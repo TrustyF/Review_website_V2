@@ -1,0 +1,16 @@
+model Genre {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  media MediaGenre[]
+}
+
+model MediaGenre {
+  mediaId Int
+  genreId Int
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  genre Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, genreId])
+}

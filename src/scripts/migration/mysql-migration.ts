@@ -1,6 +1,6 @@
 // migrate.ts
 import mysql, { RowDataPacket } from 'mysql2/promise'
-import { PrismaClient } from '@prisma/client'
+import { Prisma, PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { toMediaType } from '@/scripts/migration/legacy-mappers'
 import 'dotenv/config'
@@ -37,7 +37,7 @@ interface LegacyUserRow extends RowDataPacket {
 }
 
 async function main() {
-  // 1. Connect to the OLD db directly
+  //Connect to the OLD db directly
   const oldDb = await mysql.createConnection({
     host: 'localhost',
     port: 3306,
@@ -46,40 +46,96 @@ async function main() {
     database: 'trustyfox$review_site',
   })
 
-  // 2. Pull rows from the old schema
+  //  Pull rows from the old schema
   const [oldMedia] = await oldDb.execute<LegacyUserRow[]>('SELECT * FROM Medias')
 
-  // 3. Transform old rows into the new schema's shape
-  const transformed = oldMedia.map((u) => ({
-    title: u.name,
-    alternateTitle: u.name != u.external_name ? u.external_name : null,
-    releaseDate: u.release_date,
-    description: u.overview,
-    // poster_path: u.poster_path,
-    type: toMediaType(u.media_type),
-    myRating: u.user_rating,
-    publicRating: u.public_rating,
-    isDropped: u.is_dropped ?? false,
-    isDeleted: u.is_deleted ?? false,
-    createDate: u.created_at,
-    updateDate: u.updated_at,
-    externalId: u.external_id,
-    // runtime: u.runtime,
-    // episodes: u.episodes,
-    // seasons: u.seasons,
-    // external_link: u.external_link,
-    // author: u.author,
-    // studio: u.studio,
-    // content_rating_id: u.content_rating_id,
-    difficulty: u.difficulty ?? 0,
-  }))
+  // Transform old rows into the new schema's shape
+  const transformed = []
 
-  const trimmed = transformed.slice(0, 100)
+  // loop entries
+  for (const u of oldMedia.slice(0)) {
+    const mediaType = toMediaType(u.media_type)
 
-  for (const item of trimmed) {
+    // Skip not found
+    if (mediaType == undefined) continue
+
+    // base data
+    const mapped_entry: Prisma.MediaCreateInput = {
+      title: u.name,
+      alternateTitle: u.name != u.external_name ? u.external_name : null,
+      releaseDate: u.release_date,
+      overview: u.overview,
+      type: mediaType,
+      myRating: u.user_rating,
+      publicRating: u.public_rating,
+      isDropped: u.is_dropped ?? false,
+      isDeleted: u.is_deleted ?? false,
+      createDate: u.created_at,
+      updateDate: u.updated_at,
+      externalId: u.external_id,
+      // runtime: u.runtime,
+      // episodes: u.episodes,
+      // seasons: u.seasons,
+      // external_link: u.external_link,
+      // author: u.author,
+      // studio: u.studio,
+      // content_rating_id: u.content_rating_id,
+      difficulty: u.difficulty ?? 0,
+    }
+
+    //  per media data
+    switch (mediaType) {
+      case 'MOVIE':
+        mapped_entry.movie = {
+          create: {
+            runtime: u.runtime,
+            studio: u.studio,
+            author: u.author,
+          },
+        }
+        break
+      case 'TVSHOW':
+        mapped_entry.tvShow = {
+          create: {
+            episodeCount: u.episodes,
+            seasonCount: u.seasons,
+            network: u.network,
+          },
+        }
+        break
+      case 'MANGA':
+        mapped_entry.manga = {
+          create: {
+            chapterCount: u.chapters,
+            volumeCount: u.volumes,
+            author: u.author,
+            publisher: u.publisher,
+          },
+        }
+        break
+      case 'GAME':
+        mapped_entry.game = {
+          create: {
+            platform: u.platform,
+            developer: u.developer,
+            publisher: u.publisher,
+          },
+        }
+        break
+      case 'COMIC':
+        // no extension table yet, or handle like manga
+        break
+    }
+
+    transformed.push(mapped_entry)
+  }
+
+
+  for (const item of transformed) {
     try {
       await db.media.create({ data: item })
     } catch (err) {
+      console.log(item)
       // @ts-expect-error printing for debug
       console.log(err.meta)
     }

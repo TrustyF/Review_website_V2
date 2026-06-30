@@ -1,0 +1,93 @@
+model Media {
+  id Int @id @default(autoincrement())
+
+  title          String
+  alternateTitle String?
+  type           MediaType
+  overview       String?
+  status         MediaStatus @default(RELEASED)
+
+  myRating     Float?
+  publicRating Float?
+  difficulty   Int    @default(0)
+
+  isDropped Boolean @default(false)
+  isDeleted Boolean @default(false)
+
+  externalId     String
+  directLink     String?
+
+  releaseDate DateTime?
+  createDate  DateTime? @default(now())
+  updateDate  DateTime?
+
+  mediaGenres MediaGenre[]
+
+  tvShow TvShow?
+  movie  Movie?
+  manga  Manga?
+  comic  Comic?
+  game   Game?
+}
+
+enum MediaType {
+  MOVIE
+  TVSHOW
+  MANGA
+  COMIC
+  GAME
+}
+enum MediaStatus {
+  ANNOUNCED // minimal info, not released
+  UPCOMING // confirmed, has release date
+  RELEASED
+  ONGOING // for TV or Manga
+  FINISHED // for TV or Manga
+}
+
+model Movie {
+  mediaID Int   @id
+  media   Media @relation(fields: [mediaID], references: [id], onDelete: Cascade)
+
+  runtime Int
+  studio  String?
+  author  String?
+}
+
+model TvShow {
+  mediaID Int   @id
+  media   Media @relation(fields: [mediaID], references: [id], onDelete: Cascade)
+
+  episodeCount Int?
+  seasonCount  Int?
+  network      String?
+}
+
+model Manga {
+  mediaID Int   @id
+  media   Media @relation(fields: [mediaID], references: [id], onDelete: Cascade)
+
+  chapterCount Int?
+  volumeCount  Int?
+  author       String?
+  publisher    String?
+}
+
+model Comic {
+  mediaID Int   @id
+  media   Media @relation(fields: [mediaID], references: [id], onDelete: Cascade)
+
+  chapterCount Int?
+  volumeCount  Int?
+  author       String?
+  publisher    String?
+}
+
+model Game {
+  mediaID Int   @id
+  media   Media @relation(fields: [mediaID], references: [id], onDelete: Cascade)
+
+  platform  String?
+  developer String?
+  publisher String?
+}
