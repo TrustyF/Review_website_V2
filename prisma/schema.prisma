@@ -6,8 +6,51 @@ datasource db {
   provider = "postgresql"
 }
 
-model Movie {
-  id    String @id @default(cuid())
-  title String
-  year  Int?
+model Media {
+  id Int @id @default(autoincrement())
+
+  title          String
+  alternateTitle String?
+  type           MediaType
+  description    String?
+
+  myRating     Float?
+  publicRating Float?
+  difficulty   Int @default(0)
+
+  isDropped Boolean @default(false)
+  isDeleted Boolean @default(false)
+
+  externalId     String
+  externalSource String?
+
+  releaseDate DateTime?
+  createDate  DateTime? @default(now())
+  updateDate  DateTime?
+  mediaGenres MediaGenre[]
+}
+
+enum MediaType {
+  MOVIE
+  TV
+  MANGA
+  COMIC
+  GAME
+}
+
+model Genre {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  media MediaGenre[]
+}
+
+model MediaGenre {
+  mediaId Int
+  genreId Int
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  genre Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, genreId])
 }
