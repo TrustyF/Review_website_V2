@@ -6,20 +6,19 @@ model Media {
   type           MediaType
   overview       String?
   status         MediaStatus @default(RELEASED)
+  publicRating   Float?
 
-  myRating     Float?
-  publicRating Float?
-  difficulty   Int    @default(0)
-
-  isDropped Boolean @default(false)
   isDeleted Boolean @default(false)
 
-  externalId     String
-  directLink     String?
+  externalId String
+  directLink String?
 
   releaseDate DateTime?
   createDate  DateTime? @default(now())
   updateDate  DateTime?
+
+  enrichmentStatus String    @default("PENDING")
+  lastEnrichedAt   DateTime?
 
   mediaGenres MediaGenre[]
 
@@ -28,30 +27,39 @@ model Media {
   manga  Manga?
   comic  Comic?
   game   Game?
+
+  review Review?
 }
 
 enum MediaType {
   MOVIE
+  SHORT
   TVSHOW
   MANGA
   COMIC
   GAME
 }
+
 enum MediaStatus {
   ANNOUNCED // minimal info, not released
   UPCOMING // confirmed, has release date
   RELEASED
   ONGOING // for TV or Manga
-  FINISHED // for TV or Manga
+  COMPLETED // for TV or Manga
 }
 
 model Movie {
   mediaID Int   @id
   media   Media @relation(fields: [mediaID], references: [id], onDelete: Cascade)
 
-  runtime Int
-  studio  String?
-  author  String?
+  runtime          Int
+  budget           Int?
+  revenue          Int?
+  tagline          String?
+  imdbID           String?
+  studio           String?
+  author           String?
+  originalLanguage String?
 }
 
 model TvShow {

@@ -1,0 +1,22 @@
+model Review {
+  id Int @id @default(autoincrement())
+
+  mediaId Int   @unique
+  media   Media @relation(fields: [mediaId], references: [id])
+
+  rating     Float?
+  liked      Boolean @default(false)
+  difficulty Int     @default(0)
+
+  body  String?
+
+  createDate DateTime  @default(now())
+  updateDate DateTime?
+}
+
+enum RatingSource {
+  IMDB
+  LETTERBOXD
+  ROTTEN_TOMATOES
+  METACRITIC
+}

@@ -10,6 +10,7 @@
     "prepare": "husky",
     "studio": "npx prisma studio",
     "prisma_generate": "npx prisma generate",
+    "prisma_migrate": "npx prisma migrate dev",
     "compose": "docker compose up -d",
     "typecheck": "tsc --noEmit"
   },

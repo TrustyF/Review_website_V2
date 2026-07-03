@@ -2,8 +2,26 @@
 import mysql, { RowDataPacket } from 'mysql2/promise'
 import { Prisma, PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
-import { toMediaType } from '@/scripts/migration/legacy-mappers'
 import 'dotenv/config'
+import { MediaType } from '@prisma/client'
+
+const mediaTypeMap: Record<string, MediaType> = {
+  movie: MediaType.MOVIE,
+  short: MediaType.SHORT,
+  tv: MediaType.TVSHOW,
+  manga: MediaType.MANGA,
+  comic: MediaType.COMIC,
+  game: MediaType.GAME,
+}
+
+export function toMediaType(value: string): MediaType | undefined {
+  const mapped = mediaTypeMap[value.toLowerCase().trim()]
+  if (!mapped) {
+    console.log(`Unknown media type: ${value}`)
+    return undefined
+  }
+  return mapped
+}
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL!,
@@ -66,10 +84,8 @@ async function main() {
       releaseDate: u.release_date,
       overview: u.overview,
       type: mediaType,
-      myRating: u.user_rating,
       publicRating: u.public_rating,
-      isDropped: u.is_dropped ?? false,
-      isDeleted: u.is_deleted ?? false,
+      isDeleted: Boolean(u.is_deleted),
       createDate: u.created_at,
       updateDate: u.updated_at,
       externalId: u.external_id,
@@ -80,7 +96,6 @@ async function main() {
       // author: u.author,
       // studio: u.studio,
       // content_rating_id: u.content_rating_id,
-      difficulty: u.difficulty ?? 0,
     }
 
     //  per media data
@@ -123,19 +138,33 @@ async function main() {
         }
         break
       case 'COMIC':
-        // no extension table yet, or handle like manga
+        mapped_entry.comic = {
+          create: {
+            author: u.author,
+          },
+        }
         break
+    }
+
+    // create review object
+    if (u.user_rating != null) {
+      mapped_entry.review = {
+        create: {
+          rating: u.user_rating ?? 0,
+          difficulty: u.difficulty ?? 0,
+        },
+      }
     }
 
     transformed.push(mapped_entry)
   }
 
-
+  // insert to db
   for (const item of transformed) {
     try {
       await db.media.create({ data: item })
     } catch (err) {
-      console.log(item)
+      console.log(item.title)
       // @ts-expect-error printing for debug
       console.log(err.meta)
     }
