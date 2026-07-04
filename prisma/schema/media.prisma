@@ -13,6 +13,9 @@ model Media {
   externalId String
   directLink String?
 
+  countryId     Int?
+  originCountry Country? @relation(fields: [countryId], references: [id])
+
   releaseDate DateTime?
   createDate  DateTime? @default(now())
   updateDate  DateTime?
@@ -28,7 +31,8 @@ model Media {
   comic  Comic?
   game   Game?
 
-  review Review?
+  review  Review?
+  credits Credit[]
 }
 
 enum MediaType {

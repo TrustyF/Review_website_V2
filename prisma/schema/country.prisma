@@ -1,0 +1,12 @@
+model Country {
+  id Int @id @default(autoincrement())
+
+  name         String @unique
+  countryCode2 String @unique // "US", "CA"
+
+  flag   String? // emoji or URL
+  region String? // optional grouping
+
+  companies Company[]
+  media     Media[]
+}

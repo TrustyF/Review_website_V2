@@ -1,0 +1,43 @@
+model Person {
+  id         Int      @id @default(autoincrement())
+  name       String
+  externalId Int      @unique
+  credits    Credit[]
+}
+
+model Company {
+  id            Int      @id @default(autoincrement())
+  name          String
+  externalId    Int      @unique
+  type          String // e.g. "studio", "production_company", "network"
+  logoPath      String?
+  countryId     Int?
+  originCountry Country? @relation(fields: [countryId], references: [id])
+  credits       Credit[]
+}
+
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String @unique // "Director", "Writer", "Studio", "Producer", etc.
+
+  credits Credit[]
+}
+
+model Credit {
+  id Int @id @default(autoincrement())
+
+  mediaId Int
+  media   Media @relation(fields: [mediaId], references: [id])
+
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+
+  personId Int?
+  person   Person? @relation(fields: [personId], references: [id])
+
+  companyId Int?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  order Int?
+  job   String?
+}
