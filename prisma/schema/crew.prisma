@@ -17,10 +17,13 @@ model Company {
 }
 
 model Role {
-  id   Int    @id @default(autoincrement())
-  name String @unique // "Director", "Writer", "Studio", "Producer", etc.
+  id     Int       @id @default(autoincrement())
+  name   String    @unique // "Director", "Writer", "Studio", "Producer", etc.
+  origin MediaType
 
   credits Credit[]
+
+  @@unique([name, origin])
 }
 
 model Credit {

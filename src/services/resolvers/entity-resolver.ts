@@ -1,36 +1,65 @@
-import { db } from '@/lib/db'
+import { MediaType, Prisma } from '@prisma/client'
 
-// export async function resolvePerson(name: string) {
-//   if (!name) throw new Error('resolvePerson: missing name')
-//
-//   return db.person.upsert({
-//     where: { name },
-//     update: {},
-//     create: { name },
-//   })
-// }
-//
-// export async function resolveCompany(name: string) {
-//   if (!name) throw new Error('resolveCompany: missing name')
-//
-//   return db.company.upsert({
-//     where: { name },
-//     update: {},
-//     create: { name, type },
-//   })
-// }
+type t_client = Prisma.TransactionClient
 
-export async function resolveCountry(code2: string, name?: string) {
-  if (!code2) throw new Error('resolveCountry: missing country code')
+export async function resolvePerson(tx: t_client, externalId: number, name: string) {
+  if (!externalId) throw new Error('resolvePerson: missing externalId')
+  if (!name) throw new Error('resolvePerson: missing name')
 
-  const country_code = code2.toUpperCase()
+  return tx.person.upsert({
+    where: { externalId },
+    update: { name },
+    create: { name, externalId },
+  })
+}
 
-  return db.country.upsert({
-    where: { countryCode2: country_code },
+export async function resolveRole(tx: t_client, name: string, origin: MediaType) {
+  if (!name) throw new Error('resolveRole: missing name')
+
+  return tx.role.upsert({
+    where: { name_origin: { name, origin } },
     update: {},
-    create: {
-      countryCode2: country_code,
-      name: name ?? country_code,
-    },
+    create: { name, origin },
+  })
+}
+
+export async function resolveCompany(
+  tx: t_client,
+  externalId: number,
+  name: string,
+  type: string,
+  logoPath: string | null = null,
+  countryId: number | null = null,
+) {
+  if (!externalId) throw new Error('resolveCompany: missing externalId')
+  if (!name) throw new Error('resolveCompany: missing name')
+
+  return tx.company.upsert({
+    where: { externalId },
+    update: { name, logoPath },
+    create: { name, externalId, type, logoPath, countryId },
+  })
+}
+
+export async function resolveCountry(tx: t_client, code2?: string | null, name?: string) {
+  if (!code2) return null
+
+  const countryCode = code2.toUpperCase()
+
+  return tx.country.upsert({
+    where: { countryCode2: countryCode },
+    update: {},
+    create: { countryCode2: countryCode, name: name ?? countryCode },
+  })
+}
+
+export async function resolveGenre(tx: t_client, name: string, origin: MediaType) {
+  if (!name) throw new Error('resolveGenre: missing name')
+  if (!origin) throw new Error('resolveGenre: missing origin')
+
+  return tx.genre.upsert({
+    where: { name_origin: { name, origin } },
+    update: {},
+    create: { name, origin },
   })
 }

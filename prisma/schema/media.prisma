@@ -61,8 +61,6 @@ model Movie {
   revenue          Int?
   tagline          String?
   imdbID           String?
-  studio           String?
-  author           String?
   originalLanguage String?
 }
 

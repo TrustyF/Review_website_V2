@@ -32,25 +32,13 @@ const db = new PrismaClient({ adapter })
 interface LegacyUserRow extends RowDataPacket {
   id: number
   name: string
-  alternateTitle: string
-  releaseDate: Date
-  description: string
-  poster_path: string
   type: string
   myRating: number
-  publicRating: number
   isDropped: boolean
   isDeleted: boolean
   createDate: Date
   updateDate: Date
   externalId: number
-  runtime: number
-  episodes: number
-  seasons: number
-  external_link: string
-  author: string
-  studio: string
-  // content_rating_id: u.content_rating_id,
   difficulty: number
 }
 
@@ -80,69 +68,30 @@ async function main() {
     // base data
     const mapped_entry: Prisma.MediaCreateInput = {
       title: u.name,
-      alternateTitle: u.name != u.external_name ? u.external_name : null,
-      releaseDate: u.release_date,
-      overview: u.overview,
       type: mediaType,
-      publicRating: u.public_rating,
       isDeleted: Boolean(u.is_deleted),
       createDate: u.created_at,
       updateDate: u.updated_at,
       externalId: u.external_id,
-      // runtime: u.runtime,
-      // episodes: u.episodes,
-      // seasons: u.seasons,
-      // external_link: u.external_link,
-      // author: u.author,
-      // studio: u.studio,
-      // content_rating_id: u.content_rating_id,
     }
 
-    //  per media data
     switch (mediaType) {
       case 'MOVIE':
         mapped_entry.movie = {
-          create: {
-            runtime: u.runtime,
-            studio: u.studio,
-            author: u.author,
-          },
+          create: { runtime: 0 },
         }
         break
       case 'TVSHOW':
-        mapped_entry.tvShow = {
-          create: {
-            episodeCount: u.episodes,
-            seasonCount: u.seasons,
-            network: u.network,
-          },
-        }
+        mapped_entry.tvShow = { create: {} }
         break
       case 'MANGA':
-        mapped_entry.manga = {
-          create: {
-            chapterCount: u.chapters,
-            volumeCount: u.volumes,
-            author: u.author,
-            publisher: u.publisher,
-          },
-        }
+        mapped_entry.manga = { create: {} }
         break
       case 'GAME':
-        mapped_entry.game = {
-          create: {
-            platform: u.platform,
-            developer: u.developer,
-            publisher: u.publisher,
-          },
-        }
+        mapped_entry.game = { create: {} }
         break
       case 'COMIC':
-        mapped_entry.comic = {
-          create: {
-            author: u.author,
-          },
-        }
+        mapped_entry.comic = { create: {} }
         break
     }
 
