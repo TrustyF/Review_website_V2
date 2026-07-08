@@ -42,7 +42,7 @@ export async function resolveCompany(
 }
 
 export async function resolveCountry(tx: t_client, code2?: string | null, name?: string) {
-  if (!code2) return null
+  if (!code2) throw new Error('resolveGenre: missing origin')
 
   const countryCode = code2.toUpperCase()
 

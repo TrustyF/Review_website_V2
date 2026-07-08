@@ -1,0 +1,46 @@
+import { type } from 'arktype'
+
+export const TmdbMovieResponseSchema = type({
+  id: 'number',
+  title: 'string',
+  overview: 'string | null',
+  release_date: 'string | null',
+  runtime: 'number',
+  budget: 'number',
+  revenue: 'number',
+  tagline: 'string | null',
+  imdb_id: 'string | null',
+  original_language: 'string | null',
+  vote_average: 'number | null',
+  origin_country: 'string[]',
+  genres: type({
+    id: 'number',
+    name: 'string',
+  }).array(),
+  production_companies: type({
+    id: 'number',
+    name: 'string',
+    logo_path: 'string | null',
+    origin_country: 'string',
+  }).array(),
+  production_countries: type({
+    iso_3166_1: 'string',
+    name: 'string',
+  }).array(),
+  credits: {
+    cast: type({
+      id: 'number',
+      name: 'string',
+      character: 'string',
+      order: 'number',
+    }).array(),
+    crew: type({
+      id: 'number',
+      name: 'string',
+      job: 'string',
+      department: 'string',
+    }).array(),
+  },
+})
+
+export type TmdbMovieResponse = typeof TmdbMovieResponseSchema.infer

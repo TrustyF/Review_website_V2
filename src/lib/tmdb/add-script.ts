@@ -1,13 +1,14 @@
 import { MediaType } from '@prisma/client'
-import { TmdbMovieResponse } from '@/lib/tmdb/types'
+import { TmdbMovieResponse } from '@/lib/tmdb/request-schema'
 import { db } from '@/lib/db'
-import { resolveCompany, resolveCountry, resolvePerson, resolveRole } from '@/services/resolvers/entity-resolver'
+import {
+  resolveCompany,
+  resolveCountry,
+  resolveGenre,
+  resolvePerson,
+  resolveRole,
+} from '@/services/resolvers/entity-resolver'
 
-/**
- * Creates a Media + Movie record (with genres, cast/crew, and studio credits)
- * from a TMDB movie API response. Skips import if the movie already exists
- * (matched on externalId + type).
- */
 export async function addMovieFromTmdb(data: TmdbMovieResponse) {
   const externalId = String(data.id)
 
@@ -46,18 +47,14 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 
     // Genres
     for (const g of data.genres ?? []) {
-      const genre = await tx.genre.upsert({
-        where: { name: g.name, origin: MediaType.MOVIE },
-        update: {},
-        create: { name: g.name, origin: MediaType.MOVIE },
-      })
+      const genre = await resolveGenre(tx, g.name, MediaType.MOVIE)
       await tx.mediaGenre.create({
         data: { mediaId: media.id, genreId: genre.id },
       })
     }
 
     // Cast credits
-    const actorRole = data.credits?.cast?.length ? await resolveRole(tx, 'Actor',MediaType.MOVIE) : null
+    const actorRole = data.credits?.cast?.length ? await resolveRole(tx, 'Actor', MediaType.MOVIE) : null
     for (const c of data.credits?.cast ?? []) {
       const person = await resolvePerson(tx, c.id, c.name)
       await tx.credit.create({
@@ -66,7 +63,7 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
           roleId: actorRole!.id,
           personId: person.id,
           order: c.order,
-          job: c.character,
+          character: c.character,
         },
       })
     }

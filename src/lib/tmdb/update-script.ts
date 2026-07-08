@@ -1,4 +1,4 @@
-import { TmdbMovieResponse } from '@/lib/tmdb/types'
+import { TmdbMovieResponse } from '@/lib/tmdb/request-schema'
 import { db } from '@/lib/db'
 import { MediaType } from '@prisma/client'
 import {
@@ -18,6 +18,8 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
     })
     if (!existing) throw new Error(`updateMovieFromTmdb: no movie found for externalId ${externalId}`)
 
+    console.log(`attempting ${existing.title}`)
+
     const country = await resolveCountry(tx, data.origin_country?.[0])
 
     await tx.media.update({
@@ -27,7 +29,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
         overview: data.overview,
         releaseDate: data.release_date ? new Date(data.release_date) : null,
         publicRating: data.vote_average,
-        countryId: country?.id ?? null,
+        countryId: country.id,
         lastEnrichedAt: new Date(),
         enrichmentStatus: 'DONE',
         movie: {
@@ -64,7 +66,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
           roleId: actorRole!.id,
           personId: person.id,
           order: c.order,
-          job: c.character,
+          character: c.character,
         },
       })
     }
@@ -74,17 +76,25 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
       const person = await resolvePerson(tx, c.id, c.name)
       const role = await resolveRole(tx, c.job, MediaType.MOVIE)
       await tx.credit.create({
-        data: { mediaId: existing.id, roleId: role.id, personId: person.id },
+        data: {
+          mediaId: existing.id,
+          roleId: role.id,
+          personId: person.id,
+        },
       })
     }
 
     // Studio
     const studioRole = data.production_companies?.length ? await resolveRole(tx, 'Studio', MediaType.MOVIE) : null
     for (const co of data.production_companies ?? []) {
-      const companyCountry = await resolveCountry(tx, co.origin_country)
+      const companyCountry = co.origin_country ? await resolveCountry(tx, co.origin_country) : null
       const company = await resolveCompany(tx, co.id, co.name, 'studio', co.logo_path, companyCountry?.id ?? null)
       await tx.credit.create({
-        data: { mediaId: existing.id, roleId: studioRole!.id, companyId: company.id },
+        data: {
+          mediaId: existing.id,
+          roleId: studioRole!.id,
+          companyId: company.id,
+        },
       })
     }
 

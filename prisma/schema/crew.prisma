@@ -41,6 +41,6 @@ model Credit {
   companyId Int?
   company   Company? @relation(fields: [companyId], references: [id])
 
-  order Int?
-  job   String?
+  order     Int?
+  character String?
 }
