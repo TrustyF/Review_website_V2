@@ -1,4 +1,4 @@
-import { fetchTmdbById, fetchTmdbByName } from '@/lib/tmdb/request'
+import { fetchTmdbById } from '@/lib/tmdb/request'
 import { MediaType } from '@prisma/client'
 import 'dotenv/config'
 

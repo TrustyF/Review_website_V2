@@ -1,13 +1,15 @@
 import { type } from 'arktype'
 
+const zeroToNull = type('number').pipe((n) => (n === 0 ? null : n))
+
 export const TmdbMovieResponseSchema = type({
   id: 'number',
   title: 'string',
   overview: 'string | null',
   release_date: 'string | null',
   runtime: 'number',
-  budget: 'number',
-  revenue: 'number',
+  budget: zeroToNull,
+  revenue: zeroToNull,
   tagline: 'string | null',
   imdb_id: 'string | null',
   original_language: 'string | null',

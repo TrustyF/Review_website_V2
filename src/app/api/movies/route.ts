@@ -1,4 +1,4 @@
-import { db } from '@/lib/db'
+import { db } from '@/lib/prisma/db'
 
 export async function GET() {
   const movies = await db.media.findMany()

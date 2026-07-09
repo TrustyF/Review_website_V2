@@ -1,6 +1,6 @@
 import { MediaType } from '@prisma/client'
 import { TmdbMovieResponse } from '@/lib/tmdb/request-schema'
-import { db } from '@/lib/db'
+import { db } from '@/lib/prisma/db'
 import {
   resolveCompany,
   resolveCountry,

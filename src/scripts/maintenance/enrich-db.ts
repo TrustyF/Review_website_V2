@@ -1,4 +1,4 @@
-import { db } from '@/lib/db'
+import { db } from '@/lib/prisma/db'
 import { fetchTmdbById } from '@/lib/tmdb/request'
 import { updateMovieFromTmdb } from '@/lib/tmdb/update-script'
 import { MediaType } from '@prisma/client'
@@ -6,7 +6,7 @@ import { MediaType } from '@prisma/client'
 async function main() {
   const mediaList = await db.media.findMany({
     where: { enrichmentStatus: 'PENDING' },
-    take: 10,
+    take: 50,
   })
 
   for (const media of mediaList) {
