@@ -1,8 +1,22 @@
-export default function Home() {
+import { db } from '@/lib/prisma/db'
+import { MediaCardResolver } from '@/components/media/card/media-resolver'
+import style from './page.module.css'
+
+export default async function MediaGridPage() {
+  const mediaList = await db.media.findMany({
+    include: { movie: true, tvShow: true },
+    where:{enrichmentStatus:'DONE'},
+    take: 10,
+    orderBy: { releaseDate: 'desc' },
+  })
+
   return (
     <div>
-      <h1>Home</h1>
-      <p>Edit app/page.tsx to get started.</p>
+      <div>
+        {mediaList.map((media) => (
+          <MediaCardResolver media={media} key={media.id} />
+        ))}
+      </div>
     </div>
   )
 }
