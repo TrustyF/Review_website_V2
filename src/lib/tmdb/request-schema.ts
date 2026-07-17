@@ -7,6 +7,7 @@ export const TmdbMovieResponseSchema = type({
   title: 'string',
   overview: 'string | null',
   release_date: 'string | null',
+  poster_path: 'string',
   runtime: 'number',
   budget: zeroToNull,
   revenue: zeroToNull,

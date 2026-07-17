@@ -1,11 +1,11 @@
 import { db } from '@/lib/prisma/db'
-import { MediaCardResolver } from '@/components/media/card/media-resolver'
+import { MediaCardResolver } from '@/components/media/media-card-resolver'
 import style from './page.module.css'
 
 export default async function MediaGridPage() {
   const mediaList = await db.media.findMany({
     include: { movie: true, tvShow: true },
-    where:{enrichmentStatus:'DONE'},
+    where: { enrichmentStatus: 'DONE' },
     take: 10,
     orderBy: { releaseDate: 'desc' },
   })

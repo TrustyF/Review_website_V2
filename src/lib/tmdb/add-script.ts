@@ -31,6 +31,7 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
         externalId,
         releaseDate: data.release_date ? new Date(data.release_date) : null,
         publicRating: data.vote_average,
+        posterPath: data.poster_path,
         countryId,
         movie: {
           create: {

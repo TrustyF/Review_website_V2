@@ -29,6 +29,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
         overview: data.overview,
         releaseDate: data.release_date ? new Date(data.release_date) : null,
         publicRating: data.vote_average,
+        posterPath: data.poster_path,
         countryId: country.id,
         lastEnrichedAt: new Date(),
         enrichmentStatus: 'DONE',
