@@ -1,14 +1,19 @@
 import { MediaCardResolver } from "@/components/media/media-card-resolver";
 import { db } from "@/lib/prisma/db";
+import { MediaRecord, toMediaRecord } from "@/components/media/types";
 import style from "./page.module.sass";
 
 export default async function MediaGridPage() {
-	const mediaList = await db.media.findMany({
-		include: { movie: true, tvShow: true },
+	const rawList = await db.media.findMany({
+		include: { movie: true, tvShow: true, review: true },
 		where: { enrichmentStatus: "DONE" },
 		take: 10,
 		orderBy: { releaseDate: "desc" },
 	});
+	// convert raw prisma into typed object, filter null values out
+	const mediaList = rawList
+		.map(toMediaRecord)
+		.filter((m): m is MediaRecord => m !== null);
 
 	return (
 		<div>
