@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.sass";
+import "./styles/globals.sass";
 import React from "react";
 import Navbar from "@/components/navbar/nav-bar";
+import MediaEditorModal from "@/components/media/media-editor/media-editor-modal";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -30,6 +31,7 @@ export default function RootLayout({
 		>
 			<body>
 				<Navbar />
+				<MediaEditorModal />
 				<main>{children}</main>
 			</body>
 		</html>

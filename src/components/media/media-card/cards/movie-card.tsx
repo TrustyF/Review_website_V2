@@ -1,9 +1,9 @@
-import { MediaPoster } from "@/components/media/primitives/poster";
-import { MediaReleaseDate } from "@/components/media/primitives/release-date";
-import { MediaReview } from "@/components/media/components/review";
-import { MediaRuntime } from "@/components/media/primitives/runtime";
-import { MediaTitle } from "@/components/media/primitives/title";
-import { MediaRecord } from "@/components/media/types";
+import { MediaPoster } from "@/components/media/media-card/primitives/poster";
+import { MediaReleaseDate } from "@/components/media/media-card/primitives/release-date";
+import { MediaReview } from "@/components/media/media-card/components/review/review";
+import { MediaRuntime } from "@/components/media/media-card/primitives/runtime";
+import { MediaTitle } from "@/components/media/media-card/primitives/title";
+import { MediaRecord } from "@/components/media/media-card/types";
 import styles from "./movie-card.module.sass";
 
 type Props = {

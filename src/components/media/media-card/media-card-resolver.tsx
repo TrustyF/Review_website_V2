@@ -1,5 +1,5 @@
-import { MovieCard } from "@/components/media/cards/movie-card";
-import { MediaRecord } from "@/components/media/types";
+import { MovieCard } from "@/components/media/media-card/cards/movie-card";
+import { MediaRecord } from "@/components/media/media-card/types";
 
 export function MediaCardResolver({ media }: { media: MediaRecord }) {
 	// Return the appropriate component depending on media type

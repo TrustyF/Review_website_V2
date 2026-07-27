@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { resolvePoster } from "@/components/media/resolvers/poster-resolver";
+import { resolvePoster } from "@/components/media/media-card/resolvers/poster-resolver";
 import styles from "./primitives.module.sass";
 
 export async function MediaPoster({

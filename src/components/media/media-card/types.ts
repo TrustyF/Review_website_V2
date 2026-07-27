@@ -35,23 +35,26 @@ export type MediaRecord =
 	| (BaseRecord & { type: "COMIC"; comic: Comic })
 	| (BaseRecord & { type: "GAME"; game: Game });
 
-export function toMediaRecord(raw: RawMediaRecord): MediaRecord | null {
+export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 	switch (raw.type) {
 		case "MOVIE":
 		case "SHORT":
-			if (!raw.movie) return null;
+			if (!raw.movie) break;
 			return { ...raw, type: raw.type, movie: raw.movie };
 		case "TVSHOW":
-			if (!raw.tvShow) return null;
+			if (!raw.tvShow) break;
 			return { ...raw, type: raw.type, tvShow: raw.tvShow };
 		case "MANGA":
-			if (!raw.manga) return null;
+			if (!raw.manga) break;
 			return { ...raw, type: raw.type, manga: raw.manga };
 		case "COMIC":
-			if (!raw.comic) return null;
+			if (!raw.comic) break;
 			return { ...raw, type: raw.type, comic: raw.comic };
 		case "GAME":
-			if (!raw.game) return null;
+			if (!raw.game) break;
 			return { ...raw, type: raw.type, game: raw.game };
 	}
+	throw new Error(
+		`Media ${raw.id} has type "${raw.type}" but its matching relation was not loaded or does not exist.`,
+	);
 }
