@@ -1,9 +1,9 @@
 import { MediaCardResolver } from "@/components/media/media-card/media-card-resolver";
-import { db } from "@/lib/prisma/db";
+import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/media-card/types";
 import styles from "./styles/page.module.sass";
 import { EnrichmentStatus } from "@prisma/client";
-import { resolvePoster } from "@/components/media/media-card/resolvers/poster-resolver";
+import { resolvePoster } from "@/server/resolvers/poster-resolver";
 
 export default async function MediaGridPage() {
 	const rawList = await db.media.findMany({

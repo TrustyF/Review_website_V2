@@ -1,6 +1,6 @@
-import { db } from "@/lib/prisma/db";
-import { fetchTmdbById } from "@/lib/tmdb/request";
-import { updateMovieFromTmdb } from "@/lib/tmdb/update-script";
+import { db } from "@/server/db/client";
+import { fetchTmdbById } from "@/server/tmdb/client";
+import { updateMovieFromTmdb } from "@/server/tmdb/ingest/movie";
 import { EnrichmentStatus, MediaType } from "@prisma/client";
 
 async function main() {

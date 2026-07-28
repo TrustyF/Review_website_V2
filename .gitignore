@@ -47,3 +47,9 @@ next-env.d.ts
 
 # claude code local settings
 .claude/
+
+# Next.js compiles .sass files directly — these are stale IDE file-watcher output
+/src/app/styles/globals.css
+/src/app/styles/globals.css.map
+**/*.module.css
+**/*.module.css.map

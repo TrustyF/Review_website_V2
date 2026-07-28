@@ -1,5 +1,4 @@
-// lib/tmdb/client.ts
-import { TmdbMovieResponse, TmdbMovieResponseSchema } from "./request-schema";
+import { TmdbMovieResponse, TmdbMovieResponseSchema } from "./schema";
 import { MediaType } from "@prisma/client";
 import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
 

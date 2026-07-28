@@ -8,5 +8,12 @@ export function MediaEditButton({ mediaId }: { mediaId: number }) {
 
 	if (!mediaId) return null;
 
-	return <button onClick={() => open(mediaId)}>Edit</button>;
+	return (
+		<button
+			className={styles.edit_button}
+			onClick={() => open(mediaId)}
+		>
+			✏️
+		</button>
+	);
 }

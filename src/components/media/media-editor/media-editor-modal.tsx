@@ -9,6 +9,7 @@ import { MediaCardResolver } from "@/components/media/media-card/media-card-reso
 export default function MediaEditorModal() {
 	const mediaId = useReviewEditorStore((s) => s.mediaId);
 	const close = useReviewEditorStore((s) => s.close);
+
 	const [media, setMedia] = useState<MediaRecord | null>(null);
 	const [posterSrc, setPosterSrc] = useState<string | null>(null);
 
