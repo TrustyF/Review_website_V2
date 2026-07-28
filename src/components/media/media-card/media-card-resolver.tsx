@@ -3,15 +3,10 @@ import { MediaRecord } from "@/components/media/media-card/types";
 
 type Props = {
 	media: MediaRecord;
-	posterSrc: string;
 	showEditButton?: boolean;
 };
 
-export function MediaCardResolver({
-	media,
-	posterSrc,
-	showEditButton = true,
-}: Props) {
+export function MediaCardResolver({ media, showEditButton = true }: Props) {
 	// Return the appropriate component depending on media type
 	switch (media.type) {
 		case "MOVIE":
@@ -19,7 +14,6 @@ export function MediaCardResolver({
 			return (
 				<MovieCard
 					media={media}
-					posterSrc={posterSrc}
 					showEditButton={showEditButton}
 				/>
 			);

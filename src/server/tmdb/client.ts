@@ -4,12 +4,24 @@ import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 
+const TMDB_TYPE_MAP: Partial<Record<MediaType, string>> = {
+	TVSHOW: "tv",
+	MOVIE: "movie",
+	SHORT: "movie",
+};
+
+function toTmdbPathSegment(type: MediaType): string {
+	const segment = TMDB_TYPE_MAP[type];
+	if (!segment) throw new Error(`No TMDB endpoint for media type ${type}`);
+	return segment;
+}
+
 export async function fetchTmdbById(
 	id: string,
 	media_type: MediaType,
 ): Promise<TmdbMovieResponse> {
 	const res = await fetch(
-		`${TMDB_BASE}/${media_type.toLowerCase()}/${id}?&language=en-US&append_to_response=content_ratings,credits,external_ids`,
+		`${TMDB_BASE}/${toTmdbPathSegment(media_type)}/${id}?&language=en-US&append_to_response=content_ratings,credits,external_ids`,
 		{
 			headers: new Headers({
 				Accept: "application/json",
@@ -18,8 +30,10 @@ export async function fetchTmdbById(
 		},
 	);
 
-	if (!res.ok)
-		throw new Error(`TMDB fetch failed for movie ${id}: ${res.statusText}`);
+	if (!res.ok) {
+		const errorText = await res.text();
+		throw new Error(`TMDB fetch failed for ${media_type} ${id} : ${errorText}`);
+	}
 
 	const json = await res.json();
 	return parseOrThrow(TmdbMovieResponseSchema, json);
@@ -30,7 +44,7 @@ export async function fetchTmdbByName(
 	page: number,
 ): Promise<TmdbMovieResponse> {
 	const res = await fetch(
-		`${TMDB_BASE}/search/${media_type.toLowerCase()}?query=${name}&include_adult=true&page=${page}`,
+		`${TMDB_BASE}/search/${toTmdbPathSegment(media_type)}?query=${name}&include_adult=true&page=${page}`,
 		{
 			headers: new Headers({
 				Accept: "application/json",

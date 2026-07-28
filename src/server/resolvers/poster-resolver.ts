@@ -1,4 +1,3 @@
-// src/lib/poster-resolver.ts
 import { access, mkdir, writeFile } from "fs/promises";
 import path from "path";
 

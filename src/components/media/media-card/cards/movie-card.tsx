@@ -9,17 +9,16 @@ import { MediaEditButton } from "@/components/media/media-card/primitives/edit-b
 
 type Props = {
 	media: MediaRecord & { type: "MOVIE" | "SHORT" };
-	posterSrc: string;
 	showEditButton?: boolean;
 };
 
-export function MovieCard({ media, posterSrc, showEditButton = true }: Props) {
+export function MovieCard({ media, showEditButton = true }: Props) {
 	return (
 		<div className={styles.wrapper}>
 			{showEditButton && <MediaEditButton mediaId={media.id} />}
 			<div className={styles.poster}>
 				<MediaPoster
-					src={posterSrc}
+					src={media.posterSrc}
 					title={media.title}
 				/>
 			</div>

@@ -63,8 +63,8 @@ model Movie {
   media   Media @relation(fields: [mediaID], references: [id], onDelete: Cascade)
 
   runtime          Int
-  budget           Int?
-  revenue          Int?
+  budget           Float?
+  revenue          Float?
   tagline          String?
   imdbID           String?
   originalLanguage String?
