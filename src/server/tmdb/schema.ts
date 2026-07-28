@@ -47,3 +47,47 @@ export const TmdbMovieResponseSchema = type({
 });
 
 export type TmdbMovieResponse = typeof TmdbMovieResponseSchema.infer;
+
+export const TmdbTvResponseSchema = type({
+	id: "number",
+	name: "string",
+	overview: "string | null",
+	first_air_date: "string | null",
+	poster_path: "string | null",
+	number_of_episodes: "number | null",
+	number_of_seasons: "number | null",
+	networks: type({ id: "number", name: "string" }).array(),
+	original_language: "string | null",
+	vote_average: "number | null",
+	origin_country: "string[]",
+	genres: type({
+		id: "number",
+		name: "string",
+	}).array(),
+	production_companies: type({
+		id: "number",
+		name: "string",
+		logo_path: "string | null",
+		origin_country: "string",
+	}).array(),
+	production_countries: type({
+		iso_3166_1: "string",
+		name: "string",
+	}).array(),
+	credits: {
+		cast: type({
+			id: "number",
+			name: "string",
+			character: "string",
+			order: "number",
+		}).array(),
+		crew: type({
+			id: "number",
+			name: "string",
+			job: "string",
+			department: "string",
+		}).array(),
+	},
+});
+
+export type TmdbTvResponse = typeof TmdbTvResponseSchema.infer;

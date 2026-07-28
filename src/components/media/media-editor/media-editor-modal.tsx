@@ -73,12 +73,7 @@ export default function MediaEditorModal() {
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.media_preview}>
-				{draft && (
-					<MediaCardResolver
-						media={draft}
-						showEditButton={false}
-					/>
-				)}
+				{draft && <MediaCardResolver media={draft} />}
 			</div>
 
 			<div className={styles.fields}>

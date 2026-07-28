@@ -1,6 +1,8 @@
 import styles from "./primitives.module.sass";
 
 function formatMinutes(runtime: number) {
+	if (runtime < 60) return `${runtime}m`;
+
 	const hours = String(Math.floor(runtime / 60));
 	const minutes = String(runtime % 60).padStart(2, "0");
 

@@ -18,7 +18,7 @@ model Company {
 
 model Role {
   id     Int       @id @default(autoincrement())
-  name   String    @unique // "Director", "Writer", "Studio", "Producer", etc.
+  name   String // "Director", "Writer", "Studio", "Producer", etc.
   origin MediaType
 
   credits Credit[]

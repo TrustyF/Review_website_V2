@@ -1,15 +1,15 @@
 import { EnrichmentStatus, MediaType } from "@prisma/client";
-import { TmdbMovieResponse } from "@/server/tmdb/schema";
+import { TmdbTvResponse } from "@/server/tmdb/schema";
 import { db } from "@/server/db/client";
 import { resolveCountry } from "@/server/resolvers/entity-resolver";
-import { syncMovieCreditsAndGenres } from "@/server/tmdb/ingest/movie-credits";
+import { syncTvShowCreditsAndGenres } from "@/server/tmdb/ingest/tv-show-credits";
 
-export async function addMovieFromTmdb(data: TmdbMovieResponse) {
+export async function addTvShowFromTmdb(data: TmdbTvResponse) {
 	const externalId = String(data.id);
 
 	return db.$transaction(async (tx) => {
 		const existing = await tx.media.findFirst({
-			where: { externalId, type: MediaType.MOVIE },
+			where: { externalId, type: MediaType.TVSHOW },
 		});
 		if (existing) return existing;
 
@@ -19,43 +19,40 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 
 		const media = await tx.media.create({
 			data: {
-				title: data.title,
-				type: MediaType.MOVIE,
+				title: data.name,
+				type: MediaType.TVSHOW,
 				overview: data.overview,
 				externalId,
-				releaseDate: data.release_date ? new Date(data.release_date) : null,
+				releaseDate: data.first_air_date ? new Date(data.first_air_date) : null,
 				publicRating: data.vote_average,
 				posterPath: data.poster_path,
 				countryId: country?.id ?? null,
-				movie: {
+				tvShow: {
 					create: {
-						runtime: data.runtime ?? 0,
-						budget: data.budget,
-						revenue: data.revenue,
-						tagline: data.tagline,
-						imdbID: data.imdb_id,
-						originalLanguage: data.original_language,
+						episodeCount: data.number_of_episodes,
+						seasonCount: data.number_of_seasons,
+						network: data.networks[0]?.name ?? null,
 					},
 				},
 			},
 		});
 
-		await syncMovieCreditsAndGenres(tx, media.id, data);
+		await syncTvShowCreditsAndGenres(tx, media.id, data);
 
 		return media;
 	});
 }
 
-export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
+export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 	const externalId = String(data.id);
 
 	return db.$transaction(async (tx) => {
 		const existing = await tx.media.findFirst({
-			where: { externalId, type: MediaType.MOVIE },
+			where: { externalId, type: MediaType.TVSHOW },
 		});
 		if (!existing)
 			throw new Error(
-				`updateMovieFromTmdb: no movie found for externalId ${externalId}`,
+				`updateTvShowFromTmdb: no tv show found for externalId ${externalId}`,
 			);
 
 		const country = data.origin_country?.[0]
@@ -65,28 +62,25 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 		await tx.media.update({
 			where: { id: existing.id },
 			data: {
-				title: data.title,
+				title: data.name,
 				overview: data.overview,
-				releaseDate: data.release_date ? new Date(data.release_date) : null,
+				releaseDate: data.first_air_date ? new Date(data.first_air_date) : null,
 				publicRating: data.vote_average,
 				posterPath: data.poster_path,
 				countryId: country?.id ?? null,
 				lastEnrichedAt: new Date(),
 				enrichmentStatus: EnrichmentStatus.DONE,
-				movie: {
+				tvShow: {
 					update: {
-						runtime: data.runtime,
-						budget: data.budget,
-						revenue: data.revenue,
-						tagline: data.tagline,
-						imdbID: data.imdb_id,
-						originalLanguage: data.original_language,
+						episodeCount: data.number_of_episodes,
+						seasonCount: data.number_of_seasons,
+						network: data.networks[0]?.name ?? null,
 					},
 				},
 			},
 		});
 
-		await syncMovieCreditsAndGenres(tx, existing.id, data);
+		await syncTvShowCreditsAndGenres(tx, existing.id, data);
 
 		return existing;
 	});
