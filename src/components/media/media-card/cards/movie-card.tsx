@@ -5,6 +5,7 @@ import { MediaRuntime } from "@/components/media/media-card/primitives/runtime";
 import { MediaTitle } from "@/components/media/media-card/primitives/title";
 import { MediaRecord } from "@/components/media/media-card/types";
 import styles from "./movie-card.module.sass";
+import { MediaEditButton } from "@/components/media/media-card/primitives/edit-button";
 
 type Props = {
 	media: MediaRecord & { type: "MOVIE" | "SHORT" };
@@ -13,6 +14,7 @@ type Props = {
 export async function MovieCard({ media }: Props) {
 	return (
 		<div className={styles.wrapper}>
+			<MediaEditButton mediaId={media.id} />
 			<div className={styles.poster}>
 				<MediaPoster
 					mediaId={media.id}
