@@ -1,12 +1,28 @@
 import { MovieCard } from "@/components/media/media-card/cards/movie-card";
 import { MediaRecord } from "@/components/media/media-card/types";
 
-export function MediaCardResolver({ media }: { media: MediaRecord }) {
+type Props = {
+	media: MediaRecord;
+	posterSrc: string;
+	showEditButton?: boolean;
+};
+
+export function MediaCardResolver({
+	media,
+	posterSrc,
+	showEditButton = true,
+}: Props) {
 	// Return the appropriate component depending on media type
 	switch (media.type) {
 		case "MOVIE":
 		case "SHORT":
-			return <MovieCard media={media} />;
+			return (
+				<MovieCard
+					media={media}
+					posterSrc={posterSrc}
+					showEditButton={showEditButton}
+				/>
+			);
 		// case "TVSHOW":
 		// 	return <TvShowCard media={media} />;
 		// case "MANGA":

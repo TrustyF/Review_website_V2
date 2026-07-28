@@ -1,19 +1,15 @@
 import Image from "next/image";
-import { resolvePoster } from "@/components/media/media-card/resolvers/poster-resolver";
 import styles from "./primitives.module.sass";
 
-export async function MediaPoster({
-	mediaId,
-	posterPath,
+export function MediaPoster({
+	src,
 	title,
 	ratio = "2/3",
 }: {
-	mediaId: number;
-	posterPath: string | null;
+	src: string;
 	title: string;
 	ratio?: string;
 }) {
-	const src = await resolvePoster(mediaId, posterPath);
 	return (
 		<Image
 			src={src}

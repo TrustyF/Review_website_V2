@@ -1,6 +1,7 @@
 "use server";
 import { db } from "@/lib/prisma/db";
 import { toMediaRecord } from "@/components/media/media-card/types";
+import { resolvePoster } from "@/components/media/media-card/resolvers/poster-resolver";
 
 export async function getMediaForEdit(mediaId: number) {
 	const raw = await db.media.findFirstOrThrow({
@@ -11,5 +12,7 @@ export async function getMediaForEdit(mediaId: number) {
 			review: true,
 		},
 	});
-	return toMediaRecord(raw);
+	const media = toMediaRecord(raw);
+	const posterSrc = await resolvePoster(media.id, media.posterPath);
+	return { media, posterSrc };
 }

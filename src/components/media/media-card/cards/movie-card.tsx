@@ -9,16 +9,17 @@ import { MediaEditButton } from "@/components/media/media-card/primitives/edit-b
 
 type Props = {
 	media: MediaRecord & { type: "MOVIE" | "SHORT" };
+	posterSrc: string;
+	showEditButton?: boolean;
 };
 
-export async function MovieCard({ media }: Props) {
+export function MovieCard({ media, posterSrc, showEditButton = true }: Props) {
 	return (
 		<div className={styles.wrapper}>
-			<MediaEditButton mediaId={media.id} />
+			{showEditButton && <MediaEditButton mediaId={media.id} />}
 			<div className={styles.poster}>
 				<MediaPoster
-					mediaId={media.id}
-					posterPath={media.posterPath}
+					src={posterSrc}
 					title={media.title}
 				/>
 			</div>
@@ -29,9 +30,9 @@ export async function MovieCard({ media }: Props) {
 				</div>
 				<MediaReview review={media.review} />
 			</div>
-			{/*<div className={styles.secondary_info}>*/}
-			{/*	<MediaRuntime runtime={media.movie.runtime} />*/}
-			{/*</div>*/}
+			<div className={styles.secondary_info}>
+				<MediaRuntime runtime={media.movie.runtime} />
+			</div>
 		</div>
 	);
 }

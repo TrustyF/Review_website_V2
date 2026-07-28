@@ -21,7 +21,7 @@ model Media {
   createDate  DateTime? @default(now())
   updateDate  DateTime?
 
-  enrichmentStatus String    @default("PENDING")
+  enrichmentStatus EnrichmentStatus @default(PENDING)
   lastEnrichedAt   DateTime?
 
   mediaGenres MediaGenre[]
@@ -43,6 +43,11 @@ enum MediaType {
   MANGA
   COMIC
   GAME
+}
+
+enum EnrichmentStatus {
+  PENDING
+  DONE
 }
 
 enum MediaStatus {

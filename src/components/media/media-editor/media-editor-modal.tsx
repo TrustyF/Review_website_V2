@@ -10,10 +10,14 @@ export default function MediaEditorModal() {
 	const mediaId = useReviewEditorStore((s) => s.mediaId);
 	const close = useReviewEditorStore((s) => s.close);
 	const [media, setMedia] = useState<MediaRecord | null>(null);
+	const [posterSrc, setPosterSrc] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (mediaId === null) return;
-		getMediaForEdit(mediaId).then(setMedia);
+		getMediaForEdit(mediaId).then(({ media, posterSrc }) => {
+			setMedia(media);
+			setPosterSrc(posterSrc);
+		});
 	}, [mediaId]);
 
 	if (mediaId === null) return null;
@@ -21,7 +25,13 @@ export default function MediaEditorModal() {
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.media_preview}>
-				{media && <MediaCardResolver media={media} />}
+				{media && posterSrc && (
+					<MediaCardResolver
+						media={media}
+						posterSrc={posterSrc}
+						showEditButton={false}
+					/>
+				)}
 			</div>
 			<button onClick={close}>Close</button>
 		</div>
