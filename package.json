@@ -14,7 +14,8 @@
 		"prisma_generate": "npx prisma generate",
 		"prisma_migrate": "npx prisma migrate dev",
 		"compose": "docker compose up -d",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"cleanup_posters": "tsx src/server/maintenance/cleanup-posters.ts"
 	},
 	"dependencies": {
 		"@prisma/adapter-pg": "^7.8.0",

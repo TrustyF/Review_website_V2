@@ -13,16 +13,16 @@ export function MovieCard({ media }: Props) {
 
 	return (
 		<MediaCardShell media={media}>
-			<MediaRuntime runtime={media.movie.runtime} />
-			{roi !== null && (
-				<CircularGauge
-					value={roi}
-					size={40}
-					max={1}
-					strokeWidth={3}
-					unit="x"
-				/>
-			)}
+			{/*<MediaRuntime runtime={media.movie.runtime} />*/}
+			{/*{roi !== null && (*/}
+			{/*	<CircularGauge*/}
+			{/*		value={roi}*/}
+			{/*		size={40}*/}
+			{/*		max={1}*/}
+			{/*		strokeWidth={3}*/}
+			{/*		unit="x"*/}
+			{/*	/>*/}
+			{/*)}*/}
 		</MediaCardShell>
 	);
 }

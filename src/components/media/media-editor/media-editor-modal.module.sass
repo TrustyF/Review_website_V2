@@ -5,11 +5,40 @@
   top: 0
   width: 100vw
   height: 100vh
+  overflow-y: auto
   z-index: 100
 
 .media_preview
   max-height: 20rem
   overflow-y: scroll
+  width: 95%
+  margin: auto
+
+.poster_picker
+  display: flex
+  flex-flow: column
+  gap: 0.5rem
+  padding: 0 20px
+
+.poster_options
+  display: flex
+  flex-flow: row wrap
+  gap: 0.5rem
+  max-height: 20rem
+  overflow-y: auto
+
+.poster_option
+  height: 10rem
+  border-radius: 0.25rem
+  cursor: pointer
+  outline: 2px solid transparent
+
+  &:hover
+    outline-color: var(--accent1)
+
+.poster_pending
+  color: var(--accent1)
+  font-size: 0.85rem
 
 .fields
   display: flex
@@ -30,16 +59,22 @@
 
 .body
   width: 30rem
-  max-height: 16rem
+  height: 16rem
   overflow-y: auto
   resize: vertical
 
 
 .actions
+  position: fixed
+  right: 0
+  top: 0
   display: flex
   flex-flow: row
   gap: 0.5rem
-  padding: 0 20px 20px
+  padding: 10px
+
+  button
+    padding: 5px 8px
 
 .save_error
   color: #e05656

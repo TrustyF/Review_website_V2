@@ -91,3 +91,16 @@ export const TmdbTvResponseSchema = type({
 });
 
 export type TmdbTvResponse = typeof TmdbTvResponseSchema.infer;
+
+export const TmdbImagesResponseSchema = type({
+	id: "number",
+	posters: type({
+		file_path: "string",
+		width: "number",
+		height: "number",
+		vote_average: "number",
+		iso_639_1: "string | null",
+	}).array(),
+});
+
+export type TmdbImagesResponse = typeof TmdbImagesResponseSchema.infer;

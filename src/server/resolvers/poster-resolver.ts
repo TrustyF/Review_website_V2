@@ -1,7 +1,17 @@
 import { access, mkdir, writeFile } from "fs/promises";
+import { createHash } from "crypto";
 import path from "path";
 
-const POSTER_DIR = path.join(process.cwd(), "public", "posters", "cache");
+export const POSTER_DIR = path.join(process.cwd(), "public", "posters", "cache");
+
+// Content-addressable: the filename is derived from posterPath itself, so
+// switching a media's poster naturally produces a different filename/URL —
+// no cache-busting query string or manual invalidation needed. Old files
+// from a previous posterPath become orphaned; see poster-cleanup.ts.
+export function posterFilename(mediaId: number, posterPath: string) {
+	const hash = createHash("sha256").update(posterPath).digest("hex").slice(0, 12);
+	return `${mediaId}-${hash}.jpg`;
+}
 
 export async function resolvePoster(
 	mediaId: number,
@@ -9,7 +19,7 @@ export async function resolvePoster(
 ) {
 	if (!posterPath) return "/posters/placeholder.jpg";
 
-	const filename = `${mediaId}.jpg`;
+	const filename = posterFilename(mediaId, posterPath);
 	const filePath = path.join(POSTER_DIR, filename);
 
 	try {
