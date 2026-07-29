@@ -118,9 +118,10 @@ export default function MediaEditorModal() {
 				</div>
 
 				{/* Review body: long-form field, kept on its own row */}
-				<label className={styles.field}>
+				<label className={`${styles.field}`}>
 					Body
 					<textarea
+						className={styles.body}
 						value={draft?.review?.body ?? ""}
 						onChange={(e) => patchReview({ body: e.target.value })}
 						rows={6}

@@ -1,0 +1,60 @@
+.wrapper
+  width: 950px
+  margin: 20px auto
+  color: #ddd
+
+.controls
+  display: flex
+  flex-flow: column
+  gap: 10px
+  border: 1px solid rgba(255, 255, 255, 0.15)
+  border-radius: 4px
+  padding: 20px
+  margin-bottom: 20px
+
+.control_row
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 10px
+
+  label
+    width: 110px
+    flex-shrink: 0
+
+  input[type="range"]
+    flex: 1
+
+  output
+    width: 50px
+    text-align: right
+    font-variant-numeric: tabular-nums
+
+.preview
+  display: flex
+  justify-content: center
+  padding: 20px 0
+
+.section
+  border: 1px solid rgba(255, 255, 255, 0.15)
+  border-radius: 4px
+
+  h2
+    margin: 0
+    padding: 10px 20px
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15)
+    font-size: 1rem
+
+.grid
+  display: flex
+  flex-flow: row wrap
+  gap: 24px
+  padding: 20px
+
+.cell
+  display: flex
+  flex-flow: column
+  align-items: center
+  gap: 8px
+  font-size: 0.85rem
+  opacity: 0.8

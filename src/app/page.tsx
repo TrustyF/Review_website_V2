@@ -7,8 +7,11 @@ import { EnrichmentStatus } from "@prisma/client";
 export default async function MediaGridPage() {
 	const rawList = await db.media.findMany({
 		include: { movie: true, tvShow: true, review: true },
-		where: { enrichmentStatus: EnrichmentStatus.DONE },
-		take: 20,
+		where: {
+			enrichmentStatus: EnrichmentStatus.DONE,
+			// title: { contains: "mars" },
+		},
+		take: 50,
 		orderBy: { releaseDate: "desc" },
 	});
 	// convert raw prisma into typed, display-ready objects (posters resolved)
