@@ -1,3 +1,5 @@
+@use "@/app/styles/variables" as *
+
 .wrapper
   display: flex
   flex-flow: column
@@ -24,7 +26,9 @@
   font-size: 0.8rem
 
 .body
-  color: var(--accent3)
+  color: var(--body)
+  font-family: $font-body
+  //font-family: $font-serif
   font-size: 1rem
   line-height: 1.5rem
   white-space: pre-wrap

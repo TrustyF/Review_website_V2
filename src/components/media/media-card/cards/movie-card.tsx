@@ -9,7 +9,7 @@ type Props = {
 
 export function MovieCard({ media }: Props) {
 	const { budget, revenue } = media.movie;
-	const roi = budget && revenue ? ((revenue - budget) / budget) * 100 : null;
+	const roi = budget && revenue ? (revenue - budget) / budget : null;
 
 	return (
 		<MediaCardShell media={media}>
@@ -18,8 +18,9 @@ export function MovieCard({ media }: Props) {
 				<CircularGauge
 					value={roi}
 					size={40}
+					max={1}
 					strokeWidth={3}
-					unit="%"
+					unit="x"
 				/>
 			)}
 		</MediaCardShell>
