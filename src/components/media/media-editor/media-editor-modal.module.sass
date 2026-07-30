@@ -1,3 +1,5 @@
+@use "@/app/styles/variables" as *
+
 .wrapper
   background-color: rgba(25, 25, 25, 1)
   position: fixed
@@ -8,39 +10,50 @@
   overflow-y: auto
   z-index: 100
 
+.wrapper_body
+  width: 80vw
+  margin: auto
+  padding: 2rem 0
+
+  display: flex
+  flex-flow: column
+  gap: 2rem
+
+.divider
+  background-color: var(--accent1)
+  width: 100%
+  height: 1px
+
 .media_preview
   max-height: 20rem
   overflow-y: scroll
-  width: 95%
+  width: fit-content
   margin: auto
 
 .poster_picker
+  position: relative
   display: flex
   flex-flow: column
-  gap: 0.5rem
-  padding: 0 20px
 
-.poster_options
+.extra_posters
   display: flex
   flex-flow: row wrap
   gap: 0.5rem
   max-height: 20rem
   overflow-y: auto
 
-.poster_option
+.extra_poster
   height: 10rem
   border-radius: 0.25rem
   cursor: pointer
-  outline: 2px solid transparent
 
-  &:hover
-    outline-color: var(--accent1)
+.extra_poster_button
+  right: 0
+  bottom: 0
+  padding: 0 5px
+  position: absolute
 
-.poster_pending
-  color: var(--accent1)
-  font-size: 0.85rem
-
-.fields
+.review_fields
   display: flex
   flex-flow: row
   gap: 2rem
@@ -50,18 +63,57 @@
   display: flex
   flex-flow: column
   gap: 0.25rem
+  color: var(--accent1)
+  font-size: 0.8rem
 
-.quick_stats
+.quick_review
   display: flex
   flex-flow: column
   align-items: flex-start
   gap: 1rem
 
+// Default look for every field input: transparent, underlined, matching the
+// rendered review's typography instead of a boxed form control. Mirrors
+// .rating/.rating_number/.rating_star in
+// media-card/components/review/review.module.sass.
+.field_input
+  width: 4rem
+  padding: 0.1rem 0.3rem
+  border: none
+  border-bottom: 1px solid var(--accent1)
+  background: transparent
+  color: var(--foreground)
+  font-family: $font-body
+  font-size: 1.1rem
+
+.field_checkbox
+  accent-color: var(--foreground)
+
+.rating_group
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.2rem
+
+.rating_star
+  color: #FCCA00
+  margin-top: -0.1rem
+
+// Mirrors .body in review.module.sass so editing looks like the review text
+// itself rather than a plain textarea.
 .body
   width: 30rem
   height: 16rem
   overflow-y: auto
   resize: vertical
+  padding: 0.5rem
+  border: 1px solid var(--accent1)
+  border-radius: 0.25rem
+  background: transparent
+  color: var(--body)
+  font-family: $font-body
+  font-size: 1rem
+  line-height: 1.5rem
 
 
 .actions

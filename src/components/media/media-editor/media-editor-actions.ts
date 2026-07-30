@@ -1,23 +1,10 @@
 "use server";
 import { db } from "@/server/db/client";
-import { toMediaRecord } from "@/components/media/media-card/types";
 import { revalidatePath } from "next/cache";
 import { MediaType } from "@prisma/client";
 import { fetchTmdbImages } from "@/server/tmdb/client";
 import { resolvePoster } from "@/server/resolvers/poster-resolver";
-import { buildProxiedImageUrl } from "@/server/image-proxy";
-
-export async function getMediaForEdit(mediaId: number) {
-	const raw = await db.media.findFirstOrThrow({
-		where: { id: mediaId },
-		include: {
-			movie: true,
-			tvShow: true,
-			review: true,
-		},
-	});
-	return toMediaRecord(raw);
-}
+import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
 
 export async function saveReview(
 	mediaId: number,
@@ -46,7 +33,6 @@ export async function getAlternativePosters(
 	return images.posters
 		.slice()
 		.sort((a, b) => b.vote_average - a.vote_average)
-		.slice(0, 20)
 		.map((poster) => ({
 			filePath: poster.file_path,
 			width: poster.width,

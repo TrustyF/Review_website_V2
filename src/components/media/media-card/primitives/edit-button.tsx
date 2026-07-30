@@ -3,24 +3,26 @@ import styles from "./primitives.module.sass";
 
 import { useReviewEditorStore } from "@/components/media/media-editor/review-editor-store";
 import { useIsAdminStore } from "@/lib/is-admin-store";
+import { MediaRecord } from "@/components/media/media-card/types";
+import { PenIcon } from "@/components/media/icons/pen-icon";
 
-export function MediaEditButton({ mediaId }: { mediaId: number }) {
+export function MediaEditButton({ media }: { media: MediaRecord }) {
 	const open = useReviewEditorStore((s) => s.open);
-	const editingMediaId = useReviewEditorStore((s) => s.mediaId);
+	const editingMediaId = useReviewEditorStore((s) => s.media?.id ?? null);
 	const isAdmin = useIsAdminStore((s) => s.isAdmin);
 
-	if (!mediaId) return null;
+	if (!media.id) return null;
 	if (!isAdmin) return null;
 	// This card is the editor's own preview of the media it's already
 	// editing — showing an edit button there would just reopen itself.
-	if (editingMediaId === mediaId) return null;
+	if (editingMediaId === media.id) return null;
 
 	return (
-		<button
+		<div
 			className={styles.edit_button}
-			onClick={() => open(mediaId)}
+			onClick={() => open(media)}
 		>
-			✏️
-		</button>
+			<PenIcon className={styles.pen_icon} />
+		</div>
 	);
 }

@@ -4,12 +4,12 @@ import { useReviewEditorStore } from "./review-editor-store";
 import { MediaRecord } from "@/components/media/media-card/types";
 import { useEffect, useState } from "react";
 import {
-	getAlternativePosters,
-	getMediaForEdit,
 	saveReview,
 	updateMediaPoster,
 } from "@/components/media/media-editor/media-editor-actions";
-import { MediaCardResolver } from "@/components/media/media-card/media-card-resolver";
+import { MediaCardResolver } from "@/components/media/media-card/cards/media-card-resolver";
+import { PosterPicker } from "@/components/media/media-editor/components/poster-picker";
+import { StarIcon } from "@/components/media/icons/star-icon";
 import { MediaType, Review } from "@prisma/client";
 
 // Only these types are sourced from TMDB, so only they have alternative
@@ -21,8 +21,9 @@ const TMDB_TYPES: MediaType[] = [
 ];
 
 export default function MediaEditorModal() {
-	const mediaId = useReviewEditorStore((s) => s.mediaId);
+	const media = useReviewEditorStore((s) => s.media);
 	const close = useReviewEditorStore((s) => s.close);
+	const mediaId = media?.id ?? null;
 
 	// Editable copy of the fetched record (poster already resolved). Every
 	// field edit patches this directly, and the preview renders it as-is.
@@ -30,34 +31,24 @@ export default function MediaEditorModal() {
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveError, setSaveError] = useState<string | null>(null);
 
-	// Alternative poster picker: fetched from TMDB on demand, since it's an
-	// extra API call we don't want on every editor open.
-	const [posterOptions, setPosterOptions] = useState<
-		| {
-				filePath: string;
-				width: number;
-				height: number;
-				thumbSrc: string;
-				previewSrc: string;
-		  }[]
-		| null
-	>(null);
 	// Picked but not yet saved — applied to Media.posterPath on save, so you
 	// can try a few candidates against the preview before committing to one.
 	const [pendingPosterPath, setPendingPosterPath] = useState<string | null>(
 		null,
 	);
 
-	// Fetch the record whenever a media id is selected
-	useEffect(() => {
-		if (mediaId === null) return;
-		getMediaForEdit(mediaId).then((media) => {
-			setDraft(media);
-			setSaveError(null);
-			setPosterOptions(null);
-			setPendingPosterPath(null);
-		});
-	}, [mediaId]);
+	// Reseed the draft the moment a new record shows up in the store (i.e. a
+	// new editor session started) — done during render, not an effect, so
+	// there's no extra commit where the preview would flash empty before
+	// popping in. Track which record draft was seeded from (rather than just
+	// mediaId) since the store always hands us a fresh object on open.
+	const [draftSource, setDraftSource] = useState<MediaRecord | null>(null);
+	if (media !== null && media !== draftSource) {
+		setDraft(media);
+		setDraftSource(media);
+		setSaveError(null);
+		setPendingPosterPath(null);
+	}
 
 	// The modal itself scrolls internally (its content can exceed viewport
 	// height), so the background page's own scroll is locked while it's open
@@ -80,11 +71,6 @@ export default function MediaEditorModal() {
 
 	if (mediaId === null) return null;
 
-	async function openPosterPicker() {
-		if (!draft) return;
-		setPosterOptions(await getAlternativePosters(draft.externalId, draft.type));
-	}
-
 	// Just swaps in the proxied preview URL — no download, no DB write, so
 	// trying a poster and changing your mind costs nothing. Media.posterPath
 	// only gets touched (and the poster only gets downloaded/cached) on save.
@@ -98,14 +84,10 @@ export default function MediaEditorModal() {
 
 	// MediaEditorModal stays mounted permanently (see layout.tsx) and just
 	// renders null while closed, so its state isn't reset by unmounting —
-	// without this, the picker could still be open the next time it's shown.
-	function resetPosterPicker() {
-		setPosterOptions(null);
-		setPendingPosterPath(null);
-	}
-
+	// without this, a picked-but-unsaved poster could still show as pending
+	// next time it's shown.
 	function handleClose() {
-		resetPosterPicker();
+		setPendingPosterPath(null);
 		close();
 	}
 
@@ -125,7 +107,7 @@ export default function MediaEditorModal() {
 					? updateMediaPoster(draft.id, pendingPosterPath)
 					: Promise.resolve(),
 			]);
-			resetPosterPicker();
+			setPendingPosterPath(null);
 			close();
 		} catch {
 			setSaveError("Failed to save. Try again.");
@@ -156,96 +138,90 @@ export default function MediaEditorModal() {
 
 	return (
 		<div className={styles.wrapper}>
-			<div className={styles.media_preview}>
-				{draft && <MediaCardResolver media={draft} />}
-			</div>
-
-			<div className={styles.fields}>
-				{/* Quick stats: short, single-value fields grouped in a row */}
-				<div className={styles.quick_stats}>
-					<label className={styles.field}>
-						Rating
-						<input
-							type="number"
-							min={0}
-							max={10}
-							step={0.5}
-							value={draft?.review?.rating ?? ""}
-							onChange={(e) =>
-								patchReview({
-									rating: e.target.value === "" ? null : Number(e.target.value),
-								})
-							}
-						/>
-					</label>
-					<label className={styles.field}>
-						Liked
-						<input
-							type="checkbox"
-							checked={draft?.review?.liked ?? false}
-							onChange={(e) => patchReview({ liked: e.target.checked })}
-						/>
-					</label>
-					<label className={styles.field}>
-						Difficulty
-						<input
-							type="number"
-							min={0}
-							max={2}
-							step={1}
-							value={draft?.review?.difficulty ?? 0}
-							onChange={(e) =>
-								patchReview({ difficulty: Number(e.target.value) })
-							}
-						/>
-					</label>
+			<div className={styles.wrapper_body}>
+				<div className={styles.media_preview}>
+					{draft && <MediaCardResolver media={draft} />}
 				</div>
+				<span className={styles.divider} />
 
-				{/* Review body: long-form field, kept on its own row */}
-				<label className={`${styles.field}`}>
-					Body
-					<textarea
-						className={styles.body}
-						value={draft?.review?.body ?? ""}
-						onChange={(e) => patchReview({ body: e.target.value })}
-						rows={6}
-					/>
-				</label>
-			</div>
-
-			{draft && TMDB_TYPES.includes(draft.type) && (
-				<div className={styles.poster_picker}>
-					<button onClick={openPosterPicker}>Change poster</button>
-					{pendingPosterPath && (
-						<div className={styles.poster_pending}>
-							New poster selected — will apply when you save.
-						</div>
-					)}
-					{posterOptions && (
-						<div className={styles.poster_options}>
-							{posterOptions.map((poster) => (
-								<img
-									key={poster.filePath}
-									src={poster.thumbSrc}
-									alt="Alternative poster option"
-									className={styles.poster_option}
-									onClick={() => pickPoster(poster)}
+				<div className={styles.review_fields}>
+					{/* Quick stats: short, single-value fields grouped in a row */}
+					<div className={styles.quick_review}>
+						<label className={styles.field}>
+							Rating
+							<div className={styles.rating_group}>
+								<input
+									type="number"
+									min={0}
+									max={10}
+									step={0.5}
+									className={styles.field_input}
+									value={draft?.review?.rating ?? ""}
+									onChange={(e) =>
+										patchReview({
+											rating:
+												e.target.value === "" ? null : Number(e.target.value),
+										})
+									}
 								/>
-							))}
-						</div>
+								<StarIcon className={styles.rating_star} />
+							</div>
+						</label>
+						<label className={styles.field}>
+							Liked
+							<input
+								type="checkbox"
+								className={styles.field_checkbox}
+								checked={draft?.review?.liked ?? false}
+								onChange={(e) => patchReview({ liked: e.target.checked })}
+							/>
+						</label>
+						<label className={styles.field}>
+							Difficulty
+							<input
+								type="number"
+								min={0}
+								max={2}
+								step={1}
+								className={styles.field_input}
+								value={draft?.review?.difficulty ?? 0}
+								onChange={(e) =>
+									patchReview({ difficulty: Number(e.target.value) })
+								}
+							/>
+						</label>
+					</div>
+
+					{/* Review body: long-form field, kept on its own row */}
+					<label className={`${styles.field}`}>
+						Body
+						<textarea
+							className={styles.body}
+							value={draft?.review?.body ?? ""}
+							onChange={(e) => patchReview({ body: e.target.value })}
+							rows={6}
+						/>
+					</label>
+
+					{draft && TMDB_TYPES.includes(draft.type) && (
+						<PosterPicker
+							key={draft.id}
+							draft={draft}
+							onPick={pickPoster}
+						/>
 					)}
 				</div>
-			)}
 
-			{saveError && <div className={styles.save_error}>{saveError}</div>}
-			<div className={styles.actions}>
-				<button
-					onClick={handleSave}
-					disabled={isSaving}
-				>
-					{isSaving ? "Saving…" : "Save"}
-				</button>
-				<button onClick={handleClose}>Close</button>
+				{saveError && <div className={styles.save_error}>{saveError}</div>}
+				<div className={styles.actions}>
+					<button
+						onClick={handleSave}
+						disabled={isSaving}
+					>
+						{isSaving ? "Saving…" : "Save"}
+					</button>
+					<button onClick={handleClose}>Close</button>
+				</div>
 			</div>
 		</div>
 	);

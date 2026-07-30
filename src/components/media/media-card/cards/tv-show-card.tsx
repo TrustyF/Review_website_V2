@@ -9,10 +9,10 @@ type Props = {
 export function TvShowCard({ media }: Props) {
 	return (
 		<MediaCardShell media={media}>
-			<MediaEpisodeInfo
-				seasonCount={media.tvShow.seasonCount}
-				episodeCount={media.tvShow.episodeCount}
-			/>
+			{/*<MediaEpisodeInfo*/}
+			{/*	seasonCount={media.tvShow.seasonCount}*/}
+			{/*	episodeCount={media.tvShow.episodeCount}*/}
+			{/*/>*/}
 		</MediaCardShell>
 	);
 }

@@ -1,7 +1,7 @@
 import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/media-card/types";
-import { MediaCardResolver } from "@/components/media/media-card/media-card-resolver";
-import { MediaMiniCard } from "@/components/media/media-card/cards-mini/media-mini-card";
+import { MediaCardResolver } from "@/components/media/media-card/cards/media-card-resolver";
+import { MediaMiniCardResolver } from "@/components/media/media-card/cards-mini/media-mini-card-resolver";
 import { EnrichmentStatus, MediaType } from "@prisma/client";
 import { notFound } from "next/navigation";
 import styles from "./media-cards-dev.module.sass";
@@ -48,7 +48,10 @@ export default async function MediaCardsDevPage() {
 	);
 
 	const miniCardCandidates = await db.media.findMany({
-		where: { enrichmentStatus: EnrichmentStatus.DONE },
+		where: {
+			enrichmentStatus: EnrichmentStatus.DONE,
+			type: { in: IMPLEMENTED_TYPES },
+		},
 		include: {
 			movie: true,
 			tvShow: true,
@@ -92,7 +95,7 @@ export default async function MediaCardsDevPage() {
 			<h1>Mini card preview</h1>
 			<div className={styles.mini_grid}>
 				{miniCardMedia.map((media) => (
-					<MediaMiniCard
+					<MediaMiniCardResolver
 						media={media}
 						key={media.id}
 					/>

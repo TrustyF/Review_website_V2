@@ -9,7 +9,10 @@ export function MediaTitle({
 }) {
 	if (!title) return null;
 	return (
-		<div className={[styles.title, className].filter(Boolean).join(" ")}>
+		<div
+			className={[styles.title, className].filter(Boolean).join(" ")}
+			title={title}
+		>
 			{title}
 		</div>
 	);
