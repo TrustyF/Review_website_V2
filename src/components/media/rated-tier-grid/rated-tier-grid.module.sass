@@ -1,0 +1,31 @@
+.tiers
+  display: flex
+  flex-flow: column
+  gap: 1rem
+  margin-top: 1rem
+
+.tier
+  border: 1px solid var(--accent1)
+  border-radius: 0.5rem
+  padding: 0 1rem
+
+.tier_header
+  cursor: pointer
+  padding: 0.75rem 0
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.75rem
+  font-size: 1.1rem
+  font-weight: 600
+
+.tier_count
+  color: var(--accent1)
+  font-size: 0.9rem
+  font-weight: 400
+
+.tier_grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr))
+  gap: 1.25rem
+  padding: 0.5rem 0 1.25rem
