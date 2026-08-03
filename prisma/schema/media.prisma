@@ -34,6 +34,8 @@ model Media {
 
   review  Review?
   credits Credit[]
+
+  changeLog MediaChangeLog[]
 }
 
 enum MediaType {

@@ -1,5 +1,4 @@
 "use client";
-import styles from "./primitives.module.sass";
 
 import { useReviewEditorStore } from "@/components/media/media-editor/review-editor-store";
 import { useIsAdminStore } from "@/lib/is-admin-store";
@@ -25,7 +24,7 @@ export function MediaEditButton({ media, className }: Props) {
 
 	return (
 		<Hitbox
-			className={[styles.edit_button, className].filter(Boolean).join(" ")}
+			className={className}
 			onClick={() => open(media)}
 			padding={15}
 		>

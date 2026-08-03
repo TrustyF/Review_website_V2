@@ -1,0 +1,48 @@
+.wrapper
+  display: flex
+  align-items: center
+  gap: 1.5rem
+  width: 100%
+  padding: 1rem 2rem
+  background-color: var(--background)
+  border-bottom: 1px solid var(--accent1)
+
+.title
+  font-weight: 700
+  margin-right: auto
+
+.link
+  color: var(--accent4)
+
+  &:hover
+    color: var(--foreground)
+
+.dev
+  position: relative
+
+  &[open] .dev_menu
+    display: flex
+
+  &::-webkit-details-marker
+    display: none
+
+.dev_summary
+  cursor: pointer
+  color: var(--accent4)
+  list-style: none
+
+  &:hover
+    color: var(--foreground)
+
+.dev_menu
+  display: none
+  flex-flow: column
+  gap: 0.5rem
+  position: absolute
+  top: calc(100% + 0.5rem)
+  right: 0
+  min-width: 160px
+  padding: 0.75rem
+  background-color: var(--background)
+  border: 1px solid var(--accent1)
+  z-index: 10

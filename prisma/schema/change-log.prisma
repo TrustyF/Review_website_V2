@@ -1,0 +1,14 @@
+model MediaChangeLog {
+  id Int @id @default(autoincrement())
+
+  mediaId Int
+  media   Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  field    String
+  oldValue String?
+  newValue String?
+
+  createdAt DateTime @default(now())
+
+  @@index([mediaId])
+}

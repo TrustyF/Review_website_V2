@@ -24,6 +24,7 @@ export function MediaCardShell({ media, children }: Props) {
 				<MediaPoster
 					src={media.posterSrc}
 					title={media.title}
+					mediaId={media.id}
 				/>
 			</div>
 			<div className={styles.body}>

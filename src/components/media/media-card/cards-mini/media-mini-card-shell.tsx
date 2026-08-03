@@ -22,6 +22,7 @@ export function MediaMiniCardShell({ media, children }: Props) {
 			<MediaPoster
 				src={media.posterSrc}
 				title={media.title}
+				mediaId={media.id}
 			/>
 			{/*<MediaTitle*/}
 			{/*	title={media.title}*/}
