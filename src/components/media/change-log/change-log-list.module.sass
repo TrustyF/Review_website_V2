@@ -37,11 +37,35 @@
   color: var(--body)
 
 .old_value
+  display: flex
+  align-items: center
   color: var(--accent2)
   text-decoration: line-through
 
 .new_value
+  display: flex
+  align-items: center
   color: var(--foreground)
+
+.empty_value
+  text-decoration: none
+
+.poster_value
+  width: 2.3rem
+  height: auto
+  aspect-ratio: 2/3
+  border-radius: 0.2rem
+  text-decoration: none
+
+.rating_value
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.2rem
+
+.rating_star
+  color: #FCCA00
+  margin-top: -0.1rem
 
 .date
   flex-shrink: 0

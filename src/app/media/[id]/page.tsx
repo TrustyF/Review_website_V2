@@ -33,7 +33,7 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 	switch (media.type) {
 		case "MOVIE":
 		case "SHORT": {
-			const { runtime, budget, revenue, tagline, originalLanguage } = media.movie;
+			const { runtime, budget, revenue, tagline } = media.movie;
 			return (
 				<dl className={styles.facts}>
 					{tagline && (
@@ -58,12 +58,6 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 						<Fact
 							label="Revenue"
 							value={CurrencyFormatter.format(revenue)}
-						/>
-					)}
-					{originalLanguage && (
-						<Fact
-							label="Language"
-							value={originalLanguage.toUpperCase()}
 						/>
 					)}
 				</dl>
@@ -229,7 +223,6 @@ export default async function MediaDetailPage({
 								{raw.originCountry.flag} {raw.originCountry.name}
 							</span>
 						)}
-						<span>{media.status}</span>
 					</div>
 
 					{genres.length > 0 && (
@@ -250,19 +243,27 @@ export default async function MediaDetailPage({
 					<MediaTypeFacts media={media} />
 
 					{creditsByRole.size > 0 && (
-						<div className={styles.credits}>
-							{[...creditsByRole.entries()].map(([role, names]) => (
-								<div
-									className={styles.credit_row}
-									key={role}
-								>
-									<span className={styles.credit_role}>{role}</span>
-									<span className={styles.credit_names}>
-										{[...names].join(", ")}
-									</span>
-								</div>
-							))}
-						</div>
+						<details className={styles.credits}>
+							<summary className={styles.credits_summary}>
+								Credits
+								<span className={styles.credits_count}>
+									{creditsByRole.size}
+								</span>
+							</summary>
+							<div className={styles.credits_list}>
+								{[...creditsByRole.entries()].map(([role, names]) => (
+									<div
+										className={styles.credit_row}
+										key={role}
+									>
+										<span className={styles.credit_role}>{role}</span>
+										<span className={styles.credit_names}>
+											{[...names].join(", ")}
+										</span>
+									</div>
+								))}
+							</div>
+						</details>
 					)}
 				</div>
 			</div>
