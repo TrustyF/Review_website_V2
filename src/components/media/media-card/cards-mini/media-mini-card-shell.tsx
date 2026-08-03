@@ -19,7 +19,6 @@ type Props = {
 export function MediaMiniCardShell({ media, children }: Props) {
 	return (
 		<div className={styles.wrapper}>
-			<MediaEditButton media={media} />
 			<MediaPoster
 				src={media.posterSrc}
 				title={media.title}
@@ -37,6 +36,10 @@ export function MediaMiniCardShell({ media, children }: Props) {
 				)}
 				{children}
 			</div>
+			<MediaEditButton
+				media={media}
+				className={styles.edit_button}
+			/>
 		</div>
 	);
 }

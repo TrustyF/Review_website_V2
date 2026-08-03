@@ -10,6 +10,7 @@ export default async function MediaGridPage() {
 		where: {
 			enrichmentStatus: EnrichmentStatus.DONE,
 			// title: { contains: "mars" },
+			review: { AND: [{ body: { not: null } }, { body: { not: "" } }] },
 		},
 		take: 50,
 		orderBy: { releaseDate: "desc" },

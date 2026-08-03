@@ -20,7 +20,6 @@ type Props = {
 export function MediaCardShell({ media, children }: Props) {
 	return (
 		<div className={styles.wrapper}>
-			<MediaEditButton media={media} />
 			<div className={styles.poster}>
 				<MediaPoster
 					src={media.posterSrc}
@@ -35,6 +34,10 @@ export function MediaCardShell({ media, children }: Props) {
 				<MediaReview review={media.review} />
 			</div>
 			{children && <div className={styles.secondary_info}>{children}</div>}
+			<MediaEditButton
+				media={media}
+				className={styles.edit_button}
+			/>
 		</div>
 	);
 }

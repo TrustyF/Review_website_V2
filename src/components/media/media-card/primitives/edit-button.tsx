@@ -4,9 +4,15 @@ import styles from "./primitives.module.sass";
 import { useReviewEditorStore } from "@/components/media/media-editor/review-editor-store";
 import { useIsAdminStore } from "@/lib/is-admin-store";
 import { MediaRecord } from "@/components/media/media-card/types";
-import { PenIcon } from "@/components/media/icons/pen-icon";
+import { Hitbox } from "@/components/ui/hitbox";
+import Image from "next/image";
 
-export function MediaEditButton({ media }: { media: MediaRecord }) {
+type Props = {
+	media: MediaRecord;
+	className?: string | undefined;
+};
+
+export function MediaEditButton({ media, className }: Props) {
 	const open = useReviewEditorStore((s) => s.open);
 	const editingMediaId = useReviewEditorStore((s) => s.media?.id ?? null);
 	const isAdmin = useIsAdminStore((s) => s.isAdmin);
@@ -18,11 +24,17 @@ export function MediaEditButton({ media }: { media: MediaRecord }) {
 	if (editingMediaId === media.id) return null;
 
 	return (
-		<div
-			className={styles.edit_button}
+		<Hitbox
+			className={[styles.edit_button, className].filter(Boolean).join(" ")}
 			onClick={() => open(media)}
+			padding={15}
 		>
-			<PenIcon className={styles.pen_icon} />
-		</div>
+			<Image
+				src={"/ui/edit_pen_1.svg"}
+				width={20}
+				height={20}
+				alt={"edit pen"}
+			/>
+		</Hitbox>
 	);
 }

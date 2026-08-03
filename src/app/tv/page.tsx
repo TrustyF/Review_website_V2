@@ -8,15 +8,15 @@ export default async function MoviesPage() {
 	const rawList = await db.media.findMany({
 		where: {
 			enrichmentStatus: EnrichmentStatus.DONE,
-			type: MediaType.MOVIE,
+			type: MediaType.TVSHOW,
 		},
-		include: { movie: true, review: true },
+		include: { tvShow: true, review: true },
 	});
 	const movies = await Promise.all(rawList.map(toMediaRecord));
 
 	return (
 		<div className={styles.wrapper}>
-			<h1>Movies</h1>
+			<h1>TV</h1>
 			<RatedTierGrid media={movies} />
 		</div>
 	);

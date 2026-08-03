@@ -10,6 +10,7 @@
 .poster
   flex-shrink: 0
   width: 130px
+
 .body
   display: flex
   flex-flow: column
@@ -24,3 +25,14 @@
 .secondary_info
   display: flex
   flex-flow: row
+
+.edit_button
+  top: 1rem
+  right: 1rem
+  opacity: 0
+  visibility: hidden
+
+.wrapper:hover
+  .edit_button
+    visibility: visible
+    opacity: 1
