@@ -1,0 +1,78 @@
+@use "@/app/styles/variables" as *
+
+.wrapper
+  width: 950px
+  margin: 2rem auto
+  display: flex
+  flex-flow: column
+  gap: 1.5rem
+
+.type_tabs
+  display: flex
+  flex-flow: row
+  gap: 0.5rem
+
+.type_tab
+  padding: 0.4rem 1rem
+  border: 1px solid var(--accent1)
+  border-radius: 1rem
+  background: transparent
+  color: var(--accent1)
+  cursor: pointer
+
+.type_tab_active
+  padding: 0.4rem 1rem
+  border: 1px solid var(--accent1)
+  border-radius: 1rem
+  background: var(--accent1)
+  color: var(--background)
+  cursor: pointer
+
+.search_input
+  width: 100%
+  padding: 0.6rem 0.8rem
+  border: 1px solid var(--accent1)
+  border-radius: 0.4rem
+  background: transparent
+  color: var(--foreground)
+  font-family: $font-body
+  font-size: 1rem
+
+.error
+  color: #e05656
+
+.empty
+  color: var(--accent1)
+  font-size: 0.9rem
+
+.results
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr))
+  gap: 1.5rem
+
+.result
+  display: flex
+  flex-flow: column
+  align-items: center
+  gap: 0.3rem
+  text-align: center
+
+.result_poster
+  width: 100%
+  height: auto
+  aspect-ratio: 2/3
+  object-fit: cover
+  border-radius: 0.4rem
+
+.result_title
+  font-size: 0.9rem
+  font-weight: 500
+
+.result_year
+  font-size: 0.8rem
+  color: var(--accent1)
+  font-family: $font-mono
+
+.add_button
+  padding: 0.3rem 1rem
+  cursor: pointer
