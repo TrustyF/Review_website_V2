@@ -1,6 +1,7 @@
 import { MovieMiniCard } from "@/components/media/media-card/cards-mini/movie-mini-card";
 import { TvShowMiniCard } from "@/components/media/media-card/cards-mini/tv-show-mini-card";
 import { MangaMiniCard } from "@/components/media/media-card/cards-mini/manga-mini-card";
+import { ComicMiniCard } from "@/components/media/media-card/cards-mini/comic-mini-card";
 import { GameMiniCard } from "@/components/media/media-card/cards-mini/game-mini-card";
 import { MediaRecord } from "@/components/media/media-card/types";
 
@@ -18,6 +19,8 @@ export function MediaMiniCardResolver({ media }: Props) {
 			return <TvShowMiniCard media={media} />;
 		case "MANGA":
 			return <MangaMiniCard media={media} />;
+		case "COMIC":
+			return <ComicMiniCard media={media} />;
 		case "GAME":
 			return <GameMiniCard media={media} />;
 		default:

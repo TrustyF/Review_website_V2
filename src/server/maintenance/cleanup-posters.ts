@@ -13,7 +13,9 @@ async function main() {
 	});
 
 	const validFilenames = new Set(
-		mediaList.map(({ id, posterPath }) => posterFilename(id, posterPath as string)),
+		mediaList.map(({ id, posterPath }) =>
+			posterFilename(id, posterPath as string),
+		),
 	);
 
 	let files: string[];

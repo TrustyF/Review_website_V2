@@ -18,8 +18,13 @@ import { addMangaFromMangaDex } from "@/server/mangadex/ingest/manga";
 import { pickEnglishTitle } from "@/server/mangadex/localized";
 import { fetchIgdbGameById, searchIgdbGames } from "@/server/igdb/client";
 import { addGameFromIgdb } from "@/server/igdb/ingest/game";
+import { fetchComicVineById, searchComicVine } from "@/server/comicvine/client";
+import { addComicFromComicVine } from "@/server/comicvine/ingest/comic";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
-import { AddableType, MediaSearchResult } from "@/components/media/media-add/addable-types";
+import {
+	AddableType,
+	MediaSearchResult,
+} from "@/components/media/media-add/addable-types";
 
 function yearOf(dateString: string | null): number | null {
 	if (!dateString) return null;
@@ -41,7 +46,9 @@ export async function searchMediaSources(
 				title: r.title,
 				year: yearOf(r.release_date),
 				posterSrc: r.poster_path
-					? buildProxiedImageUrl(`https://image.tmdb.org/t/p/w154${r.poster_path}`)
+					? buildProxiedImageUrl(
+							`https://image.tmdb.org/t/p/w154${r.poster_path}`,
+						)
 					: null,
 			}));
 		}
@@ -52,7 +59,9 @@ export async function searchMediaSources(
 				title: r.name,
 				year: yearOf(r.first_air_date),
 				posterSrc: r.poster_path
-					? buildProxiedImageUrl(`https://image.tmdb.org/t/p/w154${r.poster_path}`)
+					? buildProxiedImageUrl(
+							`https://image.tmdb.org/t/p/w154${r.poster_path}`,
+						)
 					: null,
 			}));
 		}
@@ -90,6 +99,18 @@ export async function searchMediaSources(
 					: null,
 			}));
 		}
+		case MediaType.COMIC: {
+			const results = await searchComicVine(query);
+			return results.map((r) => ({
+				externalId: String(r.id),
+				title: r.name,
+				year: r.start_year ? Number(r.start_year) : null,
+				posterSrc:
+					r.image?.small_url || r.image?.medium_url
+						? buildProxiedImageUrl((r.image?.small_url ?? r.image?.medium_url)!)
+						: null,
+			}));
+		}
 	}
 }
 
@@ -119,6 +140,11 @@ export async function addMediaToLibrary(
 		case MediaType.GAME: {
 			const data = await fetchIgdbGameById(externalId);
 			mediaId = (await addGameFromIgdb(data)).id;
+			break;
+		}
+		case MediaType.COMIC: {
+			const data = await fetchComicVineById(externalId);
+			mediaId = (await addComicFromComicVine(data)).id;
 			break;
 		}
 	}

@@ -1,6 +1,7 @@
 import { MovieCard } from "@/components/media/media-card/cards/movie-card";
 import { TvShowCard } from "@/components/media/media-card/cards/tv-show-card";
 import { MangaCard } from "@/components/media/media-card/cards/manga-card";
+import { ComicCard } from "@/components/media/media-card/cards/comic-card";
 import { GameCard } from "@/components/media/media-card/cards/game-card";
 import { MediaRecord } from "@/components/media/media-card/types";
 
@@ -18,8 +19,8 @@ export function MediaCardResolver({ media }: Props) {
 			return <TvShowCard media={media} />;
 		case "MANGA":
 			return <MangaCard media={media} />;
-		// case "COMIC":
-		// 	return <ComicCard media={media} />;
+		case "COMIC":
+			return <ComicCard media={media} />;
 		case "GAME":
 			return <GameCard media={media} />;
 		default:

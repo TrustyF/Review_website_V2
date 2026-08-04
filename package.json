@@ -15,7 +15,8 @@
 		"prisma_migrate": "npx prisma migrate dev",
 		"compose": "docker compose up -d",
 		"typecheck": "tsc --noEmit",
-		"cleanup_posters": "tsx src/server/maintenance/cleanup-posters.ts"
+		"cleanup_posters": "tsx src/server/maintenance/cleanup-posters.ts",
+		"enrich_db": "tsx src/server/maintenance/enrich-db.ts"
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.115.0",

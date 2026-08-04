@@ -51,7 +51,8 @@ export const MangaDexStatisticsResponseSchema = type({
 	statistics: { "[string]": MangaDexStatisticsEntrySchema },
 });
 
-export type MangaDexStatisticsEntry = typeof MangaDexStatisticsEntrySchema.infer;
+export type MangaDexStatisticsEntry =
+	typeof MangaDexStatisticsEntrySchema.infer;
 
 // Lighter than MangaDexMangaResponseSchema — /manga (title search) returns a
 // list, and search results only need enough to render a picker (title,
@@ -66,7 +67,8 @@ const MangaDexMangaSearchResultSchema = type({
 	relationships: MangaDexRelationshipSchema.array(),
 });
 
-export type MangaDexMangaSearchResult = typeof MangaDexMangaSearchResultSchema.infer;
+export type MangaDexMangaSearchResult =
+	typeof MangaDexMangaSearchResultSchema.infer;
 
 export const MangaDexMangaSearchResponseSchema = type({
 	result: "string",

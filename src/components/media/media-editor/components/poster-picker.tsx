@@ -30,16 +30,21 @@ export function PosterPicker({ draft, onPick }: Props) {
 	const [posterOptions, setPosterOptions] = useState<PosterOption[] | null>(
 		null,
 	);
+	const [error, setError] = useState<string | null>(null);
 	const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
 	useEffect(() => {
 		getAlternativePosters(draft.externalId, draft.type)
 			.then(setPosterOptions)
-			.catch(() => setPosterOptions([]));
+			.catch(() => {
+				setPosterOptions([]);
+				setError("Couldn't load alternative posters. Try again later.");
+			});
 	}, [draft.externalId, draft.type]);
 
 	return (
 		<div className={styles.poster_picker}>
+			{error && <div className={styles.poster_picker_error}>{error}</div>}
 			{posterOptions && (
 				<>
 					<div className={styles.extra_posters}>

@@ -1,4 +1,14 @@
+// content-visibility skips layout/paint/style work for this card entirely
+// while it's off-screen — the actual "don't render what's out of view"
+// mechanism (native, no JS). contain-intrinsic-height is the estimated
+// height the browser reserves for a skipped card so the scrollbar/page
+// height stay stable instead of collapsing to 0 until each card is
+// measured for real; it only needs to be roughly right; a mismatch just
+// means a small size correction as a card scrolls into view, not the
+// whole-batch pop-in a JS-driven mount/unmount approach would cause.
 .wrapper
+  content-visibility: auto
+  contain-intrinsic-height: 240px
   position: relative
   display: flex
   flex-flow: column

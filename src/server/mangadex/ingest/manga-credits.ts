@@ -48,7 +48,12 @@ export async function syncMangaCreditsAndGenres(
 			r.type === "author" ? "Author" : "Artist",
 			MediaType.MANGA,
 		);
-		const person = await resolvePerson(tx, r.id, Source.MANGADEX, r.attributes.name);
+		const person = await resolvePerson(
+			tx,
+			r.id,
+			Source.MANGADEX,
+			r.attributes.name,
+		);
 		await tx.credit.create({
 			data: { mediaId, roleId: role.id, personId: person.id },
 		});

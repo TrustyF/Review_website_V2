@@ -27,6 +27,7 @@ export async function addTvShowFromTmdb(data: TmdbTvResponse) {
 				publicRating: data.vote_average,
 				posterPath: data.poster_path,
 				countryId: country?.id ?? null,
+				sourceUrl: `https://www.themoviedb.org/tv/${externalId}`,
 				lastEnrichedAt: new Date(),
 				enrichmentStatus: EnrichmentStatus.DONE,
 				tvShow: {
@@ -70,6 +71,7 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 				publicRating: data.vote_average,
 				posterPath: data.poster_path,
 				countryId: country?.id ?? null,
+				sourceUrl: `https://www.themoviedb.org/tv/${externalId}`,
 				lastEnrichedAt: new Date(),
 				enrichmentStatus: EnrichmentStatus.DONE,
 				tvShow: {

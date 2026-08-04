@@ -13,7 +13,9 @@ import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
 const MANGADEX_BASE = "https://api.mangadex.org";
 
 // MangaDex's read API is public — no API key/auth needed for these endpoints.
-export async function fetchMangaDexById(id: string): Promise<MangaDexMangaResponse> {
+export async function fetchMangaDexById(
+	id: string,
+): Promise<MangaDexMangaResponse> {
 	const res = await fetch(
 		`${MANGADEX_BASE}/manga/${id}?includes[]=author&includes[]=artist&includes[]=cover_art`,
 		{ headers: new Headers({ Accept: "application/json" }) },
@@ -40,7 +42,9 @@ export async function fetchMangaDexStatistics(
 
 	if (!res.ok) {
 		const errorText = await res.text();
-		throw new Error(`MangaDex statistics fetch failed for manga ${id} : ${errorText}`);
+		throw new Error(
+			`MangaDex statistics fetch failed for manga ${id} : ${errorText}`,
+		);
 	}
 
 	const json = await res.json();
@@ -48,7 +52,9 @@ export async function fetchMangaDexStatistics(
 	return parsed.statistics[id] ?? null;
 }
 
-export async function searchMangaDex(query: string): Promise<MangaDexMangaSearchResult[]> {
+export async function searchMangaDex(
+	query: string,
+): Promise<MangaDexMangaSearchResult[]> {
 	const params = new URLSearchParams({
 		title: query,
 		limit: "20",
@@ -72,7 +78,9 @@ export async function searchMangaDex(query: string): Promise<MangaDexMangaSearch
 // Unlike TMDB (one poster per movie/show plus alternates), MangaDex tracks a
 // separate cover per volume/locale — a manga easily has 50+. All of them are
 // legitimate "pick a cover" options, so nothing here filters by locale/volume.
-export async function fetchMangaDexCovers(mangaId: string): Promise<MangaDexCover[]> {
+export async function fetchMangaDexCovers(
+	mangaId: string,
+): Promise<MangaDexCover[]> {
 	const params = new URLSearchParams({ limit: "100", "order[volume]": "asc" });
 	params.append("manga[]", mangaId);
 
@@ -82,7 +90,9 @@ export async function fetchMangaDexCovers(mangaId: string): Promise<MangaDexCove
 
 	if (!res.ok) {
 		const errorText = await res.text();
-		throw new Error(`MangaDex covers fetch failed for manga ${mangaId} : ${errorText}`);
+		throw new Error(
+			`MangaDex covers fetch failed for manga ${mangaId} : ${errorText}`,
+		);
 	}
 
 	const json = await res.json();

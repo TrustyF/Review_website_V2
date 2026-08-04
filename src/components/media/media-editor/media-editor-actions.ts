@@ -5,6 +5,8 @@ import { MediaType } from "@prisma/client";
 import Anthropic from "@anthropic-ai/sdk";
 import { fetchTmdbImages } from "@/server/tmdb/client";
 import { fetchMangaDexCovers } from "@/server/mangadex/client";
+import { fetchComicVineIssuesForVolume } from "@/server/comicvine/client";
+import { fetchIgdbGameCoverOptions } from "@/server/igdb/client";
 import { resolvePoster } from "@/server/resolvers/poster-resolver";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
 
@@ -60,6 +62,52 @@ export async function saveReview(
 	revalidatePath("/");
 }
 
+// Base Media fields (title/overview/releaseDate) are otherwise only ever
+// set by a source's ingest — this is the one path that lets them be
+// hand-edited, for media a provider doesn't have data for (or has wrong
+// data for) at all.
+export async function saveMediaDetails(
+	mediaId: number,
+	details: {
+		title: string;
+		overview: string | null;
+		releaseDate: string | null;
+	},
+) {
+	const existing = await db.media.findUnique({
+		where: { id: mediaId },
+		select: { title: true, overview: true, releaseDate: true },
+	});
+
+	const releaseDate = details.releaseDate
+		? new Date(details.releaseDate)
+		: null;
+
+	await db.media.update({
+		where: { id: mediaId },
+		data: { title: details.title, overview: details.overview, releaseDate },
+	});
+
+	const changes = diffFields(
+		mediaId,
+		{
+			title: existing?.title,
+			overview: existing?.overview,
+			releaseDate: existing?.releaseDate?.toISOString().slice(0, 10) ?? null,
+		},
+		{
+			title: details.title,
+			overview: details.overview,
+			releaseDate: releaseDate?.toISOString().slice(0, 10) ?? null,
+		},
+	);
+	if (changes.length) {
+		await db.mediaChangeLog.createMany({ data: changes });
+	}
+
+	revalidatePath("/");
+}
+
 // Read-only — returns a suggested rewrite, never touches the draft or DB.
 // The caller decides what (if anything) to copy into the actual body field.
 export async function suggestReviewCorrection(body: string): Promise<string> {
@@ -79,9 +127,6 @@ export async function suggestReviewCorrection(body: string): Promise<string> {
 	return textBlock?.type === "text" ? textBlock.text : "";
 }
 
-// IGDB (games) exposes exactly one cover per game with no alternates to
-// browse, so GAME isn't handled here — see POSTER_PICKER_TYPES in
-// media-editor-modal.tsx, which keeps the picker from ever mounting for it.
 export async function getAlternativePosters(
 	externalId: string,
 	type: MediaType,
@@ -98,6 +143,42 @@ export async function getAlternativePosters(
 			),
 			previewSrc: buildProxiedImageUrl(
 				`https://uploads.mangadex.org/covers/${externalId}/${cover.attributes.fileName}.512.jpg`,
+			),
+		}));
+	}
+
+	if (type === MediaType.COMIC) {
+		// ComicVine has no alternate-cover concept at the volume level (unlike
+		// TMDB/MangaDex) — each issue's own cover stands in for one instead.
+		// filePath is a full URL rather than a path fragment, matching how
+		// poster-resolver.ts stores/reads COMIC posterPaths.
+		const issues = await fetchComicVineIssuesForVolume(externalId);
+		return issues
+			.filter((issue) => issue.image?.medium_url)
+			.map((issue) => {
+				const medium = issue.image!.medium_url!;
+				return {
+					filePath: medium,
+					thumbSrc: buildProxiedImageUrl(issue.image!.small_url ?? medium),
+					previewSrc: buildProxiedImageUrl(medium),
+				};
+			});
+	}
+
+	if (type === MediaType.GAME) {
+		// A game's own game object only ever has one cover — IGDB.com's
+		// "alternate covers" gallery is actually region-specific box art
+		// (game_localizations), fetched and combined with the default cover
+		// in fetchIgdbGameCoverOptions. filePath is a bare image_id, matching
+		// how poster-resolver.ts stores/reads GAME posterPaths.
+		const covers = await fetchIgdbGameCoverOptions(externalId);
+		return covers.map((cover) => ({
+			filePath: cover.imageId,
+			thumbSrc: buildProxiedImageUrl(
+				`https://images.igdb.com/igdb/image/upload/t_cover_small/${cover.imageId}.jpg`,
+			),
+			previewSrc: buildProxiedImageUrl(
+				`https://images.igdb.com/igdb/image/upload/t_cover_big/${cover.imageId}.jpg`,
 			),
 		}));
 	}

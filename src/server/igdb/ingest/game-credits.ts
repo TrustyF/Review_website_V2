@@ -1,6 +1,10 @@
 import { MediaType, Prisma, Source } from "@prisma/client";
 import { IgdbGame } from "@/server/igdb/schema";
-import { resolveCompany, resolveGenre, resolveRole } from "@/server/resolvers/entity-resolver";
+import {
+	resolveCompany,
+	resolveGenre,
+	resolveRole,
+} from "@/server/resolvers/entity-resolver";
 
 type t_client = Prisma.TransactionClient;
 

@@ -40,7 +40,12 @@ export type MediaRecord =
 // Async — resolves (and lazily caches) the poster alongside reshaping the
 // record, so every caller gets a fully display-ready record from one call.
 export async function toMediaRecord(raw: RawMediaRecord): Promise<MediaRecord> {
-	const posterSrc = await resolvePoster(raw.id, raw.type, raw.externalId, raw.posterPath);
+	const posterSrc = await resolvePoster(
+		raw.id,
+		raw.type,
+		raw.externalId,
+		raw.posterPath,
+	);
 	switch (raw.type) {
 		case "MOVIE":
 		case "SHORT":

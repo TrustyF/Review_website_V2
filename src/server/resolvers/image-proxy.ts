@@ -9,7 +9,12 @@
 // string) so next/image's local-pattern matching only needs a plain
 // pathname rule, no query-string allowlisting.
 
-const ALLOWED_IMAGE_HOSTS = ["image.tmdb.org", "uploads.mangadex.org", "images.igdb.com"];
+const ALLOWED_IMAGE_HOSTS = [
+	"image.tmdb.org",
+	"uploads.mangadex.org",
+	"images.igdb.com",
+	"comicvine.gamespot.com",
+];
 
 export function buildProxiedImageUrl(remoteUrl: string): string {
 	const token = Buffer.from(remoteUrl, "utf-8").toString("base64url");

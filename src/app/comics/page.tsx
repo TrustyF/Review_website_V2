@@ -1,12 +1,12 @@
 import { MediaTypeListPage } from "@/components/media/media-type-list-page/media-type-list-page";
 import { MediaType } from "@prisma/client";
 
-export default function GamesPage() {
+export default function ComicsPage() {
 	return (
 		<MediaTypeListPage
-			title="Games"
-			type={MediaType.GAME}
-			include={{ game: true }}
+			title="Comics"
+			type={MediaType.COMIC}
+			include={{ comic: true }}
 		/>
 	);
 }

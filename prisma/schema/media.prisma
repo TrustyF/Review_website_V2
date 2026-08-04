@@ -13,6 +13,10 @@ model Media {
 
   externalId String
   directLink String?
+  // The provider's own page for this media (TMDB/MangaDex/IGDB/ComicVine) —
+  // distinct from directLink, which is a user-set link to watch/read it.
+  // Null for manually created media, which has no provider.
+  sourceUrl  String?
 
   countryId     Int?
   originCountry Country? @relation(fields: [countryId], references: [id])

@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { MediaPoster } from "@/components/media/media-card/primitives/poster";
+import { posterRatioFor } from "@/components/media/media-card/primitives/poster-ratio";
 import { MediaTitle } from "@/components/media/media-card/primitives/title";
 import { MediaRecord } from "@/components/media/media-card/types";
 import { StarIcon } from "@/components/media/icons/star-icon";
@@ -23,6 +24,7 @@ export function MediaMiniCardShell({ media, children }: Props) {
 				src={media.posterSrc}
 				title={media.title}
 				mediaId={media.id}
+				ratio={posterRatioFor(media.type)}
 			/>
 			{/*<MediaTitle*/}
 			{/*	title={media.title}*/}

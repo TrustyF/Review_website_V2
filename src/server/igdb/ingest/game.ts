@@ -21,9 +21,13 @@ function buildMediaFields(game: IgdbGame) {
 		releaseDate: game.first_release_date
 			? new Date(game.first_release_date * 1000)
 			: null,
-		status: game.status != null ? (STATUS_MAP[game.status] ?? MediaStatus.RELEASED) : MediaStatus.RELEASED,
+		status:
+			game.status != null
+				? (STATUS_MAP[game.status] ?? MediaStatus.RELEASED)
+				: MediaStatus.RELEASED,
 		publicRating: game.total_rating != null ? game.total_rating / 10 : null,
 		posterPath: game.cover?.image_id ?? null,
+		sourceUrl: game.url,
 	};
 }
 
@@ -70,7 +74,9 @@ export async function updateGameFromIgdb(game: IgdbGame) {
 			where: { externalId, type: MediaType.GAME },
 		});
 		if (!existing)
-			throw new Error(`updateGameFromIgdb: no game found for externalId ${externalId}`);
+			throw new Error(
+				`updateGameFromIgdb: no game found for externalId ${externalId}`,
+			);
 
 		await tx.media.update({
 			where: { id: existing.id },

@@ -48,8 +48,8 @@ export function ReviewBodyModal({ body, onChange, onClose }: Props) {
 
 					<div className={styles.column}>
 						<div className={styles.suggestion_header}>
-							Suggested body — click a highlighted change to apply it, or
-							copy text directly
+							Suggested body — click a highlighted change to apply it, or copy
+							text directly
 							<button
 								type="button"
 								onClick={handleSuggest}
@@ -71,8 +71,8 @@ export function ReviewBodyModal({ body, onChange, onClose }: Props) {
 							/>
 						) : (
 							<div className={styles.placeholder}>
-								Click &quot;Suggest correction&quot; for an AI-proofread
-								version to compare against.
+								Click &quot;Suggest correction&quot; for an AI-proofread version
+								to compare against.
 							</div>
 						)}
 					</div>

@@ -4,6 +4,7 @@ import { useReviewEditorStore } from "./review-editor-store";
 import { MediaRecord } from "@/components/media/media-card/types";
 import { useEffect, useState } from "react";
 import {
+	saveMediaDetails,
 	saveReview,
 	updateMediaPoster,
 } from "@/components/media/media-editor/media-editor-actions";
@@ -13,15 +14,19 @@ import { ReviewBodyModal } from "@/components/media/media-editor/components/revi
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { MediaType, Review } from "@prisma/client";
 
-// Only these types have alternative posters to browse — TMDB (movies/TV)
-// and MangaDex (manga) both expose more than one cover per title. IGDB
-// (games) only ever has a single cover with no alternates, so GAME is left
-// out rather than showing a picker with nothing to pick.
+// Every type has some way to browse alternative posters — TMDB (movies/TV)
+// and MangaDex (manga) both expose more than one cover per title directly.
+// ComicVine has no alternates at the volume level, but its issues' own
+// covers stand in for them. IGDB's game object itself only ever has one
+// cover, but its region-specific box art (game_localizations) fills the
+// same role — see fetchIgdbGameCoverOptions.
 const POSTER_PICKER_TYPES: MediaType[] = [
 	MediaType.MOVIE,
 	MediaType.SHORT,
 	MediaType.TVSHOW,
 	MediaType.MANGA,
+	MediaType.COMIC,
+	MediaType.GAME,
 ];
 
 export default function MediaEditorModal() {
@@ -41,6 +46,15 @@ export default function MediaEditorModal() {
 		null,
 	);
 
+	// A manually pasted poster URL (for media with no picker, or no provider
+	// at all). Kept separate from the picker's preview: a pasted URL can be
+	// any host, and feeding an unproxied, un-allowlisted host straight into
+	// next/image throws, so this gets a plain <img> preview of its own
+	// instead of updating draft.posterSrc — the real preview only picks it
+	// up once it's saved and downloaded through resolvePoster like any
+	// other source.
+	const [posterUrlInput, setPosterUrlInput] = useState("");
+
 	// Body editing (textarea + AI suggestion diff) lives in its own modal —
 	// see ReviewBodyModal — so it gets enough room to lay out side by side.
 	const [isBodyModalOpen, setIsBodyModalOpen] = useState(false);
@@ -57,6 +71,7 @@ export default function MediaEditorModal() {
 		setSaveError(null);
 		setPendingPosterPath(null);
 		setIsBodyModalOpen(false);
+		setPosterUrlInput("");
 	}
 
 	// The modal itself scrolls internally (its content can exceed viewport
@@ -91,6 +106,12 @@ export default function MediaEditorModal() {
 		);
 	}
 
+	function applyPosterUrl() {
+		const url = posterUrlInput.trim();
+		if (!url) return;
+		setPendingPosterPath(url);
+	}
+
 	// MediaEditorModal stays mounted permanently (see layout.tsx) and just
 	// renders null while closed, so its state isn't reset by unmounting —
 	// without this, a picked-but-unsaved poster could still show as pending
@@ -112,6 +133,13 @@ export default function MediaEditorModal() {
 					liked: draft.review?.liked ?? false,
 					difficulty: draft.review?.difficulty ?? 0,
 					body: draft.review?.body ?? null,
+				}),
+				saveMediaDetails(draft.id, {
+					title: draft.title,
+					overview: draft.overview,
+					releaseDate: draft.releaseDate
+						? draft.releaseDate.toISOString().slice(0, 10)
+						: null,
 				}),
 				pendingPosterPath
 					? updateMediaPoster(draft.id, pendingPosterPath)
@@ -146,11 +174,105 @@ export default function MediaEditorModal() {
 		});
 	}
 
+	// Generic patch helper for the base Media fields — the ones a provider's
+	// ingest normally owns, editable here for media with no provider match
+	// (or a wrong one) at all.
+	function patchDetails(patch: {
+		title?: string;
+		overview?: string | null;
+		releaseDate?: Date | null;
+	}) {
+		setDraft((prev) => (prev ? { ...prev, ...patch } : prev));
+	}
+
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.wrapper_body}>
 				<div className={styles.media_preview}>
 					{draft && <MediaCardResolver media={draft} />}
+				</div>
+				<span className={styles.divider} />
+
+				{/* Base Media fields — normally owned entirely by a source's
+				ingest, editable here for the rare case a provider has no match
+				(or the wrong match) for this title at all. */}
+				<div className={styles.details_group}>
+					<label className={styles.field}>
+						Title
+						<input
+							type="text"
+							className={styles.field_input_wide}
+							value={draft?.title ?? ""}
+							onChange={(e) => patchDetails({ title: e.target.value })}
+						/>
+					</label>
+					<label className={styles.field}>
+						Overview
+						<textarea
+							className={styles.field_textarea}
+							value={draft?.overview ?? ""}
+							onChange={(e) =>
+								patchDetails({ overview: e.target.value || null })
+							}
+						/>
+					</label>
+					<div className={styles.details_row}>
+						<label className={styles.field}>
+							Release date
+							<input
+								type="date"
+								className={styles.field_input}
+								value={
+									draft?.releaseDate
+										? new Date(draft.releaseDate).toISOString().slice(0, 10)
+										: ""
+								}
+								onChange={(e) =>
+									patchDetails({
+										releaseDate: e.target.value
+											? new Date(e.target.value)
+											: null,
+									})
+								}
+							/>
+						</label>
+						<label className={styles.field}>
+							Poster URL
+							<div className={styles.poster_url_row}>
+								<input
+									type="text"
+									className={styles.field_input_wide}
+									placeholder="https://…"
+									value={posterUrlInput}
+									onChange={(e) => setPosterUrlInput(e.target.value)}
+								/>
+								<button
+									type="button"
+									onClick={applyPosterUrl}
+								>
+									Use
+								</button>
+							</div>
+							{posterUrlInput.trim() && (
+								// Plain <img>, deliberately not next/image: a pasted URL
+								// can be any host, and only gets proxied/cached once it's
+								// actually saved (see resolvePoster) — this is just a
+								// best-effort look at what you're about to set.
+								// eslint-disable-next-line @next/next/no-img-element
+								<img
+									src={posterUrlInput.trim()}
+									alt=""
+									className={styles.poster_url_preview}
+								/>
+							)}
+							{pendingPosterPath === posterUrlInput.trim() &&
+								posterUrlInput.trim() && (
+									<span className={styles.poster_url_applied}>
+										Will apply on save
+									</span>
+								)}
+						</label>
+					</div>
 				</div>
 				<span className={styles.divider} />
 

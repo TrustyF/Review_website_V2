@@ -3,14 +3,34 @@
 .wrapper
   display: flex
 
+// Carries the reserved aspect-ratio + a placeholder color, so there's a
+// calm, correctly-sized box on screen the instant a card mounts — before
+// the image has even started loading, let alone finished.
+.poster_frame
+  width: 100%
+  background-color: rgba(102, 102, 102, 0.25)
+  border-radius: 0.5rem
+  overflow: hidden
+
 .poster
   width: 100%
-  height: auto
-  object-fit: cover
-  border-radius: 0.5rem
+  height: 100%
+  object-fit: fill
+  opacity: 0
+  transition: opacity 0.25s ease
 
+.poster_loaded
+  opacity: 1
+
+// Explicit width, not just display:block — without it, this is a flex item
+// in some parents (mini-card's align-items: flex-start column) that
+// shrinks-to-fit instead of filling the space, leaving .poster_frame's own
+// width: 100% resolving against an unstable size on first paint. That's
+// what caused the 0-height-then-pop: aspect-ratio computing off a width
+// that hadn't settled yet.
 .poster_link
   display: block
+  width: 100%
 
 .title
   font-size: 1.3rem

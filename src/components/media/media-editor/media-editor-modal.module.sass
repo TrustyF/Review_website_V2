@@ -35,6 +35,10 @@
   display: flex
   flex-flow: column
 
+.poster_picker_error
+  color: #e05656
+  font-size: 0.9rem
+
 .extra_posters
   display: flex
   flex-flow: row wrap
@@ -53,6 +57,17 @@
   padding: 0 5px
   position: absolute
 
+.details_group
+  display: flex
+  flex-flow: column
+  gap: 0.75rem
+  padding: 0 20px
+
+.details_row
+  display: flex
+  flex-flow: row
+  gap: 2rem
+
 .review_fields
   display: flex
   flex-flow: row
@@ -65,6 +80,48 @@
   gap: 0.25rem
   color: var(--accent1)
   font-size: 0.8rem
+
+.field_input_wide
+  width: 100%
+  max-width: 30rem
+  padding: 0.1rem 0.3rem
+  border: none
+  border-bottom: 1px solid var(--accent1)
+  background: transparent
+  color: var(--foreground)
+  font-family: $font-body
+  font-size: 1.1rem
+
+.field_textarea
+  width: 100%
+  max-width: 30rem
+  min-height: 4rem
+  padding: 0.4rem
+  border: 1px solid var(--accent1)
+  border-radius: 0.25rem
+  background: transparent
+  color: var(--foreground)
+  font-family: $font-body
+  font-size: 1rem
+  resize: vertical
+
+.poster_url_row
+  display: flex
+  flex-flow: row
+  gap: 0.5rem
+
+  button
+    padding: 0 8px
+    cursor: pointer
+
+.poster_url_preview
+  height: 6rem
+  border-radius: 0.25rem
+  margin-top: 0.25rem
+
+.poster_url_applied
+  color: var(--accent1)
+  font-size: 0.75rem
 
 .quick_review
   display: flex

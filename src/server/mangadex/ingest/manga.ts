@@ -1,4 +1,9 @@
-import { EnrichmentStatus, MediaStatus, MediaType, Prisma } from "@prisma/client";
+import {
+	EnrichmentStatus,
+	MediaStatus,
+	MediaType,
+	Prisma,
+} from "@prisma/client";
 import {
 	MangaDexManga,
 	MangaDexMangaResponse,
@@ -68,11 +73,14 @@ async function buildMediaFields(
 			title,
 		),
 		overview: pickLocalized(manga.attributes.description),
-		releaseDate: manga.attributes.year ? new Date(manga.attributes.year, 0, 1) : null,
+		releaseDate: manga.attributes.year
+			? new Date(manga.attributes.year, 0, 1)
+			: null,
 		status: STATUS_MAP[manga.attributes.status] ?? MediaStatus.RELEASED,
 		publicRating: statistics?.rating.bayesian ?? null,
 		posterPath: extractCoverFileName(manga),
 		countryId: country ? (await resolveCountry(tx, country)).id : null,
+		sourceUrl: `https://mangadex.org/title/${manga.id}`,
 	};
 }
 

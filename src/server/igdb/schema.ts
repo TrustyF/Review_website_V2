@@ -5,6 +5,7 @@ import { type } from "arktype";
 export const IgdbGameSchema = type({
 	id: "number",
 	name: "string",
+	url: "string",
 	"summary?": "string | null",
 	"first_release_date?": "number | null",
 	"total_rating?": "number | null",
@@ -42,3 +43,26 @@ const IgdbGameSearchResultSchema = type({
 export type IgdbGameSearchResult = typeof IgdbGameSearchResultSchema.infer;
 
 export const IgdbGameSearchResponseSchema = IgdbGameSearchResultSchema.array();
+
+// /covers is a 1:1 relation to a game (one default cover) — used alongside
+// game_localizations below to build the full set of cover options a game
+// actually has, since neither endpoint alone has the complete picture.
+const IgdbCoverSchema = type({
+	id: "number",
+	image_id: "string",
+});
+
+export const IgdbCoverListSchema = IgdbCoverSchema.array();
+
+// Region-specific release info — most entries are just a localized name
+// with no art of their own, so cover is optional and filtered for by the
+// caller (cover != null in the query itself already does this, but the
+// type still has to allow for a localization with no cover).
+const IgdbGameLocalizationSchema = type({
+	id: "number",
+	"cover?": { image_id: "string" },
+	"region?": { name: "string" },
+});
+
+export const IgdbGameLocalizationListSchema =
+	IgdbGameLocalizationSchema.array();

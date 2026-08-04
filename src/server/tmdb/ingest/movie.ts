@@ -4,12 +4,20 @@ import { db } from "@/server/db/client";
 import { resolveCountry } from "@/server/resolvers/entity-resolver";
 import { syncMovieCreditsAndGenres } from "@/server/tmdb/ingest/movie-credits";
 
+// A movie's externalId is looked up against both MOVIE and SHORT — TMDB
+// has no separate id space for shorts, they're plain movie entries, and
+// some rows get reclassified to SHORT after creation. Matching MOVIE only
+// would miss an existing SHORT row entirely: add would create a duplicate,
+// and update (called for SHORT rows too, see enrich-db.ts) would 404 on a
+// row that actually exists.
+const MOVIE_OR_SHORT = [MediaType.MOVIE, MediaType.SHORT];
+
 export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 	const externalId = String(data.id);
 
 	return db.$transaction(async (tx) => {
 		const existing = await tx.media.findFirst({
-			where: { externalId, type: MediaType.MOVIE },
+			where: { externalId, type: { in: MOVIE_OR_SHORT } },
 		});
 		if (existing) return existing;
 
@@ -27,6 +35,7 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 				publicRating: data.vote_average,
 				posterPath: data.poster_path,
 				countryId: country?.id ?? null,
+				sourceUrl: `https://www.themoviedb.org/movie/${externalId}`,
 				lastEnrichedAt: new Date(),
 				enrichmentStatus: EnrichmentStatus.DONE,
 				movie: {
@@ -53,7 +62,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 
 	return db.$transaction(async (tx) => {
 		const existing = await tx.media.findFirst({
-			where: { externalId, type: MediaType.MOVIE },
+			where: { externalId, type: { in: MOVIE_OR_SHORT } },
 		});
 		if (!existing)
 			throw new Error(
@@ -73,6 +82,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 				publicRating: data.vote_average,
 				posterPath: data.poster_path,
 				countryId: country?.id ?? null,
+				sourceUrl: `https://www.themoviedb.org/movie/${externalId}`,
 				lastEnrichedAt: new Date(),
 				enrichmentStatus: EnrichmentStatus.DONE,
 				movie: {

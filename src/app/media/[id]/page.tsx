@@ -1,14 +1,28 @@
 import { notFound } from "next/navigation";
 import { db } from "@/server/db/client";
-import { toMediaRecord, MediaRecord } from "@/components/media/media-card/types";
+import {
+	toMediaRecord,
+	MediaRecord,
+} from "@/components/media/media-card/types";
 import { MediaPoster } from "@/components/media/media-card/primitives/poster";
+import { posterRatioFor } from "@/components/media/media-card/primitives/poster-ratio";
 import { MediaTitle } from "@/components/media/media-card/primitives/title";
 import { MediaReleaseDate } from "@/components/media/media-card/primitives/release-date";
 import { MediaReview } from "@/components/media/media-card/components/review/review";
 import { MediaEditButton } from "@/components/media/media-card/primitives/edit-button";
 import { ChangeLogList } from "@/components/media/change-log/change-log-list";
 import { formatRuntime } from "@/components/media/media-card/primitives/runtime";
+import { MediaType } from "@prisma/client";
 import styles from "./media-detail.module.sass";
+
+const PROVIDER_LABELS: Record<MediaType, string> = {
+	[MediaType.MOVIE]: "TMDB",
+	[MediaType.SHORT]: "TMDB",
+	[MediaType.TVSHOW]: "TMDB",
+	[MediaType.MANGA]: "MangaDex",
+	[MediaType.COMIC]: "ComicVine",
+	[MediaType.GAME]: "IGDB",
+};
 
 const CurrencyFormatter = new Intl.NumberFormat("en-US", {
 	style: "currency",
@@ -175,6 +189,7 @@ export default async function MediaDetailPage({
 					<MediaPoster
 						src={media.posterSrc}
 						title={media.title}
+						ratio={posterRatioFor(media.type)}
 					/>
 				</div>
 				<div className={styles.header_info}>
@@ -199,6 +214,16 @@ export default async function MediaDetailPage({
 								{raw.originCountry.flag} {raw.originCountry.name}
 							</span>
 						)}
+						{raw.sourceUrl && (
+							<a
+								className={styles.source_link}
+								href={raw.sourceUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								View on {PROVIDER_LABELS[media.type]}
+							</a>
+						)}
 					</div>
 
 					{genres.length > 0 && (
@@ -214,7 +239,9 @@ export default async function MediaDetailPage({
 						</div>
 					)}
 
-					{media.overview && <p className={styles.overview}>{media.overview}</p>}
+					{media.overview && (
+						<p className={styles.overview}>{media.overview}</p>
+					)}
 
 					<MediaTypeFacts media={media} />
 

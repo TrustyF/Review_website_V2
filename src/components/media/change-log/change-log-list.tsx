@@ -26,7 +26,13 @@ function posterThumbSrc(posterPath: string) {
 
 // Long free-text values (review bodies) would blow out the log — show a
 // preview instead of the full text.
-function ChangeValue({ field, value }: { field: string; value: string | null }) {
+function ChangeValue({
+	field,
+	value,
+}: {
+	field: string;
+	value: string | null;
+}) {
 	if (value === null) return <span className={styles.empty_value}>—</span>;
 
 	if (field === "posterPath") {
