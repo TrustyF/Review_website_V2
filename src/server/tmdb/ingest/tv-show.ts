@@ -27,6 +27,8 @@ export async function addTvShowFromTmdb(data: TmdbTvResponse) {
 				publicRating: data.vote_average,
 				posterPath: data.poster_path,
 				countryId: country?.id ?? null,
+				lastEnrichedAt: new Date(),
+				enrichmentStatus: EnrichmentStatus.DONE,
 				tvShow: {
 					create: {
 						episodeCount: data.number_of_episodes,

@@ -6,8 +6,6 @@ import { MediaRecord } from "@/components/media/media-card/types";
 
 type PosterOption = {
 	filePath: string;
-	width: number;
-	height: number;
 	thumbSrc: string;
 	previewSrc: string;
 };
@@ -19,8 +17,9 @@ type Props = {
 	onPick: (poster: PosterOption) => void;
 };
 
-// Lets you browse a media's other TMDB posters and try one against the
-// preview without committing to anything — Media.posterPath only changes
+// Lets you browse a media's other posters (TMDB, MangaDex, ...) and try one
+// against the preview without committing to anything — Media.posterPath only
+// changes
 // (and the poster only downloads/caches) once the parent modal saves.
 // Render this with `key={draft.id}` so switching to a different media item
 // while the modal stays open remounts it and re-fetches for the new item,
@@ -34,7 +33,9 @@ export function PosterPicker({ draft, onPick }: Props) {
 	const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
 	useEffect(() => {
-		getAlternativePosters(draft.externalId, draft.type).then(setPosterOptions);
+		getAlternativePosters(draft.externalId, draft.type)
+			.then(setPosterOptions)
+			.catch(() => setPosterOptions([]));
 	}, [draft.externalId, draft.type]);
 
 	return (

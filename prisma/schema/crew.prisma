@@ -1,19 +1,36 @@
+// Which API an externalId belongs to. Person/Company externalIds are only
+// unique within their own source's id space — two sources can each hand out
+// the same numeric id (or even the same string) for unrelated entities, so
+// externalId alone is never a safe dedupe key on its own.
+enum Source {
+  TMDB
+  MANGADEX
+  IGDB
+}
+
 model Person {
   id         Int      @id @default(autoincrement())
   name       String
-  externalId Int      @unique
+  externalId String
+  source     Source
   credits    Credit[]
+
+  @@unique([externalId, source])
 }
 
 model Company {
-  id            Int      @id @default(autoincrement())
-  name          String
-  externalId    Int      @unique
+  id         Int    @id @default(autoincrement())
+  name       String
+  externalId String
+  source     Source
+
   type          String // e.g. "studio", "production_company", "network"
   logoPath      String?
   countryId     Int?
   originCountry Country? @relation(fields: [countryId], references: [id])
   credits       Credit[]
+
+  @@unique([externalId, source])
 }
 
 model Role {
@@ -30,7 +47,7 @@ model Credit {
   id Int @id @default(autoincrement())
 
   mediaId Int
-  media   Media @relation(fields: [mediaId], references: [id])
+  media   Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 
   roleId Int
   role   Role @relation(fields: [roleId], references: [id])

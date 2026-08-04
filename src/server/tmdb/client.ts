@@ -3,8 +3,12 @@ import {
 	TmdbImagesResponseSchema,
 	TmdbMovieResponse,
 	TmdbMovieResponseSchema,
+	TmdbMovieSearchResponseSchema,
+	TmdbMovieSearchResult,
 	TmdbTvResponse,
 	TmdbTvResponseSchema,
+	TmdbTvSearchResponseSchema,
+	TmdbTvSearchResult,
 } from "./schema";
 import { MediaType } from "@prisma/client";
 import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
@@ -48,9 +52,9 @@ export async function fetchTmdbByName(
 	name: string,
 	media_type: MediaType,
 	page: number,
-): Promise<TmdbMovieResponse> {
+): Promise<TmdbMovieSearchResult[]> {
 	const res = await fetch(
-		`${TMDB_BASE}/search/${ConvertTypeToString(media_type)}?query=${name}&include_adult=true&page=${page}`,
+		`${TMDB_BASE}/search/${ConvertTypeToString(media_type)}?query=${encodeURIComponent(name)}&include_adult=true&page=${page}`,
 		{
 			headers: new Headers({
 				Accept: "application/json",
@@ -63,7 +67,7 @@ export async function fetchTmdbByName(
 		throw new Error(`TMDB fetch failed for movie ${name}: ${res.statusText}`);
 
 	const json = await res.json();
-	return parseOrThrow(TmdbMovieResponseSchema, json);
+	return parseOrThrow(TmdbMovieSearchResponseSchema, json).results;
 }
 
 export async function fetchTvShowById(id: string): Promise<TmdbTvResponse> {
@@ -117,9 +121,9 @@ export async function fetchTmdbImages(
 export async function fetchTvShowByName(
 	name: string,
 	page: number,
-): Promise<TmdbTvResponse> {
+): Promise<TmdbTvSearchResult[]> {
 	const res = await fetch(
-		`${TMDB_BASE}/search/tv?query=${name}&include_adult=true&page=${page}`,
+		`${TMDB_BASE}/search/tv?query=${encodeURIComponent(name)}&include_adult=true&page=${page}`,
 		{
 			headers: new Headers({
 				Accept: "application/json",
@@ -132,5 +136,5 @@ export async function fetchTvShowByName(
 		throw new Error(`TMDB fetch failed for tv show ${name}: ${res.statusText}`);
 
 	const json = await res.json();
-	return parseOrThrow(TmdbTvResponseSchema, json);
+	return parseOrThrow(TmdbTvSearchResponseSchema, json).results;
 }

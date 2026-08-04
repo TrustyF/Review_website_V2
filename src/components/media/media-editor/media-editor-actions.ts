@@ -2,7 +2,9 @@
 import { db } from "@/server/db/client";
 import { revalidatePath } from "next/cache";
 import { MediaType } from "@prisma/client";
+import Anthropic from "@anthropic-ai/sdk";
 import { fetchTmdbImages } from "@/server/tmdb/client";
+import { fetchMangaDexCovers } from "@/server/mangadex/client";
 import { resolvePoster } from "@/server/resolvers/poster-resolver";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
 
@@ -50,11 +52,7 @@ export async function saveReview(
 		create: { mediaId, ...review },
 	});
 
-	const changes = diffFields(
-		mediaId,
-		existing ?? {},
-		review,
-	);
+	const changes = diffFields(mediaId, existing ?? {}, review);
 	if (changes.length) {
 		await db.mediaChangeLog.createMany({ data: changes });
 	}
@@ -62,23 +60,54 @@ export async function saveReview(
 	revalidatePath("/");
 }
 
-// Movie/Short/TvShow only — those are the types actually sourced from TMDB
-// and so the only ones with alternative posters to pick from.
+// Read-only — returns a suggested rewrite, never touches the draft or DB.
+// The caller decides what (if anything) to copy into the actual body field.
+export async function suggestReviewCorrection(body: string): Promise<string> {
+	if (!body.trim()) return "";
+
+	const client = new Anthropic();
+	const response = await client.messages.create({
+		model: "claude-opus-5",
+		max_tokens: 2048,
+		output_config: { effort: "low" },
+		system:
+			"You proofread review text for a personal movie/TV/manga/game log. Fix grammar, spelling, clarity issues and repetitive wording. It should read like an essay. Preserve the reviewer's opinions. Reply with only the corrected text: no preamble, no explanation, no surrounding quotes.",
+		messages: [{ role: "user", content: body }],
+	});
+
+	const textBlock = response.content.find((block) => block.type === "text");
+	return textBlock?.type === "text" ? textBlock.text : "";
+}
+
+// IGDB (games) exposes exactly one cover per game with no alternates to
+// browse, so GAME isn't handled here — see POSTER_PICKER_TYPES in
+// media-editor-modal.tsx, which keeps the picker from ever mounting for it.
 export async function getAlternativePosters(
 	externalId: string,
 	type: MediaType,
 ) {
+	if (type === MediaType.MANGA) {
+		const covers = await fetchMangaDexCovers(externalId);
+		return covers.map((cover) => ({
+			filePath: cover.attributes.fileName,
+			// Proxied rather than hotlinked directly, so trying a poster never
+			// depends on whether the source allows hotlinking (see
+			// src/server/image-proxy.ts) — no download happens until it's saved.
+			thumbSrc: buildProxiedImageUrl(
+				`https://uploads.mangadex.org/covers/${externalId}/${cover.attributes.fileName}.256.jpg`,
+			),
+			previewSrc: buildProxiedImageUrl(
+				`https://uploads.mangadex.org/covers/${externalId}/${cover.attributes.fileName}.512.jpg`,
+			),
+		}));
+	}
+
 	const images = await fetchTmdbImages(externalId, type);
 	return images.posters
 		.slice()
 		.sort((a, b) => b.vote_average - a.vote_average)
 		.map((poster) => ({
 			filePath: poster.file_path,
-			width: poster.width,
-			height: poster.height,
-			// Proxied rather than hotlinked directly, so trying a poster never
-			// depends on whether the source allows hotlinking (see
-			// src/server/image-proxy.ts) — no download happens until it's saved.
 			thumbSrc: buildProxiedImageUrl(
 				`https://image.tmdb.org/t/p/w154${poster.file_path}`,
 			),
@@ -91,7 +120,7 @@ export async function getAlternativePosters(
 export async function updateMediaPoster(mediaId: number, posterPath: string) {
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
-		select: { posterPath: true },
+		select: { posterPath: true, type: true, externalId: true },
 	});
 
 	await db.media.update({ where: { id: mediaId }, data: { posterPath } });
@@ -107,7 +136,12 @@ export async function updateMediaPoster(mediaId: number, posterPath: string) {
 		});
 	}
 
-	const posterSrc = await resolvePoster(mediaId, posterPath);
+	const posterSrc = await resolvePoster(
+		mediaId,
+		existing!.type,
+		existing!.externalId,
+		posterPath,
+	);
 	revalidatePath("/");
 	return posterSrc;
 }

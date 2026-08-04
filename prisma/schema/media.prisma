@@ -87,8 +87,6 @@ model Manga {
 
   chapterCount Int?
   volumeCount  Int?
-  author       String?
-  publisher    String?
 }
 
 model Comic {
@@ -97,8 +95,6 @@ model Comic {
 
   chapterCount Int?
   volumeCount  Int?
-  author       String?
-  publisher    String?
 }
 
 model Game {
@@ -106,6 +102,4 @@ model Game {
   media   Media @relation(fields: [mediaID], references: [id], onDelete: Cascade)
 
   platform  String?
-  developer String?
-  publisher String?
 }

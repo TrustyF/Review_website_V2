@@ -53,3 +53,4 @@ next-env.d.ts
 /src/app/styles/globals.css.map
 **/*.module.css
 **/*.module.css.map
+/public/posters/

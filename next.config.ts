@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
 				pathname: "/posters/cache/**",
 			},
 			{
+				pathname: "/posters/placeholder.jpg",
+			},
+			{
 				pathname: "/api/image-proxy/**",
 			},
 		],

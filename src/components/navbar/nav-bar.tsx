@@ -36,6 +36,30 @@ export default function Navbar() {
 			>
 				TV
 			</Link>
+			<Link
+				href="/manga"
+				className={style.link}
+			>
+				Manga
+			</Link>
+			<Link
+				href="/games"
+				className={style.link}
+			>
+				Games
+			</Link>
+			<Link
+				href="/comics"
+				className={style.link}
+			>
+				Comics
+			</Link>
+			<Link
+				href="/add"
+				className={style.link}
+			>
+				Add
+			</Link>
 
 			{isDev && (
 				<details className={style.dev}>

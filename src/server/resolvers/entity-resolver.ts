@@ -1,19 +1,20 @@
-import { MediaType, Prisma } from "@prisma/client";
+import { MediaType, Prisma, Source } from "@prisma/client";
 
 type t_client = Prisma.TransactionClient;
 
 export async function resolvePerson(
 	tx: t_client,
-	externalId: number,
+	externalId: string,
+	source: Source,
 	name: string,
 ) {
 	if (!externalId) throw new Error("resolvePerson: missing externalId");
 	if (!name) throw new Error("resolvePerson: missing name");
 
 	return tx.person.upsert({
-		where: { externalId },
+		where: { externalId_source: { externalId, source } },
 		update: { name },
-		create: { name, externalId },
+		create: { name, externalId, source },
 	});
 }
 
@@ -33,7 +34,8 @@ export async function resolveRole(
 
 export async function resolveCompany(
 	tx: t_client,
-	externalId: number,
+	externalId: string,
+	source: Source,
 	name: string,
 	type: string,
 	logoPath: string | null = null,
@@ -43,9 +45,9 @@ export async function resolveCompany(
 	if (!name) throw new Error("resolveCompany: missing name");
 
 	return tx.company.upsert({
-		where: { externalId },
+		where: { externalId_source: { externalId, source } },
 		update: { name, logoPath },
-		create: { name, externalId, type, logoPath, countryId },
+		create: { name, externalId, source, type, logoPath, countryId },
 	});
 }
 

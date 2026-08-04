@@ -93,18 +93,6 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 			const source = media.type === "MANGA" ? media.manga : media.comic;
 			return (
 				<dl className={styles.facts}>
-					{source.author && (
-						<Fact
-							label="Author"
-							value={source.author}
-						/>
-					)}
-					{source.publisher && (
-						<Fact
-							label="Publisher"
-							value={source.publisher}
-						/>
-					)}
 					{source.volumeCount != null && (
 						<Fact
 							label="Volumes"
@@ -121,21 +109,9 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 			);
 		}
 		case "GAME": {
-			const { platform, developer, publisher } = media.game;
+			const { platform } = media.game;
 			return (
 				<dl className={styles.facts}>
-					{developer && (
-						<Fact
-							label="Developer"
-							value={developer}
-						/>
-					)}
-					{publisher && (
-						<Fact
-							label="Publisher"
-							value={publisher}
-						/>
-					)}
 					{platform && (
 						<Fact
 							label="Platform"

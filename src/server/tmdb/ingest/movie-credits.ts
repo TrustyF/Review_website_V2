@@ -1,4 +1,4 @@
-import { MediaType, Prisma } from "@prisma/client";
+import { MediaType, Prisma, Source } from "@prisma/client";
 import { TmdbMovieResponse } from "@/server/tmdb/schema";
 import {
 	resolveCompany,
@@ -34,7 +34,7 @@ export async function syncMovieCreditsAndGenres(
 		? await resolveRole(tx, "Actor", MediaType.MOVIE)
 		: null;
 	for (const c of data.credits?.cast ?? []) {
-		const person = await resolvePerson(tx, c.id, c.name);
+		const person = await resolvePerson(tx, String(c.id), Source.TMDB, c.name);
 		await tx.credit.create({
 			data: {
 				mediaId,
@@ -48,7 +48,7 @@ export async function syncMovieCreditsAndGenres(
 
 	// Crew credits (role name = job, e.g. "Director", "Screenplay")
 	for (const c of data.credits?.crew ?? []) {
-		const person = await resolvePerson(tx, c.id, c.name);
+		const person = await resolvePerson(tx, String(c.id), Source.TMDB, c.name);
 		const role = await resolveRole(tx, c.job, MediaType.MOVIE);
 		await tx.credit.create({
 			data: { mediaId, roleId: role.id, personId: person.id },
@@ -65,7 +65,8 @@ export async function syncMovieCreditsAndGenres(
 			: null;
 		const company = await resolveCompany(
 			tx,
-			co.id,
+			String(co.id),
+			Source.TMDB,
 			co.name,
 			"studio",
 			co.logo_path,

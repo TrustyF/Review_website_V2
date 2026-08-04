@@ -1,6 +1,7 @@
 import { access, mkdir, writeFile } from "fs/promises";
 import { createHash } from "crypto";
 import path from "path";
+import { MediaType } from "@prisma/client";
 
 export const POSTER_DIR = path.join(process.cwd(), "public", "posters", "cache");
 
@@ -13,8 +14,26 @@ export function posterFilename(mediaId: number, posterPath: string) {
 	return `${mediaId}-${hash}.jpg`;
 }
 
+// Each source stores posterPath differently: TMDB's is a path segment
+// appended to its image CDN, MangaDex's is just a cover filename that needs
+// the manga's own id (externalId) to locate on its upload host, IGDB's is an
+// image_id that slots into its own CDN path template.
+function sourceUrlFor(type: MediaType, externalId: string, posterPath: string) {
+	if (type === MediaType.MANGA) {
+		// .512.jpg requests MangaDex's downsized thumbnail instead of the
+		// full-resolution scan (often several MB), mirroring TMDB's w500.
+		return `https://uploads.mangadex.org/covers/${externalId}/${posterPath}.512.jpg`;
+	}
+	if (type === MediaType.GAME) {
+		return `https://images.igdb.com/igdb/image/upload/t_cover_big/${posterPath}.jpg`;
+	}
+	return `https://image.tmdb.org/t/p/w500${posterPath}`;
+}
+
 export async function resolvePoster(
 	mediaId: number,
+	type: MediaType,
+	externalId: string,
 	posterPath: string | null,
 ) {
 	if (!posterPath) return "/posters/placeholder.jpg";
@@ -26,7 +45,7 @@ export async function resolvePoster(
 		await access(filePath);
 	} catch {
 		await mkdir(POSTER_DIR, { recursive: true });
-		const res = await fetch(`https://image.tmdb.org/t/p/w500${posterPath}`);
+		const res = await fetch(sourceUrlFor(type, externalId, posterPath));
 		if (!res.ok) throw new Error("Poster download failed");
 		await writeFile(filePath, Buffer.from(await res.arrayBuffer()));
 	}

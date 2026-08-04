@@ -15,6 +15,8 @@ const IMPLEMENTED_TYPES: MediaType[] = [
 	MediaType.MOVIE,
 	MediaType.SHORT,
 	MediaType.TVSHOW,
+	MediaType.MANGA,
+	MediaType.GAME,
 ];
 
 // Plain helper (not a component), so the impure Math.random() call here

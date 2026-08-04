@@ -9,15 +9,19 @@ import {
 } from "@/components/media/media-editor/media-editor-actions";
 import { MediaCardResolver } from "@/components/media/media-card/cards/media-card-resolver";
 import { PosterPicker } from "@/components/media/media-editor/components/poster-picker";
+import { ReviewBodyModal } from "@/components/media/media-editor/components/review-body-modal";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { MediaType, Review } from "@prisma/client";
 
-// Only these types are sourced from TMDB, so only they have alternative
-// posters to pick from.
-const TMDB_TYPES: MediaType[] = [
+// Only these types have alternative posters to browse — TMDB (movies/TV)
+// and MangaDex (manga) both expose more than one cover per title. IGDB
+// (games) only ever has a single cover with no alternates, so GAME is left
+// out rather than showing a picker with nothing to pick.
+const POSTER_PICKER_TYPES: MediaType[] = [
 	MediaType.MOVIE,
 	MediaType.SHORT,
 	MediaType.TVSHOW,
+	MediaType.MANGA,
 ];
 
 export default function MediaEditorModal() {
@@ -37,6 +41,10 @@ export default function MediaEditorModal() {
 		null,
 	);
 
+	// Body editing (textarea + AI suggestion diff) lives in its own modal —
+	// see ReviewBodyModal — so it gets enough room to lay out side by side.
+	const [isBodyModalOpen, setIsBodyModalOpen] = useState(false);
+
 	// Reseed the draft the moment a new record shows up in the store (i.e. a
 	// new editor session started) — done during render, not an effect, so
 	// there's no extra commit where the preview would flash empty before
@@ -48,6 +56,7 @@ export default function MediaEditorModal() {
 		setDraftSource(media);
 		setSaveError(null);
 		setPendingPosterPath(null);
+		setIsBodyModalOpen(false);
 	}
 
 	// The modal itself scrolls internally (its content can exceed viewport
@@ -88,6 +97,7 @@ export default function MediaEditorModal() {
 	// next time it's shown.
 	function handleClose() {
 		setPendingPosterPath(null);
+		setIsBodyModalOpen(false);
 		close();
 	}
 
@@ -192,18 +202,26 @@ export default function MediaEditorModal() {
 						</label>
 					</div>
 
-					{/* Review body: long-form field, kept on its own row */}
-					<label className={`${styles.field}`}>
-						Body
-						<textarea
-							className={styles.body}
-							value={draft?.review?.body ?? ""}
-							onChange={(e) => patchReview({ body: e.target.value })}
-							rows={6}
-						/>
-					</label>
+					{/* Review body: preview + edit button, kept on its own row.
+					Actual editing (and the AI suggestion diff) happens in
+					ReviewBodyModal, which has room to lay them out side by side. */}
+					<div className={styles.body_group}>
+						<label className={styles.field}>
+							Body
+							<div className={styles.body_preview}>
+								{draft?.review?.body || <em>No review text yet.</em>}
+							</div>
+						</label>
 
-					{draft && TMDB_TYPES.includes(draft.type) && (
+						<button
+							type="button"
+							onClick={() => setIsBodyModalOpen(true)}
+						>
+							Edit body
+						</button>
+					</div>
+
+					{draft && POSTER_PICKER_TYPES.includes(draft.type) && (
 						<PosterPicker
 							key={draft.id}
 							draft={draft}
@@ -223,6 +241,14 @@ export default function MediaEditorModal() {
 					<button onClick={handleClose}>Close</button>
 				</div>
 			</div>
+
+			{isBodyModalOpen && draft && (
+				<ReviewBodyModal
+					body={draft.review?.body ?? ""}
+					onChange={(body) => patchReview({ body })}
+					onClose={() => setIsBodyModalOpen(false)}
+				/>
+			)}
 		</div>
 	);
 }

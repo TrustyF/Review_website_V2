@@ -27,6 +27,8 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 				publicRating: data.vote_average,
 				posterPath: data.poster_path,
 				countryId: country?.id ?? null,
+				lastEnrichedAt: new Date(),
+				enrichmentStatus: EnrichmentStatus.DONE,
 				movie: {
 					create: {
 						runtime: data.runtime ?? 0,

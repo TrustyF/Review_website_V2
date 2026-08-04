@@ -92,6 +92,35 @@ export const TmdbTvResponseSchema = type({
 
 export type TmdbTvResponse = typeof TmdbTvResponseSchema.infer;
 
+// /search/movie and /search/tv return a paginated {results: [...]} envelope
+// of lightweight entries — a different (much smaller) shape than the full
+// detail object TmdbMovieResponseSchema/TmdbTvResponseSchema validate.
+const TmdbMovieSearchResultSchema = type({
+	id: "number",
+	title: "string",
+	poster_path: "string | null",
+	release_date: "string | null",
+});
+
+export type TmdbMovieSearchResult = typeof TmdbMovieSearchResultSchema.infer;
+
+export const TmdbMovieSearchResponseSchema = type({
+	results: TmdbMovieSearchResultSchema.array(),
+});
+
+const TmdbTvSearchResultSchema = type({
+	id: "number",
+	name: "string",
+	poster_path: "string | null",
+	first_air_date: "string | null",
+});
+
+export type TmdbTvSearchResult = typeof TmdbTvSearchResultSchema.infer;
+
+export const TmdbTvSearchResponseSchema = type({
+	results: TmdbTvSearchResultSchema.array(),
+});
+
 export const TmdbImagesResponseSchema = type({
 	id: "number",
 	posters: type({

@@ -2,7 +2,7 @@ model Review {
   id Int @id @default(autoincrement())
 
   mediaId Int   @unique
-  media   Media @relation(fields: [mediaId], references: [id])
+  media   Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 
   rating     Float?
   liked      Boolean @default(false)

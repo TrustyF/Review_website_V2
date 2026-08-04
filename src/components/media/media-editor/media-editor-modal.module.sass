@@ -99,22 +99,30 @@
   color: #FCCA00
   margin-top: -0.1rem
 
-// Mirrors .body in review.module.sass so editing looks like the review text
-// itself rather than a plain textarea.
-.body
+.body_group
+  display: flex
+  flex-flow: column
+  align-items: flex-start
+  gap: 0.5rem
+
+// Read-only glimpse of the body — actual editing happens in
+// ReviewBodyModal. Clamped so a long review doesn't blow out the row.
+.body_preview
   width: 30rem
-  height: 16rem
+  max-height: 8rem
   overflow-y: auto
-  resize: vertical
   padding: 0.5rem
   border: 1px solid var(--accent1)
   border-radius: 0.25rem
-  background: transparent
   color: var(--body)
   font-family: $font-body
   font-size: 1rem
   line-height: 1.5rem
+  white-space: pre-wrap
 
+  em
+    color: var(--accent1)
+    font-style: italic
 
 .actions
   position: fixed
