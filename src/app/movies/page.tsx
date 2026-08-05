@@ -7,6 +7,7 @@ export default function MoviesPage() {
 			title="Movies"
 			type={MediaType.MOVIE}
 			include={{ movie: true }}
+			recentHref="/movies/recent"
 		/>
 	);
 }

@@ -153,6 +153,45 @@ export async function saveMediaDetails(
 	revalidatePath("/");
 }
 
+// Soft delete just flips Media.isDeleted — every public list query filters
+// it out (see src/app/page.tsx, media-type-list-page.tsx,
+// credit-media-list-page.tsx), but the row (and its files, review, credits,
+// change log) stays put, and /media/[id] stays directly reachable so this
+// same toggle can restore it later. Note the @@unique([externalId, type])
+// constraint still holds while soft-deleted — re-adding the same title from
+// search will collide with it; restoring here is the way back, not search.
+export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
+	const existing = await db.media.findUnique({
+		where: { id: mediaId },
+		select: { isDeleted: true },
+	});
+	if (existing?.isDeleted === isDeleted) return;
+
+	await db.media.update({ where: { id: mediaId }, data: { isDeleted } });
+	await db.mediaChangeLog.create({
+		data: {
+			mediaId,
+			field: "isDeleted",
+			oldValue: String(existing?.isDeleted ?? false),
+			newValue: String(isDeleted),
+		},
+	});
+
+	revalidatePath("/");
+	revalidatePath(`/media/${mediaId}`);
+}
+
+// Irreversible: the row itself is gone, and with it every relation that
+// cascades from Media (Movie/TvShow/Manga/Comic/Game, Review, Credit,
+// MediaGenre, MediaChangeLog — see onDelete: Cascade in schema.prisma). No
+// change log entry follows, since there'd be nothing left for it to point
+// at. Cached poster/banner files on disk aren't touched here — they're
+// swept up as orphans by the next cleanup-posters run.
+export async function hardDeleteMedia(mediaId: number) {
+	await db.media.delete({ where: { id: mediaId } });
+	revalidatePath("/");
+}
+
 const MARKUP_PLACEHOLDER_REGEX = /⟦MARKUP(\d+)⟧/g;
 
 // Swaps every ||spoiler|| / [text](url) span for an opaque placeholder so

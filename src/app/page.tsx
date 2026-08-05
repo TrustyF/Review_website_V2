@@ -1,11 +1,13 @@
 import { MediaCardResolver } from "@/components/media/media-cards/media-card/media-card-resolver";
-import { db } from "@/server/db/client";
+import { dbPublic } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
 import styles from "./media-grid.module.sass";
 import { EnrichmentStatus, MediaType } from "@prisma/client";
 
 export default async function MediaGridPage() {
-	const rawList = await db.media.findMany({
+	// dbPublic (not db) — soft-deleted media is excluded automatically, see
+	// src/server/db/client.ts.
+	const rawList = await dbPublic.media.findMany({
 		include: { movie: true, tvShow: true, review: true },
 		where: {
 			type: { in: [MediaType.MOVIE, MediaType.TVSHOW] },

@@ -32,11 +32,15 @@ export async function CreditMediaListPage({ kind, id, role }: Props) {
 			: await db.company.findUnique({ where: { id } });
 	if (!entity) notFound();
 
+	// Queried from Credit rather than Media, so dbPublic's auto-filter can't
+	// reach it (Prisma extensions don't run for nested include/where — see
+	// dbPublic's own comment in src/server/db/client.ts) — isDeleted: false
+	// has to be spelled out here by hand instead.
 	const credits = await db.credit.findMany({
 		where: {
 			...(kind === "person" ? { personId: id } : { companyId: id }),
 			...(role ? { role: { name: role } } : {}),
-			media: { enrichmentStatus: EnrichmentStatus.DONE },
+			media: { enrichmentStatus: EnrichmentStatus.DONE, isDeleted: false },
 		},
 		include: {
 			media: {

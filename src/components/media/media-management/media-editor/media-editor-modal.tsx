@@ -3,11 +3,14 @@ import styles from "./media-editor-modal.module.sass";
 import { useReviewEditorStore } from "./review-editor-store";
 import { MediaRecord } from "@/components/media/types";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
 	getAlternativeBanners,
 	getAlternativePosters,
+	hardDeleteMedia,
 	saveMediaDetails,
 	saveReview,
+	setMediaDeleted,
 	updateMediaBanner,
 	updateMediaPoster,
 } from "@/components/media/media-management/media-editor/media-editor-actions";
@@ -46,12 +49,22 @@ export default function MediaEditorModal() {
 	const media = useReviewEditorStore((s) => s.media);
 	const close = useReviewEditorStore((s) => s.close);
 	const mediaId = media?.id ?? null;
+	const router = useRouter();
 
 	// Editable copy of the fetched record (poster already resolved). Every
 	// field edit patches this directly, and the preview renders it as-is.
 	const [draft, setDraft] = useState<MediaRecord | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveError, setSaveError] = useState<string | null>(null);
+
+	// Soft delete (toggle) / hard delete (irreversible) live in the danger
+	// zone at the bottom — separate from isSaving/saveError since either can
+	// run on its own, without touching the rest of the draft.
+	const [isDeleting, setIsDeleting] = useState(false);
+	const [deleteError, setDeleteError] = useState<string | null>(null);
+	// Hard delete needs an explicit second click before it actually fires —
+	// this just tracks whether that warning is currently showing.
+	const [confirmHardDelete, setConfirmHardDelete] = useState(false);
 
 	// Picked but not yet saved — applied to Media.posterPath on save, so you
 	// can try a few candidates against the preview before committing to one.
@@ -92,6 +105,8 @@ export default function MediaEditorModal() {
 		setIsBodyModalOpen(false);
 		setPosterUrlInput("");
 		setBannerUrlInput("");
+		setDeleteError(null);
+		setConfirmHardDelete(false);
 	}
 
 	// The modal itself scrolls internally (its content can exceed viewport
@@ -154,7 +169,48 @@ export default function MediaEditorModal() {
 		setPendingPosterPath(null);
 		setPendingBannerPath(null);
 		setIsBodyModalOpen(false);
+		setDeleteError(null);
+		setConfirmHardDelete(false);
 		close();
+	}
+
+	// Toggles isDeleted both ways — same button reads "Soft delete" or
+	// "Restore" depending on the draft's current state (see the danger zone
+	// below). Applies immediately rather than waiting for Save: unlike the
+	// other fields here, there's nothing to preview or reconsider first.
+	async function handleToggleDeleted() {
+		if (!draft) return;
+		setIsDeleting(true);
+		setDeleteError(null);
+		try {
+			const nextIsDeleted = !draft.isDeleted;
+			await setMediaDeleted(draft.id, nextIsDeleted);
+			setDraft((prev) =>
+				prev ? { ...prev, isDeleted: nextIsDeleted } : prev,
+			);
+		} catch {
+			setDeleteError("Failed to update. Try again.");
+		} finally {
+			setIsDeleting(false);
+		}
+	}
+
+	// Only reachable after confirmHardDelete's second click. The record is
+	// gone afterwards, so this closes the editor and — since the page
+	// currently open might well be /media/[id] for the thing just deleted —
+	// sends the browser home rather than leaving it on a 404.
+	async function handleHardDelete() {
+		if (!draft) return;
+		setIsDeleting(true);
+		setDeleteError(null);
+		try {
+			await hardDeleteMedia(draft.id);
+			close();
+			router.push("/");
+		} catch {
+			setDeleteError("Failed to delete. Try again.");
+			setIsDeleting(false);
+		}
 	}
 
 	async function handleSave() {
@@ -438,6 +494,56 @@ export default function MediaEditorModal() {
 								errorText="Couldn't load alternative banners. Try again later."
 							/>
 						</div>
+					)}
+				</div>
+
+				<span className={styles.divider} />
+
+				<div className={styles.danger_zone}>
+					<div className={styles.danger_zone_label}>Danger zone</div>
+					{draft?.isDeleted && (
+						<div className={styles.deleted_notice}>
+							Soft-deleted — hidden from every list.
+						</div>
+					)}
+					<div className={styles.danger_actions}>
+						<button
+							type="button"
+							onClick={handleToggleDeleted}
+							disabled={isDeleting}>
+							{draft?.isDeleted ? "Restore" : "Soft delete"}
+						</button>
+
+						{!confirmHardDelete ? (
+							<button
+								type="button"
+								className={styles.danger_button}
+								onClick={() => setConfirmHardDelete(true)}
+								disabled={isDeleting}>
+								Delete permanently…
+							</button>
+						) : (
+							<span className={styles.confirm_delete}>
+								Permanently delete &quot;{draft?.title}&quot;? This removes its
+								review, credits, and change log too, and cannot be undone.
+								<button
+									type="button"
+									className={styles.danger_button}
+									onClick={handleHardDelete}
+									disabled={isDeleting}>
+									{isDeleting ? "Deleting…" : "Yes, delete forever"}
+								</button>
+								<button
+									type="button"
+									onClick={() => setConfirmHardDelete(false)}
+									disabled={isDeleting}>
+									Cancel
+								</button>
+							</span>
+						)}
+					</div>
+					{deleteError && (
+						<div className={styles.save_error}>{deleteError}</div>
 					)}
 				</div>
 

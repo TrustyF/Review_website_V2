@@ -238,6 +238,12 @@ export default async function MediaDetailPage({
 
 	return (
 		<div className={styles.wrapper}>
+			{raw.isDeleted && (
+				<div className={styles.deleted_banner}>
+					This item is soft-deleted — hidden from every list. Open the
+					editor to restore it or delete it permanently.
+				</div>
+			)}
 			{media.bannerSrc && (
 				<div className={styles.banner_wrapper}>
 					<div className={styles.banner}>
