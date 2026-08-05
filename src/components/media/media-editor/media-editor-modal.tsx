@@ -1,14 +1,14 @@
 "use client";
 import styles from "./media-editor-modal.module.sass";
 import { useReviewEditorStore } from "./review-editor-store";
-import { MediaRecord } from "@/components/media/media-card/types";
+import { MediaRecord } from "@/components/media/types";
 import { useEffect, useState } from "react";
 import {
 	saveMediaDetails,
 	saveReview,
 	updateMediaPoster,
 } from "@/components/media/media-editor/media-editor-actions";
-import { MediaCardResolver } from "@/components/media/media-card/cards/media-card-resolver";
+import { MediaCardResolver } from "@/components/media/media-card/media-card-resolver";
 import { PosterPicker } from "@/components/media/media-editor/components/poster-picker";
 import { ReviewBodyModal } from "@/components/media/media-editor/components/review-body-modal";
 import { StarIcon } from "@/components/media/icons/star-icon";

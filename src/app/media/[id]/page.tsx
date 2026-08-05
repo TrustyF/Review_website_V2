@@ -5,15 +5,15 @@ import { db } from "@/server/db/client";
 import {
 	toMediaRecord,
 	MediaRecord,
-} from "@/components/media/media-card/types";
-import { MediaPoster } from "@/components/media/media-card/primitives/poster";
-import { posterRatioFor } from "@/components/media/media-card/primitives/poster-ratio";
-import { MediaTitle } from "@/components/media/media-card/primitives/title";
-import { MediaReleaseDate } from "@/components/media/media-card/primitives/release-date";
-import { MediaReview } from "@/components/media/media-card/components/review/review";
-import { MediaEditButton } from "@/components/media/media-card/primitives/edit-button";
+} from "@/components/media/types";
+import { MediaPoster } from "@/components/media/primitives/poster";
+import { posterRatioFor } from "@/components/media/primitives/poster-ratio";
+import { MediaTitle } from "@/components/media/primitives/title";
+import { MediaReleaseDate } from "@/components/media/primitives/release-date";
+import { MediaReview } from "@/components/media/media-card/review";
+import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { ChangeLogList } from "@/components/media/change-log/change-log-list";
-import { formatRuntime } from "@/components/media/media-card/primitives/runtime";
+import { formatRuntime } from "@/components/media/primitives/runtime";
 import { MediaType } from "@prisma/client";
 import styles from "./media-detail.module.sass";
 

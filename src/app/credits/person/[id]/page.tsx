@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { CreditMediaListPage } from "@/components/media/credit-media-list-page/credit-media-list-page";
+import { CreditMediaListPage } from "@/components/media/media-pages/credit-media-list-page/credit-media-list-page";
 
 export default async function PersonCreditsPage({
 	params,

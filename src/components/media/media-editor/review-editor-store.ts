@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { MediaRecord } from "@/components/media/media-card/types";
+import { MediaRecord } from "@/components/media/types";
 
 // Holds the full record (not just an id) so the editor can render its
 // preview immediately on open instead of waiting on a redundant refetch —

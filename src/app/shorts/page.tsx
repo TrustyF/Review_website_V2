@@ -1,4 +1,4 @@
-import { MediaTypeListPage } from "@/components/media/media-type-list-page/media-type-list-page";
+import { MediaTypeListPage } from "@/components/media/media-pages/media-type-list-page/media-type-list-page";
 import { MediaType } from "@prisma/client";
 
 export default function ShortsPage() {

@@ -1,6 +1,6 @@
-import { MediaCardResolver } from "@/components/media/media-card/cards/media-card-resolver";
+import { MediaCardResolver } from "@/components/media/media-card/media-card-resolver";
 import { db } from "@/server/db/client";
-import { toMediaRecord } from "@/components/media/media-card/types";
+import { toMediaRecord } from "@/components/media/types";
 import styles from "./media-grid.module.sass";
 import { EnrichmentStatus } from "@prisma/client";
 
