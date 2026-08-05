@@ -1,0 +1,12 @@
+@use "@/app/styles/variables" as *
+
+.grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax($mini-card-min-width, 1fr))
+  gap: 1.25rem
+  padding: 0.5rem 0 1.25rem
+
+// Invisible marker the IntersectionObserver watches — sits below the grid
+// so scrolling near it reveals the next batch before you actually reach it.
+.sentinel
+  height: 1px

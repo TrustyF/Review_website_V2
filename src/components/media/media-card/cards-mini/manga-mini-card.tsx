@@ -16,10 +16,10 @@ export function MangaMiniCard({ media }: Props) {
 
 	return (
 		<MediaMiniCardShell media={media}>
-			<MediaTitle
-				title={media.title}
-				className={styles.title}
-			/>
+			{/*<MediaTitle*/}
+			{/*	title={media.title}*/}
+			{/*	className={styles.title}*/}
+			{/*/>*/}
 			{/*{volumeInfo && <div className={styles.info}>{volumeInfo}</div>}*/}
 		</MediaMiniCardShell>
 	);

@@ -22,6 +22,38 @@
   &:last-child
     border-bottom: none
 
+.entry_deleted
+  opacity: 0.4
+
+.delete_button
+  flex-shrink: 0
+  width: 1.2rem
+  height: 1.2rem
+  display: flex
+  align-items: center
+  justify-content: center
+  border-radius: 50%
+  color: var(--accent1)
+  font-size: 1rem
+  line-height: 1
+  opacity: 0
+  transition: opacity 0.1s ease, color 0.1s ease, background 0.1s ease
+
+  &:hover
+    color: #e05656
+    background: rgba(224, 86, 86, 0.15)
+
+.entry:hover .delete_button,
+.entry:focus-within .delete_button
+  opacity: 1
+
+.deleted_label
+  flex-shrink: 0
+  color: var(--accent1)
+  font-size: 0.75rem
+  text-transform: uppercase
+  font-style: italic
+
 .field
   flex-shrink: 0
   width: 6rem
@@ -35,6 +67,10 @@
   gap: 0.4rem
   min-width: 0
   color: var(--body)
+
+.arrow_icon
+  flex-shrink: 0
+  align-self: center
 
 .old_value
   display: flex

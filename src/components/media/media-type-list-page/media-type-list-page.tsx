@@ -1,6 +1,6 @@
 import { db } from "@/server/db/client";
-import { toMediaRecord } from "@/components/media/media-card/types";
-import { RatedTierGrid } from "@/components/media/rated-tier-grid/rated-tier-grid";
+import { MediaSearchGrid } from "@/components/media/media-search-grid/media-search-grid";
+import { toSearchEntry } from "@/components/media/media-search-grid/build-search-entries";
 import { EnrichmentStatus, MediaType, Prisma } from "@prisma/client";
 import styles from "./media-type-list-page.module.sass";
 
@@ -18,7 +18,17 @@ type Props = {
 export async function MediaTypeListPage({ title, type, include }: Props) {
 	const rawList = await db.media.findMany({
 		where: { enrichmentStatus: EnrichmentStatus.DONE, type },
-		include: { ...include, review: true },
+		include: {
+			...include,
+			review: true,
+			// Director/Studio only — enough for the search bar's relevance
+			// ranking (see build-search-entries.ts), without pulling every
+			// crew job for every item on a full list page.
+			credits: {
+				where: { role: { name: { in: ["Director", "Studio"] } } },
+				include: { person: true, company: true },
+			},
+		},
 		// Without this, Postgres doesn't guarantee row order at all — it's
 		// free to change between requests, and an UPDATE (e.g. saving a
 		// poster) can shift a row's physical position enough to change it.
@@ -27,12 +37,12 @@ export async function MediaTypeListPage({ title, type, include }: Props) {
 		// order here is what keeps ties from reshuffling on unrelated edits.
 		orderBy: { id: "asc" },
 	});
-	const media = await Promise.all(rawList.map(toMediaRecord));
+	const entries = rawList.map(toSearchEntry);
 
 	return (
 		<div className={styles.wrapper}>
 			<h1>{title}</h1>
-			<RatedTierGrid media={media} />
+			<MediaSearchGrid entries={entries} />
 		</div>
 	);
 }

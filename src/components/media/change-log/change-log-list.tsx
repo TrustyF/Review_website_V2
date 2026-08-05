@@ -1,7 +1,10 @@
 import Image from "next/image";
-import { MediaChangeLog } from "@prisma/client";
+import { MediaChangeLog, MediaType } from "@prisma/client";
 import { StarIcon } from "@/components/media/icons/star-icon";
-import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
+import { ArrowRightIcon } from "@/components/media/icons/arrow-right-icon";
+import { resolveChangelogPosterThumb } from "@/server/resolvers/poster-resolver";
+import { ChangeLogEntryRow } from "./change-log-entry-row";
+import { ChangeLogEmptyGate } from "./change-log-empty-gate";
 import styles from "./change-log-list.module.sass";
 
 const DateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -20,26 +23,38 @@ const FIELD_LABELS: Record<string, string> = {
 	posterPath: "Poster",
 };
 
-function posterThumbSrc(posterPath: string) {
-	return buildProxiedImageUrl(`https://image.tmdb.org/t/p/w92${posterPath}`);
-}
-
 // Long free-text values (review bodies) would blow out the log — show a
 // preview instead of the full text.
-function ChangeValue({
+async function ChangeValue({
 	field,
 	value,
+	mediaId,
+	type,
+	externalId,
 }: {
 	field: string;
 	value: string | null;
+	mediaId: number;
+	type: MediaType;
+	externalId: string;
 }) {
-	if (value === null) return <span className={styles.empty_value}>—</span>;
+	if (value === null) return null;
 
 	if (field === "posterPath") {
+		// Cached to disk at the smallest size each source offers (see
+		// resolveChangelogPosterThumb) — content-addressed by mediaId +
+		// this exact historical posterPath, so it keeps working even after
+		// the media's current poster (or the remote source) moves on.
+		const thumbSrc = await resolveChangelogPosterThumb(
+			mediaId,
+			type,
+			externalId,
+			value,
+		);
 		return (
 			<Image
 				className={styles.poster_value}
-				src={posterThumbSrc(value)}
+				src={thumbSrc}
 				alt="Poster"
 				width={46}
 				height={69}
@@ -65,41 +80,62 @@ function ChangeValue({
 	return <>{value}</>;
 }
 
-export function ChangeLogList({ entries }: { entries: MediaChangeLog[] }) {
+export function ChangeLogList({
+	entries,
+	type,
+	externalId,
+}: {
+	entries: MediaChangeLog[];
+	type: MediaType;
+	externalId: string;
+}) {
 	if (entries.length === 0) {
 		return <div className={styles.empty}>No changes recorded yet.</div>;
 	}
+	const visibleCount = entries.filter((entry) => entry.deletedAt === null).length;
 
 	return (
-		<ul className={styles.list}>
-			{entries.map((entry) => (
-				<li
-					className={styles.entry}
-					key={entry.id}
-				>
-					<span className={styles.field}>
-						{FIELD_LABELS[entry.field] ?? entry.field}
-					</span>
-					<span className={styles.change}>
-						<span className={styles.old_value}>
-							<ChangeValue
-								field={entry.field}
-								value={entry.oldValue}
-							/>
+		<ChangeLogEmptyGate
+			totalCount={entries.length}
+			visibleCount={visibleCount}
+		>
+			<ul className={styles.list}>
+				{entries.map((entry) => (
+					<ChangeLogEntryRow
+						key={entry.id}
+						id={entry.id}
+						initialDeletedAt={entry.deletedAt}
+					>
+						<span className={styles.field}>
+							{FIELD_LABELS[entry.field] ?? entry.field}
 						</span>
-						→
-						<span className={styles.new_value}>
-							<ChangeValue
-								field={entry.field}
-								value={entry.newValue}
-							/>
+						<span className={styles.change}>
+							<span className={styles.old_value}>
+								<ChangeValue
+									field={entry.field}
+									value={entry.oldValue}
+									mediaId={entry.mediaId}
+									type={type}
+									externalId={externalId}
+								/>
+							</span>
+							<ArrowRightIcon className={styles.arrow_icon} />
+							<span className={styles.new_value}>
+								<ChangeValue
+									field={entry.field}
+									value={entry.newValue}
+									mediaId={entry.mediaId}
+									type={type}
+									externalId={externalId}
+								/>
+							</span>
 						</span>
-					</span>
-					<span className={styles.date}>
-						{DateFormatter.format(entry.createdAt)}
-					</span>
-				</li>
-			))}
-		</ul>
+						<span className={styles.date}>
+							{DateFormatter.format(entry.createdAt)}
+						</span>
+					</ChangeLogEntryRow>
+				))}
+			</ul>
+		</ChangeLogEmptyGate>
 	);
 }

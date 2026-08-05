@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db/client";
 import {
@@ -31,12 +33,59 @@ const CurrencyFormatter = new Intl.NumberFormat("en-US", {
 	maximumFractionDigits: 1,
 });
 
-function Fact({ label, value }: { label: string; value: string }) {
+// Director/Actor/Studio are promoted out of the collapsed credits list (see
+// below) — everything left in there is a long tail that varies a lot by
+// source (TMDB crew jobs are free text, MangaDex/ComicVine/IGDB each have
+// their own handful of role names). Known roles worth surfacing first get a
+// rank here; anything unlisted falls back to alphabetical after them.
+const ROLE_PRIORITY: Record<string, number> = {
+	Writer: 0,
+	Screenplay: 0,
+	Creator: 0,
+	Author: 0,
+	Developer: 0,
+	Story: 1,
+	Artist: 1,
+	Publisher: 1,
+	"Executive Producer": 2,
+	Producer: 3,
+};
+
+const TOP_ACTOR_COUNT = 10;
+
+function Fact({ label, value }: { label: string; value: ReactNode }) {
 	return (
 		<div className={styles.fact}>
 			<dt className={styles.fact_label}>{label}</dt>
 			<dd className={styles.fact_value}>{value}</dd>
 		</div>
+	);
+}
+
+type CreditLink = {
+	key: string;
+	href: string;
+	name: string;
+	order: number | null;
+};
+
+// Comma-separated linked names — shared by the promoted Director/Cast/Studio
+// facts and each row of the collapsed "everything else" list.
+function CreditNames({ entries }: { entries: CreditLink[] }) {
+	return (
+		<span className={styles.credit_names}>
+			{entries.map((entry, i) => (
+				<span key={entry.key}>
+					{i > 0 && ", "}
+					<Link
+						href={entry.href}
+						className={styles.credit_link}
+					>
+						{entry.name}
+					</Link>
+				</span>
+			))}
+		</span>
 	);
 }
 
@@ -167,20 +216,61 @@ export default async function MediaDetailPage({
 	});
 	if (!raw) notFound();
 
-	const media = await toMediaRecord(raw);
+	const media = toMediaRecord(raw);
 
 	const genres = raw.mediaGenres.map((mediaGenre) => mediaGenre.genre.name);
 
-	// Same person can be attached to a role more than once (e.g. duplicate
-	// TMDB credit rows) — dedupe per role so names don't repeat.
-	const creditsByRole = new Map<string, Set<string>>();
+	// Same person/company can be attached to a role more than once (e.g.
+	// duplicate TMDB credit rows) — dedupe per role by id, not just name, so
+	// two different people who happen to share a name don't collapse. Only
+	// the first occurrence is kept: raw.credits is already ordered by
+	// billing order ascending, so for Actor that's the earliest (most
+	// prominent) row for that person.
+	const creditsByRole = new Map<string, Map<string, CreditLink>>();
 	for (const credit of raw.credits) {
-		const name = credit.person?.name ?? credit.company?.name;
-		if (!name) continue;
-		const names = creditsByRole.get(credit.role.name);
-		if (names) names.add(name);
-		else creditsByRole.set(credit.role.name, new Set([name]));
+		// Scopes the destination page to this role (e.g. clicking a name under
+		// "Director" lands on just their directing credits, not everything
+		// they've ever been credited for).
+		const roleQuery = `?role=${encodeURIComponent(credit.role.name)}`;
+		const entry = credit.person
+			? {
+					key: `person-${credit.person.id}`,
+					href: `/credits/person/${credit.person.id}${roleQuery}`,
+					name: credit.person.name,
+					order: credit.order,
+				}
+			: credit.company
+				? {
+						key: `company-${credit.company.id}`,
+						href: `/credits/company/${credit.company.id}${roleQuery}`,
+						name: credit.company.name,
+						order: credit.order,
+					}
+				: null;
+		if (!entry) continue;
+		const byRole = creditsByRole.get(credit.role.name);
+		if (byRole) {
+			if (!byRole.has(entry.key)) byRole.set(entry.key, entry);
+		} else {
+			creditsByRole.set(credit.role.name, new Map([[entry.key, entry]]));
+		}
 	}
+
+	// Director/Cast/Studio surface directly on the page — everything else
+	// (writers, producers, publishers, ...) stays in the collapsed list,
+	// ranked by ROLE_PRIORITY rather than left in arbitrary credit order.
+	const directorEntries = [...(creditsByRole.get("Director")?.values() ?? [])];
+	const studioEntries = [...(creditsByRole.get("Studio")?.values() ?? [])];
+	const actorEntries = [...(creditsByRole.get("Actor")?.values() ?? [])]
+		.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
+		.slice(0, TOP_ACTOR_COUNT);
+
+	const otherRoles = [...creditsByRole.entries()]
+		.filter(([role]) => role !== "Director" && role !== "Studio" && role !== "Actor")
+		.sort(([a], [b]) => {
+			const priorityDiff = (ROLE_PRIORITY[a] ?? 99) - (ROLE_PRIORITY[b] ?? 99);
+			return priorityDiff !== 0 ? priorityDiff : a.localeCompare(b);
+		});
 
 	return (
 		<div className={styles.wrapper}>
@@ -245,24 +335,47 @@ export default async function MediaDetailPage({
 
 					<MediaTypeFacts media={media} />
 
-					{creditsByRole.size > 0 && (
+					{(directorEntries.length > 0 ||
+						actorEntries.length > 0 ||
+						studioEntries.length > 0) && (
+						<dl className={styles.facts}>
+							{directorEntries.length > 0 && (
+								<Fact
+									label="Director"
+									value={<CreditNames entries={directorEntries} />}
+								/>
+							)}
+							{actorEntries.length > 0 && (
+								<Fact
+									label="Cast"
+									value={<CreditNames entries={actorEntries} />}
+								/>
+							)}
+							{studioEntries.length > 0 && (
+								<Fact
+									label="Studio"
+									value={<CreditNames entries={studioEntries} />}
+								/>
+							)}
+						</dl>
+					)}
+
+					{otherRoles.length > 0 && (
 						<details className={styles.credits}>
 							<summary className={styles.credits_summary}>
 								Credits
 								<span className={styles.credits_count}>
-									{creditsByRole.size}
+									{otherRoles.length}
 								</span>
 							</summary>
 							<div className={styles.credits_list}>
-								{[...creditsByRole.entries()].map(([role, names]) => (
+								{otherRoles.map(([role, entries]) => (
 									<div
 										className={styles.credit_row}
 										key={role}
 									>
 										<span className={styles.credit_role}>{role}</span>
-										<span className={styles.credit_names}>
-											{[...names].join(", ")}
-										</span>
+										<CreditNames entries={[...entries.values()]} />
 									</div>
 								))}
 							</div>
@@ -278,7 +391,11 @@ export default async function MediaDetailPage({
 
 			<section className={styles.section}>
 				<h2 className={styles.section_title}>Change log</h2>
-				<ChangeLogList entries={raw.changeLog} />
+				<ChangeLogList
+					entries={raw.changeLog}
+					type={raw.type}
+					externalId={raw.externalId}
+				/>
 			</section>
 		</div>
 	);

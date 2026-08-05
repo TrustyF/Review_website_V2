@@ -45,7 +45,7 @@ export default async function MediaCardsDevPage() {
 			const raw = pickRandom(candidates);
 			if (!raw) return { type, media: null };
 
-			return { type, media: await toMediaRecord(raw) };
+			return { type, media: toMediaRecord(raw) };
 		}),
 	);
 
@@ -64,9 +64,7 @@ export default async function MediaCardsDevPage() {
 		},
 		take: 12,
 	});
-	const miniCardMedia = await Promise.all(
-		miniCardCandidates.map(toMediaRecord),
-	);
+	const miniCardMedia = miniCardCandidates.map(toMediaRecord);
 
 	return (
 		<div className={styles.wrapper}>

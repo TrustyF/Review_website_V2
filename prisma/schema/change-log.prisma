@@ -8,7 +8,9 @@ model MediaChangeLog {
   oldValue String?
   newValue String?
 
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
 
   @@index([mediaId])
+  @@index([deletedAt])
 }

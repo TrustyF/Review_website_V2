@@ -1,3 +1,5 @@
+@use "@/app/styles/variables" as *
+
 // content-visibility skips layout/paint/style work for this card entirely
 // while it's off-screen — the actual "don't render what's out of view"
 // mechanism (native, no JS). contain-intrinsic-height is the estimated
@@ -6,9 +8,12 @@
 // measured for real; it only needs to be roughly right; a mismatch just
 // means a small size correction as a card scrolls into view, not the
 // whole-batch pop-in a JS-driven mount/unmount approach would cause.
+// Derived from $mini-card-min-width (poster's tallest ratio, 2/3, is
+// height = width * 1.5) plus ~60px for the subtitle row and gaps below
+// the poster, so it can't drift out of sync when that width changes.
 .wrapper
   content-visibility: auto
-  contain-intrinsic-height: 240px
+  contain-intrinsic-height: $mini-card-min-width * 1.5 + 60px
   position: relative
   display: flex
   flex-flow: column

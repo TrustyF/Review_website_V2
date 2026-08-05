@@ -1,7 +1,5 @@
-"use client";
-import { useEffect, useRef, useState } from "react";
 import { MediaRecord } from "@/components/media/media-card/types";
-import { MediaMiniCardResolver } from "@/components/media/media-card/cards-mini/media-mini-card-resolver";
+import { LazyMediaGrid } from "@/components/media/lazy-media-grid/lazy-media-grid";
 import styles from "./rated-tier-grid.module.sass";
 
 // Buckets media into whole-point rating tiers (9 covers a 9.0-9.5 rating,
@@ -18,58 +16,6 @@ function tierLabel(tier: number | null): string {
 	if (tier === null) return "Unrated";
 	if (tier >= 10) return "10";
 	return `${tier}–${tier + 1}`;
-}
-
-// Sized generously (well past a typical viewport's worth of ~120px cards)
-// so the sentinel starts below the fold on ordinary screens — the initial
-// batch filling the viewport on its own is what keeps the very first
-// IntersectionObserver check from immediately firing a reveal (see below).
-// Still far fewer than mounting an entire tier's worth of cards (and their
-// client-side poster components) up front, which is what actually made
-// hydrating a big page like /movies slow.
-const BATCH_SIZE = 24;
-
-// One tier's grid — owns its own reveal-more-on-scroll state so opening/
-// scrolling one tier doesn't affect the others.
-function LazyTierGrid({ items }: { items: MediaRecord[] }) {
-	const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
-	const sentinelRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		const sentinel = sentinelRef.current;
-		if (!sentinel) return;
-
-		// rootMargin gives it a head start — the next batch mounts while the
-		// sentinel is still a bit below the viewport, not exactly at its edge.
-		const observer = new IntersectionObserver(
-			(entries) => {
-				if (!entries.some((entry) => entry.isIntersecting)) return;
-				setVisibleCount((count) => Math.min(count + BATCH_SIZE, items.length));
-			},
-			{ rootMargin: "100px" },
-		);
-		observer.observe(sentinel);
-		return () => observer.disconnect();
-	}, [items.length]);
-
-	return (
-		<>
-			<div className={styles.tier_grid}>
-				{items.slice(0, visibleCount).map((item) => (
-					<MediaMiniCardResolver
-						media={item}
-						key={item.id}
-					/>
-				))}
-			</div>
-			{visibleCount < items.length && (
-				<div
-					className={styles.sentinel}
-					ref={sentinelRef}
-				/>
-			)}
-		</>
-	);
 }
 
 type Props = {
@@ -108,7 +54,7 @@ export function RatedTierGrid({ media }: Props) {
 						{tierLabel(tier)}
 						<span className={styles.tier_count}>{items.length}</span>
 					</summary>
-					<LazyTierGrid items={items} />
+					<LazyMediaGrid items={items} />
 				</details>
 			))}
 		</div>

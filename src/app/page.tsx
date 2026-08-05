@@ -15,8 +15,8 @@ export default async function MediaGridPage() {
 		take: 50,
 		orderBy: { releaseDate: "desc" },
 	});
-	// convert raw prisma into typed, display-ready objects (posters resolved)
-	const mediaList = await Promise.all(rawList.map(toMediaRecord));
+	// convert raw prisma into typed, display-ready objects
+	const mediaList = rawList.map(toMediaRecord);
 
 	return (
 		<div className={styles.wrapper}>

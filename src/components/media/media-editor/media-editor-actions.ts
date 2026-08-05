@@ -54,9 +54,20 @@ export async function saveReview(
 		create: { mediaId, ...review },
 	});
 
-	const changes = diffFields(mediaId, existing ?? {}, review);
-	if (changes.length) {
-		await db.mediaChangeLog.createMany({ data: changes });
+	// Only log once a review already exists — the first save just creates it,
+	// and a wall of "— → 8" entries for fields that never had a prior value
+	// isn't a change worth recording. Body is excluded from the diff
+	// entirely — review text gets edited/proofread often enough that
+	// logging every pass would drown out the fields worth tracking.
+	if (existing) {
+		const changes = diffFields(mediaId, existing, {
+			rating: review.rating,
+			liked: review.liked,
+			difficulty: review.difficulty,
+		});
+		if (changes.length) {
+			await db.mediaChangeLog.createMany({ data: changes });
+		}
 	}
 
 	revalidatePath("/");

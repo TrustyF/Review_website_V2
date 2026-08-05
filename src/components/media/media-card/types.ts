@@ -8,7 +8,7 @@ import {
 	Review,
 	TvShow,
 } from "@prisma/client";
-import { resolvePoster } from "@/server/resolvers/poster-resolver";
+import { posterFilename } from "@/server/resolvers/poster-resolver";
 
 // What Prisma actually hands back — every relation still optional
 export type RawMediaRecord = Media & {
@@ -37,15 +37,19 @@ export type MediaRecord =
 	| (BaseRecord & { type: "COMIC"; comic: Comic })
 	| (BaseRecord & { type: "GAME"; game: Game });
 
-// Async — resolves (and lazily caches) the poster alongside reshaping the
-// record, so every caller gets a fully display-ready record from one call.
-export async function toMediaRecord(raw: RawMediaRecord): Promise<MediaRecord> {
-	const posterSrc = await resolvePoster(
-		raw.id,
-		raw.type,
-		raw.externalId,
-		raw.posterPath,
-	);
+// Synchronous and I/O-free: posterSrc points at the /api/poster route
+// rather than a pre-resolved local file, so reshaping a whole list of media
+// never blocks on downloading (or even stat-ing) a single poster. The route
+// does the actual resolve-or-download-and-cache lazily, the moment a
+// browser actually requests that image — which for an off-screen card
+// (thanks to next/image's default lazy loading) may be never. The filename
+// segment is content-addressed by posterPath (see posterFilename), so the
+// URL itself changes whenever the poster does, making a long-lived
+// immutable Cache-Control on that route safe.
+export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
+	const posterSrc = raw.posterPath
+		? `/api/poster/${raw.id}/${posterFilename(raw.id, raw.posterPath)}`
+		: "/posters/placeholder.jpg";
 	switch (raw.type) {
 		case "MOVIE":
 		case "SHORT":

@@ -1,3 +1,5 @@
+@use "@/app/styles/variables" as *
+
 .wrapper
   width: 950px
   margin: 20px auto
@@ -24,6 +26,6 @@
 
 .mini_grid
   display: grid
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr))
+  grid-template-columns: repeat(auto-fill, minmax($mini-card-min-width, 1fr))
   gap: 20px
   margin-top: 20px

@@ -2,3 +2,9 @@ $font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif
 $font-mono: var(--font-geist-mono), Arial, Helvetica, sans-serif
 $font-serif: var(--font-geist-serif), Georgia, "Times New Roman", serif
 $font-body: var(--font-ibm-plex-sans), Arial, Helvetica, sans-serif
+
+// Single source of truth for mini card grid sizing — used by every grid
+// that lays out MediaMiniCardShell (rated-tier-grid, the dev preview grid)
+// and by the shell's own contain-intrinsic-height estimate, so resizing
+// the cards can't leave that estimate stale.
+$mini-card-min-width: 110px
