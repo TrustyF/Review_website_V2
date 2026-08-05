@@ -2,7 +2,10 @@ import Image from "next/image";
 import { MediaChangeLog, MediaType } from "@prisma/client";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { ArrowRightIcon } from "@/components/media/icons/arrow-right-icon";
-import { resolveChangelogPosterThumb } from "@/server/resolvers/poster-resolver";
+import {
+	resolveChangelogBannerThumb,
+	resolveChangelogPosterThumb,
+} from "@/server/resolvers/poster-resolver";
 import { ChangeLogEntryRow } from "./change-log-entry-row";
 import { ChangeLogEmptyGate } from "./change-log-empty-gate";
 import styles from "./change-log-list.module.sass";
@@ -21,6 +24,12 @@ const FIELD_LABELS: Record<string, string> = {
 	difficulty: "Difficulty",
 	body: "Review",
 	posterPath: "Poster",
+	bannerPath: "Banner",
+	// A milestone, not a value that changed — see saveReview and the "reviewed"
+	// case in the row rendering below, which skips the old/new/arrow entirely
+	// for it. The date column (present on every row already) is what actually
+	// answers "on" — this label just reads naturally alongside it.
+	reviewed: "Reviewed on",
 };
 
 // Long free-text values (review bodies) would blow out the log — show a
@@ -58,6 +67,22 @@ async function ChangeValue({
 				alt="Poster"
 				width={46}
 				height={69}
+			/>
+		);
+	}
+
+	if (field === "bannerPath") {
+		// Same idea as posterPath above, but landscape and via
+		// resolveChangelogBannerThumb — bannerUrlFor doesn't need externalId
+		// (unlike posterUrlFor), so this skips it.
+		const thumbSrc = await resolveChangelogBannerThumb(mediaId, type, value);
+		return (
+			<Image
+				className={styles.banner_value}
+				src={thumbSrc}
+				alt="Banner"
+				width={80}
+				height={34}
 			/>
 		);
 	}
@@ -109,26 +134,33 @@ export function ChangeLogList({
 						<span className={styles.field}>
 							{FIELD_LABELS[entry.field] ?? entry.field}
 						</span>
+						{/* "reviewed" is a milestone, not a before/after value — the
+						empty span still keeps its flex: 1 spacer role so .date
+						stays right-aligned same as every other row. */}
 						<span className={styles.change}>
-							<span className={styles.old_value}>
-								<ChangeValue
-									field={entry.field}
-									value={entry.oldValue}
-									mediaId={entry.mediaId}
-									type={type}
-									externalId={externalId}
-								/>
-							</span>
-							<ArrowRightIcon className={styles.arrow_icon} />
-							<span className={styles.new_value}>
-								<ChangeValue
-									field={entry.field}
-									value={entry.newValue}
-									mediaId={entry.mediaId}
-									type={type}
-									externalId={externalId}
-								/>
-							</span>
+							{entry.field !== "reviewed" && (
+								<>
+									<span className={styles.old_value}>
+										<ChangeValue
+											field={entry.field}
+											value={entry.oldValue}
+											mediaId={entry.mediaId}
+											type={type}
+											externalId={externalId}
+										/>
+									</span>
+									<ArrowRightIcon className={styles.arrow_icon} />
+									<span className={styles.new_value}>
+										<ChangeValue
+											field={entry.field}
+											value={entry.newValue}
+											mediaId={entry.mediaId}
+											type={type}
+											externalId={externalId}
+										/>
+									</span>
+								</>
+							)}
 						</span>
 						<span className={styles.date}>
 							{DateFormatter.format(entry.createdAt)}

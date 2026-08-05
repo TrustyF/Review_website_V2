@@ -6,9 +6,15 @@ import Anthropic from "@anthropic-ai/sdk";
 import { fetchTmdbImages } from "@/server/tmdb/client";
 import { fetchMangaDexCovers } from "@/server/mangadex/client";
 import { fetchComicVineIssuesForVolume } from "@/server/comicvine/client";
-import { fetchIgdbGameCoverOptions } from "@/server/igdb/client";
-import { posterUrlFor, resolvePoster } from "@/server/resolvers/poster-resolver";
+import { fetchIgdbGameById, fetchIgdbGameCoverOptions } from "@/server/igdb/client";
+import {
+	bannerUrlFor,
+	posterUrlFor,
+	resolveBanner,
+	resolvePoster,
+} from "@/server/resolvers/poster-resolver";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
+import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/review-body-syntax";
 
 // Compares old/new values field by field and returns a MediaChangeLog row
 // for each one that actually changed — untouched fields produce no row.
@@ -54,20 +60,39 @@ export async function saveReview(
 		create: { mediaId, ...review },
 	});
 
-	// Only log once a review already exists — the first save just creates it,
-	// and a wall of "— → 8" entries for fields that never had a prior value
-	// isn't a change worth recording. Body is excluded from the diff
-	// entirely — review text gets edited/proofread often enough that
-	// logging every pass would drown out the fields worth tracking.
+	const changes: {
+		mediaId: number;
+		field: string;
+		oldValue: string | null;
+		newValue: string | null;
+	}[] = [];
+
+	// Only log the usual field-by-field diff once a review already exists —
+	// the very first save just creates it, and a wall of "— → 8" entries for
+	// fields that never had a prior value isn't a change worth recording.
 	if (existing) {
-		const changes = diffFields(mediaId, existing, {
-			rating: review.rating,
-			liked: review.liked,
-			difficulty: review.difficulty,
-		});
-		if (changes.length) {
-			await db.mediaChangeLog.createMany({ data: changes });
-		}
+		changes.push(
+			...diffFields(mediaId, existing, {
+				rating: review.rating,
+				liked: review.liked,
+				difficulty: review.difficulty,
+			}),
+		);
+	}
+
+	// Body itself stays out of the diff above — edited/proofread often enough
+	// that logging every pass would drown out the fields worth tracking —
+	// but writing a first review is a real milestone worth marking on its
+	// own, whether that happens on this same save (existing === null) or a
+	// later one that fills in a body that was empty before.
+	const hadBody = Boolean(existing?.body?.trim());
+	const hasBody = Boolean(review.body?.trim());
+	if (!hadBody && hasBody) {
+		changes.push({ mediaId, field: "reviewed", oldValue: null, newValue: "true" });
+	}
+
+	if (changes.length) {
+		await db.mediaChangeLog.createMany({ data: changes });
 	}
 
 	revalidatePath("/");
@@ -119,10 +144,36 @@ export async function saveMediaDetails(
 	revalidatePath("/");
 }
 
+const MARKUP_PLACEHOLDER_REGEX = /⟦MARKUP(\d+)⟧/g;
+
+// Swaps every ||spoiler|| / [text](url) span for an opaque placeholder so
+// the model sent to suggestReviewCorrection never sees (and so can never
+// mangle) the actual syntax — restoreMarkup puts the original spans back
+// wherever those placeholders land in the response. Driven by the same
+// regex the renderer uses, so new markup syntax is excluded automatically;
+// nothing here needs to change for it. The one real cost: text inside a
+// span doesn't get proofread, since the model never sees it either.
+function extractMarkup(body: string): { stripped: string; spans: string[] } {
+	const spans: string[] = [];
+	const stripped = body.replace(REVIEW_MARKUP_REGEX, (match) => {
+		const index = spans.push(match) - 1;
+		return `⟦MARKUP${index}⟧`;
+	});
+	return { stripped, spans };
+}
+
+function restoreMarkup(text: string, spans: string[]): string {
+	return text.replace(MARKUP_PLACEHOLDER_REGEX, (full, indexStr: string) => {
+		return spans[Number(indexStr)] ?? full;
+	});
+}
+
 // Read-only — returns a suggested rewrite, never touches the draft or DB.
 // The caller decides what (if anything) to copy into the actual body field.
 export async function suggestReviewCorrection(body: string): Promise<string> {
 	if (!body.trim()) return "";
+
+	const { stripped, spans } = extractMarkup(body);
 
 	const client = new Anthropic();
 	const response = await client.messages.create({
@@ -130,12 +181,13 @@ export async function suggestReviewCorrection(body: string): Promise<string> {
 		max_tokens: 2048,
 		output_config: { effort: "low" },
 		system:
-			"You proofread review text for a personal movie/TV/manga/game log. Fix grammar, spelling, clarity issues and repetitive wording. It should read like an essay. Preserve the reviewer's opinions. Reply with only the corrected text: no preamble, no explanation, no surrounding quotes.",
-		messages: [{ role: "user", content: body }],
+			"You proofread review text for a personal movie/TV/manga/game log. Fix grammar, spelling, clarity issues and repetitive wording. It should read like an essay. Preserve the reviewer's opinions. The text may contain placeholder tokens like ⟦MARKUP0⟧ — leave every one exactly as it is: don't add, remove, rename, translate, or explain them. Reply with only the corrected text: no preamble, no explanation, no surrounding quotes.",
+		messages: [{ role: "user", content: stripped }],
 	});
 
 	const textBlock = response.content.find((block) => block.type === "text");
-	return textBlock?.type === "text" ? textBlock.text : "";
+	const corrected = textBlock?.type === "text" ? textBlock.text : "";
+	return restoreMarkup(corrected, spans);
 }
 
 export async function getAlternativePosters(
@@ -236,4 +288,65 @@ export async function updateMediaPoster(mediaId: number, posterPath: string) {
 	);
 	revalidatePath("/");
 	return posterSrc;
+}
+
+// Mirrors getAlternativePosters, but for banners — only TMDB and IGDB have
+// one at all (see bannerUrlFor), so MANGA/COMIC just return no options
+// rather than erroring, and ImagePicker renders an empty grid for them.
+export async function getAlternativeBanners(externalId: string, type: MediaType) {
+	if (type === MediaType.MANGA || type === MediaType.COMIC) {
+		return [];
+	}
+
+	if (type === MediaType.GAME) {
+		// Unlike covers (one default + game_localizations' regional variants),
+		// IGDB's artworks are already a flat list on the game object itself —
+		// no second query needed. t_screenshot_med keeps the thumb landscape
+		// (t_thumb would square-crop it) — see poster-resolver.ts's bannerUrlFor
+		// for the full-size template the preview/save path uses.
+		const game = await fetchIgdbGameById(externalId);
+		return (game.artworks ?? []).map((artwork) => ({
+			filePath: artwork.image_id,
+			thumbSrc: buildProxiedImageUrl(
+				`https://images.igdb.com/igdb/image/upload/t_screenshot_med/${artwork.image_id}.jpg`,
+			),
+			previewSrc: buildProxiedImageUrl(bannerUrlFor(type, artwork.image_id)),
+		}));
+	}
+
+	const images = await fetchTmdbImages(externalId, type);
+	return images.backdrops
+		.slice()
+		.sort((a, b) => b.vote_average - a.vote_average)
+		.map((backdrop) => ({
+			filePath: backdrop.file_path,
+			thumbSrc: buildProxiedImageUrl(
+				`https://image.tmdb.org/t/p/w300${backdrop.file_path}`,
+			),
+			previewSrc: buildProxiedImageUrl(bannerUrlFor(type, backdrop.file_path)),
+		}));
+}
+
+export async function updateMediaBanner(mediaId: number, bannerPath: string) {
+	const existing = await db.media.findUnique({
+		where: { id: mediaId },
+		select: { bannerPath: true, type: true },
+	});
+
+	await db.media.update({ where: { id: mediaId }, data: { bannerPath } });
+
+	if (existing?.bannerPath !== bannerPath) {
+		await db.mediaChangeLog.create({
+			data: {
+				mediaId,
+				field: "bannerPath",
+				oldValue: existing?.bannerPath ?? null,
+				newValue: bannerPath,
+			},
+		});
+	}
+
+	const bannerSrc = await resolveBanner(mediaId, existing!.type, bannerPath);
+	revalidatePath("/");
+	return bannerSrc;
 }

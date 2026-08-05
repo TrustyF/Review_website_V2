@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
 				pathname: "/posters/changelog-cache/**",
 			},
 			{
+				pathname: "/banners/changelog-cache/**",
+			},
+			{
 				pathname: "/posters/placeholder.jpg",
 			},
 			{
@@ -23,6 +26,9 @@ const nextConfig: NextConfig = {
 			},
 			{
 				pathname: "/api/poster/**",
+			},
+			{
+				pathname: "/api/banner/**",
 			},
 		],
 	},

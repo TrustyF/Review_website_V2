@@ -8,6 +8,7 @@ model Media {
   status         MediaStatus @default(RELEASED)
   publicRating   Float?
   posterPath     String?
+  bannerPath     String?
 
   isDeleted Boolean @default(false)
 

@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db/client";
@@ -7,7 +8,7 @@ import { MediaPoster } from "@/components/media/primitives/poster";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaTitle } from "@/components/media/primitives/title";
 import { MediaReleaseDate } from "@/components/media/primitives/release-date";
-import { MediaReview } from "@/components/media/primitives/review";
+import { MediaReview } from "@/components/media/media-cards/media-card/review";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { ChangeLogList } from "@/components/media/media-management/change-log/change-log-list";
 import { formatRuntime } from "@/components/media/primitives/runtime";
@@ -74,10 +75,7 @@ function CreditNames({ entries }: { entries: CreditLink[] }) {
 			{entries.map((entry, i) => (
 				<span key={entry.key}>
 					{i > 0 && ", "}
-					<Link
-						href={entry.href}
-						className={styles.credit_link}
-					>
+					<Link href={entry.href} className={styles.credit_link}>
 						{entry.name}
 					</Link>
 				</span>
@@ -96,12 +94,7 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 			const { runtime, budget, revenue, tagline } = media.movie;
 			return (
 				<dl className={styles.facts}>
-					{tagline && (
-						<Fact
-							label="Tagline"
-							value={tagline}
-						/>
-					)}
+					{tagline && <Fact label="Tagline" value={tagline} />}
 					{runtime != null && (
 						<Fact
 							label="Runtime"
@@ -109,16 +102,10 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 						/>
 					)}
 					{budget != null && (
-						<Fact
-							label="Budget"
-							value={CurrencyFormatter.format(budget)}
-						/>
+						<Fact label="Budget" value={CurrencyFormatter.format(budget)} />
 					)}
 					{revenue != null && (
-						<Fact
-							label="Revenue"
-							value={CurrencyFormatter.format(revenue)}
-						/>
+						<Fact label="Revenue" value={CurrencyFormatter.format(revenue)} />
 					)}
 				</dl>
 			);
@@ -127,23 +114,12 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 			const { seasonCount, episodeCount, network } = media.tvShow;
 			return (
 				<dl className={styles.facts}>
-					{network && (
-						<Fact
-							label="Network"
-							value={network}
-						/>
-					)}
+					{network && <Fact label="Network" value={network} />}
 					{seasonCount != null && (
-						<Fact
-							label="Seasons"
-							value={String(seasonCount)}
-						/>
+						<Fact label="Seasons" value={String(seasonCount)} />
 					)}
 					{episodeCount != null && (
-						<Fact
-							label="Episodes"
-							value={String(episodeCount)}
-						/>
+						<Fact label="Episodes" value={String(episodeCount)} />
 					)}
 				</dl>
 			);
@@ -154,16 +130,10 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 			return (
 				<dl className={styles.facts}>
 					{source.volumeCount != null && (
-						<Fact
-							label="Volumes"
-							value={String(source.volumeCount)}
-						/>
+						<Fact label="Volumes" value={String(source.volumeCount)} />
 					)}
 					{source.chapterCount != null && (
-						<Fact
-							label="Chapters"
-							value={String(source.chapterCount)}
-						/>
+						<Fact label="Chapters" value={String(source.chapterCount)} />
 					)}
 				</dl>
 			);
@@ -172,12 +142,7 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 			const { platform } = media.game;
 			return (
 				<dl className={styles.facts}>
-					{platform && (
-						<Fact
-							label="Platform"
-							value={platform}
-						/>
-					)}
+					{platform && <Fact label="Platform" value={platform} />}
 				</dl>
 			);
 		}
@@ -273,6 +238,22 @@ export default async function MediaDetailPage({
 
 	return (
 		<div className={styles.wrapper}>
+			{media.bannerSrc && (
+				<div className={styles.banner_wrapper}>
+					<div className={styles.banner}>
+						<Image
+							src={media.bannerSrc}
+							alt={`${media.title} banner`}
+							width={1280}
+							height={548}
+							className={styles.banner_image}
+							priority
+						/>
+						<div className={styles.banner_backdrop}></div>
+					</div>
+				</div>
+			)}
+			{media.bannerSrc && <div className={styles.banner_spacer} />}
 			<div className={styles.header}>
 				<div className={styles.poster}>
 					<MediaPoster
@@ -283,14 +264,8 @@ export default async function MediaDetailPage({
 				</div>
 				<div className={styles.header_info}>
 					<div className={styles.title_row}>
-						<MediaTitle
-							title={media.title}
-							className={styles.title}
-						/>
-						<MediaEditButton
-							media={media}
-							className={styles.edit_button}
-						/>
+						<MediaTitle title={media.title} className={styles.title} />
+						<MediaEditButton media={media} className={styles.edit_button} />
 					</div>
 					{media.alternateTitle && (
 						<div className={styles.alt_title}>{media.alternateTitle}</div>
@@ -308,8 +283,7 @@ export default async function MediaDetailPage({
 								className={styles.source_link}
 								href={raw.sourceUrl}
 								target="_blank"
-								rel="noopener noreferrer"
-							>
+								rel="noopener noreferrer">
 								View on {PROVIDER_LABELS[media.type]}
 							</a>
 						)}
@@ -318,10 +292,7 @@ export default async function MediaDetailPage({
 					{genres.length > 0 && (
 						<div className={styles.genres}>
 							{genres.map((genre) => (
-								<span
-									className={styles.genre}
-									key={genre}
-								>
+								<span className={styles.genre} key={genre}>
 									{genre}
 								</span>
 							))}
@@ -369,10 +340,7 @@ export default async function MediaDetailPage({
 							</summary>
 							<div className={styles.credits_list}>
 								{otherRoles.map(([role, entries]) => (
-									<div
-										className={styles.credit_row}
-										key={role}
-									>
+									<div className={styles.credit_row} key={role}>
 										<span className={styles.credit_role}>{role}</span>
 										<CreditNames entries={[...entries.values()]} />
 									</div>

@@ -64,7 +64,7 @@ async function runQueue(type: MediaType, mediaList: Media[]) {
 
 async function main() {
 	const mediaList = await db.media.findMany({
-		where: { enrichmentStatus: EnrichmentStatus.PENDING },
+		// where: { enrichmentStatus: EnrichmentStatus.PENDING },
 		orderBy: { id: "asc" },
 	});
 

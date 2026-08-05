@@ -24,6 +24,9 @@ export const IgdbGameSchema = type({
 		id: "number",
 		name: "string",
 	}).array(),
+	// Promotional artwork — wide/landscape, unlike cover — used as this
+	// app's banner image for games. Not every game has any.
+	"artworks?": type({ image_id: "string" }).array(),
 });
 
 export type IgdbGame = typeof IgdbGameSchema.infer;

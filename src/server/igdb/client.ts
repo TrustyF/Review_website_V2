@@ -25,6 +25,7 @@ const GAME_FIELDS = [
 	"involved_companies.publisher",
 	"cover.image_id",
 	"platforms.name",
+	"artworks.image_id",
 ].join(", ");
 
 // IGDB sits behind Twitch's OAuth2 app-token flow rather than a static key —

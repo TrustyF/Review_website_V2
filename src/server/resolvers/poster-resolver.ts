@@ -12,11 +12,23 @@ import { MediaType } from "@prisma/client";
 // guarantees a small cached file either way, instead of only when the
 // source happens to cooperate.
 const THUMB_MAX_HEIGHT = 140;
+// The page's own content column tops out at 950px (see media-detail.module
+// .sass .wrapper) — a banner never renders any wider than that, so caching
+// TMDB's 1280px backdrops or IGDB's up-to-1920px artworks at full size was
+// pure waste. Measured against 12 real banners: capping width alone (still
+// at WEBP_QUALITY) cut total size 45%, the large majority of what's
+// possible — quality has much less room to give without visibly softening
+// an image shown this large. See resolveBanner.
+const BANNER_MAX_WIDTH = 1280;
+// Change log rows show a small landscape thumbnail for a bannerPath change,
+// the same idea as THUMB_MAX_HEIGHT for posterPath — sized down from
+// BANNER_MAX_WIDTH the same way THUMB_MAX_HEIGHT is sized down from the full
+// poster. See resolveChangelogBannerThumb.
+const BANNER_THUMB_MAX_WIDTH = 120;
 // Both the main poster cache and the change log thumbnail cache re-encode
 // to WebP at this quality — the main poster keeps its source dimensions
 // (it's the one place a larger image is actually wanted), only the
-// thumbnail also gets resized.
-const WEBP_QUALITY = 75;
+// thumbnail and banner also get resized.
 
 export const POSTER_DIR = path.join(
 	process.cwd(),
@@ -36,14 +48,35 @@ export const CHANGELOG_THUMB_DIR = path.join(
 	"changelog-cache",
 );
 
-// Content-addressable: the filename is derived from posterPath itself, so
-// switching a media's poster naturally produces a different filename/URL —
-// no cache-busting query string or manual invalidation needed. Old files
-// from a previous posterPath become orphaned; see poster-cleanup.ts (main
-// posters) and purge-deleted-change-log.ts (change log thumbnails).
-export function posterFilename(mediaId: number, posterPath: string) {
+// Separate again from the two above: banners are a different asset (wide
+// backdrop/artwork, not a poster) with their own cache, even though they
+// share every other bit of machinery in this file.
+export const BANNER_DIR = path.join(
+	process.cwd(),
+	"public",
+	"banners",
+	"cache",
+);
+
+// Change log's own banner thumbnail cache — same reasoning as
+// CHANGELOG_THUMB_DIR vs POSTER_DIR: a different size than BANNER_DIR, own
+// directory rather than risk colliding on a same-hash-different-size file.
+export const CHANGELOG_BANNER_THUMB_DIR = path.join(
+	process.cwd(),
+	"public",
+	"banners",
+	"changelog-cache",
+);
+
+// Content-addressable: the filename is derived from the source path itself
+// (posterPath or bannerPath), so switching a media's poster/banner naturally
+// produces a different filename/URL — no cache-busting query string or
+// manual invalidation needed. Old files from a previous path become
+// orphaned; see poster-cleanup.ts (main posters) and
+// purge-deleted-change-log.ts (change log thumbnails).
+export function mediaAssetFilename(mediaId: number, assetPath: string) {
 	const hash = createHash("sha256")
-		.update(posterPath)
+		.update(assetPath)
 		.digest("hex")
 		.slice(0, 12);
 	return `${mediaId}-${hash}.webp`;
@@ -88,15 +121,16 @@ export function posterUrlFor(
 	return `https://image.tmdb.org/t/p/${size === "full" ? "w500" : "w154"}${posterPath}`;
 }
 
-// Shared by resolvePoster and resolveChangelogPosterThumb: content-addressed
-// cache-or-download, differing only in directory, which size URL to fetch,
-// and whether the downloaded bytes get resized down before being written —
-// both re-encode to WebP.
+// Shared by resolvePoster, resolveChangelogPosterThumb, and resolveBanner:
+// content-addressed cache-or-download, differing only in directory, which
+// size URL to fetch, and whether/how the downloaded bytes get resized down
+// before being written — all three re-encode to WebP.
 async function cacheOrDownload(
 	dir: string,
 	filename: string,
 	sourceUrl: string,
-	{ resize = false }: { resize?: boolean } = {},
+	{ resize }: { resize?: { width?: number; height?: number } } = {},
+	webpQuality = 75,
 ) {
 	const filePath = path.join(dir, filename);
 
@@ -109,9 +143,9 @@ async function cacheOrDownload(
 		const bytes = Buffer.from(await res.arrayBuffer());
 		let image = sharp(bytes);
 		if (resize) {
-			image = image.resize({ height: THUMB_MAX_HEIGHT, withoutEnlargement: true });
+			image = image.resize({ ...resize, withoutEnlargement: true });
 		}
-		const output = await image.webp({ quality: WEBP_QUALITY }).toBuffer();
+		const output = await image.webp({ quality: webpQuality }).toBuffer();
 		await writeFile(filePath, output);
 	}
 
@@ -126,7 +160,7 @@ export async function resolvePoster(
 ) {
 	if (!posterPath) return "/posters/placeholder.jpg";
 
-	const filename = posterFilename(mediaId, posterPath);
+	const filename = mediaAssetFilename(mediaId, posterPath);
 	await cacheOrDownload(
 		POSTER_DIR,
 		filename,
@@ -146,13 +180,71 @@ export async function resolveChangelogPosterThumb(
 	externalId: string,
 	posterPath: string,
 ) {
-	const filename = posterFilename(mediaId, posterPath);
+	const filename = mediaAssetFilename(mediaId, posterPath);
 	await cacheOrDownload(
 		CHANGELOG_THUMB_DIR,
 		filename,
 		posterUrlFor(type, externalId, posterPath, "thumb"),
-		{ resize: true },
+		{ resize: { height: THUMB_MAX_HEIGHT } },
+		50,
 	);
 
 	return `/posters/changelog-cache/${filename}`;
+}
+
+// Only TMDB (backdrop_path) and IGDB (artworks) have a wide banner asset at
+// all — MangaDex/ComicVine/manual entries never populate Media.bannerPath in
+// the first place (see the ingest files), so this never actually needs to
+// handle those. No externalId parameter: unlike posterUrlFor, neither TMDB's
+// backdrop_path nor IGDB's artwork image_id need scoping context to locate.
+export function bannerUrlFor(type: MediaType, bannerPath: string) {
+	if (bannerPath.startsWith("http://") || bannerPath.startsWith("https://")) {
+		return bannerPath;
+	}
+	if (type === MediaType.GAME) {
+		return `https://images.igdb.com/igdb/image/upload/t_1080p/${bannerPath}.jpg`;
+	}
+	return `https://image.tmdb.org/t/p/w1280${bannerPath}`;
+}
+
+// Same content-addressable cache-or-download as resolvePoster, own directory
+// (BANNER_DIR) since it's a different asset. Capped to BANNER_MAX_WIDTH —
+// the source is already display-ready otherwise, it's just wider than the
+// page ever renders it.
+export async function resolveBanner(
+	mediaId: number,
+	type: MediaType,
+	bannerPath: string | null,
+) {
+	if (!bannerPath) return null;
+
+	const filename = mediaAssetFilename(mediaId, bannerPath);
+	await cacheOrDownload(
+		BANNER_DIR,
+		filename,
+		bannerUrlFor(type, bannerPath),
+		{ resize: { width: BANNER_MAX_WIDTH } },
+		95,
+	);
+
+	return `/banners/cache/${filename}`;
+}
+
+// Same content-addressable caching as resolveChangelogPosterThumb, but for a
+// change log entry's old/new bannerPath.
+export async function resolveChangelogBannerThumb(
+	mediaId: number,
+	type: MediaType,
+	bannerPath: string,
+) {
+	const filename = mediaAssetFilename(mediaId, bannerPath);
+	await cacheOrDownload(
+		CHANGELOG_BANNER_THUMB_DIR,
+		filename,
+		bannerUrlFor(type, bannerPath),
+		{ resize: { width: BANNER_THUMB_MAX_WIDTH } },
+		50,
+	);
+
+	return `/banners/changelog-cache/${filename}`;
 }

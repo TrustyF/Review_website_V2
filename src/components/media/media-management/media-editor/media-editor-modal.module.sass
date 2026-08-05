@@ -38,7 +38,7 @@
 
 .details_row
   display: flex
-  flex-flow: row
+  flex-flow: row wrap
   gap: 2rem
 
 .review_fields
@@ -78,7 +78,11 @@
   font-size: 1rem
   resize: vertical
 
-.poster_url_row
+// Shared by both the poster and banner URL fields — a plain paste-a-URL
+// input is the same shape either way, only the preview's natural aspect
+// ratio differs (portrait vs landscape), and that comes from the image
+// itself rather than anything set here.
+.url_input_row
   display: flex
   flex-flow: row
   gap: 0.5rem
@@ -87,12 +91,12 @@
     padding: 0 8px
     cursor: pointer
 
-.poster_url_preview
+.url_preview
   height: 6rem
   border-radius: 0.25rem
   margin-top: 0.25rem
 
-.poster_url_applied
+.url_applied
   color: var(--accent1)
   font-size: 0.75rem
 
@@ -168,4 +172,21 @@
 .save_error
   color: #e05656
   padding: 0 20px
+
+.picker_group
+  display: flex
+  flex-flow: column
+  gap: 0.4rem
+  width: 100%
+
+.picker_label
+  color: var(--accent1)
+  font-size: 0.8rem
+
+.banner_preview
+  width: 100%
+  max-width: 10rem
+  aspect-ratio: 21/9
+  object-fit: cover
+  border-radius: 0.25rem
 

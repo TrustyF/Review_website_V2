@@ -54,5 +54,6 @@ next-env.d.ts
 **/*.module.css
 **/*.module.css.map
 /public/posters/
+/public/banners/
 /.idea/
 /prisma/migrations/

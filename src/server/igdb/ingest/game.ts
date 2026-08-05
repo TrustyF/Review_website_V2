@@ -27,6 +27,9 @@ function buildMediaFields(game: IgdbGame) {
 				: MediaStatus.RELEASED,
 		publicRating: game.total_rating != null ? game.total_rating / 10 : null,
 		posterPath: game.cover?.image_id ?? null,
+		// First artwork stands in for a banner — IGDB doesn't rank them, so
+		// this is just whichever one the API lists first.
+		bannerPath: game.artworks?.[0]?.image_id ?? null,
 		sourceUrl: game.url,
 	};
 }

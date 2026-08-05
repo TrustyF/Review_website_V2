@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { suggestReviewCorrection } from "@/components/media/media-management/media-editor/media-editor-actions";
 import { ReviewDiff } from "@/components/media/media-management/media-editor/components/review-diff";
 import styles from "./review-body-modal.module.sass";
@@ -17,6 +17,7 @@ export function ReviewBodyModal({ body, onChange, onClose }: Props) {
 	const [suggestion, setSuggestion] = useState<string | null>(null);
 	const [isSuggesting, setIsSuggesting] = useState(false);
 	const [suggestError, setSuggestError] = useState<string | null>(null);
+	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	async function handleSuggest() {
 		if (!body.trim()) return;
@@ -31,13 +32,68 @@ export function ReviewBodyModal({ body, onChange, onClose }: Props) {
 		}
 	}
 
+	// Wraps the current selection in before/after (or, with nothing selected,
+	// inserts a placeholder between them) — used for both toolbar buttons
+	// below. See review-body.tsx for how ||...|| and [text](url) get
+	// rendered back out.
+	function wrapSelection(before: string, after: string, placeholder: string) {
+		const textarea = textareaRef.current;
+		if (!textarea) return;
+		const { selectionStart, selectionEnd } = textarea;
+		const selected = body.slice(selectionStart, selectionEnd) || placeholder;
+		const newBody =
+			body.slice(0, selectionStart) +
+			before +
+			selected +
+			after +
+			body.slice(selectionEnd);
+		onChange(newBody);
+
+		// The re-render from onChange hasn't landed yet — wait a frame before
+		// touching the textarea's own selection again.
+		requestAnimationFrame(() => {
+			textarea.focus();
+			const start = selectionStart + before.length;
+			textarea.setSelectionRange(start, start + selected.length);
+		});
+	}
+
+	function handleSpoiler() {
+		wrapSelection("||", "||", "spoiler");
+	}
+
+	function handleLink() {
+		const url = window.prompt("Link URL:");
+		if (!url) return;
+		wrapSelection("[", `](${url})`, "link text");
+	}
+
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.panel}>
 				<div className={styles.columns}>
 					<label className={styles.column}>
-						<div className={styles.body_header}>Body</div>
+						<div className={styles.body_header}>
+							Body
+							<div className={styles.body_toolbar}>
+								<button
+									type="button"
+									title="Wrap the selected text as a spoiler"
+									onClick={handleSpoiler}
+								>
+									Spoiler
+								</button>
+								<button
+									type="button"
+									title="Turn the selected text into a link"
+									onClick={handleLink}
+								>
+									Link
+								</button>
+							</div>
+						</div>
 						<textarea
+							ref={textareaRef}
 							className={styles.textarea}
 							value={body}
 							onChange={(e) => onChange(e.target.value)}

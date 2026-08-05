@@ -4,12 +4,15 @@ import { useReviewEditorStore } from "./review-editor-store";
 import { MediaRecord } from "@/components/media/types";
 import { useEffect, useState } from "react";
 import {
+	getAlternativeBanners,
+	getAlternativePosters,
 	saveMediaDetails,
 	saveReview,
+	updateMediaBanner,
 	updateMediaPoster,
 } from "@/components/media/media-management/media-editor/media-editor-actions";
 import { MediaCardResolver } from "@/components/media/media-cards/media-card/media-card-resolver";
-import { PosterPicker } from "@/components/media/media-management/media-editor/components/poster-picker";
+import { ImagePicker } from "@/components/media/media-management/media-editor/components/image-picker";
 import { ReviewBodyModal } from "@/components/media/media-management/media-editor/components/review-body-modal";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { MediaType, Review } from "@prisma/client";
@@ -29,6 +32,16 @@ const POSTER_PICKER_TYPES: MediaType[] = [
 	MediaType.GAME,
 ];
 
+// Narrower than POSTER_PICKER_TYPES: only TMDB (backdrops) and IGDB
+// (artworks) have any banner asset at all — MangaDex/ComicVine have no
+// landscape image in their data, full stop (see bannerUrlFor).
+const BANNER_PICKER_TYPES: MediaType[] = [
+	MediaType.MOVIE,
+	MediaType.SHORT,
+	MediaType.TVSHOW,
+	MediaType.GAME,
+];
+
 export default function MediaEditorModal() {
 	const media = useReviewEditorStore((s) => s.media);
 	const close = useReviewEditorStore((s) => s.close);
@@ -45,15 +58,20 @@ export default function MediaEditorModal() {
 	const [pendingPosterPath, setPendingPosterPath] = useState<string | null>(
 		null,
 	);
+	// Same idea as pendingPosterPath, for Media.bannerPath.
+	const [pendingBannerPath, setPendingBannerPath] = useState<string | null>(
+		null,
+	);
 
-	// A manually pasted poster URL (for media with no picker, or no provider
-	// at all). Kept separate from the picker's preview: a pasted URL can be
-	// any host, and feeding an unproxied, un-allowlisted host straight into
-	// next/image throws, so this gets a plain <img> preview of its own
-	// instead of updating draft.posterSrc — the real preview only picks it
-	// up once it's saved and downloaded through resolvePoster like any
-	// other source.
+	// A manually pasted poster/banner URL (for media with no picker, or no
+	// provider at all). Kept separate from the picker's preview: a pasted URL
+	// can be any host, and feeding an unproxied, un-allowlisted host straight
+	// into next/image throws, so this gets a plain <img> preview of its own
+	// instead of updating draft.posterSrc/bannerSrc — the real preview only
+	// picks it up once it's saved and downloaded through resolvePoster/
+	// resolveBanner like any other source.
 	const [posterUrlInput, setPosterUrlInput] = useState("");
+	const [bannerUrlInput, setBannerUrlInput] = useState("");
 
 	// Body editing (textarea + AI suggestion diff) lives in its own modal —
 	// see ReviewBodyModal — so it gets enough room to lay out side by side.
@@ -70,8 +88,10 @@ export default function MediaEditorModal() {
 		setDraftSource(media);
 		setSaveError(null);
 		setPendingPosterPath(null);
+		setPendingBannerPath(null);
 		setIsBodyModalOpen(false);
 		setPosterUrlInput("");
+		setBannerUrlInput("");
 	}
 
 	// The modal itself scrolls internally (its content can exceed viewport
@@ -106,10 +126,24 @@ export default function MediaEditorModal() {
 		);
 	}
 
+	// Same idea as pickPoster — no download, no DB write, until save.
+	function pickBanner(banner: { filePath: string; previewSrc: string }) {
+		setPendingBannerPath(banner.filePath);
+		setDraft((prev) =>
+			prev ? { ...prev, bannerSrc: banner.previewSrc } : prev,
+		);
+	}
+
 	function applyPosterUrl() {
 		const url = posterUrlInput.trim();
 		if (!url) return;
 		setPendingPosterPath(url);
+	}
+
+	function applyBannerUrl() {
+		const url = bannerUrlInput.trim();
+		if (!url) return;
+		setPendingBannerPath(url);
 	}
 
 	// MediaEditorModal stays mounted permanently (see layout.tsx) and just
@@ -118,6 +152,7 @@ export default function MediaEditorModal() {
 	// next time it's shown.
 	function handleClose() {
 		setPendingPosterPath(null);
+		setPendingBannerPath(null);
 		setIsBodyModalOpen(false);
 		close();
 	}
@@ -144,8 +179,12 @@ export default function MediaEditorModal() {
 				pendingPosterPath
 					? updateMediaPoster(draft.id, pendingPosterPath)
 					: Promise.resolve(),
+				pendingBannerPath
+					? updateMediaBanner(draft.id, pendingBannerPath)
+					: Promise.resolve(),
 			]);
 			setPendingPosterPath(null);
+			setPendingBannerPath(null);
 			close();
 		} catch {
 			setSaveError("Failed to save. Try again.");
@@ -238,7 +277,7 @@ export default function MediaEditorModal() {
 						</label>
 						<label className={styles.field}>
 							Poster URL
-							<div className={styles.poster_url_row}>
+							<div className={styles.url_input_row}>
 								<input
 									type="text"
 									className={styles.field_input_wide}
@@ -262,14 +301,43 @@ export default function MediaEditorModal() {
 								<img
 									src={posterUrlInput.trim()}
 									alt=""
-									className={styles.poster_url_preview}
+									className={styles.url_preview}
 								/>
 							)}
 							{pendingPosterPath === posterUrlInput.trim() &&
 								posterUrlInput.trim() && (
-									<span className={styles.poster_url_applied}>
-										Will apply on save
-									</span>
+									<span className={styles.url_applied}>Will apply on save</span>
+								)}
+						</label>
+						<label className={styles.field}>
+							Banner URL
+							<div className={styles.url_input_row}>
+								<input
+									type="text"
+									className={styles.field_input_wide}
+									placeholder="https://…"
+									value={bannerUrlInput}
+									onChange={(e) => setBannerUrlInput(e.target.value)}
+								/>
+								<button
+									type="button"
+									onClick={applyBannerUrl}
+								>
+									Use
+								</button>
+							</div>
+							{bannerUrlInput.trim() && (
+								// Same reasoning as the poster URL preview above.
+								// eslint-disable-next-line @next/next/no-img-element
+								<img
+									src={bannerUrlInput.trim()}
+									alt=""
+									className={styles.url_preview}
+								/>
+							)}
+							{pendingBannerPath === bannerUrlInput.trim() &&
+								bannerUrlInput.trim() && (
+									<span className={styles.url_applied}>Will apply on save</span>
 								)}
 						</label>
 					</div>
@@ -344,11 +412,43 @@ export default function MediaEditorModal() {
 					</div>
 
 					{draft && POSTER_PICKER_TYPES.includes(draft.type) && (
-						<PosterPicker
-							key={draft.id}
-							draft={draft}
-							onPick={pickPoster}
-						/>
+						<div className={styles.picker_group}>
+							<div className={styles.picker_label}>Poster</div>
+							<ImagePicker
+								key={draft.id}
+								draft={draft}
+								fetchOptions={getAlternativePosters}
+								onPick={pickPoster}
+								altText="Alternative poster option"
+								errorText="Couldn't load alternative posters. Try again later."
+							/>
+						</div>
+					)}
+
+					{draft && BANNER_PICKER_TYPES.includes(draft.type) && (
+						<div className={styles.picker_group}>
+							<div className={styles.picker_label}>Banner</div>
+							{draft.bannerSrc && (
+								// Plain <img>, not next/image — this is a small editor-only
+								// preview, not worth the width/height ceremony (unlike the
+								// poster URL preview above, the host here is always already
+								// allowlisted, so this is just about keeping it simple).
+								// eslint-disable-next-line @next/next/no-img-element
+								<img
+									src={draft.bannerSrc}
+									alt=""
+									className={styles.banner_preview}
+								/>
+							)}
+							<ImagePicker
+								key={draft.id}
+								draft={draft}
+								fetchOptions={getAlternativeBanners}
+								onPick={pickBanner}
+								altText="Alternative banner option"
+								errorText="Couldn't load alternative banners. Try again later."
+							/>
+						</div>
 					)}
 				</div>
 

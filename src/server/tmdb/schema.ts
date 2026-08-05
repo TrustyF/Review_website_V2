@@ -8,6 +8,7 @@ export const TmdbMovieResponseSchema = type({
 	overview: "string | null",
 	release_date: "string | null",
 	poster_path: "string",
+	backdrop_path: "string | null",
 	runtime: "number",
 	budget: zeroToNull,
 	revenue: zeroToNull,
@@ -54,6 +55,7 @@ export const TmdbTvResponseSchema = type({
 	overview: "string | null",
 	first_air_date: "string | null",
 	poster_path: "string | null",
+	backdrop_path: "string | null",
 	number_of_episodes: "number | null",
 	number_of_seasons: "number | null",
 	networks: type({ id: "number", name: "string" }).array(),
@@ -124,6 +126,13 @@ export const TmdbTvSearchResponseSchema = type({
 export const TmdbImagesResponseSchema = type({
 	id: "number",
 	posters: type({
+		file_path: "string",
+		width: "number",
+		height: "number",
+		vote_average: "number",
+		iso_639_1: "string | null",
+	}).array(),
+	backdrops: type({
 		file_path: "string",
 		width: "number",
 		height: "number",
