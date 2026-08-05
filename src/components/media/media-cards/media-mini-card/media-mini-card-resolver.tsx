@@ -1,8 +1,8 @@
-import { MovieMiniCard } from "@/components/media/media-mini-card/movie-mini-card";
-import { TvShowMiniCard } from "@/components/media/media-mini-card/tv-show-mini-card";
-import { MangaMiniCard } from "@/components/media/media-mini-card/manga-mini-card";
-import { ComicMiniCard } from "@/components/media/media-mini-card/comic-mini-card";
-import { GameMiniCard } from "@/components/media/media-mini-card/game-mini-card";
+import { MovieMiniCard } from "@/components/media/media-cards/media-mini-card/movie-mini-card";
+import { TvShowMiniCard } from "@/components/media/media-cards/media-mini-card/tv-show-mini-card";
+import { MangaMiniCard } from "@/components/media/media-cards/media-mini-card/manga-mini-card";
+import { ComicMiniCard } from "@/components/media/media-cards/media-mini-card/comic-mini-card";
+import { GameMiniCard } from "@/components/media/media-cards/media-mini-card/game-mini-card";
 import { MediaRecord } from "@/components/media/types";
 
 type Props = {

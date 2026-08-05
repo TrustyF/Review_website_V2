@@ -1,6 +1,6 @@
 "use client";
 
-import { useReviewEditorStore } from "@/components/media/media-editor/review-editor-store";
+import { useReviewEditorStore } from "@/components/media/media-management/media-editor/review-editor-store";
 import { useIsAdminStore } from "@/lib/is-admin-store";
 import { MediaRecord } from "@/components/media/types";
 import { Hitbox } from "@/components/ui/hitbox";

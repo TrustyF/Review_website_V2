@@ -1,4 +1,4 @@
-import { MediaMiniCardShell } from "@/components/media/media-mini-card/media-mini-card-shell";
+import { MediaMiniCardShell } from "@/components/media/media-cards/media-mini-card/media-mini-card-shell";
 import { formatPlatformSummary } from "@/components/media/primitives/platform";
 import { MediaRecord } from "@/components/media/types";
 import styles from "./media-mini-card-shell.module.sass";

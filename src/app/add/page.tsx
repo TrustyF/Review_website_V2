@@ -6,13 +6,13 @@ import { MediaType } from "@prisma/client";
 import {
 	addMediaToLibrary,
 	searchMediaSources,
-} from "@/components/media/media-add/media-add-actions";
-import { createManualMedia } from "@/components/media/media-add/manual-add-actions";
+} from "@/components/media/media-management/media-add/media-add-actions";
+import { createManualMedia } from "@/components/media/media-management/media-add/manual-add-actions";
 import {
 	ADDABLE_TYPES,
 	AddableType,
 	MediaSearchResult,
-} from "@/components/media/media-add/addable-types";
+} from "@/components/media/media-management/media-add/addable-types";
 import styles from "./add-media.module.sass";
 
 // Covers every real MediaType, not just AddableType — manual entry has no

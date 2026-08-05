@@ -1,4 +1,4 @@
-import { MediaCardShell } from "@/components/media/media-card/media-card-shell";
+import { MediaCardShell } from "@/components/media/media-cards/media-card/media-card-shell";
 import { MediaPlatform } from "@/components/media/primitives/platform";
 import { MediaRecord } from "@/components/media/types";
 

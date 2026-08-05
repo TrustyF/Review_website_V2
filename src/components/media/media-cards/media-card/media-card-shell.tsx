@@ -1,8 +1,8 @@
 import { ReactNode } from "react";
 import { MediaPoster } from "@/components/media/primitives/poster";
-import { posterRatioFor } from "@/components/media/primitives/poster-ratio";
+import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaReleaseDate } from "@/components/media/primitives/release-date";
-import { MediaReview } from "@/components/media/media-card/review";
+import { MediaReview } from "@/components/media/primitives/review";
 import { MediaTitle } from "@/components/media/primitives/title";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { MediaRecord } from "@/components/media/types";

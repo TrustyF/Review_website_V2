@@ -1,4 +1,4 @@
-import { MediaCardShell } from "@/components/media/media-card/media-card-shell";
+import { MediaCardShell } from "@/components/media/media-cards/media-card/media-card-shell";
 import { MediaRuntime } from "@/components/media/primitives/runtime";
 import { MediaRecord } from "@/components/media/types";
 import { CircularGauge } from "@/components/ui/circular-gauge";

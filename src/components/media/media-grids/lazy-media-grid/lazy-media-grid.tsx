@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { MediaRecord } from "@/components/media/types";
-import { MediaMiniCardResolver } from "@/components/media/media-mini-card/media-mini-card-resolver";
+import { MediaMiniCardResolver } from "@/components/media/media-cards/media-mini-card/media-mini-card-resolver";
 import styles from "./lazy-media-grid.module.sass";
 
 // Sized generously (well past a typical viewport's worth of ~110px cards)

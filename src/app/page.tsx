@@ -1,4 +1,4 @@
-import { MediaCardResolver } from "@/components/media/media-card/media-card-resolver";
+import { MediaCardResolver } from "@/components/media/media-cards/media-card/media-card-resolver";
 import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
 import styles from "./media-grid.module.sass";

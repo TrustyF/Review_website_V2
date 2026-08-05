@@ -1,7 +1,7 @@
 import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
-import { MediaCardResolver } from "@/components/media/media-card/media-card-resolver";
-import { MediaMiniCardResolver } from "@/components/media/media-mini-card/media-mini-card-resolver";
+import { MediaCardResolver } from "@/components/media/media-cards/media-card/media-card-resolver";
+import { MediaMiniCardResolver } from "@/components/media/media-cards/media-mini-card/media-mini-card-resolver";
 import { EnrichmentStatus, MediaType } from "@prisma/client";
 import { notFound } from "next/navigation";
 import styles from "./media-cards-dev.module.sass";

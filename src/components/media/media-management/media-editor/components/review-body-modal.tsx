@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
-import { suggestReviewCorrection } from "@/components/media/media-editor/media-editor-actions";
-import { ReviewDiff } from "@/components/media/media-editor/components/review-diff";
+import { suggestReviewCorrection } from "@/components/media/media-management/media-editor/media-editor-actions";
+import { ReviewDiff } from "@/components/media/media-management/media-editor/components/review-diff";
 import styles from "./review-body-modal.module.sass";
 
 type Props = {

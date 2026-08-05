@@ -25,7 +25,7 @@ import { posterUrlFor } from "@/server/resolvers/poster-resolver";
 import {
 	AddableType,
 	MediaSearchResult,
-} from "@/components/media/media-add/addable-types";
+} from "@/components/media/media-management/media-add/addable-types";
 
 function yearOf(dateString: string | null): number | null {
 	if (!dateString) return null;

@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { MediaPoster } from "@/components/media/primitives/poster";
-import { posterRatioFor } from "@/components/media/primitives/poster-ratio";
+import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaTitle } from "@/components/media/primitives/title";
 import { MediaRecord } from "@/components/media/types";
 import { StarIcon } from "@/components/media/icons/star-icon";

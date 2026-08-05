@@ -1,7 +1,7 @@
 "use client";
 import styles from "./poster-picker.module.sass";
 import { useEffect, useState } from "react";
-import { getAlternativePosters } from "@/components/media/media-editor/media-editor-actions";
+import { getAlternativePosters } from "@/components/media/media-management/media-editor/media-editor-actions";
 import { MediaRecord } from "@/components/media/types";
 
 type PosterOption = {

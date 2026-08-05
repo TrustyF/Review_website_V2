@@ -7,10 +7,10 @@ import {
 	saveMediaDetails,
 	saveReview,
 	updateMediaPoster,
-} from "@/components/media/media-editor/media-editor-actions";
-import { MediaCardResolver } from "@/components/media/media-card/media-card-resolver";
-import { PosterPicker } from "@/components/media/media-editor/components/poster-picker";
-import { ReviewBodyModal } from "@/components/media/media-editor/components/review-body-modal";
+} from "@/components/media/media-management/media-editor/media-editor-actions";
+import { MediaCardResolver } from "@/components/media/media-cards/media-card/media-card-resolver";
+import { PosterPicker } from "@/components/media/media-management/media-editor/components/poster-picker";
+import { ReviewBodyModal } from "@/components/media/media-management/media-editor/components/review-body-modal";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { MediaType, Review } from "@prisma/client";
 

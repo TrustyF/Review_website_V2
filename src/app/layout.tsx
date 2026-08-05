@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./styles/globals.sass";
 import React from "react";
 import Navbar from "@/components/navbar/nav-bar";
-import MediaEditorModal from "@/components/media/media-editor/media-editor-modal";
+import MediaEditorModal from "@/components/media/media-management/media-editor/media-editor-modal";
 import { fontVariables } from "./fonts";
 
 export const metadata: Metadata = {

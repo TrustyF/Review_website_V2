@@ -2,17 +2,14 @@ import { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db/client";
-import {
-	toMediaRecord,
-	MediaRecord,
-} from "@/components/media/types";
+import { toMediaRecord, MediaRecord } from "@/components/media/types";
 import { MediaPoster } from "@/components/media/primitives/poster";
-import { posterRatioFor } from "@/components/media/primitives/poster-ratio";
+import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaTitle } from "@/components/media/primitives/title";
 import { MediaReleaseDate } from "@/components/media/primitives/release-date";
-import { MediaReview } from "@/components/media/media-card/review";
+import { MediaReview } from "@/components/media/primitives/review";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
-import { ChangeLogList } from "@/components/media/change-log/change-log-list";
+import { ChangeLogList } from "@/components/media/media-management/change-log/change-log-list";
 import { formatRuntime } from "@/components/media/primitives/runtime";
 import { MediaType } from "@prisma/client";
 import styles from "./media-detail.module.sass";
@@ -266,7 +263,9 @@ export default async function MediaDetailPage({
 		.slice(0, TOP_ACTOR_COUNT);
 
 	const otherRoles = [...creditsByRole.entries()]
-		.filter(([role]) => role !== "Director" && role !== "Studio" && role !== "Actor")
+		.filter(
+			([role]) => role !== "Director" && role !== "Studio" && role !== "Actor",
+		)
 		.sort(([a], [b]) => {
 			const priorityDiff = (ROLE_PRIORITY[a] ?? 99) - (ROLE_PRIORITY[b] ?? 99);
 			return priorityDiff !== 0 ? priorityDiff : a.localeCompare(b);
