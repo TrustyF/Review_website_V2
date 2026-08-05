@@ -245,7 +245,7 @@ export default async function MediaDetailPage({
 							src={media.bannerSrc}
 							alt={`${media.title} banner`}
 							width={1280}
-							height={548}
+							height={720}
 							className={styles.banner_image}
 							priority
 						/>

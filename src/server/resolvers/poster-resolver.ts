@@ -103,7 +103,7 @@ export type PosterSize = "thumb" | "full";
 // on resolveChangelogPosterThumb's own resize instead of a third tier here.
 export function posterUrlFor(
 	type: MediaType,
-	externalId: string,
+	externalId: string | null,
 	posterPath: string,
 	size: PosterSize,
 ) {
@@ -155,7 +155,7 @@ async function cacheOrDownload(
 export async function resolvePoster(
 	mediaId: number,
 	type: MediaType,
-	externalId: string,
+	externalId: string | null,
 	posterPath: string | null,
 ) {
 	if (!posterPath) return "/posters/placeholder.jpg";
@@ -177,7 +177,7 @@ export async function resolvePoster(
 export async function resolveChangelogPosterThumb(
 	mediaId: number,
 	type: MediaType,
-	externalId: string,
+	externalId: string | null,
 	posterPath: string,
 ) {
 	const filename = mediaAssetFilename(mediaId, posterPath);

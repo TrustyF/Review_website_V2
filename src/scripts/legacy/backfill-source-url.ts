@@ -37,12 +37,13 @@ async function backfillLocal() {
 				],
 			},
 			sourceUrl: null,
-			externalId: { not: "" },
+			externalId: { not: null },
 		},
 		select: { id: true, type: true, externalId: true },
 	});
 
 	for (const row of rows) {
+		if (!row.externalId) continue;
 		const sourceUrl = localSourceUrl(row.type, row.externalId);
 		if (!sourceUrl) continue;
 		await db.media.update({ where: { id: row.id }, data: { sourceUrl } });
@@ -55,12 +56,13 @@ async function backfillLocal() {
 
 async function backfillGames() {
 	const rows = await db.media.findMany({
-		where: { type: MediaType.GAME, sourceUrl: null, externalId: { not: "" } },
+		where: { type: MediaType.GAME, sourceUrl: null, externalId: { not: null } },
 		select: { id: true, title: true, externalId: true },
 	});
 
 	let updated = 0;
 	for (const row of rows) {
+		if (!row.externalId) continue;
 		try {
 			const game = await fetchIgdbGameById(row.externalId);
 			await db.media.update({
@@ -81,12 +83,13 @@ async function backfillGames() {
 
 async function backfillComics() {
 	const rows = await db.media.findMany({
-		where: { type: MediaType.COMIC, sourceUrl: null, externalId: { not: "" } },
+		where: { type: MediaType.COMIC, sourceUrl: null, externalId: { not: null } },
 		select: { id: true, title: true, externalId: true },
 	});
 
 	let updated = 0;
 	for (const row of rows) {
+		if (!row.externalId) continue;
 		try {
 			const volume = await fetchComicVineById(row.externalId);
 			const sourceUrl =

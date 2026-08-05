@@ -41,11 +41,19 @@ export function ImagePicker({
 }: Props) {
 	// Fetched once up front, then paged through client-side — cheaper than
 	// re-fetching every time "load more" is pressed.
-	const [options, setOptions] = useState<PickableImage[] | null>(null);
+	// A manually-added item (see manual-add-actions.ts) has no provider behind
+	// it to fetch alternates from — starts as an empty list rather than null
+	// (which would otherwise render as still-loading) since ImagePicker
+	// remounts fresh per draft (see key={draft.id} on its call sites), so this
+	// initializer re-evaluates correctly whenever the item changes.
+	const [options, setOptions] = useState<PickableImage[] | null>(() =>
+		draft.externalId ? null : [],
+	);
 	const [error, setError] = useState<string | null>(null);
 	const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
 	useEffect(() => {
+		if (!draft.externalId) return;
 		fetchOptions(draft.externalId, draft.type)
 			.then(setOptions)
 			.catch(() => {

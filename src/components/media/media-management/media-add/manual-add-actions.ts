@@ -44,11 +44,11 @@ export async function createManualMedia(input: {
 			overview: input.overview?.trim() || null,
 			releaseDate: input.releaseDate ? new Date(input.releaseDate) : null,
 			posterPath: input.posterUrl?.trim() || null,
-			// No provider backs a manual entry — externalId is left blank rather
-			// than guessed at, the same convention already used for the couple
-			// of comics ComicVine doesn't have (see enrich-db.ts, which only
-			// ever touches PENDING rows and so never picks these up).
-			externalId: "",
+			// No provider backs a manual entry — externalId is left null rather
+			// than guessed at, same as sourceUrl. enrich-db.ts filters these out
+			// (nothing to fetch), and null is exempt from the @@unique([externalId,
+			// type]) constraint, so any number of manual entries per type coexist.
+			externalId: null,
 			enrichmentStatus: EnrichmentStatus.DONE,
 			lastEnrichedAt: new Date(),
 			...subTableFor(input.type),

@@ -3,6 +3,7 @@ import { TmdbTvResponse } from "@/server/tmdb/schema";
 import { db } from "@/server/db/client";
 import { resolveCountry } from "@/server/resolvers/entity-resolver";
 import { syncTvShowCreditsAndGenres } from "@/server/tmdb/ingest/tv-show-credits";
+import { fetchTmdbImages, pickBestBackdrop } from "@/server/tmdb/client";
 
 export async function addTvShowFromTmdb(data: TmdbTvResponse) {
 	const externalId = String(data.id);
@@ -17,6 +18,9 @@ export async function addTvShowFromTmdb(data: TmdbTvResponse) {
 			? await resolveCountry(tx, data.origin_country[0])
 			: null;
 
+		const images = await fetchTmdbImages(externalId, MediaType.TVSHOW);
+		const bannerPath = pickBestBackdrop(images.backdrops) ?? data.backdrop_path;
+
 		const media = await tx.media.create({
 			data: {
 				title: data.name,
@@ -26,7 +30,7 @@ export async function addTvShowFromTmdb(data: TmdbTvResponse) {
 				releaseDate: data.first_air_date ? new Date(data.first_air_date) : null,
 				publicRating: data.vote_average,
 				posterPath: data.poster_path,
-				bannerPath: data.backdrop_path,
+				bannerPath,
 				countryId: country?.id ?? null,
 				sourceUrl: `https://www.themoviedb.org/tv/${externalId}`,
 				lastEnrichedAt: new Date(),
@@ -53,6 +57,7 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 	return db.$transaction(async (tx) => {
 		const existing = await tx.media.findFirst({
 			where: { externalId, type: MediaType.TVSHOW },
+			include: { tvShow: true },
 		});
 		if (!existing)
 			throw new Error(
@@ -63,24 +68,41 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 			? await resolveCountry(tx, data.origin_country[0])
 			: null;
 
+		// Only hits TMDB's images endpoint when a banner is actually still
+		// missing — bulk re-enrichment (enrich-db.ts, backfill-banners.ts)
+		// runs this over every row, most of which already have one.
+		const bannerPath =
+			existing.bannerPath ??
+			pickBestBackdrop(
+				(await fetchTmdbImages(externalId, MediaType.TVSHOW)).backdrops,
+			) ??
+			data.backdrop_path;
+
+		// Re-enrichment only fills in fields that are still empty — anything
+		// already set (whether from a prior ingest or a hand edit in the media
+		// editor) is left alone. publicRating is the exception: it genuinely
+		// changes over time at the source, so it always refreshes.
 		await tx.media.update({
 			where: { id: existing.id },
 			data: {
-				title: data.name,
-				overview: data.overview,
-				releaseDate: data.first_air_date ? new Date(data.first_air_date) : null,
+				title: existing.title ?? data.name,
+				overview: existing.overview ?? data.overview,
+				releaseDate:
+					existing.releaseDate ??
+					(data.first_air_date ? new Date(data.first_air_date) : null),
 				publicRating: data.vote_average,
-				posterPath: data.poster_path,
-				bannerPath: data.backdrop_path,
-				countryId: country?.id ?? null,
+				posterPath: existing.posterPath ?? data.poster_path,
+				bannerPath,
+				countryId: existing.countryId ?? (country?.id ?? null),
 				sourceUrl: `https://www.themoviedb.org/tv/${externalId}`,
 				lastEnrichedAt: new Date(),
 				enrichmentStatus: EnrichmentStatus.DONE,
 				tvShow: {
 					update: {
-						episodeCount: data.number_of_episodes,
-						seasonCount: data.number_of_seasons,
-						network: data.networks[0]?.name ?? null,
+						episodeCount:
+							existing.tvShow?.episodeCount ?? data.number_of_episodes,
+						seasonCount: existing.tvShow?.seasonCount ?? data.number_of_seasons,
+						network: existing.tvShow?.network ?? (data.networks[0]?.name ?? null),
 					},
 				},
 			},

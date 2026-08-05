@@ -18,18 +18,30 @@ function buildOverview(volume: ComicVineVolume): string | null {
 	return null;
 }
 
-function buildMediaFields(volume: ComicVineVolume) {
+// existing is only passed by updateComicFromComicVine (undefined on create) —
+// every field below except status/publicRating only fills in if existing
+// doesn't already have a value, whether that's a prior ingest or a hand edit
+// in the media editor.
+function buildMediaFields(
+	volume: ComicVineVolume,
+	existing?: {
+		title: string;
+		overview: string | null;
+		releaseDate: Date | null;
+		posterPath: string | null;
+	} | null,
+) {
 	return {
-		title: volume.name,
-		overview: buildOverview(volume),
-		releaseDate: volume.start_year
-			? new Date(Number(volume.start_year), 0, 1)
-			: null,
+		title: existing?.title ?? volume.name,
+		overview: existing?.overview ?? buildOverview(volume),
+		releaseDate:
+			existing?.releaseDate ??
+			(volume.start_year ? new Date(Number(volume.start_year), 0, 1) : null),
 		// ComicVine's volume endpoint has no ongoing/completed/cancelled signal
 		// to key off of — every tracked volume is treated as a released run.
 		status: MediaStatus.RELEASED,
 		publicRating: null,
-		posterPath: volume.image?.medium_url ?? null,
+		posterPath: existing?.posterPath ?? (volume.image?.medium_url ?? null),
 		sourceUrl:
 			volume.site_detail_url ??
 			`https://comicvine.gamespot.com/volume/4050-${volume.id}/`,
@@ -73,6 +85,7 @@ export async function updateComicFromComicVine(volume: ComicVineVolume) {
 	return db.$transaction(async (tx) => {
 		const existing = await tx.media.findFirst({
 			where: { externalId, type: MediaType.COMIC },
+			include: { comic: true },
 		});
 		if (!existing)
 			throw new Error(
@@ -82,12 +95,13 @@ export async function updateComicFromComicVine(volume: ComicVineVolume) {
 		await tx.media.update({
 			where: { id: existing.id },
 			data: {
-				...buildMediaFields(volume),
+				...buildMediaFields(volume, existing),
 				lastEnrichedAt: new Date(),
 				enrichmentStatus: EnrichmentStatus.DONE,
 				comic: {
 					update: {
-						chapterCount: volume.count_of_issues ?? null,
+						chapterCount:
+							existing.comic?.chapterCount ?? (volume.count_of_issues ?? null),
 					},
 				},
 			},

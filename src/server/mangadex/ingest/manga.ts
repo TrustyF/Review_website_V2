@@ -52,10 +52,22 @@ function parseCount(value: string | null): number | null {
 	return Number.isFinite(n) ? n : null;
 }
 
+// existing is only passed by updateMangaFromMangaDex (undefined on create) —
+// every field below except status/publicRating only fills in if existing
+// doesn't already have a value, whether that's a prior ingest or a hand edit
+// in the media editor.
 async function buildMediaFields(
 	tx: t_client,
 	manga: MangaDexManga,
 	statistics: MangaDexStatisticsEntry | null,
+	existing?: {
+		title: string;
+		alternateTitle: string | null;
+		overview: string | null;
+		releaseDate: Date | null;
+		posterPath: string | null;
+		countryId: number | null;
+	} | null,
 ) {
 	const country = manga.attributes.originalLanguage
 		? LANGUAGE_TO_COUNTRY[manga.attributes.originalLanguage]
@@ -66,20 +78,20 @@ async function buildMediaFields(
 		"Untitled";
 
 	return {
-		title,
-		alternateTitle: pickNativeTitle(
-			manga.attributes.title,
-			manga.attributes.altTitles,
-			title,
-		),
-		overview: pickLocalized(manga.attributes.description),
-		releaseDate: manga.attributes.year
-			? new Date(manga.attributes.year, 0, 1)
-			: null,
+		title: existing?.title ?? title,
+		alternateTitle:
+			existing?.alternateTitle ??
+			pickNativeTitle(manga.attributes.title, manga.attributes.altTitles, title),
+		overview: existing?.overview ?? pickLocalized(manga.attributes.description),
+		releaseDate:
+			existing?.releaseDate ??
+			(manga.attributes.year ? new Date(manga.attributes.year, 0, 1) : null),
 		status: STATUS_MAP[manga.attributes.status] ?? MediaStatus.RELEASED,
 		publicRating: statistics?.rating.bayesian ?? null,
-		posterPath: extractCoverFileName(manga),
-		countryId: country ? (await resolveCountry(tx, country)).id : null,
+		posterPath: existing?.posterPath ?? extractCoverFileName(manga),
+		countryId:
+			existing?.countryId ??
+			(country ? (await resolveCountry(tx, country)).id : null),
 		sourceUrl: `https://mangadex.org/title/${manga.id}`,
 	};
 }
@@ -129,6 +141,7 @@ export async function updateMangaFromMangaDex(
 	return db.$transaction(async (tx) => {
 		const existing = await tx.media.findFirst({
 			where: { externalId, type: MediaType.MANGA },
+			include: { manga: true },
 		});
 		if (!existing)
 			throw new Error(
@@ -138,13 +151,17 @@ export async function updateMangaFromMangaDex(
 		await tx.media.update({
 			where: { id: existing.id },
 			data: {
-				...(await buildMediaFields(tx, manga, statistics)),
+				...(await buildMediaFields(tx, manga, statistics, existing)),
 				lastEnrichedAt: new Date(),
 				enrichmentStatus: EnrichmentStatus.DONE,
 				manga: {
 					update: {
-						volumeCount: parseCount(manga.attributes.lastVolume),
-						chapterCount: parseCount(manga.attributes.lastChapter),
+						volumeCount:
+							existing.manga?.volumeCount ??
+							parseCount(manga.attributes.lastVolume),
+						chapterCount:
+							existing.manga?.chapterCount ??
+							parseCount(manga.attributes.lastChapter),
 					},
 				},
 			},

@@ -45,7 +45,7 @@ async function ChangeValue({
 	value: string | null;
 	mediaId: number;
 	type: MediaType;
-	externalId: string;
+	externalId: string | null;
 }) {
 	if (value === null) return null;
 
@@ -112,7 +112,7 @@ export function ChangeLogList({
 }: {
 	entries: MediaChangeLog[];
 	type: MediaType;
-	externalId: string;
+	externalId: string | null;
 }) {
 	if (entries.length === 0) {
 		return <div className={styles.empty}>No changes recorded yet.</div>;

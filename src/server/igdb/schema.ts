@@ -25,8 +25,10 @@ export const IgdbGameSchema = type({
 		name: "string",
 	}).array(),
 	// Promotional artwork — wide/landscape, unlike cover — used as this
-	// app's banner image for games. Not every game has any.
-	"artworks?": type({ image_id: "string" }).array(),
+	// app's banner image for games. Not every game has any. width/height are
+	// only used to pick the closest-to-16:9 option (see pickBestArtwork) —
+	// IGDB has no per-image relevance/vote signal the way TMDB does.
+	"artworks?": type({ image_id: "string", width: "number", height: "number" }).array(),
 });
 
 export type IgdbGame = typeof IgdbGameSchema.infer;

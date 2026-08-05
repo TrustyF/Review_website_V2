@@ -11,24 +11,29 @@ import { fetchIgdbGameById } from "@/server/igdb/client";
 import { updateGameFromIgdb } from "@/server/igdb/ingest/game";
 import { fetchComicVineById } from "@/server/comicvine/client";
 import { updateComicFromComicVine } from "@/server/comicvine/ingest/comic";
-import { EnrichmentStatus, Media, MediaType } from "@prisma/client";
+import { Media, MediaType } from "@prisma/client";
 
 async function enrichOne(media: Media) {
+	// Guaranteed non-null by main()'s where filter below — narrowed here just
+	// to satisfy the type, not a real runtime possibility.
+	if (!media.externalId) return;
+	const externalId = media.externalId;
+
 	if (media.type === MediaType.MOVIE || media.type === MediaType.SHORT) {
-		const data = await fetchTmdbById(media.externalId, media.type);
+		const data = await fetchTmdbById(externalId, media.type);
 		await updateMovieFromTmdb(data);
 	} else if (media.type === MediaType.TVSHOW) {
-		const data = await fetchTvShowById(media.externalId);
+		const data = await fetchTvShowById(externalId);
 		await updateTvShowFromTmdb(data);
 	} else if (media.type === MediaType.MANGA) {
-		const data = await fetchMangaDexById(media.externalId);
-		const statistics = await fetchMangaDexStatistics(media.externalId);
+		const data = await fetchMangaDexById(externalId);
+		const statistics = await fetchMangaDexStatistics(externalId);
 		await updateMangaFromMangaDex(data, statistics);
 	} else if (media.type === MediaType.GAME) {
-		const data = await fetchIgdbGameById(media.externalId);
+		const data = await fetchIgdbGameById(externalId);
 		await updateGameFromIgdb(data);
 	} else if (media.type === MediaType.COMIC) {
-		const data = await fetchComicVineById(media.externalId);
+		const data = await fetchComicVineById(externalId);
 		await updateComicFromComicVine(data);
 	} else {
 		console.log(
@@ -62,9 +67,18 @@ async function runQueue(type: MediaType, mediaList: Media[]) {
 	}
 }
 
+const ENRICH_INTERVAL_DAYS = 3;
+
 async function main() {
+	const enrichCutoff = new Date(
+		Date.now() - ENRICH_INTERVAL_DAYS * 24 * 60 * 60 * 1000,
+	);
+
 	const mediaList = await db.media.findMany({
-		// where: { enrichmentStatus: EnrichmentStatus.PENDING },
+		where: {
+			externalId: { not: null },
+			OR: [{ lastEnrichedAt: null }, { lastEnrichedAt: { lt: enrichCutoff } }],
+		},
 		orderBy: { id: "asc" },
 	});
 

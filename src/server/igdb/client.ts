@@ -26,6 +26,8 @@ const GAME_FIELDS = [
 	"cover.image_id",
 	"platforms.name",
 	"artworks.image_id",
+	"artworks.width",
+	"artworks.height",
 ].join(", ");
 
 // IGDB sits behind Twitch's OAuth2 app-token flow rather than a static key —
@@ -138,6 +140,44 @@ export async function searchIgdbGames(
 		`search "${escapeApicalypseString(query)}"; fields name, first_release_date, cover.image_id; limit 20;`,
 	);
 	return parseOrThrow(IgdbGameSearchResponseSchema, json);
+}
+
+// Matches the banner's fixed 16:9 display box (see media-detail.module
+// .sass's .banner) — the target isn't really "1280x720" as a resolution,
+// just the aspect ratio it implies.
+const TARGET_ASPECT_RATIO = 16 / 9;
+
+// A narrower-than-16:9 (or square, or portrait) source loses a lot to
+// object-fit: cover — the box is wider than the image, so cover scales up
+// to fill the height and slices off both sides. A wider-than-16:9 source
+// loses much less: cover only needs to trim a bit off the sides to match
+// the box's narrower shape, so the full height is usually preserved either
+// way. Same distance from the target ratio isn't the same amount of actual
+// cropping, so narrower misses are penalized more heavily than wider ones.
+const NARROW_PENALTY_MULTIPLIER = 3;
+
+// IGDB has no per-image relevance/vote signal the way TMDB's vote_average
+// is for backdrops — closest-to-16:9 (favoring wide over narrow misses) is
+// the best available proxy. Exported alongside pickBestArtwork so the
+// manual picker (getAlternativeBanners) can sort by the same metric instead
+// of just picking the one best.
+export function artworkAspectRatioDiff(artwork: {
+	width: number;
+	height: number;
+}): number {
+	const diff = artwork.width / artwork.height - TARGET_ASPECT_RATIO;
+	return diff < 0 ? Math.abs(diff) * NARROW_PENALTY_MULTIPLIER : diff;
+}
+
+export function pickBestArtwork(
+	artworks: NonNullable<IgdbGame["artworks"]>,
+): string | null {
+	if (artworks.length === 0) return null;
+	return artworks.reduce((best, artwork) =>
+		artworkAspectRatioDiff(artwork) < artworkAspectRatioDiff(best)
+			? artwork
+			: best,
+	).image_id;
 }
 
 export type IgdbCoverOption = { imageId: string; label: string };

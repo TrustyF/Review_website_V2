@@ -285,10 +285,7 @@ export default function MediaEditorModal() {
 									value={posterUrlInput}
 									onChange={(e) => setPosterUrlInput(e.target.value)}
 								/>
-								<button
-									type="button"
-									onClick={applyPosterUrl}
-								>
+								<button type="button" onClick={applyPosterUrl}>
 									Use
 								</button>
 							</div>
@@ -319,10 +316,7 @@ export default function MediaEditorModal() {
 									value={bannerUrlInput}
 									onChange={(e) => setBannerUrlInput(e.target.value)}
 								/>
-								<button
-									type="button"
-									onClick={applyBannerUrl}
-								>
+								<button type="button" onClick={applyBannerUrl}>
 									Use
 								</button>
 							</div>
@@ -394,19 +388,14 @@ export default function MediaEditorModal() {
 
 					{/* Review body: preview + edit button, kept on its own row.
 					Actual editing (and the AI suggestion diff) happens in
-					ReviewBodyModal, which has room to lay them out side by side. */}
+					ReviewBodyModal, which has room to lay them outside by side. */}
 					<div className={styles.body_group}>
-						<label className={styles.field}>
-							Body
-							<div className={styles.body_preview}>
-								{draft?.review?.body || <em>No review text yet.</em>}
-							</div>
-						</label>
+						<label className={styles.field}>Body</label>
 
 						<button
 							type="button"
-							onClick={() => setIsBodyModalOpen(true)}
-						>
+							style={{ width: "5rem" }}
+							onClick={() => setIsBodyModalOpen(true)}>
 							Edit body
 						</button>
 					</div>
@@ -454,10 +443,7 @@ export default function MediaEditorModal() {
 
 				{saveError && <div className={styles.save_error}>{saveError}</div>}
 				<div className={styles.actions}>
-					<button
-						onClick={handleSave}
-						disabled={isSaving}
-					>
+					<button onClick={handleSave} disabled={isSaving}>
 						{isSaving ? "Saving…" : "Save"}
 					</button>
 					<button onClick={handleClose}>Close</button>

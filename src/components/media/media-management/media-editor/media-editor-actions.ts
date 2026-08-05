@@ -6,7 +6,11 @@ import Anthropic from "@anthropic-ai/sdk";
 import { fetchTmdbImages } from "@/server/tmdb/client";
 import { fetchMangaDexCovers } from "@/server/mangadex/client";
 import { fetchComicVineIssuesForVolume } from "@/server/comicvine/client";
-import { fetchIgdbGameById, fetchIgdbGameCoverOptions } from "@/server/igdb/client";
+import {
+	artworkAspectRatioDiff,
+	fetchIgdbGameById,
+	fetchIgdbGameCoverOptions,
+} from "@/server/igdb/client";
 import {
 	bannerUrlFor,
 	posterUrlFor,
@@ -88,7 +92,12 @@ export async function saveReview(
 	const hadBody = Boolean(existing?.body?.trim());
 	const hasBody = Boolean(review.body?.trim());
 	if (!hadBody && hasBody) {
-		changes.push({ mediaId, field: "reviewed", oldValue: null, newValue: "true" });
+		changes.push({
+			mediaId,
+			field: "reviewed",
+			oldValue: null,
+			newValue: "true",
+		});
 	}
 
 	if (changes.length) {
@@ -293,7 +302,10 @@ export async function updateMediaPoster(mediaId: number, posterPath: string) {
 // Mirrors getAlternativePosters, but for banners — only TMDB and IGDB have
 // one at all (see bannerUrlFor), so MANGA/COMIC just return no options
 // rather than erroring, and ImagePicker renders an empty grid for them.
-export async function getAlternativeBanners(externalId: string, type: MediaType) {
+export async function getAlternativeBanners(
+	externalId: string,
+	type: MediaType,
+) {
 	if (type === MediaType.MANGA || type === MediaType.COMIC) {
 		return [];
 	}
@@ -305,13 +317,16 @@ export async function getAlternativeBanners(externalId: string, type: MediaType)
 		// (t_thumb would square-crop it) — see poster-resolver.ts's bannerUrlFor
 		// for the full-size template the preview/save path uses.
 		const game = await fetchIgdbGameById(externalId);
-		return (game.artworks ?? []).map((artwork) => ({
-			filePath: artwork.image_id,
-			thumbSrc: buildProxiedImageUrl(
-				`https://images.igdb.com/igdb/image/upload/t_screenshot_med/${artwork.image_id}.jpg`,
-			),
-			previewSrc: buildProxiedImageUrl(bannerUrlFor(type, artwork.image_id)),
-		}));
+		return (game.artworks ?? [])
+			.slice()
+			.sort((a, b) => artworkAspectRatioDiff(a) - artworkAspectRatioDiff(b))
+			.map((artwork) => ({
+				filePath: artwork.image_id,
+				thumbSrc: buildProxiedImageUrl(
+					`https://images.igdb.com/igdb/image/upload/t_screenshot_med/${artwork.image_id}.jpg`,
+				),
+				previewSrc: buildProxiedImageUrl(bannerUrlFor(type, artwork.image_id)),
+			}));
 	}
 
 	const images = await fetchTmdbImages(externalId, type);

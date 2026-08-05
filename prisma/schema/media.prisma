@@ -12,11 +12,8 @@ model Media {
 
   isDeleted Boolean @default(false)
 
-  externalId String
+  externalId String?
   directLink String?
-  // The provider's own page for this media (TMDB/MangaDex/IGDB/ComicVine) —
-  // distinct from directLink, which is a user-set link to watch/read it.
-  // Null for manually created media, which has no provider.
   sourceUrl  String?
 
   countryId     Int?
@@ -41,6 +38,11 @@ model Media {
   credits Credit[]
 
   changeLog MediaChangeLog[]
+
+  // Multiple manual entries (externalId null) never collide here — Postgres
+  // treats each NULL as distinct — this only stops the same provider item
+  // from being imported into the same type twice.
+  @@unique([externalId, type])
 }
 
 enum MediaType {

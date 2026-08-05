@@ -118,6 +118,22 @@ export async function fetchTmdbImages(
 	return parseOrThrow(TmdbImagesResponseSchema, json);
 }
 
+type TmdbBackdrop = TmdbImagesResponse["backdrops"][number];
+
+// TMDB doesn't flag whether a backdrop is a plain film still or has
+// title/logo art baked in — iso_639_1: null is the closest proxy (a
+// language-tagged backdrop is conventionally one with localized text on
+// it), so a textless one is preferred whenever one exists. Within whichever
+// pool applies, highest community vote_average wins.
+export function pickBestBackdrop(backdrops: TmdbBackdrop[]): string | null {
+	if (backdrops.length === 0) return null;
+	const textless = backdrops.filter((b) => b.iso_639_1 === null);
+	const pool = textless.length > 0 ? textless : backdrops;
+	return pool.reduce((best, b) =>
+		b.vote_average > best.vote_average ? b : best,
+	).file_path;
+}
+
 export async function fetchTvShowByName(
 	name: string,
 	page: number,
