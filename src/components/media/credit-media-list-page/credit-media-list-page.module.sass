@@ -1,9 +1,11 @@
+@use "@/app/styles/variables" as *
+
 .wrapper
   width: 950px
   margin: 2rem auto
 
 .empty
-  opacity: 0.6
+  @include empty-text
   margin-top: 1rem
 
 .role_filter

@@ -42,5 +42,7 @@
   font-family: $font-mono
   color: var(--accent1)
 
-.runtime
+// Shared by every one-line type-specific fact (runtime, episode count,
+// volume count, platform) — one class since they're never shown together.
+.info_line
   font-size: 1rem

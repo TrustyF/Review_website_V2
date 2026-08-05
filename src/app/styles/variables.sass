@@ -8,3 +8,11 @@ $font-body: var(--font-ibm-plex-sans), Arial, Helvetica, sans-serif
 // and by the shell's own contain-intrinsic-height estimate, so resizing
 // the cards can't leave that estimate stale.
 $mini-card-min-width: 110px
+
+// Shared "nothing here yet" text treatment — was independently redefined in
+// four different module.sass files (change log, search results, credit
+// pages, add-media) with the same intent; centralized so the look only
+// needs to change in one place.
+@mixin empty-text
+  color: var(--accent1)
+  font-size: 0.9rem

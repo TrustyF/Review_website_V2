@@ -21,6 +21,7 @@ import { addGameFromIgdb } from "@/server/igdb/ingest/game";
 import { fetchComicVineById, searchComicVine } from "@/server/comicvine/client";
 import { addComicFromComicVine } from "@/server/comicvine/ingest/comic";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
+import { posterUrlFor } from "@/server/resolvers/poster-resolver";
 import {
 	AddableType,
 	MediaSearchResult,
@@ -47,7 +48,7 @@ export async function searchMediaSources(
 				year: yearOf(r.release_date),
 				posterSrc: r.poster_path
 					? buildProxiedImageUrl(
-							`https://image.tmdb.org/t/p/w154${r.poster_path}`,
+							posterUrlFor(MediaType.MOVIE, String(r.id), r.poster_path, "thumb"),
 						)
 					: null,
 			}));
@@ -60,7 +61,7 @@ export async function searchMediaSources(
 				year: yearOf(r.first_air_date),
 				posterSrc: r.poster_path
 					? buildProxiedImageUrl(
-							`https://image.tmdb.org/t/p/w154${r.poster_path}`,
+							posterUrlFor(MediaType.TVSHOW, String(r.id), r.poster_path, "thumb"),
 						)
 					: null,
 			}));
@@ -78,7 +79,7 @@ export async function searchMediaSources(
 					year: r.attributes.year,
 					posterSrc: fileName
 						? buildProxiedImageUrl(
-								`https://uploads.mangadex.org/covers/${r.id}/${fileName}.256.jpg`,
+								posterUrlFor(MediaType.MANGA, r.id, fileName, "thumb"),
 							)
 						: null,
 				};
@@ -94,7 +95,7 @@ export async function searchMediaSources(
 					: null,
 				posterSrc: r.cover?.image_id
 					? buildProxiedImageUrl(
-							`https://images.igdb.com/igdb/image/upload/t_cover_small/${r.cover.image_id}.jpg`,
+							posterUrlFor(MediaType.GAME, String(r.id), r.cover.image_id, "thumb"),
 						)
 					: null,
 			}));

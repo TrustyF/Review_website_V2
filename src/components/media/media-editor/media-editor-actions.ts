@@ -7,7 +7,7 @@ import { fetchTmdbImages } from "@/server/tmdb/client";
 import { fetchMangaDexCovers } from "@/server/mangadex/client";
 import { fetchComicVineIssuesForVolume } from "@/server/comicvine/client";
 import { fetchIgdbGameCoverOptions } from "@/server/igdb/client";
-import { resolvePoster } from "@/server/resolvers/poster-resolver";
+import { posterUrlFor, resolvePoster } from "@/server/resolvers/poster-resolver";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
 
 // Compares old/new values field by field and returns a MediaChangeLog row
@@ -150,10 +150,10 @@ export async function getAlternativePosters(
 			// depends on whether the source allows hotlinking (see
 			// src/server/image-proxy.ts) — no download happens until it's saved.
 			thumbSrc: buildProxiedImageUrl(
-				`https://uploads.mangadex.org/covers/${externalId}/${cover.attributes.fileName}.256.jpg`,
+				posterUrlFor(type, externalId, cover.attributes.fileName, "thumb"),
 			),
 			previewSrc: buildProxiedImageUrl(
-				`https://uploads.mangadex.org/covers/${externalId}/${cover.attributes.fileName}.512.jpg`,
+				posterUrlFor(type, externalId, cover.attributes.fileName, "full"),
 			),
 		}));
 	}
@@ -186,10 +186,10 @@ export async function getAlternativePosters(
 		return covers.map((cover) => ({
 			filePath: cover.imageId,
 			thumbSrc: buildProxiedImageUrl(
-				`https://images.igdb.com/igdb/image/upload/t_cover_small/${cover.imageId}.jpg`,
+				posterUrlFor(type, externalId, cover.imageId, "thumb"),
 			),
 			previewSrc: buildProxiedImageUrl(
-				`https://images.igdb.com/igdb/image/upload/t_cover_big/${cover.imageId}.jpg`,
+				posterUrlFor(type, externalId, cover.imageId, "full"),
 			),
 		}));
 	}
@@ -201,10 +201,10 @@ export async function getAlternativePosters(
 		.map((poster) => ({
 			filePath: poster.file_path,
 			thumbSrc: buildProxiedImageUrl(
-				`https://image.tmdb.org/t/p/w154${poster.file_path}`,
+				posterUrlFor(type, externalId, poster.file_path, "thumb"),
 			),
 			previewSrc: buildProxiedImageUrl(
-				`https://image.tmdb.org/t/p/w500${poster.file_path}`,
+				posterUrlFor(type, externalId, poster.file_path, "full"),
 			),
 		}));
 }

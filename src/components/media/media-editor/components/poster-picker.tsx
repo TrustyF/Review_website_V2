@@ -1,5 +1,5 @@
 "use client";
-import styles from "../media-editor-modal.module.sass";
+import styles from "./poster-picker.module.sass";
 import { useEffect, useState } from "react";
 import { getAlternativePosters } from "@/components/media/media-editor/media-editor-actions";
 import { MediaRecord } from "@/components/media/media-card/types";

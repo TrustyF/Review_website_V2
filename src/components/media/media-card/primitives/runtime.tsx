@@ -13,5 +13,5 @@ export function formatRuntime(runtime: number | null) {
 export function MediaRuntime({ runtime }: { runtime: number | null }) {
 	const formatted = formatRuntime(runtime);
 	if (!formatted) return null;
-	return <div className={styles.runtime}>{formatted}</div>;
+	return <div className={styles.info_line}>{formatted}</div>;
 }

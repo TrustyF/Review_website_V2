@@ -1,7 +1,7 @@
 import { MediaCardResolver } from "@/components/media/media-card/cards/media-card-resolver";
 import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/media-card/types";
-import styles from "./styles/page.module.sass";
+import styles from "./media-grid.module.sass";
 import { EnrichmentStatus } from "@prisma/client";
 
 export default async function MediaGridPage() {

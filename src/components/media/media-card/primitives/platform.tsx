@@ -13,5 +13,5 @@ export function formatPlatformSummary(platform: string | null) {
 
 export function MediaPlatform({ platform }: { platform: string | null }) {
 	if (!platform) return null;
-	return <div className={styles.runtime}>{platform}</div>;
+	return <div className={styles.info_line}>{platform}</div>;
 }

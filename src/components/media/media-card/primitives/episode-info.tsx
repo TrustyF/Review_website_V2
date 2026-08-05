@@ -23,5 +23,5 @@ export function MediaEpisodeInfo({
 }) {
 	const formatted = formatEpisodeInfo(seasonCount, episodeCount);
 	if (!formatted) return null;
-	return <div className={styles.runtime}>{formatted}</div>;
+	return <div className={styles.info_line}>{formatted}</div>;
 }

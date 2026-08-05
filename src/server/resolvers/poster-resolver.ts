@@ -49,6 +49,13 @@ export function posterFilename(mediaId: number, posterPath: string) {
 	return `${mediaId}-${hash}.webp`;
 }
 
+export type PosterSize = "thumb" | "full";
+
+// The one place that knows how to turn a stored posterPath into an actual
+// CDN URL — used for the main poster cache, the change log thumbnail cache,
+// the editor's alternate-poster picker, and add-media's search-result
+// thumbnails, so a source's URL template only ever needs to change here.
+//
 // Each source stores posterPath differently: TMDB's is a path segment
 // appended to its image CDN, MangaDex's is just a cover filename that needs
 // the manga's own id (externalId) to locate on its upload host, IGDB's is an
@@ -56,41 +63,29 @@ export function posterFilename(mediaId: number, posterPath: string) {
 // entered posters (see manual-add-actions.ts) are already full URLs, with
 // nothing left to template — checked first, ahead of and independent of
 // type, since a manual entry can be any MediaType.
-export function sourceUrlFor(type: MediaType, externalId: string, posterPath: string) {
-	if (posterPath.startsWith("http://") || posterPath.startsWith("https://")) {
-		return posterPath;
-	}
-	if (type === MediaType.MANGA) {
-		// .512.jpg requests MangaDex's downsized thumbnail instead of the
-		// full-resolution scan (often several MB), mirroring TMDB's w500.
-		return `https://uploads.mangadex.org/covers/${externalId}/${posterPath}.512.jpg`;
-	}
-	if (type === MediaType.GAME) {
-		return `https://images.igdb.com/igdb/image/upload/t_cover_big/${posterPath}.jpg`;
-	}
-	return `https://image.tmdb.org/t/p/w500${posterPath}`;
-}
-
-// Smallest size each source will template — used only for change log
-// thumbnails (rendered at 46x69), where the main poster's w500-equivalent
-// would be needlessly large. ComicVine/manual posterPaths are already a
-// full URL with nothing left to template (see sourceUrlFor), so there's no
-// smaller variant to ask for — same URL as the main poster in that case.
-export function smallSourceUrlFor(
+//
+// "thumb" vs "full" only matters for the three templated sources — a
+// ComicVine/manual posterPath is a fixed URL either way. Callers that want a
+// smaller size than "thumb" gives (e.g. the change log's 46x69 display) rely
+// on resolveChangelogPosterThumb's own resize instead of a third tier here.
+export function posterUrlFor(
 	type: MediaType,
 	externalId: string,
 	posterPath: string,
+	size: PosterSize,
 ) {
 	if (posterPath.startsWith("http://") || posterPath.startsWith("https://")) {
 		return posterPath;
 	}
 	if (type === MediaType.MANGA) {
-		return `https://uploads.mangadex.org/covers/${externalId}/${posterPath}.256.jpg`;
+		// .512.jpg is MangaDex's downsized thumbnail rather than the
+		// full-resolution scan (often several MB); .256.jpg is smaller still.
+		return `https://uploads.mangadex.org/covers/${externalId}/${posterPath}.${size === "full" ? "512" : "256"}.jpg`;
 	}
 	if (type === MediaType.GAME) {
-		return `https://images.igdb.com/igdb/image/upload/t_cover_small/${posterPath}.jpg`;
+		return `https://images.igdb.com/igdb/image/upload/t_cover_${size === "full" ? "big" : "small"}/${posterPath}.jpg`;
 	}
-	return `https://image.tmdb.org/t/p/w92${posterPath}`;
+	return `https://image.tmdb.org/t/p/${size === "full" ? "w500" : "w154"}${posterPath}`;
 }
 
 // Shared by resolvePoster and resolveChangelogPosterThumb: content-addressed
@@ -132,7 +127,11 @@ export async function resolvePoster(
 	if (!posterPath) return "/posters/placeholder.jpg";
 
 	const filename = posterFilename(mediaId, posterPath);
-	await cacheOrDownload(POSTER_DIR, filename, sourceUrlFor(type, externalId, posterPath));
+	await cacheOrDownload(
+		POSTER_DIR,
+		filename,
+		posterUrlFor(type, externalId, posterPath, "full"),
+	);
 
 	return `/posters/cache/${filename}`;
 }
@@ -151,7 +150,7 @@ export async function resolveChangelogPosterThumb(
 	await cacheOrDownload(
 		CHANGELOG_THUMB_DIR,
 		filename,
-		smallSourceUrlFor(type, externalId, posterPath),
+		posterUrlFor(type, externalId, posterPath, "thumb"),
 		{ resize: true },
 	);
 
