@@ -1,6 +1,7 @@
 @use "@/app/styles/variables" as *
 
 .wrapper
+  position: relative
   width: 950px
   margin: 0 auto 15rem auto
   display: flex
@@ -16,6 +17,7 @@
 
 .banner_wrapper
   position: absolute
+  width: 100%
   left: auto
   top: 0
 
@@ -24,7 +26,29 @@
 
   aspect-ratio: 16/9
   border-radius: 0.5rem
+
+// Everything actually decorative (image + gradient) lives at z-index: -10,
+// so it stays behind .header — that's what lets the header's content
+// visually overlap the bottom of the banner (see .banner_spacer). Split out
+// from .banner itself so the click target (a sibling of this, not a
+// descendant — see banner-edit-trigger.tsx) doesn't inherit that negative
+// stacking: a child can never escape its parent's stacking context no
+// matter what z-index it sets on itself, so the button has to live outside
+// this one entirely to ever paint above .header.
+.banner_visual
+  position: absolute
+  inset: 0
   z-index: -10
+  // Reserved-box placeholder, same treatment as MediaPoster's .poster_frame
+  // — shows through until the banner image fades in (see
+  // banner-edit-trigger.tsx's .image/.image_loaded), instead of a blank
+  // flash. border-radius here (not just on .banner) is what actually clips
+  // this background's own corners — a parent's border-radius alone doesn't
+  // round a child's painted background without overflow: hidden, which
+  // .banner deliberately doesn't set (it'd clip .banner_image's intentional
+  // 105%-width bleed).
+  background-color: var(--background)
+  border-radius: 0.5rem
 
 .banner_image
   width: 105%

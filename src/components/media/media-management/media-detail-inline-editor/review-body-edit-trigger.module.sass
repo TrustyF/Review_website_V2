@@ -1,0 +1,35 @@
+.wrapper
+  display: flex
+  flex-flow: column
+  gap: 0.4rem
+
+.hitbox
+  position: relative
+  border-radius: 0.25rem
+  transition: outline-color 0.15s
+
+  &:hover
+    outline: 1px dashed var(--accent1)
+    outline-offset: 6px
+    cursor: pointer
+
+.hover_badge
+  position: absolute
+  top: 0
+  right: 0
+  color: var(--accent1)
+  font-size: 0.75rem
+  opacity: 0
+  pointer-events: none
+  transition: opacity 0.15s
+
+  .hitbox:hover &
+    opacity: 1
+
+.status
+  color: var(--accent1)
+  font-size: 0.8rem
+
+.status_error
+  color: #e05656
+  font-size: 0.8rem

@@ -28,6 +28,9 @@ const nextConfig: NextConfig = {
 				pathname: "/posters/cache/**",
 			},
 			{
+				pathname: "/banners/cache/**",
+			},
+			{
 				pathname: "/posters/changelog-cache/**",
 			},
 			{

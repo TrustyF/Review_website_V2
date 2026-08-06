@@ -1,0 +1,28 @@
+// Fades in over .banner_visual's placeholder background (see
+// media-detail.module.sass) instead of popping in the instant it's
+// decoded — combined with the page's own .banner_image class, not instead
+// of it (see banner-edit-trigger.tsx).
+.image
+  opacity: 0
+  transition: opacity 0.25s ease
+
+.image_loaded
+  opacity: 1
+
+// Positioned (absolute) but deliberately no z-index set here — this only
+// needs to sit above .header's non-positioned, in-flow box, and per the CSS
+// stacking order a positioned element (any z-index, even auto) always
+// paints above non-positioned in-flow content regardless of DOM order. It
+// no longer has to compete with .banner_backdrop's z-index: 1 at all, since
+// that now lives one level down inside .banner_visual (see
+// banner-edit-trigger.tsx) — a stacking context this button was never part
+// of to begin with.
+.click_target
+  position: absolute
+  inset: 0
+  border: none
+  padding: 0
+  margin: 0
+  border-radius: 0.5rem
+  background: transparent
+  cursor: pointer

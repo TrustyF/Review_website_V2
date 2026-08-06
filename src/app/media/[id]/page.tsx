@@ -1,17 +1,17 @@
 import { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db/client";
 import { toMediaRecord, MediaRecord } from "@/components/media/types";
-import { MediaPoster } from "@/components/media/primitives/poster";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaTitle } from "@/components/media/primitives/title";
 import { MediaReleaseDate } from "@/components/media/primitives/release-date";
-import { MediaReview } from "@/components/media/media-cards/media-card/review";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { ChangeLogList } from "@/components/media/media-management/change-log/change-log-list";
 import { formatRuntime } from "@/components/media/primitives/runtime";
+import { PosterEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/poster-edit-trigger";
+import { BannerEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/banner-edit-trigger";
+import { ReviewBodyEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/review-body-edit-trigger";
 import { MediaType } from "@prisma/client";
 import styles from "./media-detail.module.sass";
 
@@ -246,25 +246,21 @@ export default async function MediaDetailPage({
 			)}
 			{media.bannerSrc && (
 				<div className={styles.banner_wrapper}>
-					<div className={styles.banner}>
-						<Image
-							src={media.bannerSrc}
-							alt={`${media.title} banner`}
-							width={1280}
-							height={720}
-							className={styles.banner_image}
-							priority
-						/>
-						<div className={styles.banner_backdrop}></div>
-					</div>
+					<BannerEditTrigger
+						media={media}
+						bannerSrc={media.bannerSrc}
+						bannerClassName={styles.banner}
+						visualClassName={styles.banner_visual}
+						imageClassName={styles.banner_image}
+						backdropClassName={styles.banner_backdrop}
+					/>
 				</div>
 			)}
 			{media.bannerSrc && <div className={styles.banner_spacer} />}
 			<div className={styles.header}>
 				<div className={styles.poster}>
-					<MediaPoster
-						src={media.posterSrc}
-						title={media.title}
+					<PosterEditTrigger
+						media={media}
 						ratio={posterRatioFor(media.type)}
 					/>
 				</div>
@@ -359,7 +355,7 @@ export default async function MediaDetailPage({
 
 			<section className={styles.section}>
 				<h2 className={styles.section_title}>Review</h2>
-				<MediaReview review={media.review} />
+				<ReviewBodyEditTrigger media={media} />
 			</section>
 
 			<section className={styles.section}>
