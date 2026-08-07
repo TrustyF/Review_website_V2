@@ -1,9 +1,29 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { MediaRecord } from "@/components/media/types";
 import { RatedTierGrid } from "@/components/media/media-grids/rated-tier-grid/rated-tier-grid";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
 import styles from "./media-search-grid.module.sass";
+
+// Avoids React's "useLayoutEffect does nothing on the server" warning — this
+// component still gets server-rendered on a hard load, where there's no
+// scroll position to restore anyway.
+const useIsomorphicLayoutEffect =
+	typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+// Set the instant the browser fires a back/forward navigation, so the
+// restore effect below only fires for an actual "back" — not a fresh Link
+// click into this same page, which should start at the top like normal.
+// Module-level rather than state: it needs to survive the *next* mount of
+// this component, and a plain variable does since the module itself isn't
+// torn down by a client-side route change, only components are.
+let cameFromPopState = false;
+if (typeof window !== "undefined") {
+	window.addEventListener("popstate", () => {
+		cameFromPopState = true;
+	});
+}
 
 export type MediaSearchEntry = {
 	media: MediaRecord;
@@ -47,8 +67,29 @@ function matchRank(entry: MediaSearchEntry, query: string): number | null {
 // overview) — rating tiers stop being a meaningful grouping once relevance
 // is the point, so each matched field gets its own section instead.
 export function MediaSearchGrid({ entries }: Props) {
+	const pathname = usePathname();
 	const [input, setInput] = useState("");
 	const [query, setQuery] = useState("");
+
+	// Restores window scroll position on a back-navigation into this page.
+	// Can't lean on the browser's/Next's own scroll restoration here — every
+	// save/edit on the detail page calls revalidatePath, which evicts this
+	// route from the Router Cache along with whatever scroll offset Next had
+	// recorded for it. This tracks its own, independent of that cache
+	// surviving. Runs as a layout effect so the jump (if any) happens before
+	// paint rather than as a visible snap afterward.
+	useIsomorphicLayoutEffect(() => {
+		const key = `list-scroll:${pathname}`;
+		if (cameFromPopState) {
+			cameFromPopState = false;
+			const saved = sessionStorage.getItem(key);
+			if (saved) window.scrollTo(0, Number(saved));
+		}
+
+		const onScroll = () => sessionStorage.setItem(key, String(window.scrollY));
+		window.addEventListener("scroll", onScroll, { passive: true });
+		return () => window.removeEventListener("scroll", onScroll);
+	}, [pathname]);
 
 	useEffect(() => {
 		const handle = setTimeout(
