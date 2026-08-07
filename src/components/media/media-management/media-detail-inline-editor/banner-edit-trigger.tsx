@@ -62,6 +62,9 @@ export function BannerEditTrigger({
 		setUrlInput,
 		pick,
 		submitUrl,
+		saveDraft,
+		discardDraft,
+		pendingPath,
 	} = useImageEditPopover({
 		initialSrc: bannerSrc,
 		// resolveBanner's return type is nullable in general (a banner is
@@ -69,8 +72,7 @@ export function BannerEditTrigger({
 		// we just picked/pasted, so the null case can't actually happen here
 		// — falling back to that same path keeps the type honest without an
 		// unsafe assertion.
-		save: async (path) =>
-			(await updateMediaBanner(media.id, path)) ?? path,
+		save: async (path) => (await updateMediaBanner(media.id, path)) ?? path,
 	});
 
 	// Same fade-in-on-load treatment as MediaPoster (see primitives.module.
@@ -111,9 +113,7 @@ export function BannerEditTrigger({
 	}
 
 	return (
-		<div
-			className={bannerClassName}
-			ref={containerRef}>
+		<div className={bannerClassName} ref={containerRef}>
 			<div className={visualClassName}>
 				{image}
 				<div className={backdropClassName}></div>
@@ -134,12 +134,17 @@ export function BannerEditTrigger({
 					onPick={pick}
 					altText="Alternative banner option"
 					errorText="Couldn't load alternative banners. Try again later."
+					optionAspectRatio="16/9"
+					optionClipTop={0}
+					optionClipBottom={32}
 					urlInput={urlInput}
 					onUrlInputChange={setUrlInput}
 					onSubmitUrl={submitUrl}
+					pendingPath={pendingPath}
+					onSave={saveDraft}
 					isSaving={isSaving}
 					error={error}
-					onClose={() => setIsOpen(false)}
+					onClose={discardDraft}
 				/>
 			)}
 		</div>

@@ -40,6 +40,9 @@ export function PosterEditTrigger({ media, ratio }: Props) {
 		setUrlInput,
 		pick,
 		submitUrl,
+		saveDraft,
+		discardDraft,
+		pendingPath,
 	} = useImageEditPopover({
 		initialSrc: media.posterSrc,
 		save: (path) => updateMediaPoster(media.id, path),
@@ -75,12 +78,17 @@ export function PosterEditTrigger({ media, ratio }: Props) {
 					onPick={pick}
 					altText="Alternative poster option"
 					errorText="Couldn't load alternative posters. Try again later."
+					optionAspectRatio={undefined}
+					optionClipTop={undefined}
+					optionClipBottom={undefined}
 					urlInput={urlInput}
 					onUrlInputChange={setUrlInput}
 					onSubmitUrl={submitUrl}
+					pendingPath={pendingPath}
+					onSave={saveDraft}
 					isSaving={isSaving}
 					error={error}
-					onClose={() => setIsOpen(false)}
+					onClose={discardDraft}
 				/>
 			)}
 		</div>

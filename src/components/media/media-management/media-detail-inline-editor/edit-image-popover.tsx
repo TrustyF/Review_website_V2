@@ -16,11 +16,25 @@ type Props = {
 	onPick: (image: PickableImage) => void;
 	altText: string;
 	errorText: string;
+	// Not `?:` — every caller passes this explicitly (undefined for posters),
+	// same convention as bannerClassName etc. in banner-edit-trigger.tsx;
+	// exactOptionalPropertyTypes rejects forwarding a possibly-undefined
+	// value through a truly optional prop.
+	optionAspectRatio: string | undefined;
+	optionClipTop: number | undefined;
+	optionClipBottom: number | undefined;
 	urlInput: string;
 	onUrlInputChange: (value: string) => void;
 	onSubmitUrl: () => void;
+	// Whatever pick()/onSubmitUrl last staged, or null if nothing's staged —
+	// onSave is a no-op (just closes) when this is null, and it doubles as
+	// the check for whether the currently typed urlInput is the thing that's
+	// actually staged (see the "will apply on save" note below).
+	pendingPath: string | null;
+	onSave: () => void;
 	isSaving: boolean;
 	error: string | null;
+	// Closes without saving — discards whatever pick()/onSubmitUrl staged.
 	onClose: () => void;
 };
 
@@ -36,13 +50,20 @@ export function EditImagePopover({
 	onPick,
 	altText,
 	errorText,
+	optionAspectRatio,
+	optionClipTop,
+	optionClipBottom,
 	urlInput,
 	onUrlInputChange,
 	onSubmitUrl,
+	pendingPath,
+	onSave,
 	isSaving,
 	error,
 	onClose,
 }: Props) {
+	const trimmedUrl = urlInput.trim();
+
 	return (
 		<div className={styles.popover}>
 			<div className={styles.header}>
@@ -63,6 +84,9 @@ export function EditImagePopover({
 				onPick={onPick}
 				altText={altText}
 				errorText={errorText}
+				optionAspectRatio={optionAspectRatio}
+				optionClipTop={optionClipTop}
+				optionClipBottom={optionClipBottom}
 			/>
 
 			<div className={styles.url_row}>
@@ -81,7 +105,36 @@ export function EditImagePopover({
 				</button>
 			</div>
 
-			{isSaving && <div className={styles.status}>Saving…</div>}
+			{trimmedUrl && (
+				// Plain <img>, deliberately not next/image — same reasoning as the
+				// full editor modal's own url_preview: a pasted URL can be any
+				// host, and only gets proxied/cached once it's actually saved.
+				// eslint-disable-next-line @next/next/no-img-element
+				<img
+					src={trimmedUrl}
+					alt=""
+					className={styles.url_preview}
+				/>
+			)}
+			{pendingPath === trimmedUrl && trimmedUrl && (
+				<span className={styles.url_applied}>Will apply on save</span>
+			)}
+
+			<div className={styles.actions}>
+				<button
+					type="button"
+					onClick={onClose}
+					disabled={isSaving}>
+					Discard
+				</button>
+				<button
+					type="button"
+					onClick={onSave}
+					disabled={isSaving || pendingPath === null}>
+					{isSaving ? "Saving…" : "Save"}
+				</button>
+			</div>
+
 			{error && <div className={styles.status_error}>{error}</div>}
 		</div>
 	);

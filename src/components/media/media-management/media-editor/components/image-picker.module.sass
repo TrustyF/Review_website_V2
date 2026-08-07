@@ -16,12 +16,33 @@
 
 .option
   height: 10rem
+  max-width: 100%
   object-fit: cover
+  object-position: center
   border-radius: 0.25rem
   cursor: pointer
 
-.load_more
-  right: 0
-  bottom: 0
-  padding: 0 5px
-  position: absolute
+// Used instead of .option directly whenever a top/bottom clip is in play —
+// width/height come from an inline style per option (see image-picker.tsx),
+// since they depend on that option's own ratio/clip percentages. Clips its
+// .option child to those bounds via overflow: hidden, rather than via
+// clip-path on the image itself, so the box's *layout* size (what .options'
+// flex-wrap actually reserves space for) matches its visible size instead of
+// leaving a gap the size of whatever got clipped.
+.option_frame
+  overflow: hidden
+  max-width: 100%
+  border-radius: 0.25rem
+  cursor: pointer
+
+  .option
+    width: 100%
+    max-width: none
+    border-radius: 0
+
+// Invisible marker the IntersectionObserver watches (root: .options — see
+// image-picker.tsx) — a full-width flex item of its own so it always sits on
+// its own row, below the last option, rather than trailing one mid-row.
+.sentinel
+  flex: 0 0 100%
+  height: 1px

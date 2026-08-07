@@ -57,3 +57,5 @@ next-env.d.ts
 /public/banners/
 /.idea/
 /prisma/migrations/
+/CLAUDE.md
+/AGENTS.md

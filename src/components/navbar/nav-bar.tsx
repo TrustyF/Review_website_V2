@@ -77,6 +77,12 @@ export default function Navbar() {
 						>
 							Gauges
 						</Link>
+						<Link
+							href="/dev/banner-compression"
+							className={style.link}
+						>
+							Banner compression
+						</Link>
 					</div>
 				</details>
 			)}

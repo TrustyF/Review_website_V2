@@ -1,0 +1,84 @@
+.wrapper
+  width: 950px
+  margin: 20px auto
+  color: #ddd
+
+.controls
+  position: fixed
+  z-index: 10
+  left: 0
+  display: flex
+  flex-flow: column
+  gap: 10px
+  border: 1px solid rgba(255, 255, 255, 0.15)
+  border-radius: 4px
+  padding: 20px
+  margin-bottom: 20px
+
+.control_row
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 10px
+
+  label
+    width: 110px
+    flex-shrink: 0
+
+  input[type="range"]
+    flex: 1
+
+  output
+    width: 50px
+    text-align: right
+    font-variant-numeric: tabular-nums
+
+.error
+  color: #e05656
+
+.comparison
+  display: flex
+  flex-flow: column
+  gap: 5px
+
+.pane
+  flex: 1
+  min-width: 0
+  display: flex
+  flex-flow: column
+  gap: 8px
+
+  h2
+    margin: 0
+    font-size: 0.9rem
+    font-weight: normal
+    opacity: 0.8
+
+.image
+  width: 100%
+  height: auto
+  border-radius: 4px
+  background: rgba(255, 255, 255, 0.05)
+
+.reduction
+  color: #6fc47e
+
+.hint
+  margin: 0
+  font-size: 0.75rem
+  opacity: 0.6
+
+// Wraps the custom-result <img> so .grain_overlay (an absolutely-positioned
+// sibling) can sit directly on top of it — the overlay itself carries no
+// image bytes at all, it's an inline SVG feTurbulence filter rendered by the
+// browser, so this "costs" nothing regardless of opacity.
+.grain_wrapper
+  position: relative
+
+.grain_overlay
+  position: absolute
+  inset: 0
+  border-radius: 4px
+  pointer-events: none
+  mix-blend-mode: overlay
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")

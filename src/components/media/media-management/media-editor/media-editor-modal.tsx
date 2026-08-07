@@ -492,6 +492,9 @@ export default function MediaEditorModal() {
 								onPick={pickBanner}
 								altText="Alternative banner option"
 								errorText="Couldn't load alternative banners. Try again later."
+								optionClipTop={25}
+								optionClipBottom={25}
+								optionAspectRatio="16/9"
 							/>
 						</div>
 					)}

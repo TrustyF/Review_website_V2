@@ -19,7 +19,12 @@ const THUMB_MAX_HEIGHT = 140;
 // at WEBP_QUALITY) cut total size 45%, the large majority of what's
 // possible — quality has much less room to give without visibly softening
 // an image shown this large. See resolveBanner.
-const BANNER_MAX_WIDTH = 1280;
+// Exported (unlike the other size/quality constants here) so the banner
+// compression dev tool can show "what production actually does today" as a
+// baseline alongside whatever it's experimenting with, instead of a
+// hardcoded number that could silently drift out of sync with this file.
+export const BANNER_MAX_WIDTH = 1280;
+export const BANNER_WEBP_QUALITY = 90;
 // Change log rows show a small landscape thumbnail for a bannerPath change,
 // the same idea as THUMB_MAX_HEIGHT for posterPath — sized down from
 // BANNER_MAX_WIDTH the same way THUMB_MAX_HEIGHT is sized down from the full
@@ -224,7 +229,7 @@ export async function resolveBanner(
 		filename,
 		bannerUrlFor(type, bannerPath),
 		{ resize: { width: BANNER_MAX_WIDTH } },
-		95,
+		BANNER_WEBP_QUALITY,
 	);
 
 	return `/banners/cache/${filename}`;
