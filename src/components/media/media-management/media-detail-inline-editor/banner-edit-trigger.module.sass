@@ -26,3 +26,32 @@
   border-radius: 0.5rem
   background: transparent
   cursor: pointer
+
+// Same box geometry as media-detail.module.sass's .banner_backdrop (105%
+// width bleed, centered) so it lines up exactly with the image underneath.
+// z-index sits between the plain (non-positioned, so always-behind) image
+// and the backdrop's z-index: 1, painting over the image but still under
+// the edge-fade gradient.
+.grain
+  display: block
+  position: absolute
+  width: 105%
+  height: 100%
+  top: 0
+  left: 50%
+  transform: translateX(-50%)
+  z-index: 0
+  pointer-events: none
+  border-radius: 0.5rem
+  mix-blend-mode: overlay
+  // Opacity itself is driven inline (grainOpacity is a number, not a fixed
+  // class) — this just makes that change fade instead of pop, in step with
+  // .image's own transition above.
+  transition: opacity 0.25s ease
+  // A real (non-tileable) grain photo rather than a repeating synthetic
+  // pattern — stretched to cover instead of tiled, so there's no repeat
+  // seam. See the same swap in banner-compression-dev.module.sass.
+  background-image: url("/ui/CT_35mm_Grain.png")
+  background-repeat: no-repeat
+  background-position: center
+  background-size: cover

@@ -1,6 +1,7 @@
 import { MediaRecord } from "@/components/media/types";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
 import styles from "./rated-tier-grid.module.sass";
+import { StarIcon } from "@/components/media/icons/star-icon";
 
 // Buckets media into whole-point rating tiers (9 covers a 9.0-9.5 rating,
 // etc.) — halfway steps would mean twenty collapsible sections, too many to
@@ -15,7 +16,7 @@ function ratingTierOf(media: MediaRecord): number | null {
 function tierLabel(tier: number | null): string {
 	if (tier === null) return "Unrated";
 	if (tier >= 10) return "10";
-	return `${tier}–${tier + 1}`;
+	return `${tier}`;
 }
 
 type Props = {
@@ -45,14 +46,11 @@ export function RatedTierGrid({ media }: Props) {
 	return (
 		<div className={styles.tiers}>
 			{orderedTiers.map(([tier, items]) => (
-				<details
-					className={styles.tier}
-					key={tier ?? "unrated"}
-					open
-				>
+				<details key={tier ?? "unrated"} open>
 					<summary className={styles.tier_header}>
 						{tierLabel(tier)}
-						<span className={styles.tier_count}>{items.length}</span>
+						<StarIcon size={15} />
+						{/*<span className={styles.tier_count}>{items.length}</span>*/}
 					</summary>
 					<LazyMediaGrid
 						items={items}

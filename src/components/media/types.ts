@@ -8,7 +8,10 @@ import {
 	Review,
 	TvShow,
 } from "@prisma/client";
-import { mediaAssetFilename } from "@/server/resolvers/poster-resolver";
+import {
+	BANNER_FORMAT,
+	mediaAssetFilename,
+} from "@/server/resolvers/poster-resolver";
 
 // What Prisma actually hands back — every relation still optional
 export type RawMediaRecord = Media & {
@@ -55,7 +58,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 		? `/api/poster/${raw.id}/${mediaAssetFilename(raw.id, raw.posterPath)}`
 		: "/posters/placeholder.jpg";
 	const bannerSrc = raw.bannerPath
-		? `/api/banner/${raw.id}/${mediaAssetFilename(raw.id, raw.bannerPath)}`
+		? `/api/banner/${raw.id}/${mediaAssetFilename(raw.id, raw.bannerPath, BANNER_FORMAT)}`
 		: null;
 	switch (raw.type) {
 		case "MOVIE":
@@ -64,7 +67,13 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 			return { ...raw, type: raw.type, movie: raw.movie, posterSrc, bannerSrc };
 		case "TVSHOW":
 			if (!raw.tvShow) break;
-			return { ...raw, type: raw.type, tvShow: raw.tvShow, posterSrc, bannerSrc };
+			return {
+				...raw,
+				type: raw.type,
+				tvShow: raw.tvShow,
+				posterSrc,
+				bannerSrc,
+			};
 		case "MANGA":
 			if (!raw.manga) break;
 			return { ...raw, type: raw.type, manga: raw.manga, posterSrc, bannerSrc };

@@ -28,6 +28,11 @@ type Props = {
 	visualClassName: string | undefined;
 	imageClassName: string | undefined;
 	backdropClassName: string | undefined;
+	// BANNER_GRAIN_OPACITY, passed down rather than imported directly —
+	// poster-resolver.ts pulls in fs/promises and sharp, and this is a
+	// "use client" module (see the same note on productionSettings in
+	// compression-playground.tsx).
+	grainOpacity: number;
 };
 
 // Drop-in replacement for the detail page's banner block — click it to open
@@ -46,6 +51,7 @@ export function BannerEditTrigger({
 	visualClassName,
 	imageClassName,
 	backdropClassName,
+	grainOpacity,
 }: Props) {
 	const isAdmin = useIsAdminStore((s) => s.isAdmin);
 	// Destructured rather than kept as one `popover` object — see the same
@@ -101,11 +107,27 @@ export function BannerEditTrigger({
 		/>
 	);
 
+	// Sits between the image and the backdrop gradient (paint order, not DOM
+	// order — both are position: absolute, so z-index in the sass decides):
+	// grain only textures the actual banner pixels, and still fades out
+	// toward the edges along with the image underneath it, same as the
+	// backdrop already does. Held at 0 until isLoaded (same signal .image's
+	// own fade-in uses) — otherwise the grain sits fully visible over the
+	// placeholder background while the image itself is still loading,
+	// texturing a blank box instead of the banner.
+	const grain = (
+		<div
+			className={styles.grain}
+			style={{ opacity: isLoaded ? grainOpacity : 0 }}
+		/>
+	);
+
 	if (!isAdmin) {
 		return (
 			<div className={bannerClassName}>
 				<div className={visualClassName}>
 					{image}
+					{grain}
 					<div className={backdropClassName}></div>
 				</div>
 			</div>
@@ -116,6 +138,7 @@ export function BannerEditTrigger({
 		<div className={bannerClassName} ref={containerRef}>
 			<div className={visualClassName}>
 				{image}
+				{grain}
 				<div className={backdropClassName}></div>
 			</div>
 

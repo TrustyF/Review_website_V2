@@ -25,12 +25,18 @@ const FIELD_LABELS: Record<string, string> = {
 	body: "Review",
 	posterPath: "Poster",
 	bannerPath: "Banner",
-	// A milestone, not a value that changed — see saveReview and the "reviewed"
-	// case in the row rendering below, which skips the old/new/arrow entirely
-	// for it. The date column (present on every row already) is what actually
-	// answers "on" — this label just reads naturally alongside it.
+	// Milestones, not values that changed — see saveReview/logRewatch and
+	// MILESTONE_FIELDS below, which skips the old/new/arrow entirely for
+	// these. The date column (present on every row already) is what actually
+	// answers "on" — the label just reads naturally alongside it.
 	reviewed: "Reviewed on",
+	rewatched: "Rewatched on",
 };
+
+// Rows for these fields are date-only markers (see saveReview's "reviewed"
+// and logRewatch's "rewatched") — oldValue/newValue are just a "true"
+// placeholder, not a real before/after worth rendering.
+const MILESTONE_FIELDS = new Set(["reviewed", "rewatched"]);
 
 // Long free-text values (review bodies) would blow out the log — show a
 // preview instead of the full text.
@@ -91,7 +97,7 @@ async function ChangeValue({
 		return (
 			<span className={styles.rating_value}>
 				{value}
-				<StarIcon className={styles.rating_star} />
+				<StarIcon />
 			</span>
 		);
 	}
@@ -134,11 +140,11 @@ export function ChangeLogList({
 						<span className={styles.field}>
 							{FIELD_LABELS[entry.field] ?? entry.field}
 						</span>
-						{/* "reviewed" is a milestone, not a before/after value — the
-						empty span still keeps its flex: 1 spacer role so .date
-						stays right-aligned same as every other row. */}
+						{/* Milestone fields skip the value diff — the empty span still
+						keeps its flex: 1 spacer role so .date stays right-aligned same
+						as every other row. */}
 						<span className={styles.change}>
-							{entry.field !== "reviewed" && (
+							{!MILESTONE_FIELDS.has(entry.field) && (
 								<>
 									<span className={styles.old_value}>
 										<ChangeValue

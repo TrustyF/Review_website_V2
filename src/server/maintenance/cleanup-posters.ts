@@ -3,6 +3,7 @@ import path from "path";
 import { db } from "@/server/db/client";
 import {
 	BANNER_DIR,
+	BANNER_FORMAT,
 	mediaAssetFilename,
 	POSTER_DIR,
 } from "@/server/resolvers/poster-resolver";
@@ -44,7 +45,7 @@ async function main() {
 	const validBannerFilenames = new Set(
 		mediaList
 			.filter((m) => m.bannerPath)
-			.map((m) => mediaAssetFilename(m.id, m.bannerPath as string)),
+			.map((m) => mediaAssetFilename(m.id, m.bannerPath as string, BANNER_FORMAT)),
 	);
 
 	await cleanupOrphans(POSTER_DIR, validPosterFilenames, "poster");

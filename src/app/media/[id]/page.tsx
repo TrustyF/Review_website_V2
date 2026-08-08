@@ -13,6 +13,7 @@ import { PosterEditTrigger } from "@/components/media/media-management/media-det
 import { BannerEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/banner-edit-trigger";
 import { ReviewBodyEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/review-body-edit-trigger";
 import { MediaType } from "@prisma/client";
+import { BANNER_GRAIN_OPACITY } from "@/server/resolvers/poster-resolver";
 import styles from "./media-detail.module.sass";
 
 const PROVIDER_LABELS: Record<MediaType, string> = {
@@ -253,6 +254,7 @@ export default async function MediaDetailPage({
 						visualClassName={styles.banner_visual}
 						imageClassName={styles.banner_image}
 						backdropClassName={styles.banner_backdrop}
+						grainOpacity={BANNER_GRAIN_OPACITY}
 					/>
 				</div>
 			)}

@@ -24,16 +24,35 @@ const THUMB_MAX_HEIGHT = 140;
 // baseline alongside whatever it's experimenting with, instead of a
 // hardcoded number that could silently drift out of sync with this file.
 export const BANNER_MAX_WIDTH = 1280;
-export const BANNER_WEBP_QUALITY = 90;
+// avif/60 tuned in the banner compression dev tool (/dev/banner-compression)
+// against real TMDB/IGDB banners — meaningfully smaller than webp at a
+// quality where the difference isn't visible at the size a banner actually
+// renders. Changing either requires updating every place that assumes
+// BANNER_FORMAT's extension: mediaAssetFilename's "avif" argument in
+// types.ts (bannerSrc) and cleanup-posters.ts (orphan filenames), and the
+// Content-Type in the /api/banner route — all four have to agree on what's
+// actually on disk.
+export const BANNER_FORMAT = "avif";
+export const BANNER_QUALITY = 60;
+// Decorative only — a CSS mix-blend-mode overlay applied where a banner is
+// actually displayed (see BannerEditTrigger's .grain), never baked into the
+// cached file itself. Sharing this constant with the compression dev tool's
+// default just keeps "what production does" accurate there too; the
+// playground's grain slider still isn't part of what gets encoded to disk.
+export const BANNER_GRAIN_OPACITY = 0.5;
 // Change log rows show a small landscape thumbnail for a bannerPath change,
 // the same idea as THUMB_MAX_HEIGHT for posterPath — sized down from
 // BANNER_MAX_WIDTH the same way THUMB_MAX_HEIGHT is sized down from the full
 // poster. See resolveChangelogBannerThumb.
 const BANNER_THUMB_MAX_WIDTH = 120;
-// Both the main poster cache and the change log thumbnail cache re-encode
-// to WebP at this quality — the main poster keeps its source dimensions
-// (it's the one place a larger image is actually wanted), only the
-// thumbnail and banner also get resized.
+// The main poster cache re-encodes to WebP at this quality and keeps the
+// source's own dimensions — it's the one cached asset here that's deliberately
+// never resized down, unlike the thumbnail and banner. Exported for the same
+// reason as the BANNER_* constants: so the compression dev tool can show
+// this as a baseline instead of a number that could drift out of sync.
+export const POSTER_QUALITY = 50;
+// The change log thumbnail cache re-encodes to WebP at its own lower
+// quality — see resolveChangelogPosterThumb.
 
 export const POSTER_DIR = path.join(
 	process.cwd(),
@@ -73,18 +92,28 @@ export const CHANGELOG_BANNER_THUMB_DIR = path.join(
 	"changelog-cache",
 );
 
+type CacheFormat = "webp" | "avif";
+
 // Content-addressable: the filename is derived from the source path itself
 // (posterPath or bannerPath), so switching a media's poster/banner naturally
 // produces a different filename/URL — no cache-busting query string or
 // manual invalidation needed. Old files from a previous path become
 // orphaned; see poster-cleanup.ts (main posters) and
 // purge-deleted-change-log.ts (change log thumbnails).
-export function mediaAssetFilename(mediaId: number, assetPath: string) {
+// extension must match whatever cacheOrDownload actually encoded to for
+// that asset (see BANNER_FORMAT) — every caller of this function is
+// independently guessing the filename an earlier resolve*/cache write
+// produced, not reading it off disk.
+export function mediaAssetFilename(
+	mediaId: number,
+	assetPath: string,
+	extension: CacheFormat = "webp",
+) {
 	const hash = createHash("sha256")
 		.update(assetPath)
 		.digest("hex")
 		.slice(0, 12);
-	return `${mediaId}-${hash}.webp`;
+	return `${mediaId}-${hash}.${extension}`;
 }
 
 export type PosterSize = "thumb" | "full";
@@ -135,7 +164,8 @@ async function cacheOrDownload(
 	filename: string,
 	sourceUrl: string,
 	{ resize }: { resize?: { width?: number; height?: number } } = {},
-	webpQuality = 75,
+	quality = POSTER_QUALITY,
+	format: CacheFormat = "webp",
 ) {
 	const filePath = path.join(dir, filename);
 
@@ -150,7 +180,9 @@ async function cacheOrDownload(
 		if (resize) {
 			image = image.resize({ ...resize, withoutEnlargement: true });
 		}
-		const output = await image.webp({ quality: webpQuality }).toBuffer();
+		const encoded =
+			format === "avif" ? image.avif({ quality }) : image.webp({ quality });
+		const output = await encoded.toBuffer();
 		await writeFile(filePath, output);
 	}
 
@@ -223,13 +255,14 @@ export async function resolveBanner(
 ) {
 	if (!bannerPath) return null;
 
-	const filename = mediaAssetFilename(mediaId, bannerPath);
+	const filename = mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT);
 	await cacheOrDownload(
 		BANNER_DIR,
 		filename,
 		bannerUrlFor(type, bannerPath),
 		{ resize: { width: BANNER_MAX_WIDTH } },
-		BANNER_WEBP_QUALITY,
+		BANNER_QUALITY,
+		BANNER_FORMAT,
 	);
 
 	return `/banners/cache/${filename}`;

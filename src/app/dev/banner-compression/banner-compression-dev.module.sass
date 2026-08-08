@@ -1,12 +1,17 @@
 .wrapper
-  width: 950px
+  width: 1280px
   margin: 20px auto
   color: #ddd
 
 .controls
   position: fixed
   z-index: 10
+  top: 25%
   left: 0
+  // Grows with every control row added; without a cap a long enough list
+  // would run off the bottom of the viewport with no way to reach it.
+  max-height: calc(100vh - 40px)
+  overflow-y: auto
   display: flex
   flex-flow: column
   gap: 10px
@@ -14,51 +19,142 @@
   border-radius: 4px
   padding: 20px
   margin-bottom: 20px
+  width: 19rem
+  background: #1a1a1a
 
+// Label (+ value, for sliders) stacked above the control rather than beside
+// it — the row's width is then just whatever the control itself needs, so
+// .controls can go as narrow as a single select/range wants to be instead
+// of label-width + control-width side by side.
 .control_row
   display: flex
+  flex-flow: column
+  gap: 4px
+  min-width: 0
+
+  select, input
+    width: 100%
+    min-width: 0
+    box-sizing: border-box
+
+.control_head
+  display: flex
   flex-flow: row
-  align-items: center
+  align-items: baseline
+  justify-content: space-between
   gap: 10px
 
   label
-    width: 110px
-    flex-shrink: 0
+    font-size: 0.8rem
+    opacity: 0.7
+
+  output
+    font-variant-numeric: tabular-nums
+    font-size: 0.8rem
+
+// denoise pairs a method <select> with its amount <input type="range"> on
+// one line, under a single shared .control_head — narrower than giving each
+// its own head+value row, and the two are one setting conceptually anyway.
+.control_body
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 8px
+  min-width: 0
+
+  select
+    flex: 0 1 auto
+    width: auto
 
   input[type="range"]
     flex: 1
-
-  output
-    width: 50px
-    text-align: right
-    font-variant-numeric: tabular-nums
+    min-width: 0
 
 .error
   color: #e05656
 
 .comparison
+  position: relative
   display: flex
   flex-flow: column
-  gap: 5px
+  gap: 10px
 
-.pane
-  flex: 1
-  min-width: 0
-  display: flex
-  flex-flow: column
-  gap: 8px
-
-  h2
-    margin: 0
-    font-size: 0.9rem
-    font-weight: normal
-    opacity: 0.8
-
-.image
-  width: 100%
-  height: auto
+// Original and compressed <img> stacked in the same box (grid-area) rather
+// than side by side — .compare_overlay reveals the compressed one from the
+// left up to the drag position via clip-path, so the divider is a straight
+// read of "how much of the image is compressed" instead of two separate
+// images the eye has to compare across a gap.
+.compare_wrapper
+  position: relative
+  overflow: hidden
   border-radius: 4px
   background: rgba(255, 255, 255, 0.05)
+  cursor: ew-resize
+  // Without this, dragging the divider on a touchscreen also scrolls the
+  // page — the pointer stream is meant for us alone.
+  touch-action: none
+  user-select: none
+  // Height used to be whatever the original image's own aspect ratio gave
+  // at the page's 1280px width (~720px for 16:9) — nothing capped it, so a
+  // tall/portrait source could push the whole comparison off-screen. Fixed
+  // height + object-fit: cover on both layers below crops instead of
+  // scaling the box to the image.
+  height: min(70vh, 1000px)
+
+.compare_image
+  pointer-events: none
+  display: block
+  position: absolute
+  inset: 0
+  width: 100%
+  height: 100%
+  object-fit: cover
+
+.compare_overlay
+  position: absolute
+  inset: 0
+  overflow: hidden
+  // Scopes the grain overlay's mix-blend-mode (below) to just this box —
+  // without it the blend reaches through to whatever's painted behind,
+  // including the original image showing through the unclipped remainder.
+  isolation: isolate
+
+.compare_handle
+  position: absolute
+  top: 0
+  bottom: 0
+  width: 2px
+  background: #fff
+  transform: translateX(-50%)
+  pointer-events: none
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.6)
+
+  &::before
+    content: ""
+    position: absolute
+    top: 50%
+    left: 50%
+    width: 28px
+    height: 28px
+    border-radius: 50%
+    background: #fff
+    transform: translate(-50%, -50%)
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.6)
+
+.compare_label_left, .compare_label_right
+  position: absolute
+  top: 8px
+  padding: 2px 8px
+  font-size: 0.75rem
+  background: rgba(0, 0, 0, 0.55)
+  border-radius: 3px
+  pointer-events: none
+
+.compare_label_left
+  left: 8px
+
+.compare_label_right
+  right: 8px
 
 .reduction
   color: #6fc47e
@@ -68,17 +164,49 @@
   font-size: 0.75rem
   opacity: 0.6
 
-// Wraps the custom-result <img> so .grain_overlay (an absolutely-positioned
-// sibling) can sit directly on top of it — the overlay itself carries no
-// image bytes at all, it's an inline SVG feTurbulence filter rendered by the
-// browser, so this "costs" nothing regardless of opacity.
-.grain_wrapper
-  position: relative
-
 .grain_overlay
   position: absolute
   inset: 0
-  border-radius: 4px
   pointer-events: none
   mix-blend-mode: overlay
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")
+  // A real (non-tileable) grain photo rather than a repeating synthetic
+  // pattern — stretched to cover instead of tiled, so there's no repeat
+  // seam to hide. Downside: at sizes much larger than the source's own
+  // 1280x720 it'll be upscaled and soften slightly.
+  background-image: url("/ui/CT_35mm_Grain.png")
+  background-repeat: no-repeat
+  background-position: center
+  background-size: cover
+
+// Posters only — shows the same compressed result at the actual pixel
+// widths the grid card and detail page render it at (see
+// POSTER_PRACTICAL_SIZES), since artifacts obvious in the large
+// slice-compare view above can vanish entirely at real on-screen size.
+.practical_row
+  position: fixed
+  top: 70px
+  right: 40px
+  display: flex
+  flex-flow: column wrap
+  align-items: flex-end
+  gap: 24px
+
+.practical_item
+  display: flex
+  flex-flow: column
+  gap: 6px
+  align-items: center
+
+// Same treatment as primitives.module.sass's .poster_frame/.poster:
+// aspect-ratio box with a placeholder background, image stretched
+// (object-fit: fill, not cover) to exactly fill it.
+.practical_frame
+  background-color: rgba(102, 102, 102, 0.25)
+  border-radius: 0.5rem
+  overflow: hidden
+
+.practical_image
+  display: block
+  width: 100%
+  height: 100%
+  object-fit: fill

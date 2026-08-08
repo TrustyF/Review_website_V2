@@ -32,12 +32,19 @@ export function MediaReview({ review }: { review: Review | null | undefined }) {
 		<div className={styles.wrapper}>
 			<div className={styles.rating}>
 				<div className={styles.rating_number}>{review.rating}</div>
-				<StarIcon className={styles.rating_star} />
+				<StarIcon />
 			</div>
 
-			<div className={styles.watched_on}>
-				watched {DateFormatter.format(review.createDate)}
-			</div>
+			{review.ratedDate && (
+				<div className={styles.review_date}>
+					Watched on {DateFormatter.format(review.ratedDate)}
+				</div>
+			)}
+			{review.reviewedDate && (
+				<div className={styles.review_date}>
+					Reviewed on {DateFormatter.format(review.reviewedDate)}
+				</div>
+			)}
 
 			<div className={styles.body}>{SplitLineBody}</div>
 		</div>

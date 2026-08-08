@@ -108,7 +108,7 @@
 
 // Default look for every field input: transparent, underlined, matching the
 // rendered review's typography instead of a boxed form control. Mirrors
-// .rating/.rating_number/.rating_star in media-card/review.module.sass.
+// .rating/.rating_number in media-card/review.module.sass.
 .field_input
   width: 4rem
   padding: 0.1rem 0.3rem
@@ -122,15 +122,29 @@
 .field_checkbox
   accent-color: var(--foreground)
 
+// Same underlined, no-box look as .field_input, but auto-width (a button's
+// label — "Log today"/"Logged" — doesn't fit .field_input's fixed 4rem) and
+// clickable.
+.rewatch_button
+  width: auto
+  padding: 0.1rem 0.3rem
+  border: none
+  border-bottom: 1px solid var(--accent1)
+  background: transparent
+  color: var(--foreground)
+  font-family: $font-body
+  font-size: 1.1rem
+  cursor: pointer
+
+  &:disabled
+    cursor: default
+    opacity: 0.6
+
 .rating_group
   display: flex
   flex-flow: row
   align-items: center
   gap: 0.2rem
-
-.rating_star
-  color: #FCCA00
-  margin-top: -0.1rem
 
 .body_group
   display: flex

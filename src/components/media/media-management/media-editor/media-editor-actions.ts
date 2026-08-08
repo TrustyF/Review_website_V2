@@ -58,10 +58,27 @@ export async function saveReview(
 ) {
 	const existing = await db.review.findUnique({ where: { mediaId } });
 
+	// Each set once, the first time its own trigger actually happens — keyed
+	// off the dedicated date field itself (not re-derived from rating/body),
+	// so an unrate-then-rerate or a body cleared-then-rewritten later doesn't
+	// silently move "Watched on"/"Reviewed on" off their original dates.
+	// Subsequent re-rates are what MediaChangeLog's "rewatched" milestone
+	// (logRewatch) is for instead.
+	const hasRating = review.rating != null;
+	const hasBody = Boolean(review.body?.trim());
+	// Spread in conditionally rather than passing `undefined` for the "not
+	// yet" case — exactOptionalPropertyTypes rejects an explicit `undefined`
+	// value for these (Prisma's input type wants the key entirely absent, a
+	// real Date, or null, never `undefined`).
+	const dateFields = {
+		...(!existing?.ratedDate && hasRating ? { ratedDate: new Date() } : {}),
+		...(!existing?.reviewedDate && hasBody ? { reviewedDate: new Date() } : {}),
+	};
+
 	await db.review.upsert({
 		where: { mediaId },
-		update: review,
-		create: { mediaId, ...review },
+		update: { ...review, ...dateFields },
+		create: { mediaId, ...review, ...dateFields },
 	});
 
 	const changes: {
@@ -90,7 +107,6 @@ export async function saveReview(
 	// own, whether that happens on this same save (existing === null) or a
 	// later one that fills in a body that was empty before.
 	const hadBody = Boolean(existing?.body?.trim());
-	const hasBody = Boolean(review.body?.trim());
 	if (!hadBody && hasBody) {
 		changes.push({
 			mediaId,
@@ -104,6 +120,18 @@ export async function saveReview(
 		await db.mediaChangeLog.createMany({ data: changes });
 	}
 
+	revalidatePath("/");
+}
+
+// A rewatch has no field of its own to diff — it's not "rating changed",
+// it's "watched it again" — so unlike everything else in this file it's
+// logged directly on request rather than inferred from a before/after
+// comparison. Repeatable (unlike "reviewed"): every call adds another
+// "Rewatched on" row, one per actual rewatch.
+export async function logRewatch(mediaId: number) {
+	await db.mediaChangeLog.create({
+		data: { mediaId, field: "rewatched", oldValue: null, newValue: "true" },
+	});
 	revalidatePath("/");
 }
 

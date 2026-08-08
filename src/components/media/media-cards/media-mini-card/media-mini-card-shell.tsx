@@ -34,15 +34,12 @@ export function MediaMiniCardShell({ media, children }: Props) {
 				{media.review && (
 					<div className={styles.rating}>
 						{media.review.rating}
-						<StarIcon className={styles.rating_star} />
+						<StarIcon size={11} />
 					</div>
 				)}
 				{children}
 			</div>
-			<MediaEditButton
-				media={media}
-				className={styles.edit_button}
-			/>
+			<MediaEditButton media={media} className={styles.edit_button} />
 		</div>
 	);
 }

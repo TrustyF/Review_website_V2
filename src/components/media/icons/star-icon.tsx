@@ -1,16 +1,37 @@
-import { SVGProps } from "react";
+import { CSSProperties, SVGProps } from "react";
 
-export function StarIcon(props: SVGProps<SVGSVGElement>) {
+// Every caller was redefining the same color and baseline nudge on their own
+// .rating_star class — pulled in here as the default instead, so a plain
+// <StarIcon /> already looks right and a caller only needs its own style for
+// something that's actually context-specific, like the mini card's smaller
+// size (see media-mini-card-shell.module.sass's .rating_star).
+const DEFAULT_STYLE: CSSProperties = {
+	color: "#FCCA00",
+	marginTop: "-0.1rem",
+	aspectRatio: "1",
+	objectFit: "scale-down",
+};
+
+type Props = SVGProps<SVGSVGElement> & {
+	// Drives both width and height together — a plain CSS width override
+	// would fight DEFAULT_STYLE's inline color/margin (inline style always
+	// wins over a class, same reason marginTop needed its own override in
+	// media-mini-card-shell.tsx), and a width-only override risked distorting
+	// the star if height didn't follow. A prop sidesteps both.
+	size?: number;
+};
+
+export function StarIcon({ style, size = 15, ...props }: Props) {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
 			role="graphics-symbol"
-			width="15"
-			height="15"
+			width={size}
+			height={size}
 			viewBox="0 0 15 15"
 			aria-label="★"
-			{...props}
-		>
+			style={{ ...DEFAULT_STYLE, ...style }}
+			{...props}>
 			<path
 				fill="currentColor"
 				fillRule="evenodd"

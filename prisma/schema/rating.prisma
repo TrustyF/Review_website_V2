@@ -10,6 +10,15 @@ model Review {
 
   body  String?
 
+  // Set once, the first time rating/body actually go from unset to set — see
+  // saveReview. Distinct from createDate (just "when this row first
+  // existed", which happens as soon as ANY field is touched, not
+  // specifically rating or body) and from re-rates/rewatches after the
+  // first one, which don't move these — see MediaChangeLog's "rewatched"
+  // milestone (logRewatch) for tracking those instead.
+  ratedDate    DateTime?
+  reviewedDate DateTime?
+
   createDate DateTime  @default(now())
   updateDate DateTime?
 }

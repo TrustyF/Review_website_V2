@@ -2,7 +2,7 @@ import { readFile } from "fs/promises";
 import path from "path";
 import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
-import { resolveBanner } from "@/server/resolvers/poster-resolver";
+import { BANNER_FORMAT, resolveBanner } from "@/server/resolvers/poster-resolver";
 
 // Same lazy-resolve-on-request pattern as /api/poster (see that route for
 // the full reasoning) — toMediaRecord builds this URL with zero I/O, and
@@ -37,7 +37,7 @@ export async function GET(
 
 	return new NextResponse(bytes, {
 		headers: {
-			"Content-Type": "image/webp",
+			"Content-Type": `image/${BANNER_FORMAT}`,
 			"Cache-Control": "public, max-age=31536000, immutable",
 		},
 	});

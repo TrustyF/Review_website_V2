@@ -8,6 +8,7 @@ import {
 	getAlternativeBanners,
 	getAlternativePosters,
 	hardDeleteMedia,
+	logRewatch,
 	saveMediaDetails,
 	saveReview,
 	setMediaDeleted,
@@ -62,6 +63,13 @@ export default function MediaEditorModal() {
 	// run on its own, without touching the rest of the draft.
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
+
+	// Logging a rewatch is its own independent action too — it doesn't touch
+	// (and shouldn't wait on) whatever unsaved edits are sitting in the rest
+	// of the draft, so it gets its own request/error state rather than
+	// riding along with handleSave.
+	const [isLoggingRewatch, setIsLoggingRewatch] = useState(false);
+	const [rewatchLogged, setRewatchLogged] = useState(false);
 	// Hard delete needs an explicit second click before it actually fires —
 	// this just tracks whether that warning is currently showing.
 	const [confirmHardDelete, setConfirmHardDelete] = useState(false);
@@ -107,6 +115,7 @@ export default function MediaEditorModal() {
 		setBannerUrlInput("");
 		setDeleteError(null);
 		setConfirmHardDelete(false);
+		setRewatchLogged(false);
 	}
 
 	// The modal itself scrolls internally (its content can exceed viewport
@@ -213,6 +222,23 @@ export default function MediaEditorModal() {
 		}
 	}
 
+	// Fires immediately on click, today's date, no draft/confirmation step —
+	// matches logRewatch's own one-click "insert a marker" design (see its
+	// comment in media-editor-actions.ts). rewatchLogged is a transient
+	// "done" acknowledgment, not persisted state — it resets the moment the
+	// modal's reopened (draft reload below), same as any other in-progress
+	// UI state here.
+	async function handleLogRewatch() {
+		if (!draft) return;
+		setIsLoggingRewatch(true);
+		try {
+			await logRewatch(draft.id);
+			setRewatchLogged(true);
+		} finally {
+			setIsLoggingRewatch(false);
+		}
+	}
+
 	async function handleSave() {
 		if (!draft) return;
 		setIsSaving(true);
@@ -261,6 +287,8 @@ export default function MediaEditorModal() {
 				liked: prev.review?.liked ?? false,
 				difficulty: prev.review?.difficulty ?? 0,
 				body: prev.review?.body ?? null,
+				ratedDate: prev.review?.ratedDate ?? null,
+				reviewedDate: prev.review?.reviewedDate ?? null,
 				createDate: prev.review?.createDate ?? new Date(),
 				updateDate: prev.review?.updateDate ?? null,
 				...patch,
@@ -414,7 +442,7 @@ export default function MediaEditorModal() {
 										})
 									}
 								/>
-								<StarIcon className={styles.rating_star} />
+								<StarIcon />
 							</div>
 						</label>
 						<label className={styles.field}>
@@ -440,6 +468,20 @@ export default function MediaEditorModal() {
 								}
 							/>
 						</label>
+						<div className={styles.field}>
+							Rewatch
+							<button
+								type="button"
+								className={styles.rewatch_button}
+								disabled={isLoggingRewatch || rewatchLogged}
+								onClick={handleLogRewatch}>
+								{rewatchLogged
+									? "Logged"
+									: isLoggingRewatch
+										? "Logging…"
+										: "Log today"}
+							</button>
+						</div>
 					</div>
 
 					{/* Review body: preview + edit button, kept on its own row.
