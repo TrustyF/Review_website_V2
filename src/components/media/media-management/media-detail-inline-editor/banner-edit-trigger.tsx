@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { MediaRecord } from "@/components/media/types";
 import {
 	getAlternativeBanners,
 	updateMediaBanner,
+	updateMediaBannerFocus,
 } from "@/components/media/media-management/media-editor/media-editor-actions";
 import { useIsAdminStore } from "@/lib/is-admin-store";
 import { useImageEditPopover } from "@/components/media/media-management/media-detail-inline-editor/use-image-edit-popover";
@@ -95,6 +96,23 @@ export function BannerEditTrigger({
 		setLoadedSrc(src);
 	}
 
+	// The display box is almost always shorter than the source banner, so a
+	// fixed center crop (object-fit: cover's default object-position) doesn't
+	// always land on the interesting part of the image — see Media.
+	// bannerFocusY. Local state for a live preview while dragging; the actual
+	// save is debounced (see handleFocusYChange) rather than firing on every
+	// tick a drag produces.
+	const [focusY, setFocusY] = useState(media.bannerFocusY);
+	const focusYSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	function handleFocusYChange(value: number) {
+		setFocusY(value);
+		if (focusYSaveTimer.current) clearTimeout(focusYSaveTimer.current);
+		focusYSaveTimer.current = setTimeout(() => {
+			updateMediaBannerFocus(media.id, value);
+		}, 400);
+	}
+
 	const image = (
 		<Image
 			src={src}
@@ -102,6 +120,7 @@ export function BannerEditTrigger({
 			width={1280}
 			height={720}
 			className={`${imageClassName ?? ""} ${styles.image} ${isLoaded ? styles.image_loaded : ""}`}
+			style={{ objectPosition: `50% ${focusY}%` }}
 			onLoad={() => setIsLoaded(true)}
 			priority
 		/>
@@ -149,6 +168,23 @@ export function BannerEditTrigger({
 				onClick={() => setIsOpen((v) => !v)}
 			/>
 
+			{/* A sibling of click_target, not a descendant — same reasoning as
+			    that button itself (see this component's own top comment):
+			    positioned independently so dragging it doesn't also trigger
+			    click_target underneath. stopPropagation is still there as a
+			    second guard since the two visually overlap at the edge. */}
+			<input
+				type="range"
+				min={0}
+				max={100}
+				value={focusY}
+				onChange={(e) => handleFocusYChange(Number(e.target.value))}
+				onClick={(e) => e.stopPropagation()}
+				onPointerDown={(e) => e.stopPropagation()}
+				className={styles.focus_slider}
+				aria-label="Banner vertical framing"
+			/>
+
 			{isOpen && (
 				<EditImagePopover
 					title="Change banner"
@@ -158,8 +194,6 @@ export function BannerEditTrigger({
 					altText="Alternative banner option"
 					errorText="Couldn't load alternative banners. Try again later."
 					optionAspectRatio="16/9"
-					optionClipTop={0}
-					optionClipBottom={32}
 					urlInput={urlInput}
 					onUrlInputChange={setUrlInput}
 					onSubmitUrl={submitUrl}

@@ -33,6 +33,12 @@ type BaseRecord = Omit<Media, "type"> & {
 	// at all (only TMDB/IGDB have one), so absent just means "don't render
 	// a banner section" rather than "show a stand-in image".
 	bannerSrc: string | null;
+	// "Watched on", shown on MediaReview — Review.createDate itself, not a
+	// separate column (see saveReview): saveReview now requires a rating to
+	// save at all, so createDate can never predate one — gated on rating
+	// being present anyway as a defensive fallback for rows that existed
+	// before that requirement did.
+	watchedDate: Date | null;
 };
 
 // The shape components actually want to work with
@@ -60,11 +66,20 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 	const bannerSrc = raw.bannerPath
 		? `/api/banner/${raw.id}/${mediaAssetFilename(raw.id, raw.bannerPath, BANNER_FORMAT)}`
 		: null;
+	const watchedDate =
+		raw.review?.rating != null ? raw.review.createDate : null;
 	switch (raw.type) {
 		case "MOVIE":
 		case "SHORT":
 			if (!raw.movie) break;
-			return { ...raw, type: raw.type, movie: raw.movie, posterSrc, bannerSrc };
+			return {
+				...raw,
+				type: raw.type,
+				movie: raw.movie,
+				posterSrc,
+				bannerSrc,
+				watchedDate,
+			};
 		case "TVSHOW":
 			if (!raw.tvShow) break;
 			return {
@@ -73,16 +88,38 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				tvShow: raw.tvShow,
 				posterSrc,
 				bannerSrc,
+				watchedDate,
 			};
 		case "MANGA":
 			if (!raw.manga) break;
-			return { ...raw, type: raw.type, manga: raw.manga, posterSrc, bannerSrc };
+			return {
+				...raw,
+				type: raw.type,
+				manga: raw.manga,
+				posterSrc,
+				bannerSrc,
+				watchedDate,
+			};
 		case "COMIC":
 			if (!raw.comic) break;
-			return { ...raw, type: raw.type, comic: raw.comic, posterSrc, bannerSrc };
+			return {
+				...raw,
+				type: raw.type,
+				comic: raw.comic,
+				posterSrc,
+				bannerSrc,
+				watchedDate,
+			};
 		case "GAME":
 			if (!raw.game) break;
-			return { ...raw, type: raw.type, game: raw.game, posterSrc, bannerSrc };
+			return {
+				...raw,
+				type: raw.type,
+				game: raw.game,
+				posterSrc,
+				bannerSrc,
+				watchedDate,
+			};
 	}
 	throw new Error(
 		`Media ${raw.id} has type "${raw.type}" but its matching relation was not loaded or does not exist.`,

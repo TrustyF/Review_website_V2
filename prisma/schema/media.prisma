@@ -9,6 +9,11 @@ model Media {
   publicRating   Float?
   posterPath     String?
   bannerPath     String?
+  // Vertical object-position (0 = top, 100 = bottom) for the banner's
+  // object-fit: cover crop — the display box is almost always shorter than
+  // the source image, so a fixed center crop doesn't always frame the
+  // interesting part. See banner-edit-trigger.tsx's framing slider.
+  bannerFocusY   Int     @default(50)
 
   isDeleted Boolean @default(false)
 

@@ -12,7 +12,16 @@ const DateFormatter = new Intl.DateTimeFormat("en-GB", {
 	day: "numeric",
 });
 
-export function MediaReview({ review }: { review: Review | null | undefined }) {
+type Props = {
+	review: Review | null | undefined;
+	// Not a Review column — derived from the "watched" MediaChangeLog
+	// milestone (see saveReview/toMediaRecord), since that's the single
+	// source of truth "Reviewed on"/"Rewatched on" also read from in the
+	// changelog itself, instead of duplicating a date on the review row too.
+	watchedDate?: Date | null;
+};
+
+export function MediaReview({ review, watchedDate }: Props) {
 	if (!review) return null;
 
 	// One provider per review — clicking any spoiler reveals every spoiler
@@ -35,14 +44,12 @@ export function MediaReview({ review }: { review: Review | null | undefined }) {
 				<StarIcon />
 			</div>
 
-			{review.ratedDate && (
+			{/* "Reviewed on" isn't shown here — see saveReview's comment: it's
+			    changelog-only, alongside "watched" itself, rather than
+			    duplicated on the card too. */}
+			{watchedDate && (
 				<div className={styles.review_date}>
-					Watched on {DateFormatter.format(review.ratedDate)}
-				</div>
-			)}
-			{review.reviewedDate && (
-				<div className={styles.review_date}>
-					Reviewed on {DateFormatter.format(review.reviewedDate)}
+					Watched on {DateFormatter.format(watchedDate)}
 				</div>
 			)}
 

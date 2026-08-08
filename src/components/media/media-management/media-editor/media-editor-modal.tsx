@@ -194,9 +194,7 @@ export default function MediaEditorModal() {
 		try {
 			const nextIsDeleted = !draft.isDeleted;
 			await setMediaDeleted(draft.id, nextIsDeleted);
-			setDraft((prev) =>
-				prev ? { ...prev, isDeleted: nextIsDeleted } : prev,
-			);
+			setDraft((prev) => (prev ? { ...prev, isDeleted: nextIsDeleted } : prev));
 		} catch {
 			setDeleteError("Failed to update. Try again.");
 		} finally {
@@ -245,12 +243,22 @@ export default function MediaEditorModal() {
 		setSaveError(null);
 		try {
 			await Promise.all([
-				saveReview(draft.id, {
-					rating: draft.review?.rating ?? null,
-					liked: draft.review?.liked ?? false,
-					difficulty: draft.review?.difficulty ?? 0,
-					body: draft.review?.body ?? null,
-				}),
+				// Only if there's actually a review to save — draft.review stays
+				// unset until patchReview's first call, which only happens once
+				// a review field is actually touched (see patchReview), so this
+				// is false for an untouched, never-rated media. saveReview itself
+				// now rejects a null rating (see its own comment), so an existing
+				// review's rating can't be cleared back out this way either —
+				// exactly the same guard, just skipped here when there's nothing
+				// to even attempt saving.
+				draft.review
+					? saveReview(draft.id, {
+							rating: draft.review.rating,
+							liked: draft.review.liked,
+							difficulty: draft.review.difficulty,
+							body: draft.review.body,
+						})
+					: Promise.resolve(),
 				saveMediaDetails(draft.id, {
 					title: draft.title,
 					overview: draft.overview,
@@ -268,8 +276,14 @@ export default function MediaEditorModal() {
 			setPendingPosterPath(null);
 			setPendingBannerPath(null);
 			close();
-		} catch {
-			setSaveError("Failed to save. Try again.");
+		} catch (e) {
+			// Surfaces saveReview's own message (e.g. "A rating is required to
+			// save a review.") when that's what actually failed, rather than a
+			// generic message that gives no clue which of the four requests in
+			// the Promise.all above was the one that rejected.
+			setSaveError(
+				e instanceof Error ? e.message : "Failed to save. Try again.",
+			);
 		} finally {
 			setIsSaving(false);
 		}
@@ -287,8 +301,7 @@ export default function MediaEditorModal() {
 				liked: prev.review?.liked ?? false,
 				difficulty: prev.review?.difficulty ?? 0,
 				body: prev.review?.body ?? null,
-				ratedDate: prev.review?.ratedDate ?? null,
-				reviewedDate: prev.review?.reviewedDate ?? null,
+				reviewDate: prev.review?.reviewDate ?? null,
 				createDate: prev.review?.createDate ?? new Date(),
 				updateDate: prev.review?.updateDate ?? null,
 				...patch,
@@ -498,48 +511,46 @@ export default function MediaEditorModal() {
 						</button>
 					</div>
 
-					{draft && POSTER_PICKER_TYPES.includes(draft.type) && (
-						<div className={styles.picker_group}>
-							<div className={styles.picker_label}>Poster</div>
-							<ImagePicker
-								key={draft.id}
-								draft={draft}
-								fetchOptions={getAlternativePosters}
-								onPick={pickPoster}
-								altText="Alternative poster option"
-								errorText="Couldn't load alternative posters. Try again later."
-							/>
-						</div>
-					)}
+					{/*{draft && POSTER_PICKER_TYPES.includes(draft.type) && (*/}
+					{/*	<div className={styles.picker_group}>*/}
+					{/*		<div className={styles.picker_label}>Poster</div>*/}
+					{/*		<ImagePicker*/}
+					{/*			key={draft.id}*/}
+					{/*			draft={draft}*/}
+					{/*			fetchOptions={getAlternativePosters}*/}
+					{/*			onPick={pickPoster}*/}
+					{/*			altText="Alternative poster option"*/}
+					{/*			errorText="Couldn't load alternative posters. Try again later."*/}
+					{/*		/>*/}
+					{/*	</div>*/}
+					{/*)}*/}
 
-					{draft && BANNER_PICKER_TYPES.includes(draft.type) && (
-						<div className={styles.picker_group}>
-							<div className={styles.picker_label}>Banner</div>
-							{draft.bannerSrc && (
-								// Plain <img>, not next/image — this is a small editor-only
-								// preview, not worth the width/height ceremony (unlike the
-								// poster URL preview above, the host here is always already
-								// allowlisted, so this is just about keeping it simple).
-								// eslint-disable-next-line @next/next/no-img-element
-								<img
-									src={draft.bannerSrc}
-									alt=""
-									className={styles.banner_preview}
-								/>
-							)}
-							<ImagePicker
-								key={draft.id}
-								draft={draft}
-								fetchOptions={getAlternativeBanners}
-								onPick={pickBanner}
-								altText="Alternative banner option"
-								errorText="Couldn't load alternative banners. Try again later."
-								optionClipTop={25}
-								optionClipBottom={25}
-								optionAspectRatio="16/9"
-							/>
-						</div>
-					)}
+					{/*{draft && BANNER_PICKER_TYPES.includes(draft.type) && (*/}
+					{/*	<div className={styles.picker_group}>*/}
+					{/*		<div className={styles.picker_label}>Banner</div>*/}
+					{/*		{draft.bannerSrc && (*/}
+					{/*			// Plain <img>, not next/image — this is a small editor-only*/}
+					{/*			// preview, not worth the width/height ceremony (unlike the*/}
+					{/*			// poster URL preview above, the host here is always already*/}
+					{/*			// allowlisted, so this is just about keeping it simple).*/}
+					{/*			// eslint-disable-next-line @next/next/no-img-element*/}
+					{/*			<img*/}
+					{/*				src={draft.bannerSrc}*/}
+					{/*				alt=""*/}
+					{/*				className={styles.banner_preview}*/}
+					{/*			/>*/}
+					{/*		)}*/}
+					{/*		<ImagePicker*/}
+					{/*			key={draft.id}*/}
+					{/*			draft={draft}*/}
+					{/*			fetchOptions={getAlternativeBanners}*/}
+					{/*			onPick={pickBanner}*/}
+					{/*			altText="Alternative banner option"*/}
+					{/*			errorText="Couldn't load alternative banners. Try again later."*/}
+					{/*			optionAspectRatio="16/9"*/}
+					{/*		/>*/}
+					{/*	</div>*/}
+					{/*)}*/}
 				</div>
 
 				<span className={styles.divider} />

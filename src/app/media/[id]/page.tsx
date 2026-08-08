@@ -15,6 +15,7 @@ import { ReviewBodyEditTrigger } from "@/components/media/media-management/media
 import { MediaType } from "@prisma/client";
 import { BANNER_GRAIN_OPACITY } from "@/server/resolvers/poster-resolver";
 import styles from "./media-detail.module.sass";
+import { CircularGauge } from "@/components/ui/circular-gauge";
 
 const PROVIDER_LABELS: Record<MediaType, string> = {
 	[MediaType.MOVIE]: "TMDB",
@@ -93,6 +94,10 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 		case "MOVIE":
 		case "SHORT": {
 			const { runtime, budget, revenue, tagline } = media.movie;
+			const roi =
+				budget != null && revenue != null && budget !== 0
+					? (revenue - budget) / budget
+					: null;
 			return (
 				<dl className={styles.facts}>
 					{tagline && <Fact label="Tagline" value={tagline} />}
@@ -107,6 +112,16 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 					)}
 					{revenue != null && (
 						<Fact label="Revenue" value={CurrencyFormatter.format(revenue)} />
+					)}
+					{roi != null && (
+						<CircularGauge
+							value={roi}
+							size={30}
+							strokeWidth={2}
+							max={1}
+							unit={"x"}
+							textScaling={0.35}
+						/>
 					)}
 				</dl>
 			);
@@ -241,8 +256,8 @@ export default async function MediaDetailPage({
 		<div className={styles.wrapper}>
 			{raw.isDeleted && (
 				<div className={styles.deleted_banner}>
-					This item is soft-deleted — hidden from every list. Open the
-					editor to restore it or delete it permanently.
+					This item is soft-deleted — hidden from every list. Open the editor to
+					restore it or delete it permanently.
 				</div>
 			)}
 			{media.bannerSrc && (
@@ -259,115 +274,119 @@ export default async function MediaDetailPage({
 				</div>
 			)}
 			{media.bannerSrc && <div className={styles.banner_spacer} />}
-			<div className={styles.header}>
-				<div className={styles.poster}>
-					<PosterEditTrigger
-						media={media}
-						ratio={posterRatioFor(media.type)}
-					/>
-				</div>
-				<div className={styles.header_info}>
-					<div className={styles.title_row}>
-						<MediaTitle title={media.title} className={styles.title} />
-						<MediaEditButton media={media} className={styles.edit_button} />
-					</div>
-					{media.alternateTitle && (
-						<div className={styles.alt_title}>{media.alternateTitle}</div>
-					)}
 
-					<div className={styles.meta_row}>
-						<MediaReleaseDate date={media.releaseDate} />
-						{raw.originCountry && (
-							<span>
-								{raw.originCountry.flag} {raw.originCountry.name}
-							</span>
-						)}
-						{raw.sourceUrl && (
-							<a
-								className={styles.source_link}
-								href={raw.sourceUrl}
-								target="_blank"
-								rel="noopener noreferrer">
-								View on {PROVIDER_LABELS[media.type]}
-							</a>
-						)}
+			<div className={styles.details_wrapper}>
+				<div className={styles.header}>
+					<div className={styles.poster}>
+						<PosterEditTrigger
+							media={media}
+							ratio={posterRatioFor(media.type)}
+						/>
 					</div>
-
-					{genres.length > 0 && (
-						<div className={styles.genres}>
-							{genres.map((genre) => (
-								<span className={styles.genre} key={genre}>
-									{genre}
-								</span>
-							))}
+					<div className={styles.header_info}>
+						<div className={styles.title_row}>
+							<MediaTitle title={media.title} className={styles.title} />
+							<MediaEditButton media={media} className={styles.edit_button} />
 						</div>
-					)}
+						{media.alternateTitle && (
+							<div className={styles.alt_title}>{media.alternateTitle}</div>
+						)}
 
-					{media.overview && (
-						<p className={styles.overview}>{media.overview}</p>
-					)}
-
-					<MediaTypeFacts media={media} />
-
-					{(directorEntries.length > 0 ||
-						actorEntries.length > 0 ||
-						studioEntries.length > 0) && (
-						<dl className={styles.facts}>
-							{directorEntries.length > 0 && (
-								<Fact
-									label="Director"
-									value={<CreditNames entries={directorEntries} />}
-								/>
-							)}
-							{actorEntries.length > 0 && (
-								<Fact
-									label="Cast"
-									value={<CreditNames entries={actorEntries} />}
-								/>
-							)}
-							{studioEntries.length > 0 && (
-								<Fact
-									label="Studio"
-									value={<CreditNames entries={studioEntries} />}
-								/>
-							)}
-						</dl>
-					)}
-
-					{otherRoles.length > 0 && (
-						<details className={styles.credits}>
-							<summary className={styles.credits_summary}>
-								Credits
-								<span className={styles.credits_count}>
-									{otherRoles.length}
+						<div className={styles.meta_row}>
+							<MediaReleaseDate date={media.releaseDate} />
+							{raw.originCountry && (
+								<span>
+									{raw.originCountry.flag} {raw.originCountry.name}
 								</span>
-							</summary>
-							<div className={styles.credits_list}>
-								{otherRoles.map(([role, entries]) => (
-									<div className={styles.credit_row} key={role}>
-										<span className={styles.credit_role}>{role}</span>
-										<CreditNames entries={[...entries.values()]} />
-									</div>
+							)}
+							{raw.sourceUrl && (
+								<a
+									className={styles.source_link}
+									href={raw.sourceUrl}
+									target="_blank"
+									rel="noopener noreferrer">
+									View on {PROVIDER_LABELS[media.type]}
+								</a>
+							)}
+						</div>
+
+						{genres.length > 0 && (
+							<div className={styles.genres}>
+								{genres.map((genre) => (
+									<span className={styles.genre} key={genre}>
+										{genre}
+									</span>
 								))}
 							</div>
-						</details>
-					)}
+						)}
+
+						{media.overview && (
+							<p className={styles.overview}>{media.overview}</p>
+						)}
+
+						<MediaTypeFacts media={media} />
+
+						{(directorEntries.length > 0 ||
+							actorEntries.length > 0 ||
+							studioEntries.length > 0) && (
+							<dl className={styles.facts}>
+								{directorEntries.length > 0 && (
+									<Fact
+										label="Director"
+										value={<CreditNames entries={directorEntries} />}
+									/>
+								)}
+								{actorEntries.length > 0 && (
+									<Fact
+										label="Cast"
+										value={<CreditNames entries={actorEntries} />}
+									/>
+								)}
+								{studioEntries.length > 0 && (
+									<Fact
+										label="Studio"
+										value={<CreditNames entries={studioEntries} />}
+									/>
+								)}
+							</dl>
+						)}
+
+						{otherRoles.length > 0 && (
+							<details className={styles.credits}>
+								<summary className={styles.credits_summary}>
+									Credits
+									<span className={styles.credits_count}>
+										{otherRoles.length}
+									</span>
+								</summary>
+								<div className={styles.credits_list}>
+									{otherRoles.map(([role, entries]) => (
+										<div className={styles.credit_row} key={role}>
+											<span className={styles.credit_role}>{role}</span>
+											<CreditNames entries={[...entries.values()]} />
+										</div>
+									))}
+								</div>
+							</details>
+						)}
+					</div>
 				</div>
+
+				<section className={styles.section}>
+					<h2 className={styles.section_title}>Review</h2>
+					<ReviewBodyEditTrigger media={media} />
+				</section>
+
+				<section className={styles.section}>
+					<h2 className={styles.section_title}>Change log</h2>
+					<ChangeLogList
+						entries={raw.changeLog}
+						type={raw.type}
+						externalId={raw.externalId}
+						review={raw.review}
+					/>
+				</section>
 			</div>
-
-			<section className={styles.section}>
-				<h2 className={styles.section_title}>Review</h2>
-				<ReviewBodyEditTrigger media={media} />
-			</section>
-
-			<section className={styles.section}>
-				<h2 className={styles.section_title}>Change log</h2>
-				<ChangeLogList
-					entries={raw.changeLog}
-					type={raw.type}
-					externalId={raw.externalId}
-				/>
-			</section>
 		</div>
 	);
 }

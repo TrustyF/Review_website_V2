@@ -10,14 +10,16 @@ model Review {
 
   body  String?
 
-  // Set once, the first time rating/body actually go from unset to set — see
-  // saveReview. Distinct from createDate (just "when this row first
-  // existed", which happens as soon as ANY field is touched, not
-  // specifically rating or body) and from re-rates/rewatches after the
-  // first one, which don't move these — see MediaChangeLog's "rewatched"
-  // milestone (logRewatch) for tracking those instead.
-  ratedDate    DateTime?
-  reviewedDate DateTime?
+  // Set once, the first time body actually goes from unset to set — see
+  // saveReview. "Watched on" reads createDate below instead (a rating is
+  // required to save at all now, so createDate can never predate one) —
+  // this is specifically "when did the review text itself first exist",
+  // which can land well after the rating did. Surfaced in the changelog as
+  // a synthesized "Reviewed on" entry (see change-log-list.tsx), same as
+  // createDate's "Watched on" — neither is a real MediaChangeLog row.
+  // "Rewatched on" is the one milestone that's still a real, repeatable row
+  // — see logRewatch.
+  reviewDate DateTime?
 
   createDate DateTime  @default(now())
   updateDate DateTime?

@@ -36,7 +36,7 @@ export function ReviewBodyEditTrigger({ media }: Props) {
 	const [error, setError] = useState<string | null>(null);
 
 	if (!review || !isAdmin) {
-		return <MediaReview review={review} />;
+		return <MediaReview review={review} watchedDate={media.watchedDate} />;
 	}
 
 	async function handleClose() {
@@ -50,8 +50,8 @@ export function ReviewBodyEditTrigger({ media }: Props) {
 				difficulty: review!.difficulty,
 				body,
 			});
-		} catch {
-			setError("Failed to save. Try again.");
+		} catch (e) {
+			setError(e instanceof Error ? e.message : "Failed to save. Try again.");
 		} finally {
 			setIsSaving(false);
 		}
@@ -62,7 +62,7 @@ export function ReviewBodyEditTrigger({ media }: Props) {
 			<Hitbox
 				className={styles.hitbox}
 				onClick={() => setIsOpen(true)}>
-				<MediaReview review={{ ...review, body }} />
+				<MediaReview review={{ ...review, body }} watchedDate={media.watchedDate} />
 				<div className={styles.hover_badge}>Edit review body</div>
 			</Hitbox>
 

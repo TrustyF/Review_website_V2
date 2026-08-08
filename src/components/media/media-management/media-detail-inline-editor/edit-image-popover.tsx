@@ -21,8 +21,8 @@ type Props = {
 	// exactOptionalPropertyTypes rejects forwarding a possibly-undefined
 	// value through a truly optional prop.
 	optionAspectRatio: string | undefined;
-	optionClipTop: number | undefined;
-	optionClipBottom: number | undefined;
+	optionClipTop?: number | 0;
+	optionClipBottom?: number | 0;
 	urlInput: string;
 	onUrlInputChange: (value: string) => void;
 	onSubmitUrl: () => void;
@@ -97,10 +97,7 @@ export function EditImagePopover({
 					value={urlInput}
 					onChange={(e) => onUrlInputChange(e.target.value)}
 				/>
-				<button
-					type="button"
-					onClick={onSubmitUrl}
-					disabled={isSaving}>
+				<button type="button" onClick={onSubmitUrl} disabled={isSaving}>
 					Use
 				</button>
 			</div>
@@ -110,21 +107,14 @@ export function EditImagePopover({
 				// full editor modal's own url_preview: a pasted URL can be any
 				// host, and only gets proxied/cached once it's actually saved.
 				// eslint-disable-next-line @next/next/no-img-element
-				<img
-					src={trimmedUrl}
-					alt=""
-					className={styles.url_preview}
-				/>
+				<img src={trimmedUrl} alt="" className={styles.url_preview} />
 			)}
 			{pendingPath === trimmedUrl && trimmedUrl && (
 				<span className={styles.url_applied}>Will apply on save</span>
 			)}
 
 			<div className={styles.actions}>
-				<button
-					type="button"
-					onClick={onClose}
-					disabled={isSaving}>
+				<button type="button" onClick={onClose} disabled={isSaving}>
 					Discard
 				</button>
 				<button

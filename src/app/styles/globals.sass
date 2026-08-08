@@ -10,6 +10,12 @@
   --accent4: #b3b3b3
   --accent5: #cccccc
 
+  --darkaccent1: #0d0d0d
+  --darkaccent2: #1a1a1a
+  --darkaccent3: #262626
+  --darkaccent4: #333333
+  --darkaccent5: #404040
+
   --color1accent1: #334d66
   --color1accent2: #406080
   --color1accent3: #4d7399
@@ -17,6 +23,13 @@
   --color1accent5: #6699cc
 
   --body: #cccccc
+
+  // Reserves the space Navbar's own fixed-position box takes up (see main
+  // below) — position: fixed removes it from flow entirely, so without
+  // this every page's content would start right at the top of the
+  // viewport and sit underneath it. Kept in sync by hand with nav-bar.
+  // module.sass's own .wrapper padding/height, not derived from it.
+  --navbar-height: 3rem
 
 
 html
@@ -45,6 +58,10 @@ body
   padding: 0
   margin: 0
   position: relative
+
+
+main
+  padding-top: var(--navbar-height)
 
 
 a

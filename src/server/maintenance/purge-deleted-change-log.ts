@@ -9,7 +9,7 @@ import {
 
 // How long a soft-deleted entry stays visible (greyed out) before this
 // script permanently removes it — see change-log-actions.ts.
-const RETENTION_DAYS = 5;
+const RETENTION_DAYS = 1;
 
 type Purgeable = {
 	id: number;
@@ -24,13 +24,20 @@ type Purgeable = {
 // CHANGELOG_BANNER_THUMB_DIR), skipping any pair a surviving (non-purged)
 // row still references — the same pair can appear in more than one row,
 // e.g. one edit's newValue is the next edit's oldValue.
-async function purgeThumbnails(toPurge: Purgeable[], field: string, dir: string) {
+async function purgeThumbnails(
+	toPurge: Purgeable[],
+	field: string,
+	dir: string,
+) {
 	const candidates = new Map<string, { mediaId: number; value: string }>();
 	for (const entry of toPurge) {
 		if (entry.field !== field) continue;
 		for (const value of [entry.oldValue, entry.newValue]) {
 			if (!value) continue;
-			candidates.set(`${entry.mediaId}:${value}`, { mediaId: entry.mediaId, value });
+			candidates.set(`${entry.mediaId}:${value}`, {
+				mediaId: entry.mediaId,
+				value,
+			});
 		}
 	}
 
@@ -63,11 +70,19 @@ async function main() {
 
 	const toPurge = await db.mediaChangeLog.findMany({
 		where: { deletedAt: { lt: cutoff } },
-		select: { id: true, mediaId: true, field: true, oldValue: true, newValue: true },
+		select: {
+			id: true,
+			mediaId: true,
+			field: true,
+			oldValue: true,
+			newValue: true,
+		},
 	});
 
 	if (toPurge.length === 0) {
-		console.log(`Purged 0 change log entries deleted more than ${RETENTION_DAYS} days ago.`);
+		console.log(
+			`Purged 0 change log entries deleted more than ${RETENTION_DAYS} days ago.`,
+		);
 		return;
 	}
 
@@ -78,7 +93,11 @@ async function main() {
 		where: { id: { in: toPurge.map((entry) => entry.id) } },
 	});
 
-	const posterFilesRemoved = await purgeThumbnails(toPurge, "posterPath", CHANGELOG_THUMB_DIR);
+	const posterFilesRemoved = await purgeThumbnails(
+		toPurge,
+		"posterPath",
+		CHANGELOG_THUMB_DIR,
+	);
 	const bannerFilesRemoved = await purgeThumbnails(
 		toPurge,
 		"bannerPath",

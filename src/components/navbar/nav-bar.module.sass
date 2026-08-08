@@ -1,18 +1,32 @@
+// Height here (1rem padding + ~1rem of line-height content + 1rem padding
+// = ~3rem) is what globals.sass's --navbar-height is standing in for, to
+// reserve the right amount of space at the top of every page — the two
+// aren't otherwise linked, so a padding/font change here that moves this
+// box's real height needs that variable nudged to match.
 .wrapper
   display: flex
   align-items: center
   gap: 1.5rem
   width: 100%
   padding: 1rem 2rem
-  background-color: var(--background)
-  border-bottom: 1px solid var(--accent1)
+  position: fixed
+  top: 0
+  left: 0
+  z-index: 10
+  //background: linear-gradient(to bottom, var(--background) -100%, transparent 100%)
+  transition: transform 0.25s ease
+
+.hidden
+  transform: translateY(-100%)
 
 .title
   font-weight: 700
   margin-right: auto
 
 .link
-  color: var(--accent4)
+  color: #e6e6e6
+  text-shadow: #151315 1px 1px 3px
+
 
   &:hover
     color: var(--foreground)

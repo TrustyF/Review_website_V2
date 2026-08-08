@@ -21,7 +21,15 @@ import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
 import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/review-body-syntax";
 
 // Compares old/new values field by field and returns a MediaChangeLog row
-// for each one that actually changed — untouched fields produce no row.
+// for each one that actually changed — untouched fields produce no row. A
+// field going from no prior value to having one isn't a "change" in that
+// sense either — it's the field being set for the first time, which reads
+// as noise ("— → 8") rather than a change worth recording — so that's
+// skipped too, regardless of whether a caller's own guard (e.g. saveReview's
+// `if (existing)`) already prevents it from happening. This is a hard
+// invariant, not a caller-by-caller convention — 21 legacy rows for rating/
+// liked/difficulty violating it (predating whatever guard was already here)
+// were found and deleted when this was added.
 function diffFields(
 	mediaId: number,
 	before: Record<string, unknown>,
@@ -37,10 +45,11 @@ function diffFields(
 		const oldValue = before[field] ?? null;
 		const newValue = after[field] ?? null;
 		if (oldValue === newValue) continue;
+		if (oldValue === null) continue;
 		changes.push({
 			mediaId,
 			field,
-			oldValue: oldValue == null ? null : String(oldValue),
+			oldValue: String(oldValue),
 			newValue: newValue == null ? null : String(newValue),
 		});
 	}
@@ -56,68 +65,47 @@ export async function saveReview(
 		body: string | null;
 	},
 ) {
+	// A rating is the one thing that has to exist for a review to mean
+	// anything here — "Watched on" reads straight off Review.createDate now
+	// (see toMediaRecord's watchedDate), which only holds up if createDate
+	// can never predate an actual rating. Enforced here rather than left as
+	// a UI nicety so it can't be bypassed by any other caller either.
+	if (review.rating == null) {
+		throw new Error("A rating is required to save a review.");
+	}
+
 	const existing = await db.review.findUnique({ where: { mediaId } });
 
-	// Each set once, the first time its own trigger actually happens — keyed
-	// off the dedicated date field itself (not re-derived from rating/body),
-	// so an unrate-then-rerate or a body cleared-then-rewritten later doesn't
-	// silently move "Watched on"/"Reviewed on" off their original dates.
-	// Subsequent re-rates are what MediaChangeLog's "rewatched" milestone
-	// (logRewatch) is for instead.
-	const hasRating = review.rating != null;
+	// Set once, the first time body actually goes from unset to set — see
+	// this field's own comment in rating.prisma. Keyed off reviewDate's own
+	// presence rather than re-derived from hadBody every time, so a body
+	// cleared out and rewritten later doesn't move it.
+	const hadBody = Boolean(existing?.body?.trim());
 	const hasBody = Boolean(review.body?.trim());
-	// Spread in conditionally rather than passing `undefined` for the "not
-	// yet" case — exactOptionalPropertyTypes rejects an explicit `undefined`
-	// value for these (Prisma's input type wants the key entirely absent, a
-	// real Date, or null, never `undefined`).
-	const dateFields = {
-		...(!existing?.ratedDate && hasRating ? { ratedDate: new Date() } : {}),
-		...(!existing?.reviewedDate && hasBody ? { reviewedDate: new Date() } : {}),
-	};
+	const reviewDate =
+		!existing?.reviewDate && !hadBody && hasBody ? new Date() : undefined;
 
 	await db.review.upsert({
 		where: { mediaId },
-		update: { ...review, ...dateFields },
-		create: { mediaId, ...review, ...dateFields },
+		update: { ...review, ...(reviewDate ? { reviewDate } : {}) },
+		create: { mediaId, ...review, ...(reviewDate ? { reviewDate } : {}) },
 	});
-
-	const changes: {
-		mediaId: number;
-		field: string;
-		oldValue: string | null;
-		newValue: string | null;
-	}[] = [];
 
 	// Only log the usual field-by-field diff once a review already exists —
 	// the very first save just creates it, and a wall of "— → 8" entries for
 	// fields that never had a prior value isn't a change worth recording.
+	// Body/reviewDate stay out of this — see change-log-list.tsx's
+	// synthesized "Reviewed on" entry (sourced from reviewDate, same as
+	// "Watched on" reads createDate) instead of a real changelog row here.
 	if (existing) {
-		changes.push(
-			...diffFields(mediaId, existing, {
-				rating: review.rating,
-				liked: review.liked,
-				difficulty: review.difficulty,
-			}),
-		);
-	}
-
-	// Body itself stays out of the diff above — edited/proofread often enough
-	// that logging every pass would drown out the fields worth tracking —
-	// but writing a first review is a real milestone worth marking on its
-	// own, whether that happens on this same save (existing === null) or a
-	// later one that fills in a body that was empty before.
-	const hadBody = Boolean(existing?.body?.trim());
-	if (!hadBody && hasBody) {
-		changes.push({
-			mediaId,
-			field: "reviewed",
-			oldValue: null,
-			newValue: "true",
+		const changes = diffFields(mediaId, existing, {
+			rating: review.rating,
+			liked: review.liked,
+			difficulty: review.difficulty,
 		});
-	}
-
-	if (changes.length) {
-		await db.mediaChangeLog.createMany({ data: changes });
+		if (changes.length) {
+			await db.mediaChangeLog.createMany({ data: changes });
+		}
 	}
 
 	revalidatePath("/");
@@ -431,4 +419,18 @@ export async function updateMediaBanner(mediaId: number, bannerPath: string) {
 	const bannerSrc = await resolveBanner(mediaId, existing!.type, bannerPath);
 	revalidatePath("/");
 	return bannerSrc;
+}
+
+// Purely a display tweak (see Media.bannerFocusY) — not logged to the
+// changelog, same reasoning as review body edits being excluded from the
+// generic diff: a slider fires many updates per drag, and "nudged the
+// framing" isn't a change worth a permanent record the way swapping the
+// banner image itself is.
+export async function updateMediaBannerFocus(mediaId: number, focusY: number) {
+	const clamped = Math.max(0, Math.min(100, Math.round(focusY)));
+	await db.media.update({
+		where: { id: mediaId },
+		data: { bannerFocusY: clamped },
+	});
+	revalidatePath("/");
 }

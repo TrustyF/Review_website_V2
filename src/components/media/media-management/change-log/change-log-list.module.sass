@@ -6,17 +6,8 @@
 .list
   display: flex
   flex-flow: column
-  gap: 0.5rem
+  //gap: 0.5rem
   list-style: none
-
-.entry
-  display: flex
-  flex-flow: row
-  align-items: baseline
-  gap: 0.75rem
-  padding: 0.5rem 0
-  border-bottom: 1px solid var(--accent1)
-  font-size: 0.9rem
 
   &:last-child
     border-bottom: none
@@ -25,6 +16,8 @@
   opacity: 0.4
 
 .delete_button
+  position: absolute
+  right: 0
   flex-shrink: 0
   width: 1.2rem
   height: 1.2rem
@@ -55,17 +48,39 @@
 
 .field
   flex-shrink: 0
-  width: 6rem
-  font-weight: 600
+  color: var(--body)
+
+.entry
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.75rem
+  padding: 0.5rem 1rem
+  border-radius: 0.5rem
+  font-size: 0.9rem
+  height: 3rem
+  // Nothing (a tall poster thumbnail, a body preview that wraps) gets to
+  // push the row taller or spill past it — clipped to height above instead.
+  overflow: hidden
+
+// Applied via JS (ChangeLogEntryRow's alt prop / ChangeLogList's own index),
+// not :nth-child — timeline gap dividers are interleaved <li>s between
+// entries too, which would throw off a purely structural odd/even count.
+// Mixed against --foreground rather than a fixed color so the stripe stays
+// the same faint weight in both light and dark themes instead of needing its
+// own light/dark value.
+.entry_alt
+  //background: color-mix(in srgb, var(--foreground) 1.5%, transparent)
 
 .change
   flex: 1
   display: flex
   flex-flow: row
-  align-items: baseline
+  align-items: center
   gap: 0.4rem
   min-width: 0
   color: var(--body)
+  height: 100%
 
 .arrow_icon
   flex-shrink: 0
@@ -74,21 +89,25 @@
 .old_value
   display: flex
   align-items: center
+  height: 100%
   color: var(--accent2)
   text-decoration: line-through
 
 .new_value
   display: flex
   align-items: center
+  height: 100%
   color: var(--foreground)
 
 .empty_value
   text-decoration: none
 
 .poster_value
-  width: 2.3rem
-  height: auto
-  aspect-ratio: 2/3
+  //width: 2.3rem
+  height: 100%
+  width: auto
+  object-fit: contain
+  //aspect-ratio: 2/3
   border-radius: 0.2rem
   text-decoration: none
 
@@ -111,3 +130,26 @@
   color: var(--accent1)
   font-family: $font-mono
   font-size: 0.8rem
+
+// Inserted between two entries at least TIMELINE_GAP_DAYS apart (see
+// change-log-list.tsx) — a short vertical tick rather than a horizontal
+// rule, reading as a break in the timeline's spine at that point instead of
+// a divider spanning the row's full width.
+.timeline_gap
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 1rem
+  height: 2rem
+  margin: 0.2rem 0 0.2rem 2.5rem
+
+.timeline_gap_line
+  align-self: stretch
+  border-left: 1px var(--accent1) dashed
+
+.timeline_gap_label
+  flex-shrink: 0
+  color: var(--accent1)
+  font-size: 0.7rem
+  //text-transform: uppercase
+  letter-spacing: 0.03em

@@ -34,7 +34,7 @@ export function MediaCardShell({ media, children }: Props) {
 					<MediaTitle title={media.title} />
 					<MediaReleaseDate date={media.releaseDate} />
 				</div>
-				<MediaReview review={media.review} />
+				<MediaReview review={media.review} watchedDate={media.watchedDate} />
 			</div>
 			{children && <div className={styles.secondary_info}>{children}</div>}
 			<MediaEditButton

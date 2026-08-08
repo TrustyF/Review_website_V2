@@ -27,6 +27,31 @@
   background: transparent
   cursor: pointer
 
+// A horizontal <input type="range"> rotated to read vertically — no
+// standard cross-browser CSS for an actually-vertical range input, this is
+// the reliable way to get one. min (0, top-framed) ends up at the top of
+// the rotated track, max (100, bottom-framed) at the bottom. Faint until
+// interacted with so it doesn't compete with the banner itself at rest;
+// later in the DOM than click_target (both position: absolute, neither
+// sets z-index) is what lets it paint — and receive drag input — above it,
+// per normal stacking order.
+.focus_slider
+  position: absolute
+  top: 50%
+  right: 0.5rem
+  width: 6rem
+  height: 1.2rem
+  margin: 0
+  transform: translateY(-50%) rotate(90deg)
+  transform-origin: center
+  cursor: ns-resize
+  accent-color: var(--foreground)
+  opacity: 0.35
+  transition: opacity 0.15s ease
+
+  &:hover, &:focus-visible
+    opacity: 1
+
 // Same box geometry as media-detail.module.sass's .banner_backdrop (105%
 // width bleed, centered) so it lines up exactly with the image underneath.
 // z-index sits between the plain (non-positioned, so always-behind) image
@@ -35,15 +60,15 @@
 .grain
   display: block
   position: absolute
-  width: 105%
-  height: 100%
+  width: 120%
+  height: 370px
   top: 0
   left: 50%
   transform: translateX(-50%)
   z-index: 0
   pointer-events: none
   border-radius: 0.5rem
-  mix-blend-mode: overlay
+  mix-blend-mode: soft-light
   // Opacity itself is driven inline (grainOpacity is a number, not a fixed
   // class) — this just makes that change fade instead of pop, in step with
   // .image's own transition above.
