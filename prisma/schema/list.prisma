@@ -1,0 +1,22 @@
+model List {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  thumbnail   String?
+  createDate  DateTime @default(now())
+  updateDate  DateTime @updatedAt
+
+  items ListItem[]
+}
+
+model ListItem {
+  listId  Int
+  mediaId Int
+
+  list  List  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  addedAt DateTime @default(now())
+
+  @@id([listId, mediaId])
+}

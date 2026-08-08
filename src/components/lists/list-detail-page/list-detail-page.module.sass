@@ -1,0 +1,46 @@
+@use "@/app/styles/variables" as *
+
+.wrapper
+  width: 950px
+  margin: 2rem auto
+
+.header
+  display: flex
+  flex-flow: row
+  gap: 1.5rem
+  margin-bottom: 1.5rem
+
+.thumbnail
+  width: 220px
+  aspect-ratio: 16 / 9
+  object-fit: cover
+  border-radius: 8px
+  flex-shrink: 0
+
+.header_info
+  display: flex
+  flex-flow: column
+  gap: 0.4rem
+
+.title_row
+  display: flex
+  flex-flow: row
+  align-items: baseline
+  gap: 0.75rem
+
+.description
+  color: var(--accent1)
+
+.back_link
+  color: var(--accent1)
+  font-size: 0.85rem
+  text-decoration: underline
+  opacity: 0.8
+  width: fit-content
+
+  &:hover
+    opacity: 1
+
+.empty
+  @include empty-text
+  margin-top: 1rem

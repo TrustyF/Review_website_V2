@@ -1,0 +1,55 @@
+@use "@/app/styles/variables" as *
+
+.wrapper
+  display: flex
+  flex-flow: column
+  gap: 0.75rem
+  margin-bottom: 1rem
+
+.search_input
+  width: 100%
+  padding: 0.6rem 0.8rem
+  border: 1px solid var(--accent1)
+  border-radius: 0.4rem
+  background: transparent
+  color: var(--foreground)
+  font-family: $font-body
+  font-size: 1rem
+
+.error
+  color: #e05656
+
+.status
+  @include empty-text
+
+.results
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr))
+  gap: 1rem
+
+.result
+  display: flex
+  flex-flow: column
+  align-items: center
+  gap: 0.3rem
+  text-align: center
+
+.result_poster
+  width: 100%
+  height: auto
+  aspect-ratio: 2/3
+  object-fit: cover
+  border-radius: 0.4rem
+
+.result_title
+  font-size: 0.8rem
+  font-weight: 500
+  white-space: nowrap
+  overflow: hidden
+  text-overflow: ellipsis
+  max-width: 100%
+
+.add_button
+  padding: 0.2rem 0.8rem
+  font-size: 0.8rem
+  cursor: pointer

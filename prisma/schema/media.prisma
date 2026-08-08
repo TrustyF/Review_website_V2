@@ -32,6 +32,7 @@ model Media {
   lastEnrichedAt   DateTime?
 
   mediaGenres MediaGenre[]
+  listItems   ListItem[]
 
   tvShow TvShow?
   movie  Movie?

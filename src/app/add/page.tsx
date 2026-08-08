@@ -235,6 +235,7 @@ export default function AddMediaPage() {
 						placeholder={`Search for a ${TYPE_LABELS[type].toLowerCase()}…`}
 						value={query}
 						onChange={(e) => handleQueryChange(e.target.value)}
+						onFocus={(e) => e.target.select()}
 						autoFocus
 					/>
 

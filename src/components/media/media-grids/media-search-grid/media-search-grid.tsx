@@ -119,6 +119,7 @@ export function MediaSearchGrid({ entries }: Props) {
 				placeholder="Search title, director, studio, overview…"
 				value={input}
 				onChange={(e) => setInput(e.target.value)}
+				onFocus={(e) => e.target.select()}
 			/>
 			{resultGroups === null ? (
 				<RatedTierGrid media={entries.map((entry) => entry.media)} />

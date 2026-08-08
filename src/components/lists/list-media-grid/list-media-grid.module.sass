@@ -1,0 +1,31 @@
+@use "@/app/styles/variables" as *
+
+.grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax($mini-card-min-width, 1fr))
+  gap: 1.25rem
+  padding: 1rem 0
+
+.item
+  position: relative
+
+.remove_button
+  position: absolute
+  top: 0.25rem
+  right: 0.25rem
+  width: 1.4rem
+  height: 1.4rem
+  border-radius: 50%
+  border: none
+  background: rgba(0, 0, 0, 0.65)
+  color: #fff
+  font-size: 1rem
+  line-height: 1
+  cursor: pointer
+  opacity: 0
+  visibility: hidden
+
+.item:hover
+  .remove_button
+    visibility: visible
+    opacity: 1

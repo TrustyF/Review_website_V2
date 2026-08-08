@@ -1,0 +1,42 @@
+import Link from "next/link";
+import { db } from "@/server/db/client";
+import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
+import styles from "./lists-overview-page.module.sass";
+
+// Server Component for /lists: every list, newest first, grouped together on
+// one page — the "dedicated grouping-of-lists page" the feature was asked
+// for, mirroring how media-type-list-page.tsx groups media by type.
+export async function ListsOverviewPage() {
+	const lists = await db.list.findMany({
+		include: { _count: { select: { items: true } } },
+		orderBy: { createDate: "desc" },
+	});
+
+	return (
+		<div className={styles.wrapper}>
+			<div className={styles.header}>
+				<h1>Lists</h1>
+				<Link href="/lists/new" className={styles.new_link}>
+					New list
+				</Link>
+			</div>
+
+			{lists.length === 0 ? (
+				<p className={styles.empty}>No lists yet.</p>
+			) : (
+				<div className={styles.grid}>
+					{lists.map((list) => (
+						<ListPreviewCard
+							key={list.id}
+							id={list.id}
+							title={list.title}
+							description={list.description}
+							thumbnail={list.thumbnail}
+							itemCount={list._count.items}
+						/>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}

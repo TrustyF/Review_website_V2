@@ -12,6 +12,7 @@ import { formatRuntime } from "@/components/media/primitives/runtime";
 import { PosterEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/poster-edit-trigger";
 import { BannerEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/banner-edit-trigger";
 import { ReviewBodyEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/review-body-edit-trigger";
+import { AddToListButton } from "@/components/lists/add-to-list-button/add-to-list-button";
 import { MediaType } from "@prisma/client";
 import { BANNER_GRAIN_OPACITY } from "@/server/resolvers/poster-resolver";
 import styles from "./media-detail.module.sass";
@@ -196,6 +197,21 @@ export default async function MediaDetailPage({
 
 	const media = toMediaRecord(raw);
 
+	// For AddToListButton — every list, plus which ones (if any) already
+	// have this media, so the popover can render pre-checked checkboxes
+	// without a second round trip once it opens.
+	const allLists = await db.list.findMany({
+		select: {
+			id: true,
+			title: true,
+			items: { where: { mediaId }, select: { mediaId: true } },
+		},
+		orderBy: { createDate: "desc" },
+	});
+	const memberListIds = allLists
+		.filter((list) => list.items.length > 0)
+		.map((list) => list.id);
+
 	const genres = raw.mediaGenres.map((mediaGenre) => mediaGenre.genre.name);
 
 	// Same person/company can be attached to a role more than once (e.g.
@@ -286,6 +302,11 @@ export default async function MediaDetailPage({
 					<div className={styles.header_info}>
 						<div className={styles.title_row}>
 							<MediaTitle title={media.title} className={styles.title} />
+							<AddToListButton
+								mediaId={media.id}
+								allLists={allLists}
+								memberListIds={memberListIds}
+							/>
 							<MediaEditButton media={media} className={styles.edit_button} />
 						</div>
 						{media.alternateTitle && (

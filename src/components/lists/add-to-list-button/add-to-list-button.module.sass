@@ -1,0 +1,41 @@
+.trigger
+  padding: 0.3rem 0.9rem
+  border: 1px solid var(--accent1)
+  border-radius: 1rem
+  background: transparent
+  color: var(--accent1)
+  font-size: 0.8rem
+  cursor: pointer
+
+  &:hover
+    color: var(--foreground)
+    border-color: var(--foreground)
+
+.popover
+  position: absolute
+  z-index: 20
+  margin-top: 0.4rem
+  padding: 0.6rem
+  min-width: 12rem
+  background: var(--darkaccent2)
+  border: 1px solid var(--darkaccent4)
+  border-radius: 0.5rem
+
+.list
+  display: flex
+  flex-flow: column
+  gap: 0.4rem
+  list-style: none
+
+.label
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.5rem
+  font-size: 0.9rem
+  cursor: pointer
+
+.empty_link
+  color: var(--accent1)
+  font-size: 0.85rem
+  text-decoration: underline
