@@ -26,6 +26,7 @@ export function MediaMiniCardShell({ media, children }: Props) {
 				title={media.title}
 				mediaId={media.id}
 				ratio={posterRatioFor(media.type)}
+				difficulty={media.review?.difficulty}
 			/>
 			{/*<MediaTitle*/}
 			{/*	title={media.title}*/}

@@ -9,8 +9,17 @@
 .poster_frame
   width: 100%
   background-color: rgba(102, 102, 102, 0.25)
-  border-radius: 0.5rem
+  border-radius: 0.25rem
   overflow: hidden
+  // Forces this onto its own GPU compositing layer — without it, the
+  // border-radius + overflow: hidden clip on this element can leave a
+  // hairline sub-pixel seam right at the rounded corner (a well-known
+  // Chromium/WebKit quirk). .difficulty_notch used to sit inside this frame
+  // and seam against exactly this — it's a sibling of .poster_frame now
+  // (see poster.tsx), painted on top instead of clipped by it, but this
+  // stays since the underlying frame-corner quirk is real regardless of
+  // what's positioned near it.
+  transform: translateZ(0)
 
 .poster
   width: 100%
@@ -22,6 +31,30 @@
 .poster_loaded
   opacity: 1
 
+// Corner flag, not a badge — an inline SVG path (see poster.tsx) rather
+// than a clip-path div: the rounded outer tip and the straight edges are
+// one continuous path instead of two separate CSS mechanisms (border-radius
+// + clip-path) layered on the same box, and the stroke below pads the
+// path's edge with solid color instead of leaving bare anti-aliased pixels
+// to blend against the poster. A sibling of .poster_frame (see poster.tsx),
+// positioned against .poster_wrapper/.poster_link instead (position:
+// relative by default, see globals.sass's `*` rule) — both size exactly to
+// .poster_frame's own box (same width: 100%, same aspect-ratio-driven
+// height), so bottom: 0/right: 0 still lands on the poster's true corner,
+// just painted on top of it rather than clipped by its overflow: hidden.
+.difficulty_notch
+  position: absolute
+  bottom: -0.25px
+  right: -0.25px
+  width: 10px
+  height: 10px
+
+.difficulty_notch_1
+  fill: #F1C40FFF
+
+.difficulty_notch_2
+  fill: #E64432FF
+
 // Explicit width, not just display:block — without it, this is a flex item
 // in some parents (mini-card's align-items: flex-start column) that
 // shrinks-to-fit instead of filling the space, leaving .poster_frame's own
@@ -29,6 +62,13 @@
 // what caused the 0-height-then-pop: aspect-ratio computing off a width
 // that hadn't settled yet.
 .poster_link
+  display: block
+  width: 100%
+
+// Same box model as .poster_link, for the mediaId == null case that skips
+// the <Link> wrapper — still needs something sized to .poster_frame's own
+// box for .difficulty_notch to position against.
+.poster_wrapper
   display: block
   width: 100%
 

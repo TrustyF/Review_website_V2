@@ -84,8 +84,18 @@ export function AddMediaToList({ listId }: Props) {
 							<Image
 								src={result.posterSrc}
 								alt={result.title}
-								width={60}
-								height={90}
+								// Rendered box is CSS width: 100% of a
+								// minmax(90px, 1fr) grid column — the 1fr means
+								// it can grow well past 90px on a wide popover,
+								// so this requests past that minimum rather
+								// than exactly it (see the module.sass note on
+								// .results). Still far under MediaPoster's
+								// blanket 500px: the poster route's own cache
+								// is never pre-shrunk (see poster-resolver.ts),
+								// so requesting close to the real render size
+								// here is both sharp and lighter.
+								width={180}
+								height={270}
 								className={styles.result_poster}
 							/>
 							<div className={styles.result_title}>{result.title}</div>

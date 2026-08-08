@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { dbPublic } from "@/server/db/client";
-import { MediaSearchGrid } from "@/components/media/media-grids/media-search-grid/media-search-grid";
-import { toSearchEntry } from "@/components/media/media-grids/media-search-grid/build-search-entries";
+import { MediaFilterGrid } from "@/components/media/media-grids/media-filter-grid/media-filter-grid";
+import { toMediaRecord } from "@/components/media/types";
 import { EnrichmentStatus, MediaType, Prisma } from "@prisma/client";
 import styles from "./media-type-list-page.module.sass";
 
@@ -32,13 +32,8 @@ export async function MediaTypeListPage({
 		include: {
 			...include,
 			review: true,
-			// Director/Studio only — enough for the search bar's relevance
-			// ranking (see build-search-entries.ts), without pulling every
-			// crew job for every item on a full list page.
-			credits: {
-				where: { role: { name: { in: ["Director", "Studio"] } } },
-				include: { person: true, company: true },
-			},
+			// For MediaFilterPopover's genre filter (see media-filter-grid.tsx).
+			mediaGenres: { include: { genre: true } },
 		},
 		// Without this, Postgres doesn't guarantee row order at all — it's
 		// free to change between requests, and an UPDATE (e.g. saving a
@@ -48,7 +43,7 @@ export async function MediaTypeListPage({
 		// order here is what keeps ties from reshuffling on unrelated edits.
 		orderBy: { id: "asc" },
 	});
-	const entries = rawList.map(toSearchEntry);
+	const media = rawList.map(toMediaRecord);
 
 	return (
 		<div className={styles.wrapper}>
@@ -62,7 +57,7 @@ export async function MediaTypeListPage({
 					</Link>
 				)}
 			</div>
-			<MediaSearchGrid entries={entries} />
+			<MediaFilterGrid media={media} />
 		</div>
 	);
 }

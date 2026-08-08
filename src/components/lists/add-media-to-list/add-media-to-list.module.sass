@@ -22,6 +22,10 @@
 .status
   @include empty-text
 
+// 1fr means a column can render wider than the 90px minimum whenever there
+// are few enough results to not fill a row — the poster's next/image
+// width/height (add-media-to-list.tsx) requests past that minimum for
+// exactly this reason, so it doesn't upscale-blur on a short result set.
 .results
   display: grid
   grid-template-columns: repeat(auto-fill, minmax(90px, 1fr))

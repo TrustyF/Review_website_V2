@@ -49,8 +49,8 @@ export function RatedTierGrid({ media }: Props) {
 				<details key={tier ?? "unrated"} open>
 					<summary className={styles.tier_header}>
 						{tierLabel(tier)}
-						<StarIcon size={15} />
-						{/*<span className={styles.tier_count}>{items.length}</span>*/}
+						{/*<StarIcon size={15} />*/}
+						<span className={styles.tier_count}>- {items.length} items</span>
 					</summary>
 					<LazyMediaGrid
 						items={items}

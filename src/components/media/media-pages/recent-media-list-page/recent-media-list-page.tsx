@@ -18,11 +18,9 @@ type Props = {
 };
 
 // Sibling to MediaTypeListPage: same DONE-only, one-type query, but flat
-// (no RatedTierGrid tiers) and sorted by releaseDate instead of rating —
-// for browsing what's new rather than what's best. No MediaSearchGrid here
-// either: search's own grouping-by-match-field doesn't have a "recency"
-// angle worth keeping, and LazyMediaGrid alone is exactly the flat grid
-// this needs.
+// (no RatedTierGrid tiers, no MediaFilterGrid popover) and sorted by
+// releaseDate instead of rating — for browsing what's new rather than what's
+// best. LazyMediaGrid alone is exactly the flat grid this needs.
 export async function RecentMediaListPage({
 	title,
 	type,
@@ -33,7 +31,16 @@ export async function RecentMediaListPage({
 	// src/server/db/client.ts.
 	const rawList = await dbPublic.media.findMany({
 		where: { enrichmentStatus: EnrichmentStatus.DONE, type },
-		include: { ...include, review: true },
+		// mediaGenres isn't used on this page (no filter popover here — see
+		// its own top comment) — included anyway because the generic
+		// `include` prop's wide Prisma.MediaInclude type otherwise makes
+		// TypeScript infer mediaGenres in its bare (no nested genre) shape,
+		// which toMediaRecord's now-stricter RawMediaRecord type rejects.
+		include: {
+			...include,
+			review: true,
+			mediaGenres: { include: { genre: true } },
+		},
 		orderBy: { releaseDate: "desc" },
 	});
 	const mediaList = rawList.map(toMediaRecord);
@@ -42,9 +49,7 @@ export async function RecentMediaListPage({
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				<h1>{title}</h1>
-				<Link
-					href={backHref}
-					className={styles.back_link}>
+				<Link href={backHref} className={styles.back_link}>
 					By rating
 				</Link>
 			</div>

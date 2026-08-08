@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Company, Credit, Person } from "@prisma/client";
 import { db } from "@/server/db/client";
-import { RawMediaRecord } from "@/components/media/types";
-import { MediaSearchGrid } from "@/components/media/media-grids/media-search-grid/media-search-grid";
-import { toSearchEntry } from "@/components/media/media-grids/media-search-grid/build-search-entries";
+import { RawMediaRecord, toMediaRecord } from "@/components/media/types";
+import { MediaFilterGrid } from "@/components/media/media-grids/media-filter-grid/media-filter-grid";
 import { RatingDistribution } from "@/components/media/media-grids/rating-distribution/rating-distribution";
 import { EnrichmentStatus } from "@prisma/client";
 import styles from "./credit-media-list-page.module.sass";
@@ -16,10 +14,6 @@ type Props = {
 	// is reached by clicking a credit under a specific role on the media
 	// detail page, rather than browsing every credit this entity has.
 	role?: string | undefined;
-};
-
-type MediaWithSearchCredits = Omit<RawMediaRecord, "credits"> & {
-	credits: (Credit & { person: Person | null; company: Company | null })[];
 };
 
 // Shared by both /credits/person/[id] and /credits/company/[id]: look up the
@@ -51,12 +45,8 @@ export async function CreditMediaListPage({ kind, id, role }: Props) {
 					comic: true,
 					game: true,
 					review: true,
-					// Director/Studio only — enough for the search bar's relevance
-					// ranking (see build-search-entries.ts).
-					credits: {
-						where: { role: { name: { in: ["Director", "Studio"] } } },
-						include: { person: true, company: true },
-					},
+					// For MediaFilterPopover's genre filter (see media-filter-grid.tsx).
+					mediaGenres: { include: { genre: true } },
 				},
 			},
 		},
@@ -66,13 +56,12 @@ export async function CreditMediaListPage({ kind, id, role }: Props) {
 	// The same person/company can be credited more than once on one title
 	// (e.g. actor + character listed twice, or a studio with two credit
 	// rows) — dedupe to one card per media.
-	const byMediaId = new Map<number, MediaWithSearchCredits>();
+	const byMediaId = new Map<number, RawMediaRecord>();
 	for (const credit of credits) {
 		if (!byMediaId.has(credit.media.id)) byMediaId.set(credit.media.id, credit.media);
 	}
 
-	const entries = [...byMediaId.values()].map(toSearchEntry);
-	const media = entries.map((entry) => entry.media);
+	const media = [...byMediaId.values()].map(toMediaRecord);
 
 	return (
 		<div className={styles.wrapper}>
@@ -93,7 +82,7 @@ export async function CreditMediaListPage({ kind, id, role }: Props) {
 			) : (
 				<>
 					<RatingDistribution media={media} />
-					<MediaSearchGrid entries={entries} />
+					<MediaFilterGrid media={media} />
 				</>
 			)}
 		</div>

@@ -30,6 +30,8 @@ export async function ListDetailPage({ id }: Props) {
 							comic: true,
 							game: true,
 							review: true,
+							// For MediaFilterPopover's genre filter (see list-media-grid.tsx).
+							mediaGenres: { include: { genre: true } },
 						},
 					},
 				},

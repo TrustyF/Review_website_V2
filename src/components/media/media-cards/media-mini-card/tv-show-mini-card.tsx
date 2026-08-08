@@ -15,7 +15,7 @@ export function TvShowMiniCard({ media }: Props) {
 
 	return (
 		<MediaMiniCardShell media={media}>
-			{episodeInfo && <div className={styles.info}>{episodeInfo}</div>}
+			{/*{episodeInfo && <div className={styles.info}>{episodeInfo}</div>}*/}
 		</MediaMiniCardShell>
 	);
 }

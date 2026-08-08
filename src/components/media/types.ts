@@ -2,8 +2,10 @@ import {
 	Comic,
 	Credit,
 	Game,
+	Genre,
 	Manga,
 	Media,
+	MediaGenre,
 	Movie,
 	Review,
 	TvShow,
@@ -22,12 +24,17 @@ export type RawMediaRecord = Media & {
 	game?: Game | null;
 	review?: Review | null;
 	credits?: Credit[];
+	mediaGenres?: (MediaGenre & { genre: Genre })[];
 };
 
 // The base record type we will fill out by media type
 type BaseRecord = Omit<Media, "type"> & {
 	review?: Review | null;
 	credits?: Credit[];
+	// Empty when a caller's query didn't bother including mediaGenres (dev
+	// fixture pages, the manual-add flow, ...) — same "just absent" handling
+	// as credits above, not an error case.
+	genres: string[];
 	posterSrc: string;
 	// Unlike posterSrc, no placeholder fallback — most media has no banner
 	// at all (only TMDB/IGDB have one), so absent just means "don't render
@@ -68,6 +75,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 		: null;
 	const watchedDate =
 		raw.review?.rating != null ? raw.review.createDate : null;
+	const genres = (raw.mediaGenres ?? []).map((mg) => mg.genre.name);
 	switch (raw.type) {
 		case "MOVIE":
 		case "SHORT":
@@ -79,6 +87,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				posterSrc,
 				bannerSrc,
 				watchedDate,
+				genres,
 			};
 		case "TVSHOW":
 			if (!raw.tvShow) break;
@@ -89,6 +98,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				posterSrc,
 				bannerSrc,
 				watchedDate,
+				genres,
 			};
 		case "MANGA":
 			if (!raw.manga) break;
@@ -99,6 +109,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				posterSrc,
 				bannerSrc,
 				watchedDate,
+				genres,
 			};
 		case "COMIC":
 			if (!raw.comic) break;
@@ -109,6 +120,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				posterSrc,
 				bannerSrc,
 				watchedDate,
+				genres,
 			};
 		case "GAME":
 			if (!raw.game) break;
@@ -119,6 +131,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				posterSrc,
 				bannerSrc,
 				watchedDate,
+				genres,
 			};
 	}
 	throw new Error(

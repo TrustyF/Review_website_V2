@@ -1,5 +1,14 @@
 @use "@/app/styles/variables" as *
 
+.controls
+  display: flex
+  flex-flow: row
+  align-items: center
+  margin-bottom: 0.75rem
+
+.empty
+  @include empty-text
+
 .grid
   display: grid
   grid-template-columns: repeat(auto-fill, minmax($mini-card-min-width, 1fr))

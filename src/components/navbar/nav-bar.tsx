@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { NavSearch } from "@/components/navbar/nav-search/nav-search";
 import style from "./nav-bar.module.sass";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -56,6 +57,9 @@ export default function Navbar() {
 			<Link href="/" className={style.title}>
 				Review app
 			</Link>
+
+			<NavSearch />
+
 			<Link href="/" className={style.link}>
 				Home
 			</Link>

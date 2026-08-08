@@ -1,0 +1,82 @@
+.wrapper
+  display: flex
+  flex-flow: column
+  gap: 0.35rem
+
+.value_row
+  display: flex
+  flex-flow: row
+  justify-content: space-between
+  font-size: 0.8rem
+  color: var(--accent1)
+  font-variant-numeric: tabular-nums
+
+.track_container
+  position: relative
+  height: 1.1rem
+  display: flex
+  align-items: center
+
+.track
+  position: absolute
+  left: 0
+  right: 0
+  height: 3px
+  border-radius: 2px
+  background: var(--darkaccent4)
+
+.track_fill
+  position: absolute
+  height: 3px
+  border-radius: 2px
+  background: var(--accent3)
+
+// Two of these stack on top of each other and the .track above — the input
+// itself (and its native track) is made fully transparent/invisible via the
+// appearance resets below, and pointer-events: none keeps clicks anywhere on
+// its (full-width) hit area from grabbing it. Only the thumb pseudo-element
+// opts back into pointer-events, so each handle is only draggable by its
+// actual visible knob, not by the invisible strip the rest of the input
+// still occupies underneath it.
+.thumb
+  position: absolute
+  left: 0
+  width: 100%
+  margin: 0
+  background: transparent
+  pointer-events: none
+  -webkit-appearance: none
+  appearance: none
+
+  &:last-of-type
+    z-index: 1
+
+  &::-webkit-slider-runnable-track
+    -webkit-appearance: none
+    background: transparent
+    height: 3px
+
+  &::-webkit-slider-thumb
+    -webkit-appearance: none
+    pointer-events: auto
+    width: 14px
+    height: 14px
+    border-radius: 50%
+    background: var(--foreground)
+    border: 2px solid var(--accent1)
+    cursor: pointer
+    margin-top: 0
+
+  &::-moz-range-track
+    background: transparent
+    border: none
+    height: 3px
+
+  &::-moz-range-thumb
+    pointer-events: auto
+    width: 10px
+    height: 10px
+    border-radius: 50%
+    background: var(--foreground)
+    border: 2px solid var(--accent1)
+    cursor: pointer

@@ -18,14 +18,13 @@ const BATCH_SIZE = 24;
 type Props = {
 	items: MediaRecord[];
 	// Stable id for this grid instance (e.g. a rating tier) — when given,
-	// how far the user had scrolled into it survives a back-navigation. Left
-	// out by search results, which don't persist across navigation anyway.
+	// how far the user had scrolled into it survives a back-navigation.
 	restoreKey?: string;
 };
 
 // A grid that reveals more cards as the sentinel scrolls into view, instead
 // of mounting every item up front. Shared by RatedTierGrid (one instance per
-// tier) and MediaSearchGrid (one instance per search) — both hand it a list
+// tier) and RecentMediaListPage (one flat instance) — both hand it a list
 // that can run into the hundreds.
 export function LazyMediaGrid({ items, restoreKey }: Props) {
 	useMarkHydrated();
@@ -38,9 +37,9 @@ export function LazyMediaGrid({ items, restoreKey }: Props) {
 	// Compared by id set rather than array identity — a revalidated server
 	// action (every save/edit action calls revalidatePath) hands this a
 	// brand-new `items` array even when the underlying rows are unchanged,
-	// which used to be misread as "a new search result set" and reset the
+	// which used to be misread as "the filtered set changed" and reset the
 	// reveal depth back to one batch on every edit. Reset only on an actual
-	// change: real search input, not a resend of the same rows.
+	// change to which media is shown, not a resend of the same rows.
 	const itemsKey = items.map((item) => item.id).join(",");
 	const [prevItemsKey, setPrevItemsKey] = useState(itemsKey);
 	if (itemsKey !== prevItemsKey) {
@@ -49,7 +48,7 @@ export function LazyMediaGrid({ items, restoreKey }: Props) {
 	}
 
 	// Restores how far this grid was scrolled into before, so the page comes
-	// back the same height it was left at before MediaSearchGrid's own effect
+	// back the same height it was left at before MediaFilterGrid's own effect
 	// tries to restore the window's scroll position — an effect (even a
 	// layout one) runs a whole commit later than a render-phase update, and
 	// by then the parent's scroll-restore effect has already fired against
