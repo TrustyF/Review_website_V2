@@ -50,24 +50,14 @@ export function PosterEditTrigger({ media, ratio }: Props) {
 
 	if (!isAdmin) {
 		return (
-			<MediaPoster
-				src={media.posterSrc}
-				title={media.title}
-				ratio={ratio}
-			/>
+			<MediaPoster src={media.posterSrc} title={media.title} ratio={ratio} />
 		);
 	}
 
 	return (
-		<div
-			className={styles.wrapper}
-			ref={containerRef}>
+		<div className={styles.wrapper} ref={containerRef}>
 			<Hitbox onClick={() => setIsOpen((v) => !v)}>
-				<MediaPoster
-					src={src}
-					title={media.title}
-					ratio={ratio}
-				/>
+				<MediaPoster src={src} title={media.title} ratio={ratio} />
 			</Hitbox>
 
 			{isOpen && (
@@ -79,8 +69,6 @@ export function PosterEditTrigger({ media, ratio }: Props) {
 					altText="Alternative poster option"
 					errorText="Couldn't load alternative posters. Try again later."
 					optionAspectRatio={undefined}
-					optionClipTop={undefined}
-					optionClipBottom={undefined}
 					urlInput={urlInput}
 					onUrlInputChange={setUrlInput}
 					onSubmitUrl={submitUrl}

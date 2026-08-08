@@ -6,6 +6,7 @@ import { MediaRecord } from "@/components/media/types";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import styles from "./media-mini-card-shell.module.sass";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
+import { ReviewIcon } from "@/components/media/icons/review-icon";
 
 type Props = {
 	media: MediaRecord;
@@ -35,6 +36,7 @@ export function MediaMiniCardShell({ media, children }: Props) {
 					<div className={styles.rating}>
 						{media.review.rating}
 						<StarIcon size={11} />
+						{media.review.body != null && <ReviewIcon size={9} />}
 					</div>
 				)}
 				{children}
