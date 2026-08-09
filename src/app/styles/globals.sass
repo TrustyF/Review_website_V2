@@ -31,6 +31,10 @@
   // module.sass's own .wrapper padding/height, not derived from it.
   --navbar-height: 3rem
 
+  // Permanent breathing room below every page's content, same idea as
+  // --navbar-height above but for the bottom — see main below.
+  --footer-margin: 3rem
+
 
 html
   height: 100%
@@ -62,6 +66,7 @@ body
 
 main
   padding-top: var(--navbar-height)
+  padding-bottom: var(--footer-margin)
 
 
 a

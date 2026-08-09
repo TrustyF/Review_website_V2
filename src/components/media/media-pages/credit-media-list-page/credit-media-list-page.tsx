@@ -58,7 +58,8 @@ export async function CreditMediaListPage({ kind, id, role }: Props) {
 	// rows) — dedupe to one card per media.
 	const byMediaId = new Map<number, RawMediaRecord>();
 	for (const credit of credits) {
-		if (!byMediaId.has(credit.media.id)) byMediaId.set(credit.media.id, credit.media);
+		if (!byMediaId.has(credit.media.id))
+			byMediaId.set(credit.media.id, credit.media);
 	}
 
 	const media = [...byMediaId.values()].map(toMediaRecord);
@@ -69,10 +70,7 @@ export async function CreditMediaListPage({ kind, id, role }: Props) {
 			{role && (
 				<div className={styles.role_filter}>
 					{role}
-					<Link
-						href={`/credits/${kind}/${id}`}
-						className={styles.role_clear}
-					>
+					<Link href={`/credits/${kind}/${id}`} className={styles.role_clear}>
 						View all credits
 					</Link>
 				</div>
@@ -81,7 +79,7 @@ export async function CreditMediaListPage({ kind, id, role }: Props) {
 				<p className={styles.empty}>No credited media in the collection.</p>
 			) : (
 				<>
-					<RatingDistribution media={media} />
+					{/*<RatingDistribution media={media} />*/}
 					<MediaFilterGrid media={media} />
 				</>
 			)}

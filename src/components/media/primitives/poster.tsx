@@ -3,6 +3,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./primitives.module.sass";
+import { Tooltip } from "@/components/ui/tooltip";
 
 export function MediaPoster({
 	src,
@@ -50,21 +51,21 @@ export function MediaPoster({
 	);
 
 	// 0/null means "not rated for difficulty" — same as a review with no
-	// rating just showing nothing rather than a 0-star. A sibling of
-	// .poster_frame, not a child of it — .poster_frame's own overflow:
-	// hidden (there for its border-radius) was leaving a hairline seam right
-	// at this notch's edge, a rounded-corner-clip rendering quirk that
-	// turned out to have nothing to do with the notch's own positioning.
-	// Sitting on top instead, outside that clipped box entirely, means
-	// there's no clip boundary anywhere near the notch's edges to seam
-	// against.
+	// rating just showing nothing rather than a 0-star. The Tooltip's own
+	// wrapper (not the <svg>) carries .difficulty_notch's position/size —
+	// it's a sibling of .poster_frame, not a child of it (see .poster_frame's
+	// transform comment for why: its overflow: hidden was seaming against
+	// whatever sat inside it, unrelated to the notch's own positioning).
 	const notch =
 		difficulty === 1 || difficulty === 2 ? (
-			<svg
-				viewBox="0 0 10 10"
+			<Tooltip
+				content={difficulty === 1 ? "Medium difficulty" : "Hard difficulty"}
+				hitboxPadding={6}
 				className={`${styles.difficulty_notch} ${difficulty === 1 ? styles.difficulty_notch_1 : styles.difficulty_notch_2}`}>
-				<path d="M10 0V6.8A3.2 3.2 0 016.8 10H0Z" />
-			</svg>
+				<svg viewBox="0 0 10 10" className={styles.difficulty_notch_svg}>
+					<path d="M10 0V6.8A3.2 3.2 0 016.8 10H0Z" />
+				</svg>
+			</Tooltip>
 		) : null;
 
 	if (mediaId == null) {

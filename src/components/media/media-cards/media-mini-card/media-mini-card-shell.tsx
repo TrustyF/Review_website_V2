@@ -28,18 +28,14 @@ export function MediaMiniCardShell({ media, children }: Props) {
 				ratio={posterRatioFor(media.type)}
 				difficulty={media.review?.difficulty}
 			/>
-			{/*<MediaTitle*/}
-			{/*	title={media.title}*/}
-			{/*	className={styles.title}*/}
-			{/*/>*/}
 			<div className={styles.subtitle}>
 				{media.review && (
 					<div className={styles.rating}>
 						{media.review.rating}
 						<StarIcon size={11} />
-						{media.review.body != null && <ReviewIcon size={9} />}
 					</div>
 				)}
+				{media.review && media.review.body && <ReviewIcon size={9} />}
 				{children}
 			</div>
 			<MediaEditButton media={media} className={styles.edit_button} />

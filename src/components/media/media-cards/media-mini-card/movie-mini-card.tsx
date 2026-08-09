@@ -12,7 +12,7 @@ export function MovieMiniCard({ media }: Props) {
 
 	return (
 		<MediaMiniCardShell media={media}>
-			{runtime && <div className={styles.info}>{runtime}</div>}
+			{/*{runtime && <div className={styles.info}>{runtime}</div>}*/}
 		</MediaMiniCardShell>
 	);
 }

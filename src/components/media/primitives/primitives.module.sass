@@ -3,28 +3,38 @@
 .wrapper
   display: flex
 
+
 // Carries the reserved aspect-ratio + a placeholder color, so there's a
 // calm, correctly-sized box on screen the instant a card mounts — before
-// the image has even started loading, let alone finished.
+// the image has even started loading, let alone finished. No overflow:
+// hidden — that clipped anything touching this box's own edges (the
+// difficulty notch, a drop-shadow filter, ...), not just .poster below;
+// .poster rounds its own corners instead (same radius, kept in sync by
+// hand — it's sized to exactly fill this frame either way), so nothing
+// here needs to clip anything.
 .poster_frame
   width: 100%
   background-color: rgba(102, 102, 102, 0.25)
   border-radius: 0.25rem
-  overflow: hidden
-  // Forces this onto its own GPU compositing layer — without it, the
-  // border-radius + overflow: hidden clip on this element can leave a
-  // hairline sub-pixel seam right at the rounded corner (a well-known
-  // Chromium/WebKit quirk). .difficulty_notch used to sit inside this frame
-  // and seam against exactly this — it's a sibling of .poster_frame now
-  // (see poster.tsx), painted on top instead of clipped by it, but this
-  // stays since the underlying frame-corner quirk is real regardless of
-  // what's positioned near it.
-  transform: translateZ(0)
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5)
 
+// position: absolute + inset: 0, *and* explicit width/height: 100% — for a
+// replaced element (img) specifically, inset: 0 alone only positions it
+// against .poster_frame (position: relative by default — see globals.sass's
+// `*` rule); without an explicit width/height a replaced element still
+// falls back to its own intrinsic size instead of stretching to fill. The
+// width/height: 100% here resolve against the *containing block for
+// absolute positioning* (.poster_frame's padding box), which is a much
+// more robustly-supported percentage-resolution path across browsers than
+// a statically-positioned element's height: 100% resolving through
+// .poster_frame's aspect-ratio-derived height.
 .poster
+  position: absolute
+  inset: 0
   width: 100%
   height: 100%
-  object-fit: fill
+  object-fit: cover
+  border-radius: 0.25rem
   opacity: 0
   transition: opacity 0.25s ease
 
@@ -40,8 +50,13 @@
 // positioned against .poster_wrapper/.poster_link instead (position:
 // relative by default, see globals.sass's `*` rule) — both size exactly to
 // .poster_frame's own box (same width: 100%, same aspect-ratio-driven
-// height), so bottom: 0/right: 0 still lands on the poster's true corner,
-// just painted on top of it rather than clipped by its overflow: hidden.
+// height), so bottom: 0/right: 0 still lands on the poster's true corner.
+// Predates .poster_frame dropping overflow: hidden (see that comment) —
+// staying a sibling instead of moving back inside doesn't cost anything,
+// so there's no reason to undo it now that it's no longer required.
+// Applied to the Tooltip wrapper (see poster.tsx), not the <svg> directly —
+// Tooltip's own wrapper div sits between this and the svg now, so this is
+// what needs the explicit size/position; the svg just fills it below.
 .difficulty_notch
   position: absolute
   bottom: -0.25px
@@ -49,6 +64,14 @@
   width: 10px
   height: 10px
 
+.difficulty_notch_svg
+  display: block
+  width: 100%
+  height: 100%
+
+// fill is inherited by the nested <path> (no fill of its own) regardless of
+// the plain <div> in between — fill/stroke inherit through the DOM tree the
+// same as color does, not just through other SVG elements.
 .difficulty_notch_1
   fill: #F1C40FFF
 
