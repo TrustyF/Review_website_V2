@@ -19,16 +19,24 @@ export async function generateMediaMetadata({
 
 	const media = await db.media.findUnique({
 		where: { id: mediaId },
-		select: { title: true, overview: true, posterPath: true, isDeleted: true },
+		select: {
+			title: true,
+			overview: true,
+			posterPath: true,
+			bannerPath: true,
+			isDeleted: true,
+		},
 	});
 	if (!media || media.isDeleted) return {};
 
-	// JPEG, not the site's usual WebP poster — Discord and WhatsApp's
-	// crawlers don't reliably render WebP for og:image (see
-	// toLinkEmbedImageSrc). Same 2:3 poster crop as on-site for now; a
-	// proper 1200x630 crop for the preview card's own aspect ratio is a
-	// separate follow-up.
-	const linkEmbedImageUrl = toLinkEmbedImageSrc(mediaId, media.posterPath);
+	// JPEG, not the site's usual WebP poster, composited into the standard
+	// 1200x630 og:image shape rather than just resized into it — see
+	// toLinkEmbedImageSrc/resolveLinkEmbedImage's own comments on why.
+	const linkEmbedImageUrl = toLinkEmbedImageSrc(
+		mediaId,
+		media.posterPath,
+		media.bannerPath,
+	);
 
 	return {
 		title: media.title,

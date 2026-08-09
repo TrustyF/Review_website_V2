@@ -108,11 +108,22 @@ export const LINK_EMBED_DIR = path.join(
 	"posters",
 	"link-embed-cache",
 );
-// Renders small in a chat/embed UI, not full poster size like the detail
-// page — well under TMDB's own posterUrlFor "full" size, so this resizes
-// down every source, not just the ComicVine/manual entries whose posters
-// can come back arbitrarily large.
-const LINK_EMBED_MAX_WIDTH = 240;
+// 1200x630 (~1.91:1) is the de facto standard og:image shape — the one
+// dimension both Discord and WhatsApp render consistently as a clean
+// rectangle. A poster's own 2:3 (or 3:4) crop doesn't fit that box, and
+// WhatsApp's link-preview UI force-crops non-matching shapes into a square
+// no matter what metadata says (client-side behavior, not something a
+// publisher can override) — see resolveLinkEmbedImage for how this actually
+// gets composited into that box instead of just resized into it.
+const LINK_EMBED_WIDTH = 1200;
+const LINK_EMBED_HEIGHT = 630;
+// Height of the poster "card" composited on top of the backdrop, border
+// included — leaves a little backdrop visible above/below on the 630-tall
+// canvas. Width follows whatever a given poster's own ratio produces at
+// this height (2:3 for most types, 3:4 for comic/game) rather than a second
+// fixed number.
+const LINK_EMBED_POSTER_HEIGHT = 540;
+const LINK_EMBED_POSTER_BORDER = 6;
 // Not measured in the compression dev tool the way POSTER_QUALITY/
 // BANNER_QUALITY were — JPEG generally needs a higher quality number than
 // WebP/AVIF for comparable visual fidelity, so this is deliberately well
@@ -281,40 +292,122 @@ export async function resolvePoster(
 	return { bytes, contentType: "image/webp" };
 }
 
+// The composite depends on both the poster and (when there is one) the
+// banner, so both need to be part of the content-address — shared between
+// toLinkEmbedImageSrc and resolveLinkEmbedImage so they can never compute
+// different filenames for the same inputs.
+function linkEmbedCacheKey(posterPath: string, bannerPath: string | null) {
+	return `${posterPath}::${bannerPath ?? ""}`;
+}
+
 // The lazy-resolve URL counterpart to resolveLinkEmbedImage, same shape as
 // toPosterSrc — points at /api/link-embed, which resolves-or-downloads the
 // moment a link-preview crawler actually requests it. Returns null (not a
 // placeholder) when there's no real poster — a generic placeholder image on
 // a preview card would misrepresent the title rather than just show nothing.
-export function toLinkEmbedImageSrc(mediaId: number, posterPath: string | null) {
+export function toLinkEmbedImageSrc(
+	mediaId: number,
+	posterPath: string | null,
+	bannerPath: string | null,
+) {
 	return posterPath
-		? `/api/link-embed/${mediaId}/${mediaAssetFilename(mediaId, posterPath, "jpeg")}`
+		? `/api/link-embed/${mediaId}/${mediaAssetFilename(mediaId, linkEmbedCacheKey(posterPath, bannerPath), "jpeg")}`
 		: null;
 }
 
-// Downsized and re-encoded to JPEG instead of WebP, on its own quality
-// setting — see LINK_EMBED_DIR/LINK_EMBED_MAX_WIDTH/LINK_EMBED_QUALITY's
-// own comments on why this doesn't just reuse resolvePoster's settings.
-// Getting the crop right for a wide preview card (posters are 2:3, not the
-// ~1.91:1 a card wants) is a separate follow-up, not part of this fix.
+async function fetchImageBytes(url: string): Promise<Buffer> {
+	const res = await fetch(url);
+	if (!res.ok) throw new Error(`Image download failed: ${url}`);
+	return Buffer.from(await res.arrayBuffer());
+}
+
+// Composites a standard-shaped (1200x630) link-preview image instead of
+// just resizing the poster into that box — see LINK_EMBED_WIDTH's own
+// comment on why a plain resize/crop doesn't work here. A real banner
+// (TMDB backdrop / IGDB artwork) makes a much better backdrop than a
+// blurred-up poster when one exists; manga/comic never have one (see
+// bannerUrlFor's own note on that), and even TMDB/IGDB titles sometimes
+// lack one, so this falls back to blurring the poster itself either way.
+// Doesn't share cacheOrDownload's shape — that helper assumes one source
+// image and one resize, this needs up to two sources and a composite.
 export async function resolveLinkEmbedImage(
 	mediaId: number,
 	type: MediaType,
 	externalId: string | null,
 	posterPath: string | null,
+	bannerPath: string | null,
 ): Promise<ResolvedAsset | null> {
 	if (!posterPath) return null;
 
-	const filename = mediaAssetFilename(mediaId, posterPath, "jpeg");
-	const { bytes } = await cacheOrDownload(
-		LINK_EMBED_DIR,
-		filename,
-		posterUrlFor(type, externalId, posterPath, "full"),
-		{ resize: { width: LINK_EMBED_MAX_WIDTH } },
-		LINK_EMBED_QUALITY,
+	const filename = mediaAssetFilename(
+		mediaId,
+		linkEmbedCacheKey(posterPath, bannerPath),
 		"jpeg",
 	);
+	const filePath = path.join(LINK_EMBED_DIR, filename);
 
+	try {
+		return { bytes: await readFile(filePath), contentType: "image/jpeg" };
+	} catch {
+		// Not cached yet — fall through and build it.
+	}
+
+	await mkdir(LINK_EMBED_DIR, { recursive: true });
+
+	const posterBytes = await fetchImageBytes(
+		posterUrlFor(type, externalId, posterPath, "full"),
+	);
+
+	let backgroundBytes = posterBytes;
+	if (bannerPath) {
+		try {
+			backgroundBytes = await fetchImageBytes(bannerUrlFor(type, bannerPath));
+		} catch {
+			// Falls back to the poster itself (still assigned above) — a
+			// broken/unreachable banner shouldn't block the whole embed image.
+		}
+	}
+	const isBlurredPosterBackdrop = backgroundBytes === posterBytes;
+
+	let background = sharp(backgroundBytes).resize({
+		width: LINK_EMBED_WIDTH,
+		height: LINK_EMBED_HEIGHT,
+		fit: "cover",
+	});
+	if (isBlurredPosterBackdrop) {
+		background = background.blur(24);
+	}
+
+	// Darkens the backdrop either way — keeps the poster card readable
+	// against a bright banner/poster, same idea as the detail page's own
+	// banner gradient (see media-detail.module.sass's .banner_backdrop).
+	const scrim = Buffer.from(
+		`<svg width="${LINK_EMBED_WIDTH}" height="${LINK_EMBED_HEIGHT}"><rect width="100%" height="100%" fill="black" fill-opacity="0.35"/></svg>`,
+	);
+
+	// A thin solid border gives the poster a "card" edge against the
+	// backdrop instead of just floating with nothing to define it.
+	const posterCard = await sharp(posterBytes)
+		.resize({
+			height: LINK_EMBED_POSTER_HEIGHT - LINK_EMBED_POSTER_BORDER * 2,
+			withoutEnlargement: true,
+		})
+		.extend({
+			top: LINK_EMBED_POSTER_BORDER,
+			bottom: LINK_EMBED_POSTER_BORDER,
+			left: LINK_EMBED_POSTER_BORDER,
+			right: LINK_EMBED_POSTER_BORDER,
+			background: "#ffffff",
+		})
+		.png()
+		.toBuffer();
+
+	const bytes = await background
+		.composite([{ input: scrim }, { input: posterCard, gravity: "center" }])
+		.jpeg({ quality: LINK_EMBED_QUALITY })
+		.toBuffer();
+
+	await writeFile(filePath, bytes);
 	return { bytes, contentType: "image/jpeg" };
 }
 

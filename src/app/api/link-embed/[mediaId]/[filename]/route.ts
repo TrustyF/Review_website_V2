@@ -19,7 +19,7 @@ export async function GET(
 
 	const media = await db.media.findUnique({
 		where: { id },
-		select: { type: true, externalId: true, posterPath: true },
+		select: { type: true, externalId: true, posterPath: true, bannerPath: true },
 	});
 	if (!media) {
 		return NextResponse.json({ error: "Media not found" }, { status: 404 });
@@ -30,6 +30,7 @@ export async function GET(
 		media.type,
 		media.externalId,
 		media.posterPath,
+		media.bannerPath,
 	);
 	if (!resolved) {
 		return NextResponse.json({ error: "No poster for this media" }, { status: 404 });
