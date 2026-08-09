@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { MediaRecord } from "@/components/media/types";
 import {
 	availableFilterFields,
@@ -10,6 +10,7 @@ import {
 } from "@/components/media/media-grids/media-filter/media-filter";
 import { DualRangeSlider } from "@/components/media/media-grids/media-filter/dual-range-slider";
 import { formatRuntime } from "@/components/media/primitives/runtime";
+import { useOutsideClick } from "@/lib/use-outside-click";
 import styles from "./media-filter-popover.module.sass";
 
 type Props = {
@@ -57,20 +58,7 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 	const availableGenres = useMemo(() => collectGenres(media), [media]);
 	const availableFields = useMemo(() => availableFilterFields(media), [media]);
 
-	// Closes on an outside click, same pattern as add-to-list-button.tsx.
-	useEffect(() => {
-		if (!isOpen) return;
-		function handlePointerDown(e: MouseEvent) {
-			if (
-				containerRef.current &&
-				!containerRef.current.contains(e.target as Node)
-			) {
-				setIsOpen(false);
-			}
-		}
-		document.addEventListener("mousedown", handlePointerDown);
-		return () => document.removeEventListener("mousedown", handlePointerDown);
-	}, [isOpen]);
+	useOutsideClick(containerRef, () => setIsOpen(false), { enabled: isOpen });
 
 	const activeCount =
 		filter.includedGenres.size +

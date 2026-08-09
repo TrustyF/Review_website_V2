@@ -1,9 +1,10 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import Fuse from "fuse.js";
 import { db, dbPublic } from "@/server/db/client";
 import { EnrichmentStatus } from "@prisma/client";
-import { mediaAssetFilename } from "@/server/resolvers/poster-resolver";
+import { toPosterSrc } from "@/server/resolvers/poster-resolver";
+import { fuzzySearch } from "@/lib/fuzzy-search";
+import { saveListThumbnail } from "@/server/resolvers/list-thumbnail-resolver";
 
 type ListInput = {
 	title: string;
@@ -40,6 +41,18 @@ export async function updateList(id: number, input: ListInput): Promise<void> {
 
 	revalidatePath("/lists");
 	revalidatePath(`/lists/${id}`);
+}
+
+// Alternative to pasting a URL (see ListForm) — a locally-picked file,
+// resized/re-encoded and written under public/list-thumbnails via
+// saveListThumbnail, returning a URL that slots into the same thumbnailUrl
+// field a pasted URL would.
+export async function uploadListThumbnail(formData: FormData): Promise<string> {
+	const file = formData.get("file");
+	if (!(file instanceof File)) throw new Error("No file provided");
+
+	const bytes = Buffer.from(await file.arrayBuffer());
+	return saveListThumbnail(bytes);
 }
 
 export async function deleteList(id: number): Promise<void> {
@@ -114,17 +127,12 @@ export async function searchMediaForList(
 		orderBy: { id: "asc" },
 	});
 
-	const fuse = new Fuse(candidates, FUSE_OPTIONS);
-
-	return fuse
-		.search(trimmed)
-		.slice(0, SEARCH_LIMIT)
-		.map(({ item: m }) => ({
+	return fuzzySearch(candidates, FUSE_OPTIONS, trimmed, SEARCH_LIMIT).map(
+		(m) => ({
 			id: m.id,
 			title: m.title,
 			type: m.type,
-			posterSrc: m.posterPath
-				? `/api/poster/${m.id}/${mediaAssetFilename(m.id, m.posterPath)}`
-				: "/posters/placeholder.jpg",
-		}));
+			posterSrc: toPosterSrc(m.id, m.posterPath),
+		}),
+	);
 }

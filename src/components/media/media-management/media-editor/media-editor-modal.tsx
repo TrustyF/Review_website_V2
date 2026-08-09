@@ -5,8 +5,6 @@ import { MediaRecord } from "@/components/media/types";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-	getAlternativeBanners,
-	getAlternativePosters,
 	hardDeleteMedia,
 	logRewatch,
 	saveMediaDetails,
@@ -16,35 +14,9 @@ import {
 	updateMediaPoster,
 } from "@/components/media/media-management/media-editor/media-editor-actions";
 import { MediaCardResolver } from "@/components/media/media-cards/media-card/media-card-resolver";
-import { ImagePicker } from "@/components/media/media-management/media-editor/components/image-picker";
 import { ReviewBodyModal } from "@/components/media/media-management/media-editor/components/review-body-modal";
 import { StarIcon } from "@/components/media/icons/star-icon";
-import { MediaType, Review } from "@prisma/client";
-
-// Every type has some way to browse alternative posters — TMDB (movies/TV)
-// and MangaDex (manga) both expose more than one cover per title directly.
-// ComicVine has no alternates at the volume level, but its issues' own
-// covers stand in for them. IGDB's game object itself only ever has one
-// cover, but its region-specific box art (game_localizations) fills the
-// same role — see fetchIgdbGameCoverOptions.
-const POSTER_PICKER_TYPES: MediaType[] = [
-	MediaType.MOVIE,
-	MediaType.SHORT,
-	MediaType.TVSHOW,
-	MediaType.MANGA,
-	MediaType.COMIC,
-	MediaType.GAME,
-];
-
-// Narrower than POSTER_PICKER_TYPES: only TMDB (backdrops) and IGDB
-// (artworks) have any banner asset at all — MangaDex/ComicVine have no
-// landscape image in their data, full stop (see bannerUrlFor).
-const BANNER_PICKER_TYPES: MediaType[] = [
-	MediaType.MOVIE,
-	MediaType.SHORT,
-	MediaType.TVSHOW,
-	MediaType.GAME,
-];
+import { Review } from "@prisma/client";
 
 export default function MediaEditorModal() {
 	const media = useReviewEditorStore((s) => s.media);
@@ -142,22 +114,6 @@ export default function MediaEditorModal() {
 	// Just swaps in the proxied preview URL — no download, no DB write, so
 	// trying a poster and changing your mind costs nothing. Media.posterPath
 	// only gets touched (and the poster only gets downloaded/cached) on save.
-	// The picker stays open so you can try a few in a row.
-	function pickPoster(poster: { filePath: string; previewSrc: string }) {
-		setPendingPosterPath(poster.filePath);
-		setDraft((prev) =>
-			prev ? { ...prev, posterSrc: poster.previewSrc } : prev,
-		);
-	}
-
-	// Same idea as pickPoster — no download, no DB write, until save.
-	function pickBanner(banner: { filePath: string; previewSrc: string }) {
-		setPendingBannerPath(banner.filePath);
-		setDraft((prev) =>
-			prev ? { ...prev, bannerSrc: banner.previewSrc } : prev,
-		);
-	}
-
 	function applyPosterUrl() {
 		const url = posterUrlInput.trim();
 		if (!url) return;
@@ -510,47 +466,6 @@ export default function MediaEditorModal() {
 							Edit body
 						</button>
 					</div>
-
-					{/*{draft && POSTER_PICKER_TYPES.includes(draft.type) && (*/}
-					{/*	<div className={styles.picker_group}>*/}
-					{/*		<div className={styles.picker_label}>Poster</div>*/}
-					{/*		<ImagePicker*/}
-					{/*			key={draft.id}*/}
-					{/*			draft={draft}*/}
-					{/*			fetchOptions={getAlternativePosters}*/}
-					{/*			onPick={pickPoster}*/}
-					{/*			altText="Alternative poster option"*/}
-					{/*			errorText="Couldn't load alternative posters. Try again later."*/}
-					{/*		/>*/}
-					{/*	</div>*/}
-					{/*)}*/}
-
-					{/*{draft && BANNER_PICKER_TYPES.includes(draft.type) && (*/}
-					{/*	<div className={styles.picker_group}>*/}
-					{/*		<div className={styles.picker_label}>Banner</div>*/}
-					{/*		{draft.bannerSrc && (*/}
-					{/*			// Plain <img>, not next/image — this is a small editor-only*/}
-					{/*			// preview, not worth the width/height ceremony (unlike the*/}
-					{/*			// poster URL preview above, the host here is always already*/}
-					{/*			// allowlisted, so this is just about keeping it simple).*/}
-					{/*			// eslint-disable-next-line @next/next/no-img-element*/}
-					{/*			<img*/}
-					{/*				src={draft.bannerSrc}*/}
-					{/*				alt=""*/}
-					{/*				className={styles.banner_preview}*/}
-					{/*			/>*/}
-					{/*		)}*/}
-					{/*		<ImagePicker*/}
-					{/*			key={draft.id}*/}
-					{/*			draft={draft}*/}
-					{/*			fetchOptions={getAlternativeBanners}*/}
-					{/*			onPick={pickBanner}*/}
-					{/*			altText="Alternative banner option"*/}
-					{/*			errorText="Couldn't load alternative banners. Try again later."*/}
-					{/*			optionAspectRatio="16/9"*/}
-					{/*		/>*/}
-					{/*	</div>*/}
-					{/*)}*/}
 				</div>
 
 				<span className={styles.divider} />

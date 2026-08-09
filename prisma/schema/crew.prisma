@@ -61,4 +61,14 @@ model Credit {
 
   order     Int?
   character String?
+
+  // Postgres doesn't auto-index relation scalar columns the way MySQL does —
+  // every one of these gets filtered on somewhere hot: mediaId on every
+  // media detail page load and every re-ingest's deleteMany, personId/
+  // companyId on every credit page load, roleId whenever a role is matched
+  // by name during ingest/query.
+  @@index([mediaId])
+  @@index([personId])
+  @@index([companyId])
+  @@index([roleId])
 }

@@ -1,4 +1,4 @@
-import { access, mkdir, writeFile } from "fs/promises";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import { createHash } from "crypto";
 import path from "path";
 import sharp from "sharp";
@@ -116,6 +116,19 @@ export function mediaAssetFilename(
 	return `${mediaId}-${hash}.${extension}`;
 }
 
+// The lazy-resolve poster URL for a media item — points at /api/poster,
+// which does the actual resolve-or-download the moment something requests
+// it (see that route), or the static placeholder when there's no poster at
+// all. Was copy-pasted identically in list-actions.ts's searchMediaForList
+// and search-actions.ts's searchAllMedia; both build search results shaped
+// around a MediaRecord-like {id, posterPath}, so this is the one place that
+// ternary needs to live.
+export function toPosterSrc(mediaId: number, posterPath: string | null) {
+	return posterPath
+		? `/api/poster/${mediaId}/${mediaAssetFilename(mediaId, posterPath)}`
+		: "/posters/placeholder.jpg";
+}
+
 export type PosterSize = "thumb" | "full";
 
 // The one place that knows how to turn a stored posterPath into an actual
@@ -159,6 +172,14 @@ export function posterUrlFor(
 // content-addressed cache-or-download, differing only in directory, which
 // size URL to fetch, and whether/how the downloaded bytes get resized down
 // before being written — all three re-encode to WebP.
+//
+// Returns the bytes alongside filePath, not just the path — resolvePoster/
+// resolveBanner hand these straight to their API route callers, which used
+// to re-read the same file right back off disk themselves immediately after
+// (a redundant syscall on every cache hit, and on a miss an outright waste:
+// writing the just-encoded buffer to disk only to read it straight back).
+// The hit path reads the file directly (rather than a cheaper existence-only
+// stat) specifically so those bytes are available either way.
 async function cacheOrDownload(
 	dir: string,
 	filename: string,
@@ -166,45 +187,67 @@ async function cacheOrDownload(
 	{ resize }: { resize?: { width?: number; height?: number } } = {},
 	quality = POSTER_QUALITY,
 	format: CacheFormat = "webp",
-) {
+): Promise<{ filePath: string; bytes: Buffer }> {
 	const filePath = path.join(dir, filename);
 
 	try {
-		await access(filePath);
+		const bytes = await readFile(filePath);
+		return { filePath, bytes };
 	} catch {
 		await mkdir(dir, { recursive: true });
 		const res = await fetch(sourceUrl);
 		if (!res.ok) throw new Error("Poster download failed");
-		const bytes = Buffer.from(await res.arrayBuffer());
-		let image = sharp(bytes);
+		const source = Buffer.from(await res.arrayBuffer());
+		let image = sharp(source);
 		if (resize) {
 			image = image.resize({ ...resize, withoutEnlargement: true });
 		}
 		const encoded =
 			format === "avif" ? image.avif({ quality }) : image.webp({ quality });
-		const output = await encoded.toBuffer();
-		await writeFile(filePath, output);
+		const bytes = await encoded.toBuffer();
+		await writeFile(filePath, bytes);
+		return { filePath, bytes };
 	}
-
-	return filePath;
 }
 
+// bytes typed as the plain Uint8Array rather than Node's own generic
+// Buffer<ArrayBufferLike> — the two are structurally the same at runtime
+// (Buffer extends Uint8Array), but NextResponse's BodyInit type doesn't
+// resolve against the generic Buffer type cleanly, only the plain one.
+export type ResolvedAsset = { bytes: Uint8Array; contentType: string };
+
+const PLACEHOLDER_POSTER_PATH = path.join(
+	process.cwd(),
+	"public",
+	"posters",
+	"placeholder.jpg",
+);
+
+// Returns the actual bytes (not a URL) — its only caller, the /api/poster
+// route, used to take the returned path and read the file right back off
+// disk itself; this hands the bytes cacheOrDownload already has straight
+// through instead, see that function's own comment for why.
 export async function resolvePoster(
 	mediaId: number,
 	type: MediaType,
 	externalId: string | null,
 	posterPath: string | null,
-) {
-	if (!posterPath) return "/posters/placeholder.jpg";
+): Promise<ResolvedAsset> {
+	if (!posterPath) {
+		return {
+			bytes: await readFile(PLACEHOLDER_POSTER_PATH),
+			contentType: "image/jpeg",
+		};
+	}
 
 	const filename = mediaAssetFilename(mediaId, posterPath);
-	await cacheOrDownload(
+	const { bytes } = await cacheOrDownload(
 		POSTER_DIR,
 		filename,
 		posterUrlFor(type, externalId, posterPath, "full"),
 	);
 
-	return `/posters/cache/${filename}`;
+	return { bytes, contentType: "image/webp" };
 }
 
 // Same content-addressable caching as resolvePoster, but for a change log
@@ -248,15 +291,16 @@ export function bannerUrlFor(type: MediaType, bannerPath: string) {
 // (BANNER_DIR) since it's a different asset. Capped to BANNER_MAX_WIDTH —
 // the source is already display-ready otherwise, it's just wider than the
 // page ever renders it.
+// Same "return bytes, not a URL" reasoning as resolvePoster.
 export async function resolveBanner(
 	mediaId: number,
 	type: MediaType,
 	bannerPath: string | null,
-) {
+): Promise<ResolvedAsset | null> {
 	if (!bannerPath) return null;
 
 	const filename = mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT);
-	await cacheOrDownload(
+	const { bytes } = await cacheOrDownload(
 		BANNER_DIR,
 		filename,
 		bannerUrlFor(type, bannerPath),
@@ -265,7 +309,7 @@ export async function resolveBanner(
 		BANNER_FORMAT,
 	);
 
-	return `/banners/cache/${filename}`;
+	return { bytes, contentType: `image/${BANNER_FORMAT}` };
 }
 
 // Same content-addressable caching as resolveChangelogPosterThumb, but for a

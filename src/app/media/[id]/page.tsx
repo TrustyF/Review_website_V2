@@ -175,39 +175,44 @@ export default async function MediaDetailPage({
 	const mediaId = Number(id);
 	if (!Number.isFinite(mediaId)) notFound();
 
-	const raw = await db.media.findUnique({
-		where: { id: mediaId },
-		include: {
-			movie: true,
-			tvShow: true,
-			manga: true,
-			comic: true,
-			game: true,
-			review: true,
-			originCountry: true,
-			mediaGenres: { include: { genre: true } },
-			credits: {
-				include: { person: true, company: true, role: true },
-				orderBy: { order: "asc" },
+	// allLists only depends on mediaId (already known from the route param),
+	// not on raw — the two queries don't depend on each other, so there's no
+	// reason to make this page wait on them one after another.
+	const [raw, allLists] = await Promise.all([
+		db.media.findUnique({
+			where: { id: mediaId },
+			include: {
+				movie: true,
+				tvShow: true,
+				manga: true,
+				comic: true,
+				game: true,
+				review: true,
+				originCountry: true,
+				mediaGenres: { include: { genre: true } },
+				credits: {
+					include: { person: true, company: true, role: true },
+					orderBy: { order: "asc" },
+				},
+				changeLog: { orderBy: { createdAt: "desc" } },
 			},
-			changeLog: { orderBy: { createdAt: "desc" } },
-		},
-	});
+		}),
+		// For AddToListButton — every list, plus which ones (if any) already
+		// have this media, so the popover can render pre-checked checkboxes
+		// without a second round trip once it opens.
+		db.list.findMany({
+			select: {
+				id: true,
+				title: true,
+				items: { where: { mediaId }, select: { mediaId: true } },
+			},
+			orderBy: { createDate: "desc" },
+		}),
+	]);
 	if (!raw) notFound();
 
 	const media = toMediaRecord(raw);
 
-	// For AddToListButton — every list, plus which ones (if any) already
-	// have this media, so the popover can render pre-checked checkboxes
-	// without a second round trip once it opens.
-	const allLists = await db.list.findMany({
-		select: {
-			id: true,
-			title: true,
-			items: { where: { mediaId }, select: { mediaId: true } },
-		},
-		orderBy: { createDate: "desc" },
-	});
 	const memberListIds = allLists
 		.filter((list) => list.items.length > 0)
 		.map((list) => list.id);

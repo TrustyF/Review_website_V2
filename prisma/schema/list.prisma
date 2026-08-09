@@ -19,4 +19,9 @@ model ListItem {
   addedAt DateTime @default(now())
 
   @@id([listId, mediaId])
+  // @@id([listId, mediaId]) only indexes that pair with listId leading —
+  // no current query looks up by mediaId alone, but media/[id]/page.tsx
+  // already computes "which lists contain this media" from a List-side
+  // query, one small step from wanting this the other way around too.
+  @@index([mediaId])
 }

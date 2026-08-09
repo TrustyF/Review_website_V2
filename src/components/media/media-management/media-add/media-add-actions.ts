@@ -133,8 +133,10 @@ export async function addMediaToLibrary(
 			break;
 		}
 		case MediaType.MANGA: {
-			const data = await fetchMangaDexById(externalId);
-			const statistics = await fetchMangaDexStatistics(externalId);
+			const [data, statistics] = await Promise.all([
+				fetchMangaDexById(externalId),
+				fetchMangaDexStatistics(externalId),
+			]);
 			mediaId = (await addMangaFromMangaDex(data, statistics)).id;
 			break;
 		}

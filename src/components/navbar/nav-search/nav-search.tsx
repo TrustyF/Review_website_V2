@@ -7,6 +7,7 @@ import {
 	GlobalSearchResult,
 	searchAllMedia,
 } from "@/components/search/search-actions";
+import { useOutsideClick } from "@/lib/use-outside-click";
 import styles from "./nav-search.module.sass";
 
 const TYPE_LABELS: Record<MediaType, string> = {
@@ -36,21 +37,7 @@ export function NavSearch() {
 	const [error, setError] = useState<string | null>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 
-	// Closes on an outside click, same pattern as add-to-list-button.tsx /
-	// media-filter-popover.tsx.
-	useEffect(() => {
-		if (!isOpen) return;
-		function handlePointerDown(e: MouseEvent) {
-			if (
-				containerRef.current &&
-				!containerRef.current.contains(e.target as Node)
-			) {
-				setIsOpen(false);
-			}
-		}
-		document.addEventListener("mousedown", handlePointerDown);
-		return () => document.removeEventListener("mousedown", handlePointerDown);
-	}, [isOpen]);
+	useOutsideClick(containerRef, () => setIsOpen(false), { enabled: isOpen });
 
 	useEffect(() => {
 		if (!input.trim()) return;

@@ -13,6 +13,7 @@ import {
 import {
 	BANNER_FORMAT,
 	mediaAssetFilename,
+	toPosterSrc,
 } from "@/server/resolvers/poster-resolver";
 
 // What Prisma actually hands back — every relation still optional
@@ -67,14 +68,11 @@ export type MediaRecord =
 // (see mediaAssetFilename), so the URL itself changes whenever the image
 // does, making a long-lived immutable Cache-Control on those routes safe.
 export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
-	const posterSrc = raw.posterPath
-		? `/api/poster/${raw.id}/${mediaAssetFilename(raw.id, raw.posterPath)}`
-		: "/posters/placeholder.jpg";
+	const posterSrc = toPosterSrc(raw.id, raw.posterPath);
 	const bannerSrc = raw.bannerPath
 		? `/api/banner/${raw.id}/${mediaAssetFilename(raw.id, raw.bannerPath, BANNER_FORMAT)}`
 		: null;
-	const watchedDate =
-		raw.review?.rating != null ? raw.review.createDate : null;
+	const watchedDate = raw.review?.rating != null ? raw.review.createDate : null;
 	const genres = (raw.mediaGenres ?? []).map((mg) => mg.genre.name);
 	switch (raw.type) {
 		case "MOVIE":

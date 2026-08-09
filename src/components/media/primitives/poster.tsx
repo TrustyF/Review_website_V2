@@ -54,8 +54,9 @@ export function MediaPoster({
 	// rating just showing nothing rather than a 0-star. The Tooltip's own
 	// wrapper (not the <svg>) carries .difficulty_notch's position/size —
 	// it's a sibling of .poster_frame, not a child of it (see .poster_frame's
-	// transform comment for why: its overflow: hidden was seaming against
-	// whatever sat inside it, unrelated to the notch's own positioning).
+	// own comment in primitives.module.sass: it used to have overflow: hidden,
+	// which seamed against whatever sat inside it, unrelated to the notch's
+	// own positioning — dropped now, but staying a sibling still costs nothing).
 	const notch =
 		difficulty === 1 || difficulty === 2 ? (
 			<Tooltip

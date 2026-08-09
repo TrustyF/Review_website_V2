@@ -4,6 +4,13 @@ const nextConfig: NextConfig = {
 	/* config options here */
 	reactCompiler: true,
 	experimental: {
+		serverActions: {
+			// Default 1MB cap is too small for uploadListThumbnail's raw source
+			// image (see list-thumbnail-resolver.ts) — sharp compresses it down
+			// server-side, but the original file still has to survive the trip
+			// there first.
+			bodySizeLimit: "10mb",
+		},
 		// Keeps a visited list page's client-side instance (and with it,
 		// LazyMediaGrid's already-expanded card count + scroll position)
 		// alive for a few minutes instead of remounting from scratch on

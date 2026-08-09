@@ -1,8 +1,8 @@
 "use server";
-import Fuse from "fuse.js";
 import { dbPublic } from "@/server/db/client";
 import { EnrichmentStatus, MediaType } from "@prisma/client";
-import { mediaAssetFilename } from "@/server/resolvers/poster-resolver";
+import { toPosterSrc } from "@/server/resolvers/poster-resolver";
+import { fuzzySearch } from "@/lib/fuzzy-search";
 
 export type GlobalSearchResult = {
 	id: number;
@@ -75,18 +75,13 @@ export async function searchAllMedia(
 			.filter((name): name is string => name != null),
 	}));
 
-	const fuse = new Fuse(searchable, FUSE_OPTIONS);
-
-	return fuse
-		.search(trimmed)
-		.slice(0, SEARCH_LIMIT)
-		.map(({ item: m }) => ({
+	return fuzzySearch(searchable, FUSE_OPTIONS, trimmed, SEARCH_LIMIT).map(
+		(m) => ({
 			id: m.id,
 			title: m.title,
 			type: m.type,
 			releaseDate: m.releaseDate,
-			posterSrc: m.posterPath
-				? `/api/poster/${m.id}/${mediaAssetFilename(m.id, m.posterPath)}`
-				: "/posters/placeholder.jpg",
-		}));
+			posterSrc: toPosterSrc(m.id, m.posterPath),
+		}),
+	);
 }

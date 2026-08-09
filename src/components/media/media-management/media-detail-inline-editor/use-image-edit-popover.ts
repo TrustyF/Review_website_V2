@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { PickableImage } from "@/components/media/media-management/media-editor/components/image-picker";
+import { useOutsideClick } from "@/lib/use-outside-click";
 
 // Shared open/pick/save state machine behind PosterEditTrigger and
 // BannerEditTrigger — the only real difference between "click the poster"
@@ -45,31 +46,13 @@ export function useImageEditPopover({
 		setIsOpen(false);
 	}
 
-	// Closes (discarding anything staged but unsaved) on an outside click or
-	// Escape — only wired up while actually open, so it costs nothing the
-	// rest of the time.
-	useEffect(() => {
-		if (!isOpen) return;
-
-		function handlePointerDown(e: MouseEvent) {
-			if (
-				containerRef.current &&
-				!containerRef.current.contains(e.target as Node)
-			) {
-				discardDraft();
-			}
-		}
-		function handleKeyDown(e: KeyboardEvent) {
-			if (e.key === "Escape") discardDraft();
-		}
-
-		document.addEventListener("mousedown", handlePointerDown);
-		document.addEventListener("keydown", handleKeyDown);
-		return () => {
-			document.removeEventListener("mousedown", handlePointerDown);
-			document.removeEventListener("keydown", handleKeyDown);
-		};
-	}, [isOpen]);
+	// Discards anything staged but unsaved on an outside click or Escape —
+	// only wired up while actually open, so it costs nothing the rest of the
+	// time.
+	useOutsideClick(containerRef, discardDraft, {
+		enabled: isOpen,
+		escapeToo: true,
+	});
 
 	// Only swaps in the proxied preview — no download, no DB write, so
 	// picking a few options in a row to compare costs nothing. The field

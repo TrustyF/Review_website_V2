@@ -26,8 +26,10 @@ async function enrichOne(media: Media) {
 		const data = await fetchTvShowById(externalId);
 		await updateTvShowFromTmdb(data);
 	} else if (media.type === MediaType.MANGA) {
-		const data = await fetchMangaDexById(externalId);
-		const statistics = await fetchMangaDexStatistics(externalId);
+		const [data, statistics] = await Promise.all([
+			fetchMangaDexById(externalId),
+			fetchMangaDexStatistics(externalId),
+		]);
 		await updateMangaFromMangaDex(data, statistics);
 	} else if (media.type === MediaType.GAME) {
 		const data = await fetchIgdbGameById(externalId);

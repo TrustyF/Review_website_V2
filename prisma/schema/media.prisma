@@ -49,6 +49,13 @@ model Media {
   // treats each NULL as distinct — this only stops the same provider item
   // from being imported into the same type twice.
   @@unique([externalId, type])
+  // Backs every per-type list page's `where: { type, enrichmentStatus }`
+  // (+ recency sort via releaseDate) and the home feed's same filter.
+  @@index([type, enrichmentStatus, releaseDate])
+  // Backs dbPublic's isDeleted: false merge (see src/server/db/client.ts),
+  // which rides along on almost every public-facing Media query, plus the
+  // plain enrichmentStatus-only scans in the list/global search actions.
+  @@index([enrichmentStatus, isDeleted])
 }
 
 enum MediaType {

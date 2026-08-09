@@ -1,8 +1,6 @@
-import { readFile } from "fs/promises";
-import path from "path";
 import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
-import { BANNER_FORMAT, resolveBanner } from "@/server/resolvers/poster-resolver";
+import { resolveBanner } from "@/server/resolvers/poster-resolver";
 
 // Same lazy-resolve-on-request pattern as /api/poster (see that route for
 // the full reasoning) — toMediaRecord builds this URL with zero I/O, and
@@ -28,16 +26,19 @@ export async function GET(
 		return NextResponse.json({ error: "Media not found" }, { status: 404 });
 	}
 
-	const localPath = await resolveBanner(id, media.type, media.bannerPath);
-	if (!localPath) {
-		return NextResponse.json({ error: "No banner for this media" }, { status: 404 });
+	const resolved = await resolveBanner(id, media.type, media.bannerPath);
+	if (!resolved) {
+		return NextResponse.json(
+			{ error: "No banner for this media" },
+			{ status: 404 },
+		);
 	}
 
-	const bytes = await readFile(path.join(process.cwd(), "public", localPath));
-
-	return new NextResponse(bytes, {
+	// See the /api/poster route's own comment on this cast — known TS 5.9 +
+	// @types/node v20 friction, not a real mismatch.
+	return new NextResponse(resolved.bytes as BodyInit, {
 		headers: {
-			"Content-Type": `image/${BANNER_FORMAT}`,
+			"Content-Type": resolved.contentType,
 			"Cache-Control": "public, max-age=31536000, immutable",
 		},
 	});

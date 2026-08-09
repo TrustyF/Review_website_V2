@@ -55,6 +55,8 @@ next-env.d.ts
 **/*.module.css.map
 /public/posters/
 /public/banners/
+/public/list-thumbnails/
+/public/cropped/
 /.idea/
 /prisma/migrations/
 /CLAUDE.md

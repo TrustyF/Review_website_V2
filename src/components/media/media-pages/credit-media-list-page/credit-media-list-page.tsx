@@ -3,7 +3,10 @@ import { notFound } from "next/navigation";
 import { db } from "@/server/db/client";
 import { RawMediaRecord, toMediaRecord } from "@/components/media/types";
 import { MediaFilterGrid } from "@/components/media/media-grids/media-filter-grid/media-filter-grid";
-import { RatingDistribution } from "@/components/media/media-grids/rating-distribution/rating-distribution";
+// RatingDistribution is currently disabled below — its import is dropped
+// too so this doesn't trip an unused-import lint warning; re-add
+// `import { RatingDistribution } from "@/components/media/media-grids/rating-distribution/rating-distribution";`
+// alongside it if it comes back.
 import { EnrichmentStatus } from "@prisma/client";
 import styles from "./credit-media-list-page.module.sass";
 

@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import {
 	addMediaToList,
 	removeMediaFromList,
 } from "@/components/lists/list-actions";
 import { useIsAdminStore } from "@/lib/is-admin-store";
+import { useOutsideClick } from "@/lib/use-outside-click";
 import styles from "./add-to-list-button.module.sass";
 
 type ListOption = {
@@ -38,20 +39,7 @@ export function AddToListButton({
 	const [pendingId, setPendingId] = useState<number | null>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 
-	// Closes on an outside click, same pattern as use-image-edit-popover.ts.
-	useEffect(() => {
-		if (!isOpen) return;
-		function handlePointerDown(e: MouseEvent) {
-			if (
-				containerRef.current &&
-				!containerRef.current.contains(e.target as Node)
-			) {
-				setIsOpen(false);
-			}
-		}
-		document.addEventListener("mousedown", handlePointerDown);
-		return () => document.removeEventListener("mousedown", handlePointerDown);
-	}, [isOpen]);
+	useOutsideClick(containerRef, () => setIsOpen(false), { enabled: isOpen });
 
 	async function toggle(listId: number) {
 		const wasMember = memberIds.has(listId);

@@ -41,13 +41,25 @@ async function purgeThumbnails(
 		}
 	}
 
+	if (candidates.size === 0) return 0;
+
+	// One query for every surviving row that could reference any candidate,
+	// instead of one findFirst per candidate — same "is this still
+	// referenced" check, just batched instead of N sequential round trips.
+	const mediaIds = [...new Set([...candidates.values()].map((c) => c.mediaId))];
+	const survivors = await db.mediaChangeLog.findMany({
+		where: { field, mediaId: { in: mediaIds } },
+		select: { mediaId: true, oldValue: true, newValue: true },
+	});
+	const stillReferenced = new Set<string>();
+	for (const row of survivors) {
+		if (row.oldValue) stillReferenced.add(`${row.mediaId}:${row.oldValue}`);
+		if (row.newValue) stillReferenced.add(`${row.mediaId}:${row.newValue}`);
+	}
+
 	let filesRemoved = 0;
-	for (const { mediaId, value } of candidates.values()) {
-		const stillReferenced = await db.mediaChangeLog.findFirst({
-			where: { mediaId, field, OR: [{ oldValue: value }, { newValue: value }] },
-			select: { id: true },
-		});
-		if (stillReferenced) continue;
+	for (const [key, { mediaId, value }] of candidates) {
+		if (stillReferenced.has(key)) continue;
 
 		const filePath = path.join(dir, mediaAssetFilename(mediaId, value));
 		try {

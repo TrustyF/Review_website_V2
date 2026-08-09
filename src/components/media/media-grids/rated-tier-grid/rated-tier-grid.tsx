@@ -1,7 +1,8 @@
+"use client";
+import { memo, useMemo } from "react";
 import { MediaRecord } from "@/components/media/types";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
 import styles from "./rated-tier-grid.module.sass";
-import { StarIcon } from "@/components/media/icons/star-icon";
 
 // Buckets media into whole-point rating tiers (9 covers a 9.0-9.5 rating,
 // etc.) — halfway steps would mean twenty collapsible sections, too many to
@@ -24,24 +25,34 @@ type Props = {
 };
 
 // Groups media into rating tiers, highest first (Unrated last), each
-// rendered as a collapsible, lazily-revealed grid of mini cards.
-export function RatedTierGrid({ media }: Props) {
-	const sorted = [...media].sort(
-		(a, b) => (b.review?.rating ?? -1) - (a.review?.rating ?? -1),
-	);
+// rendered as a collapsible, lazily-revealed grid of mini cards. Its only
+// caller (MediaFilterGrid) already memoizes the `media` it passes down
+// (use-media-filter.ts's filteredMedia), but that only helps if this
+// component actually skips re-rendering when that reference is unchanged —
+// without memo() below, React still calls this function on every parent
+// re-render regardless, which used to mean redoing the full sort/bucket
+// pass on every tick of a filter slider drag even though the list hadn't
+// changed. memo() + useMemo() together make an unrelated parent re-render
+// (dragging a slider before the debounced filter settles) genuinely free.
+export const RatedTierGrid = memo(function RatedTierGrid({ media }: Props) {
+	const orderedTiers = useMemo(() => {
+		const sorted = [...media].sort(
+			(a, b) => (b.review?.rating ?? -1) - (a.review?.rating ?? -1),
+		);
 
-	const tiers = new Map<number | null, MediaRecord[]>();
-	for (const item of sorted) {
-		const tier = ratingTierOf(item);
-		const bucket = tiers.get(tier);
-		if (bucket) bucket.push(item);
-		else tiers.set(tier, [item]);
-	}
-	const orderedTiers = [...tiers.entries()].sort(([a], [b]) => {
-		if (a === null) return 1;
-		if (b === null) return -1;
-		return b - a;
-	});
+		const tiers = new Map<number | null, MediaRecord[]>();
+		for (const item of sorted) {
+			const tier = ratingTierOf(item);
+			const bucket = tiers.get(tier);
+			if (bucket) bucket.push(item);
+			else tiers.set(tier, [item]);
+		}
+		return [...tiers.entries()].sort(([a], [b]) => {
+			if (a === null) return 1;
+			if (b === null) return -1;
+			return b - a;
+		});
+	}, [media]);
 
 	return (
 		<div className={styles.tiers}>
@@ -49,7 +60,6 @@ export function RatedTierGrid({ media }: Props) {
 				<details key={tier ?? "unrated"} open>
 					<summary className={styles.tier_header}>
 						{tierLabel(tier)}
-						{/*<StarIcon size={15} />*/}
 						<span className={styles.tier_count}>- {items.length} items</span>
 					</summary>
 					<LazyMediaGrid
@@ -60,4 +70,4 @@ export function RatedTierGrid({ media }: Props) {
 			))}
 		</div>
 	);
-}
+});

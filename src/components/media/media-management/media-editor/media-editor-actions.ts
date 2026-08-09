@@ -12,7 +12,9 @@ import {
 	fetchIgdbGameCoverOptions,
 } from "@/server/igdb/client";
 import {
+	BANNER_FORMAT,
 	bannerUrlFor,
+	mediaAssetFilename,
 	posterUrlFor,
 	resolveBanner,
 	resolvePoster,
@@ -344,14 +346,18 @@ export async function updateMediaPoster(mediaId: number, posterPath: string) {
 		});
 	}
 
-	const posterSrc = await resolvePoster(
+	// Eagerly downloads/caches the new poster right now (its returned bytes
+	// aren't needed here — see resolvePoster's own comment) so it's already
+	// on disk the moment this save resolves, rather than lazily on whatever
+	// request happens to hit /api/poster next.
+	await resolvePoster(
 		mediaId,
 		existing!.type,
 		existing!.externalId,
 		posterPath,
 	);
 	revalidatePath("/");
-	return posterSrc;
+	return `/api/poster/${mediaId}/${mediaAssetFilename(mediaId, posterPath)}`;
 }
 
 // Mirrors getAlternativePosters, but for banners — only TMDB and IGDB have
@@ -416,9 +422,10 @@ export async function updateMediaBanner(mediaId: number, bannerPath: string) {
 		});
 	}
 
-	const bannerSrc = await resolveBanner(mediaId, existing!.type, bannerPath);
+	// Same eager cache-on-save reasoning as updateMediaPoster above.
+	await resolveBanner(mediaId, existing!.type, bannerPath);
 	revalidatePath("/");
-	return bannerSrc;
+	return `/api/banner/${mediaId}/${mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT)}`;
 }
 
 // Purely a display tweak (see Media.bannerFocusY) — not logged to the

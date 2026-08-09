@@ -9,9 +9,13 @@ const DEFAULT_STYLE: CSSProperties = {
 
 type Props = SVGProps<SVGSVGElement> & {
 	size?: number;
+	// Rendered as an SVG <title> child rather than an aria-label override —
+	// browsers show that as a native hover tooltip (e.g. a review body
+	// preview), which aria-label alone doesn't do.
+	title?: string;
 };
 
-export function ReviewIcon({ style, size = 15, ...props }: Props) {
+export function ReviewIcon({ style, size = 15, title, ...props }: Props) {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
@@ -22,6 +26,7 @@ export function ReviewIcon({ style, size = 15, ...props }: Props) {
 			aria-label="Review"
 			style={{ ...DEFAULT_STYLE, ...style }}
 			{...props}>
+			{title && <title>{title}</title>}
 			<path
 				fill="currentColor"
 				fillRule="evenodd"

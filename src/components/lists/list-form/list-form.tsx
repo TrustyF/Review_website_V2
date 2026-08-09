@@ -1,6 +1,7 @@
 "use client";
-import { FormEvent, ReactNode, useState } from "react";
+import { ChangeEvent, FormEvent, ReactNode, useState } from "react";
 import styles from "./list-form.module.sass";
+import { uploadListThumbnail } from "@/components/lists/list-actions";
 
 export type ListFormValues = {
 	title: string;
@@ -19,16 +20,18 @@ type Props = {
 };
 
 // Shared by /lists/new and /lists/[id]/edit — same three fields (title,
-// description, pasted thumbnail URL) either way, only what onSubmit does
-// with them differs. Mirrors add/page.tsx's manual-entry form: a plain
-// controlled form, a live <img> preview of the pasted URL, no picker (see
-// the plan's "paste-a-URL only" thumbnail decision — a list has no provider
-// to search against).
+// description, thumbnail) either way, only what onSubmit does with them
+// differs. Mirrors add/page.tsx's manual-entry form: a plain controlled
+// form, a live <img> preview, no provider picker (a list has no provider to
+// search against). Thumbnail can be set two ways — a pasted URL, or a local
+// file uploaded via uploadListThumbnail — both just end up setting the same
+// thumbnailUrl state, so onSubmit never needs to know which one happened.
 export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 	const [title, setTitle] = useState(initial.title);
 	const [description, setDescription] = useState(initial.description);
 	const [thumbnailUrl, setThumbnailUrl] = useState(initial.thumbnailUrl);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isUploading, setIsUploading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	async function handleSubmit(e: FormEvent) {
@@ -41,6 +44,24 @@ export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 		} catch {
 			setError("Failed to save. Try again.");
 			setIsSubmitting(false);
+		}
+	}
+
+	async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
+		const file = e.target.files?.[0];
+		e.target.value = ""; // lets the same file be re-picked later
+		if (!file) return;
+
+		setIsUploading(true);
+		setError(null);
+		try {
+			const formData = new FormData();
+			formData.append("file", file);
+			setThumbnailUrl(await uploadListThumbnail(formData));
+		} catch {
+			setError("Failed to upload image. Try again.");
+		} finally {
+			setIsUploading(false);
 		}
 	}
 
@@ -75,6 +96,17 @@ export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 					onChange={(e) => setThumbnailUrl(e.target.value)}
 				/>
 			</label>
+			<label className={styles.field}>
+				Or upload a file
+				<input
+					className={styles.input}
+					type="file"
+					accept="image/*"
+					onChange={handleFileChange}
+					disabled={isUploading}
+				/>
+			</label>
+			{isUploading && <div className={styles.uploading}>Uploading…</div>}
 			{thumbnailUrl.trim() && (
 				// Plain <img>, not next/image — arbitrary pasted host, same as
 				// add/page.tsx's manual poster preview.
