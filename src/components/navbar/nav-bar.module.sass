@@ -27,36 +27,5 @@
   color: #e6e6e6
   text-shadow: #151315 1px 1px 3px
 
-
   &:hover
     color: var(--foreground)
-
-.dev
-  position: relative
-
-  &[open] .dev_menu
-    display: flex
-
-  &::-webkit-details-marker
-    display: none
-
-.dev_summary
-  cursor: pointer
-  color: var(--accent4)
-  list-style: none
-
-  &:hover
-    color: var(--foreground)
-
-.dev_menu
-  display: none
-  flex-flow: column
-  gap: 0.5rem
-  position: absolute
-  top: calc(100% + 0.5rem)
-  right: 0
-  min-width: 160px
-  padding: 0.75rem
-  background-color: var(--background)
-  border: 1px solid var(--accent1)
-  z-index: 10

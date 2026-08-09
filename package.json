@@ -18,10 +18,14 @@
 		"cleanup_posters": "tsx src/server/maintenance/cleanup-posters.ts",
 		"cleanup_cropped_images": "tsx src/server/maintenance/cleanup-cropped-images.ts",
 		"enrich_db": "tsx src/server/maintenance/enrich-db.ts",
-		"purge_deleted_changelogs": "tsx src/server/maintenance/purge-deleted-change-log.ts"
+		"purge_deleted_changelogs": "tsx src/server/maintenance/purge-deleted-change-log.ts",
+		"add_movies_to_list": "tsx src/scripts/dev/add-movies-to-list.ts"
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.115.0",
+		"@dnd-kit/core": "^6.3.1",
+		"@dnd-kit/sortable": "^10.0.0",
+		"@dnd-kit/utilities": "^3.2.2",
 		"@prisma/adapter-pg": "^7.8.0",
 		"@prisma/client": "^7.8.0",
 		"arktype": "^2.0.0",

@@ -1,0 +1,122 @@
+@use "@/app/styles/variables" as *
+
+.controls
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.75rem
+  margin-bottom: 0.75rem
+
+.sort_button
+  padding: 0.4rem 0.8rem
+  border: 1px solid var(--accent1)
+  border-radius: 0.4rem
+  background: transparent
+  color: var(--foreground)
+  font-size: 0.85rem
+  cursor: pointer
+
+  &:disabled
+    opacity: 0.4
+    cursor: not-allowed
+
+.empty
+  @include empty-text
+
+.error
+  color: #e05656
+  margin-bottom: 0.75rem
+
+.list
+  display: flex
+  flex-flow: column
+  gap: 0.5rem
+  padding: 1rem 0
+
+.row
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.75rem
+  padding: 0.5rem
+  border-radius: 0.5rem
+  background: var(--darkaccent2)
+
+.row_dragging
+  opacity: 0.5
+  z-index: 1
+
+.rank
+  width: 2rem
+  flex-shrink: 0
+  text-align: center
+  font-size: 1.1rem
+  font-weight: 700
+  font-family: $font-mono
+  color: var(--accent1)
+
+// A grip icon would need its own asset — a monospace glyph does the job
+// with zero extra weight, same reasoning as this app's other small
+// text-as-icon affordances.
+.drag_handle
+  flex-shrink: 0
+  width: 1.5rem
+  height: 1.5rem
+  border: none
+  background: transparent
+  color: var(--accent1)
+  font-size: 1.1rem
+  line-height: 1
+  cursor: grab
+  // Without this, a touch-drag on the handle also scrolls the page — the
+  // pointer stream is meant for dnd-kit alone.
+  touch-action: none
+
+  &:active
+    cursor: grabbing
+
+// Fixed small width, unlike MediaPoster's other callers which size it via
+// their own full-width flex/grid item — a ranked row's poster is
+// deliberately thumbnail-scale, not the card-scale MediaMiniCardShell uses.
+.poster_slot
+  width: 46px
+  flex-shrink: 0
+
+.info
+  flex: 1
+  min-width: 0
+  display: flex
+  flex-flow: column
+  gap: 0.15rem
+
+.title
+  font-weight: 600
+  white-space: nowrap
+  overflow: hidden
+  text-overflow: ellipsis
+
+.rating
+  display: flex
+  align-items: center
+  gap: 0.25rem
+  font-size: 0.85rem
+  color: var(--accent1)
+
+.remove_button
+  flex-shrink: 0
+  width: 1.4rem
+  height: 1.4rem
+  border-radius: 50%
+  border: none
+  background: rgba(0, 0, 0, 0.65)
+  color: #fff
+  font-size: 1rem
+  line-height: 1
+  cursor: pointer
+  opacity: 0
+  visibility: hidden
+
+.row:hover
+  .remove_button
+    visibility: visible
+    opacity: 1

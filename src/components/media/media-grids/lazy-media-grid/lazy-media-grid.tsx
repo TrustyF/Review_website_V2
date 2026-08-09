@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { MediaRecord } from "@/components/media/types";
 import { MediaMiniCardResolver } from "@/components/media/media-cards/media-mini-card/media-mini-card-resolver";
@@ -20,13 +20,18 @@ type Props = {
 	// Stable id for this grid instance (e.g. a rating tier) — when given,
 	// how far the user had scrolled into it survives a back-navigation.
 	restoreKey?: string;
+	// Per-item action overlay (e.g. a list's admin-only "remove" button) —
+	// optional and unused by every caller except list-media-view.tsx; neither
+	// MediaFilterGrid nor RecentMediaListPage's items have anything list-
+	// specific to render here.
+	renderOverlay?: ((item: MediaRecord) => ReactNode) | undefined;
 };
 
 // A grid that reveals more cards as the sentinel scrolls into view, instead
 // of mounting every item up front. Shared by RatedTierGrid (one instance per
 // tier) and RecentMediaListPage (one flat instance) — both hand it a list
 // that can run into the hundreds.
-export function LazyMediaGrid({ items, restoreKey }: Props) {
+export function LazyMediaGrid({ items, restoreKey, renderOverlay }: Props) {
 	useMarkHydrated();
 	const pathname = usePathname();
 	const storageKey = restoreKey ? `lazy-grid:${pathname}:${restoreKey}` : null;
@@ -92,10 +97,10 @@ export function LazyMediaGrid({ items, restoreKey }: Props) {
 		<>
 			<div className={styles.grid}>
 				{items.slice(0, visibleCount).map((item) => (
-					<MediaMiniCardResolver
-						media={item}
-						key={item.id}
-					/>
+					<div className={styles.item} key={item.id}>
+						<MediaMiniCardResolver media={item} />
+						{renderOverlay?.(item)}
+					</div>
 				))}
 			</div>
 			{visibleCount < items.length && (

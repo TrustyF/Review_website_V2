@@ -1,5 +1,6 @@
 "use client";
 import { ChangeEvent, FormEvent, ReactNode, useState } from "react";
+import { ListSortMode } from "@prisma/client";
 import styles from "./list-form.module.sass";
 import { uploadListThumbnail } from "@/components/lists/list-actions";
 
@@ -7,7 +8,14 @@ export type ListFormValues = {
 	title: string;
 	description: string;
 	thumbnailUrl: string;
+	sortMode: ListSortMode;
 };
+
+const SORT_MODE_OPTIONS: { value: ListSortMode; label: string }[] = [
+	{ value: "RANKED", label: "Ranked (drag to reorder)" },
+	{ value: "RATED", label: "Grouped by rating" },
+	{ value: "UNSORTED", label: "Unsorted" },
+];
 
 type Props = {
 	initial: ListFormValues;
@@ -30,6 +38,7 @@ export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 	const [title, setTitle] = useState(initial.title);
 	const [description, setDescription] = useState(initial.description);
 	const [thumbnailUrl, setThumbnailUrl] = useState(initial.thumbnailUrl);
+	const [sortMode, setSortMode] = useState(initial.sortMode);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -40,7 +49,7 @@ export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 		setIsSubmitting(true);
 		setError(null);
 		try {
-			await onSubmit({ title, description, thumbnailUrl });
+			await onSubmit({ title, description, thumbnailUrl, sortMode });
 		} catch {
 			setError("Failed to save. Try again.");
 			setIsSubmitting(false);
@@ -117,6 +126,22 @@ export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 					className={styles.thumbnail_preview}
 				/>
 			)}
+			<div className={styles.field}>
+				Sort mode
+				<div className={styles.sort_mode_row}>
+					{SORT_MODE_OPTIONS.map((option) => (
+						<label key={option.value} className={styles.sort_mode_option}>
+							<input
+								type="radio"
+								name="sortMode"
+								checked={sortMode === option.value}
+								onChange={() => setSortMode(option.value)}
+							/>
+							{option.label}
+						</label>
+					))}
+				</div>
+			</div>
 			{error && <div className={styles.error}>{error}</div>}
 			<button
 				type="submit"

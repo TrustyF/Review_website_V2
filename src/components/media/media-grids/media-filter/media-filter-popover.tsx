@@ -48,7 +48,7 @@ function formatRuntimeLabel(value: number): string {
 }
 
 // Generic filter trigger + popover, meant to drop onto any media grid
-// (MediaFilterGrid, ListMediaGrid, ...) — the caller owns the filter state
+// (MediaFilterGrid, RankedList, ...) — the caller owns the filter state
 // and is responsible for actually applying matchesMediaFilter to whatever
 // it's rendering; this component only edits that state.
 export function MediaFilterPopover({ media, filter, onChange }: Props) {

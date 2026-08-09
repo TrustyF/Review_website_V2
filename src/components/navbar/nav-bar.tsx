@@ -2,10 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { NavSearch } from "@/components/navbar/nav-search/nav-search";
-import { useIsAdminStore } from "@/lib/is-admin-store";
 import style from "./nav-bar.module.sass";
-
-const isDev = process.env.NODE_ENV === "development";
 
 // Hides the instant you scroll down (past a small top-of-page exemption —
 // otherwise the tiniest scroll right at the top would hide it pointlessly),
@@ -16,7 +13,6 @@ const TOP_EXEMPT_PX = 200;
 const REVEAL_THRESHOLD_PX = 200;
 
 export default function Navbar() {
-	const isAdmin = useIsAdminStore((s) => s.isAdmin);
 	const [hidden, setHidden] = useState(false);
 	// Refs, not state — every scroll frame writes these, and re-rendering on
 	// each one (rather than only when `hidden` actually flips) would be pure
@@ -89,32 +85,6 @@ export default function Navbar() {
 			<Link href="/add" className={style.link}>
 				Add
 			</Link>
-			{/* isAdmin-gated here too (not just inside the page itself) so a
-			    non-admin visitor never sees a dead-end link — not dev-gated,
-			    unlike the actual /dev/* tools below, since this is meant for
-			    production use. */}
-			{isAdmin && (
-				<Link href="/dev/image-crop" className={style.link}>
-					Image crop
-				</Link>
-			)}
-
-			{isDev && (
-				<details className={style.dev}>
-					<summary className={style.dev_summary}>Dev</summary>
-					<div className={style.dev_menu}>
-						<Link href="/dev/media-cards" className={style.link}>
-							Media cards
-						</Link>
-						<Link href="/dev/gauges" className={style.link}>
-							Gauges
-						</Link>
-						<Link href="/dev/banner-compression" className={style.link}>
-							Banner compression
-						</Link>
-					</div>
-				</details>
-			)}
 		</nav>
 	);
 }

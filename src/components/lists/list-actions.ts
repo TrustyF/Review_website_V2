@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { db, dbPublic } from "@/server/db/client";
-import { EnrichmentStatus } from "@prisma/client";
+import { EnrichmentStatus, ListSortMode } from "@prisma/client";
 import { toPosterSrc } from "@/server/resolvers/poster-resolver";
 import { fuzzySearch } from "@/lib/fuzzy-search";
 import { saveListThumbnail } from "@/server/resolvers/list-thumbnail-resolver";
@@ -11,6 +11,7 @@ type ListInput = {
 	title: string;
 	description: string | null;
 	thumbnailUrl: string | null;
+	sortMode: ListSortMode;
 };
 
 // The Thumbnail URL field accepts a path copied out of /dev/image-crop
@@ -40,6 +41,7 @@ export async function createList(input: ListInput): Promise<number> {
 			title: input.title.trim(),
 			description: input.description?.trim() || null,
 			thumbnail: await resolveThumbnailUrl(input.thumbnailUrl),
+			sortMode: input.sortMode,
 		},
 	});
 
@@ -56,6 +58,7 @@ export async function updateList(id: number, input: ListInput): Promise<void> {
 			title: input.title.trim(),
 			description: input.description?.trim() || null,
 			thumbnail: await resolveThumbnailUrl(input.thumbnailUrl),
+			sortMode: input.sortMode,
 		},
 	});
 
@@ -84,8 +87,15 @@ export async function addMediaToList(
 	listId: number,
 	mediaId: number,
 ): Promise<void> {
+	// New items always append to the bottom of the ranking, never jump ahead
+	// of what's already there — same idea as appending to an array.
+	const { _max } = await db.listItem.aggregate({
+		where: { listId },
+		_max: { rank: true },
+	});
+
 	await db.listItem.createMany({
-		data: [{ listId, mediaId }],
+		data: [{ listId, mediaId, rank: (_max.rank ?? -1) + 1 }],
 		skipDuplicates: true,
 	});
 
@@ -105,6 +115,31 @@ export async function removeMediaFromList(
 	revalidatePath(`/lists/${listId}`);
 	revalidatePath("/lists");
 	revalidatePath(`/media/${mediaId}`);
+}
+
+// Persists a drag-and-drop reorder (see ranked-list.tsx) — orderedMediaIds
+// is the full new top-to-bottom order, rewriting every item's rank to match
+// its index. Simple 0..n-1 renumbering rather than fractional/gap-based
+// positions: always correct, and cheap at this app's scale (a personal
+// collection's lists run to tens of items). Any ListItem row not present in
+// orderedMediaIds (a filtered-out or deleted-media row — see ranked-list.tsx's
+// own note on why reordering is disabled while filtered) simply keeps its
+// prior rank untouched, which is harmless since a row that's never rendered
+// can't have its position observed anyway.
+export async function reorderListItems(
+	listId: number,
+	orderedMediaIds: number[],
+): Promise<void> {
+	await db.$transaction(
+		orderedMediaIds.map((mediaId, index) =>
+			db.listItem.update({
+				where: { listId_mediaId: { listId, mediaId } },
+				data: { rank: index },
+			}),
+		),
+	);
+
+	revalidatePath(`/lists/${listId}`);
 }
 
 export type ListMediaSearchResult = {

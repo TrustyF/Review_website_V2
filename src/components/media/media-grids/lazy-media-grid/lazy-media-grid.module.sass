@@ -6,6 +6,22 @@
   gap: 1.25rem
   padding: 1rem 0 1.25rem
 
+// Just a positioning anchor for renderOverlay (e.g. a list's remove
+// button) — same shape as the old, now-deleted list-media-grid.module.sass's
+// .item, proven to work as a plain grid item with no explicit size of its
+// own.
+.item
+  position: relative
+
+  // Contract for renderOverlay content that wants a hover-to-reveal
+  // treatment (see list-media-view.module.sass's .remove_button) — a data
+  // attribute rather than a shared class name, since CSS module class names
+  // are locally scoped/hashed and can't be targeted with :global() across
+  // separate .module.sass files the way a plain class could.
+  &:hover [data-reveal-on-hover]
+    opacity: 1
+    visibility: visible
+
 // Invisible marker the IntersectionObserver watches — sits below the grid
 // so scrolling near it reveals the next batch before you actually reach it.
 .sentinel

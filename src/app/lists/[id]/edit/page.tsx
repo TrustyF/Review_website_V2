@@ -24,6 +24,7 @@ export default async function EditListPage({
 					title: list.title,
 					description: list.description ?? "",
 					thumbnailUrl: list.thumbnail ?? "",
+					sortMode: list.sortMode,
 				}}
 			/>
 		</div>

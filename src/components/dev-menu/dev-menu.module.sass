@@ -1,0 +1,76 @@
+.wrapper
+  position: fixed
+  bottom: 1.5rem
+  right: 1.5rem
+  z-index: 20
+
+  &::-webkit-details-marker
+    display: none
+
+.button
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 2.75rem
+  height: 2.75rem
+  border-radius: 50%
+  background-color: var(--background)
+  border: 1px solid var(--accent1)
+  color: var(--accent1)
+  font-size: 1.3rem
+  cursor: pointer
+  list-style: none
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5)
+
+  &:hover
+    color: var(--foreground)
+
+// Anchored above the button (opens upward — it sits at the bottom of the
+// viewport, so a downward-opening panel would run off-screen) rather than
+// beside it.
+.panel
+  position: absolute
+  bottom: calc(100% + 0.5rem)
+  right: 0
+  display: flex
+  flex-flow: column
+  gap: 0.75rem
+  min-width: 170px
+  padding: 0.75rem
+  background-color: var(--background)
+  border: 1px solid var(--accent1)
+  border-radius: 0.5rem
+
+.section
+  display: flex
+  flex-flow: column
+  gap: 0.4rem
+
+.section_title
+  font-size: 0.75rem
+  text-transform: uppercase
+  letter-spacing: 0.03em
+  color: var(--accent1)
+  opacity: 0.8
+
+.link
+  color: #e6e6e6
+  text-shadow: #151315 1px 1px 3px
+
+  &:hover
+    color: var(--foreground)
+
+// Same look as .link, but a real <button> reset — this toggles state on
+// click rather than navigating anywhere.
+.admin_toggle
+  border: none
+  background: transparent
+  padding: 0
+  font: inherit
+  text-align: left
+  cursor: pointer
+  color: #e6e6e6
+  text-shadow: #151315 1px 1px 3px
+
+  &:hover
+    color: var(--foreground)

@@ -9,7 +9,7 @@ import {
 } from "@/components/media/media-grids/media-filter/media-filter";
 
 // Shared by every grid that hangs a MediaFilterPopover off a list of media
-// (MediaFilterGrid, ListMediaGrid) — owns the filter state and the popover's
+// (MediaFilterGrid, RankedList) — owns the filter state and the popover's
 // live/debounced split: the popover always reflects `filter` immediately so
 // a dragged slider handle tracks the pointer with no lag, while
 // `filteredMedia` lags behind by FILTER_DEBOUNCE_MS so a drag doesn't

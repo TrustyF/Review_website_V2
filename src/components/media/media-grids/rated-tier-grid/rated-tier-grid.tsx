@@ -1,5 +1,5 @@
 "use client";
-import { memo, useMemo } from "react";
+import { memo, ReactNode, useMemo } from "react";
 import { MediaRecord } from "@/components/media/types";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
 import styles from "./rated-tier-grid.module.sass";
@@ -22,6 +22,9 @@ function tierLabel(tier: number | null): string {
 
 type Props = {
 	media: MediaRecord[];
+	// Forwarded straight through to each tier's own LazyMediaGrid — see that
+	// component's own note on why this exists.
+	renderOverlay?: ((item: MediaRecord) => ReactNode) | undefined;
 };
 
 // Groups media into rating tiers, highest first (Unrated last), each
@@ -34,7 +37,10 @@ type Props = {
 // pass on every tick of a filter slider drag even though the list hadn't
 // changed. memo() + useMemo() together make an unrelated parent re-render
 // (dragging a slider before the debounced filter settles) genuinely free.
-export const RatedTierGrid = memo(function RatedTierGrid({ media }: Props) {
+export const RatedTierGrid = memo(function RatedTierGrid({
+	media,
+	renderOverlay,
+}: Props) {
 	const orderedTiers = useMemo(() => {
 		const sorted = [...media].sort(
 			(a, b) => (b.review?.rating ?? -1) - (a.review?.rating ?? -1),
@@ -65,6 +71,7 @@ export const RatedTierGrid = memo(function RatedTierGrid({ media }: Props) {
 					<LazyMediaGrid
 						items={items}
 						restoreKey={tier === null ? "unrated" : String(tier)}
+						renderOverlay={renderOverlay}
 					/>
 				</details>
 			))}

@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
 import { AddMediaToList } from "@/components/lists/add-media-to-list/add-media-to-list";
-import { ListMediaGrid } from "@/components/lists/list-media-grid/list-media-grid";
+import { RankedList } from "@/components/lists/ranked-list/ranked-list";
+import { ListMediaView } from "@/components/lists/list-media-view/list-media-view";
 import { EditListLink } from "@/components/lists/edit-list-link/edit-list-link";
+import { ListIdBadge } from "@/components/lists/list-id-badge/list-id-badge";
 import styles from "./list-detail-page.module.sass";
 
 type Props = {
@@ -13,14 +15,14 @@ type Props = {
 
 // Server Component for /lists/[id] — mirrors credit-media-list-page.tsx's
 // shape (look up the grouping entity, notFound() if missing, render its
-// media as a grid) but the media set here comes from ListItem membership
+// media as a list) but the media set here comes from ListItem membership
 // the user curated by hand, not a derived query.
 export async function ListDetailPage({ id }: Props) {
 	const list = await db.list.findUnique({
 		where: { id },
 		include: {
 			items: {
-				orderBy: { addedAt: "asc" },
+				orderBy: { rank: "asc" },
 				include: {
 					media: {
 						include: {
@@ -30,7 +32,7 @@ export async function ListDetailPage({ id }: Props) {
 							comic: true,
 							game: true,
 							review: true,
-							// For MediaFilterPopover's genre filter (see list-media-grid.tsx).
+							// For MediaFilterPopover's genre filter (see ranked-list.tsx).
 							mediaGenres: { include: { genre: true } },
 						},
 					},
@@ -54,6 +56,7 @@ export async function ListDetailPage({ id }: Props) {
 				<div className={styles.header_info}>
 					<div className={styles.title_row}>
 						<h1>{list.title}</h1>
+						<ListIdBadge listId={list.id} />
 						<EditListLink listId={list.id} />
 					</div>
 					{list.description && (
@@ -69,8 +72,10 @@ export async function ListDetailPage({ id }: Props) {
 
 			{media.length === 0 ? (
 				<p className={styles.empty}>No media in this list yet.</p>
+			) : list.sortMode === "RANKED" ? (
+				<RankedList listId={list.id} media={media} />
 			) : (
-				<ListMediaGrid listId={list.id} media={media} />
+				<ListMediaView listId={list.id} media={media} sortMode={list.sortMode} />
 			)}
 		</div>
 	);

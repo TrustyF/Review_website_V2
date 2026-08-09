@@ -1,10 +1,23 @@
+// RANKED: explicit top-to-bottom order (ListItem.rank), drag-to-reorder —
+// see RankedList. RATED: grouped into rating tiers, same view /movies etc.
+// already use — see RatedTierGrid. UNSORTED: plain grid, no ordering UI —
+// see LazyMediaGrid. ListItem.rank still gets set on every add regardless
+// of mode (see addMediaToList) — harmless when unused, and it means
+// switching a list back to RANKED later already has a sane starting order.
+enum ListSortMode {
+  RANKED
+  RATED
+  UNSORTED
+}
+
 model List {
-  id          Int      @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   title       String
   description String?
   thumbnail   String?
-  createDate  DateTime @default(now())
-  updateDate  DateTime @updatedAt
+  sortMode    ListSortMode @default(RANKED)
+  createDate  DateTime     @default(now())
+  updateDate  DateTime     @updatedAt
 
   items ListItem[]
 }
@@ -12,6 +25,13 @@ model List {
 model ListItem {
   listId  Int
   mediaId Int
+  // Explicit top-to-bottom position within the list (0-based) — the
+  // sort key ranked-list.tsx's drag-and-drop reordering writes to.
+  // @default(0) exists only so the migration adding this column doesn't
+  // need existing rows backfilled interactively; every real insert
+  // (addMediaToList) always sets an explicit value, and a one-off script
+  // backfills existing rows right after the migration runs.
+  rank    Int @default(0)
 
   list  List  @relation(fields: [listId], references: [id], onDelete: Cascade)
   media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
@@ -24,4 +44,5 @@ model ListItem {
   // already computes "which lists contain this media" from a List-side
   // query, one small step from wanting this the other way around too.
   @@index([mediaId])
+  @@index([listId, rank])
 }
