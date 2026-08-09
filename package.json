@@ -16,6 +16,7 @@
 		"compose": "docker compose up -d",
 		"typecheck": "tsc --noEmit",
 		"cleanup_posters": "tsx src/server/maintenance/cleanup-posters.ts",
+		"cleanup_cropped_images": "tsx src/server/maintenance/cleanup-cropped-images.ts",
 		"enrich_db": "tsx src/server/maintenance/enrich-db.ts",
 		"purge_deleted_changelogs": "tsx src/server/maintenance/purge-deleted-change-log.ts"
 	},

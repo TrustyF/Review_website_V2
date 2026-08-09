@@ -1,4 +1,4 @@
-import { mkdir } from "fs/promises";
+import { mkdir, readFile } from "fs/promises";
 import { createHash } from "crypto";
 import path from "path";
 import sharp from "sharp";
@@ -31,6 +31,31 @@ const LIST_THUMBNAIL_16_9_DIR = path.join(
 	"cropped",
 	"list-thumbnail-16-9",
 );
+
+const CROPPED_ROOT = path.join(process.cwd(), "public", "cropped");
+
+// Reads a temp file previously produced by saveCroppedImage, if `url` points
+// at one — null for anything else (an external URL, an already-permanent
+// local path, or a temp file cleanup-cropped-images.ts has since removed),
+// so callers can treat that as "use the URL as given" rather than a hard
+// error: a pasted /cropped/ link that's simply gone stale is a
+// self-correcting user mistake, not a crash. What a caller does with the
+// bytes (copy them into its own real storage) is up to it — this function
+// only knows how to recognize and read one of its own temp files back out.
+export async function readCroppedFile(url: string): Promise<Buffer | null> {
+	if (!url.startsWith("/cropped/")) return null;
+
+	const resolved = path.join(process.cwd(), "public", url);
+	// Path traversal guard — url is arbitrary pasted text (a form field),
+	// not guaranteed to be a real prior saveCroppedImage output.
+	if (!resolved.startsWith(CROPPED_ROOT + path.sep)) return null;
+
+	try {
+		return await readFile(resolved);
+	} catch {
+		return null;
+	}
+}
 
 // Shared crop+resize+encode+write, parameterized on dir/urlPrefix passed in
 // by each case of saveCroppedImage below (one of the four fixed constants

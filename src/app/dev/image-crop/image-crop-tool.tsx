@@ -2,7 +2,7 @@
 import { ChangeEvent, useEffect, useState } from "react";
 import Cropper, { Area, Point } from "react-easy-crop";
 import { CROP_SHAPES, CropShapeId } from "./crop-shapes";
-import { saveCroppedImageAction } from "./crop-actions";
+import { fetchImportedImage, saveCroppedImageAction } from "./crop-actions";
 import { useIsAdminStore } from "@/lib/is-admin-store";
 import styles from "./image-crop-dev.module.sass";
 
@@ -27,6 +27,8 @@ export function ImageCropTool() {
 	const [error, setError] = useState<string | null>(null);
 	const [resultPath, setResultPath] = useState<string | null>(null);
 	const [copied, setCopied] = useState(false);
+	const [urlInput, setUrlInput] = useState("");
+	const [isImporting, setIsImporting] = useState(false);
 
 	useEffect(() => {
 		return () => {
@@ -38,11 +40,10 @@ export function ImageCropTool() {
 		return <div className={styles.wrapper}>Admin access required.</div>;
 	}
 
-	function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
-		const picked = e.target.files?.[0];
-		e.target.value = "";
-		if (!picked) return;
-
+	// The one place "a new source image was loaded" is defined — shared by
+	// the file picker and the URL import below, so a locally-picked file and
+	// an imported one reset exactly the same state.
+	function loadFile(picked: File) {
 		if (previewUrl) URL.revokeObjectURL(previewUrl);
 		setFile(picked);
 		setPreviewUrl(URL.createObjectURL(picked));
@@ -51,6 +52,34 @@ export function ImageCropTool() {
 		setCroppedAreaPixels(null);
 		setResultPath(null);
 		setError(null);
+	}
+
+	function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
+		const picked = e.target.files?.[0];
+		e.target.value = "";
+		if (picked) loadFile(picked);
+	}
+
+	// Fetches server-side (crop-actions.ts's fetchImportedImage — an arbitrary
+	// host won't reliably send CORS headers a browser fetch would need),
+	// then turns the returned data URL into a real File so everything past
+	// this point (Cropper, handleSave) can't tell it apart from a local pick.
+	async function handleUrlImport() {
+		const trimmed = urlInput.trim();
+		if (!trimmed) return;
+
+		setIsImporting(true);
+		setError(null);
+		try {
+			const dataUrl = await fetchImportedImage(trimmed);
+			const blob = await (await fetch(dataUrl)).blob();
+			loadFile(new File([blob], "imported", { type: blob.type }));
+			setUrlInput("");
+		} catch {
+			setError("Failed to import image. Try again.");
+		} finally {
+			setIsImporting(false);
+		}
 	}
 
 	function handleShapeChange(next: CropShapeId) {
@@ -95,6 +124,23 @@ export function ImageCropTool() {
 			</p>
 
 			<input type="file" accept="image/*" onChange={handleFileChange} />
+
+			<div className={styles.import_row}>
+				<input
+					type="text"
+					className={styles.import_input}
+					placeholder="https://…"
+					value={urlInput}
+					onChange={(e) => setUrlInput(e.target.value)}
+					disabled={isImporting}
+				/>
+				<button
+					type="button"
+					onClick={handleUrlImport}
+					disabled={isImporting || !urlInput.trim()}>
+					{isImporting ? "Importing…" : "Import"}
+				</button>
+			</div>
 
 			<div className={styles.shape_row}>
 				{Object.entries(CROP_SHAPES).map(([id, shape]) => (

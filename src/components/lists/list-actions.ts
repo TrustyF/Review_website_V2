@@ -5,12 +5,32 @@ import { EnrichmentStatus } from "@prisma/client";
 import { toPosterSrc } from "@/server/resolvers/poster-resolver";
 import { fuzzySearch } from "@/lib/fuzzy-search";
 import { saveListThumbnail } from "@/server/resolvers/list-thumbnail-resolver";
+import { readCroppedFile } from "@/server/resolvers/image-crop-resolver";
 
 type ListInput = {
 	title: string;
 	description: string | null;
 	thumbnailUrl: string | null;
 };
+
+// The Thumbnail URL field accepts a path copied out of /dev/image-crop
+// (public/cropped/... — see that tool's own note on why it's temporary) as
+// well as a real external URL. A /cropped/ path gets promoted here: its
+// bytes get copied into public/list-thumbnails via saveListThumbnail (the
+// same place a direct file upload already lands), and the permanent URL is
+// what actually gets persisted — otherwise the list's thumbnail would stop
+// resolving the moment cleanup-cropped-images.ts's maintenance sweep
+// removes the temp file it still pointed at. Anything else (an external
+// URL, or an already-/list-thumbnails/... value on an untouched edit)
+// passes through unchanged, since readCroppedFile only returns bytes for a
+// real /cropped/ file.
+async function resolveThumbnailUrl(raw: string | null | undefined): Promise<string | null> {
+	const trimmed = raw?.trim();
+	if (!trimmed) return null;
+
+	const cropped = await readCroppedFile(trimmed);
+	return cropped ? saveListThumbnail(cropped) : trimmed;
+}
 
 export async function createList(input: ListInput): Promise<number> {
 	if (!input.title.trim()) throw new Error("Title is required");
@@ -19,7 +39,7 @@ export async function createList(input: ListInput): Promise<number> {
 		data: {
 			title: input.title.trim(),
 			description: input.description?.trim() || null,
-			thumbnail: input.thumbnailUrl?.trim() || null,
+			thumbnail: await resolveThumbnailUrl(input.thumbnailUrl),
 		},
 	});
 
@@ -35,7 +55,7 @@ export async function updateList(id: number, input: ListInput): Promise<void> {
 		data: {
 			title: input.title.trim(),
 			description: input.description?.trim() || null,
-			thumbnail: input.thumbnailUrl?.trim() || null,
+			thumbnail: await resolveThumbnailUrl(input.thumbnailUrl),
 		},
 	});
 
