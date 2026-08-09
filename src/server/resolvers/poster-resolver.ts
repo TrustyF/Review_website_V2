@@ -92,7 +92,34 @@ export const CHANGELOG_BANNER_THUMB_DIR = path.join(
 	"changelog-cache",
 );
 
-type CacheFormat = "webp" | "avif";
+// A JPEG-specific cache purely for the og:image tag a shared link's preview
+// card reads (see resolveLinkEmbedImage) — separate from POSTER_DIR because
+// the main poster cache is deliberately WebP (smaller, and every on-site
+// caller already supports it), but Discord and WhatsApp's link-preview
+// crawlers (the latter shares Meta's scraper) have long-standing,
+// well-documented unreliability rendering WebP for og:image, reliable only
+// with JPEG/PNG. Its own directory rather than writing JPEGs into
+// POSTER_DIR alongside the WebP files — different format/size/quality
+// settings (below) means it isn't the same asset the rest of the site
+// wants, just derived from the same source.
+export const LINK_EMBED_DIR = path.join(
+	process.cwd(),
+	"public",
+	"posters",
+	"link-embed-cache",
+);
+// Renders small in a chat/embed UI, not full poster size like the detail
+// page — well under TMDB's own posterUrlFor "full" size, so this resizes
+// down every source, not just the ComicVine/manual entries whose posters
+// can come back arbitrarily large.
+const LINK_EMBED_MAX_WIDTH = 240;
+// Not measured in the compression dev tool the way POSTER_QUALITY/
+// BANNER_QUALITY were — JPEG generally needs a higher quality number than
+// WebP/AVIF for comparable visual fidelity, so this is deliberately well
+// above POSTER_QUALITY's 50 rather than reused from it.
+const LINK_EMBED_QUALITY = 60;
+
+type CacheFormat = "webp" | "avif" | "jpeg";
 
 // Content-addressable: the filename is derived from the source path itself
 // (posterPath or bannerPath), so switching a media's poster/banner naturally
@@ -203,7 +230,11 @@ async function cacheOrDownload(
 			image = image.resize({ ...resize, withoutEnlargement: true });
 		}
 		const encoded =
-			format === "avif" ? image.avif({ quality }) : image.webp({ quality });
+			format === "avif"
+				? image.avif({ quality })
+				: format === "jpeg"
+					? image.jpeg({ quality })
+					: image.webp({ quality });
 		const bytes = await encoded.toBuffer();
 		await writeFile(filePath, bytes);
 		return { filePath, bytes };
@@ -248,6 +279,43 @@ export async function resolvePoster(
 	);
 
 	return { bytes, contentType: "image/webp" };
+}
+
+// The lazy-resolve URL counterpart to resolveLinkEmbedImage, same shape as
+// toPosterSrc — points at /api/link-embed, which resolves-or-downloads the
+// moment a link-preview crawler actually requests it. Returns null (not a
+// placeholder) when there's no real poster — a generic placeholder image on
+// a preview card would misrepresent the title rather than just show nothing.
+export function toLinkEmbedImageSrc(mediaId: number, posterPath: string | null) {
+	return posterPath
+		? `/api/link-embed/${mediaId}/${mediaAssetFilename(mediaId, posterPath, "jpeg")}`
+		: null;
+}
+
+// Downsized and re-encoded to JPEG instead of WebP, on its own quality
+// setting — see LINK_EMBED_DIR/LINK_EMBED_MAX_WIDTH/LINK_EMBED_QUALITY's
+// own comments on why this doesn't just reuse resolvePoster's settings.
+// Getting the crop right for a wide preview card (posters are 2:3, not the
+// ~1.91:1 a card wants) is a separate follow-up, not part of this fix.
+export async function resolveLinkEmbedImage(
+	mediaId: number,
+	type: MediaType,
+	externalId: string | null,
+	posterPath: string | null,
+): Promise<ResolvedAsset | null> {
+	if (!posterPath) return null;
+
+	const filename = mediaAssetFilename(mediaId, posterPath, "jpeg");
+	const { bytes } = await cacheOrDownload(
+		LINK_EMBED_DIR,
+		filename,
+		posterUrlFor(type, externalId, posterPath, "full"),
+		{ resize: { width: LINK_EMBED_MAX_WIDTH } },
+		LINK_EMBED_QUALITY,
+		"jpeg",
+	);
+
+	return { bytes, contentType: "image/jpeg" };
 }
 
 // Same content-addressable caching as resolvePoster, but for a change log

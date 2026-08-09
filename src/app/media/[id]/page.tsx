@@ -17,6 +17,11 @@ import { MediaType } from "@prisma/client";
 import { BANNER_GRAIN_OPACITY } from "@/server/resolvers/poster-resolver";
 import styles from "./media-detail.module.sass";
 import { CircularGauge } from "@/components/ui/circular-gauge";
+import { generateMediaMetadata } from "./metadata";
+
+// See metadata.ts — kept there rather than inlined here so this file stays
+// about rendering the page, not also building link-preview tags.
+export const generateMetadata = generateMediaMetadata;
 
 const PROVIDER_LABELS: Record<MediaType, string> = {
 	[MediaType.MOVIE]: "TMDB",
