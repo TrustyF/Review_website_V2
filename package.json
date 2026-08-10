@@ -13,7 +13,7 @@
 		"studio": "npx prisma studio",
 		"prisma_generate": "npx prisma generate",
 		"prisma_migrate": "npx prisma migrate dev",
-		"compose": "docker compose up -d",
+		"compose": "docker compose up -d && docker compose up -d --wait db && npx prisma migrate deploy",
 		"typecheck": "tsc --noEmit",
 		"cleanup_posters": "tsx src/server/maintenance/cleanup-posters.ts",
 		"cleanup_cropped_images": "tsx src/server/maintenance/cleanup-cropped-images.ts",
