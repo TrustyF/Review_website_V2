@@ -21,8 +21,6 @@ type Props = {
 	// exactOptionalPropertyTypes rejects forwarding a possibly-undefined
 	// value through a truly optional prop.
 	optionAspectRatio: string | undefined;
-	optionClipTop?: number | 0;
-	optionClipBottom?: number | 0;
 	urlInput: string;
 	onUrlInputChange: (value: string) => void;
 	onSubmitUrl: () => void;
@@ -51,8 +49,6 @@ export function EditImagePopover({
 	altText,
 	errorText,
 	optionAspectRatio,
-	optionClipTop,
-	optionClipBottom,
 	urlInput,
 	onUrlInputChange,
 	onSubmitUrl,
@@ -85,8 +81,6 @@ export function EditImagePopover({
 				altText={altText}
 				errorText={errorText}
 				optionAspectRatio={optionAspectRatio}
-				optionClipTop={optionClipTop}
-				optionClipBottom={optionClipBottom}
 			/>
 
 			<div className={styles.url_row}>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useReviewEditorStore } from "@/components/media/media-management/media-editor/review-editor-store";
-import { useIsAdminStore } from "@/lib/is-admin-store";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import { MediaRecord } from "@/components/media/types";
 import { Hitbox } from "@/components/ui/hitbox";
 import Image from "next/image";
@@ -14,7 +14,7 @@ type Props = {
 export function MediaEditButton({ media, className }: Props) {
 	const open = useReviewEditorStore((s) => s.open);
 	const editingMediaId = useReviewEditorStore((s) => s.media?.id ?? null);
-	const isAdmin = useIsAdminStore((s) => s.isAdmin);
+	const isAdmin = useIsAdmin();
 
 	if (!media.id) return null;
 	if (!isAdmin) return null;

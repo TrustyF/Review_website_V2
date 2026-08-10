@@ -6,7 +6,7 @@ import {
 	getAlternativePosters,
 	updateMediaPoster,
 } from "@/components/media/media-management/media-editor/media-editor-actions";
-import { useIsAdminStore } from "@/lib/is-admin-store";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import { useImageEditPopover } from "@/components/media/media-management/media-detail-inline-editor/use-image-edit-popover";
 import { EditImagePopover } from "@/components/media/media-management/media-detail-inline-editor/edit-image-popover";
 import styles from "./poster-edit-trigger.module.sass";
@@ -23,7 +23,7 @@ type Props = {
 // getAlternativePosters), so unlike BannerEditTrigger this never needs to
 // gate on media type.
 export function PosterEditTrigger({ media, ratio }: Props) {
-	const isAdmin = useIsAdminStore((s) => s.isAdmin);
+	const isAdmin = useIsAdmin();
 	// Destructured rather than kept as one `popover` object: the react-hooks
 	// lint rule treats any object holding a ref (containerRef here) as
 	// tainted as a whole, flagging every property read off it — even

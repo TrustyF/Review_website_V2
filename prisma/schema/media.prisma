@@ -13,7 +13,7 @@ model Media {
   // object-fit: cover crop — the display box is almost always shorter than
   // the source image, so a fixed center crop doesn't always frame the
   // interesting part. See banner-edit-trigger.tsx's framing slider.
-  bannerFocusY   Int     @default(50)
+  bannerFocusY   Int         @default(50)
 
   isDeleted Boolean @default(false)
 
@@ -31,8 +31,9 @@ model Media {
   enrichmentStatus EnrichmentStatus @default(PENDING)
   lastEnrichedAt   DateTime?
 
-  mediaGenres MediaGenre[]
-  listItems   ListItem[]
+  mediaGenres    MediaGenre[]
+  listItems      ListItem[]
+  watchlistItems WatchlistItem[]
 
   tvShow TvShow?
   movie  Movie?
@@ -123,7 +124,7 @@ model Game {
   mediaID Int   @id
   media   Media @relation(fields: [mediaID], references: [id], onDelete: Cascade)
 
-  platform  String?
+  platform String?
 }
 
 model Book {

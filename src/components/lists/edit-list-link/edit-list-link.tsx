@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useIsAdminStore } from "@/lib/is-admin-store";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import styles from "./edit-list-link.module.sass";
 
 type Props = {
@@ -8,7 +8,7 @@ type Props = {
 };
 
 export function EditListLink({ listId }: Props) {
-	const isAdmin = useIsAdminStore((s) => s.isAdmin);
+	const isAdmin = useIsAdmin();
 	if (!isAdmin) return null;
 
 	return (

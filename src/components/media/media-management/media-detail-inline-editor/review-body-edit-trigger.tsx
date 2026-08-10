@@ -5,7 +5,7 @@ import { MediaReview } from "@/components/media/media-cards/media-card/review";
 import { Hitbox } from "@/components/ui/hitbox";
 import { ReviewBodyModal } from "@/components/media/media-management/media-editor/components/review-body-modal";
 import { saveReview } from "@/components/media/media-management/media-editor/media-editor-actions";
-import { useIsAdminStore } from "@/lib/is-admin-store";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import styles from "./review-body-edit-trigger.module.sass";
 
 type Props = {
@@ -27,7 +27,7 @@ type Props = {
 // nothing either way (MediaReview itself returns null), same as before —
 // creating a first review still goes through the full editor.
 export function ReviewBodyEditTrigger({ media }: Props) {
-	const isAdmin = useIsAdminStore((s) => s.isAdmin);
+	const isAdmin = useIsAdmin();
 	const review = media.review;
 
 	const [body, setBody] = useState(review?.body ?? "");

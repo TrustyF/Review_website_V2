@@ -35,26 +35,7 @@ type Props = {
 	// or exactOptionalPropertyTypes rejects EditImagePopover explicitly
 	// forwarding undefined through here for its poster callers.
 	optionAspectRatio?: string | undefined;
-	// Percentage (0-100 each) trimmed off the top and off the bottom,
-	// independently — an explicit, tunable crop rather than whatever
-	// object-fit: cover happens to land on for a given source image's ratio.
-	// Also unset for posters. Implemented as a shorter frame (not clip-path
-	// on the image directly) specifically so the trimmed height is real
-	// layout, not just paint — a clip-path crop leaves the flex item at its
-	// full pre-clip height, which opened a gap below every clipped option.
-	optionClipTop?: number | undefined;
-	optionClipBottom?: number | undefined;
 };
-
-// Height every option is framed against before any top/bottom clip is
-// applied — arbitrary but has to match between the frame's width
-// calculation and the image's own height below for the crop math to line up.
-const BASE_HEIGHT_REM = 10;
-
-function ratioToNumber(ratio: string): number {
-	const [width, height] = ratio.split("/").map(Number);
-	return width! / height!;
-}
 
 // Lets you browse a media's other posters/banners (TMDB, MangaDex, ...) and
 // try one against the preview without committing to anything — the actual
@@ -70,8 +51,6 @@ export function ImagePicker({
 	altText,
 	errorText,
 	optionAspectRatio,
-	optionClipTop,
-	optionClipBottom,
 }: Props) {
 	// Fetched once up front, then paged through client-side — cheaper than
 	// re-fetching every time "load more" is pressed.
@@ -85,6 +64,12 @@ export function ImagePicker({
 	);
 	const [error, setError] = useState<string | null>(null);
 	const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+	// Tracks which options have actually finished loading, so each one can
+	// fade in from .option's placeholder color instead of popping straight
+	// from blank to fully rendered — same idea as MediaPoster's own
+	// isLoaded/onLoad (see primitives.module.sass), just per-option here
+	// since a whole grid mounts at once rather than a single image.
+	const [loadedPaths, setLoadedPaths] = useState<Set<string>>(new Set());
 	const optionsRef = useRef<HTMLDivElement>(null);
 	const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -124,55 +109,31 @@ export function ImagePicker({
 			{error && <div className={styles.image_picker_error}>{error}</div>}
 			{options && (
 				<div className={styles.options} ref={optionsRef}>
-					{options.slice(0, visibleCount).map((option) => {
-						if (!optionClipTop && !optionClipBottom) {
-							return (
-								<img
-									key={option.filePath}
-									src={option.thumbSrc}
-									alt={altText}
-									className={styles.option}
-									style={
-										optionAspectRatio
-											? { aspectRatio: optionAspectRatio }
-											: undefined
-									}
-									onClick={() => onPick(option)}
-								/>
-							);
-						}
-
-						// The frame is the flex item — its height is the *post-clip*
-						// height, so it takes up only the space that's actually
-						// visible (no gap). The image inside stays at the full,
-						// pre-clip height and is pulled up by the top-clip amount;
-						// whatever spills above or below the frame's shorter box is
-						// what overflow: hidden trims away.
-						const ratio = ratioToNumber(optionAspectRatio ?? "1/1");
-						const clipTopRem = (BASE_HEIGHT_REM * (optionClipTop ?? 0)) / 100;
-						const clipBottomRem =
-							(BASE_HEIGHT_REM * (optionClipBottom ?? 0)) / 100;
-						return (
-							<div
-								key={option.filePath}
-								className={styles.option_frame}
-								style={{
-									width: `${BASE_HEIGHT_REM * ratio}rem`,
-									height: `${BASE_HEIGHT_REM - clipTopRem - clipBottomRem}rem`,
-								}}
-								onClick={() => onPick(option)}>
-								<img
-									src={option.thumbSrc}
-									alt={altText}
-									className={styles.option}
-									style={{
-										height: `${BASE_HEIGHT_REM}rem`,
-										marginTop: `-${clipTopRem}rem`,
-									}}
-								/>
-							</div>
-						);
-					})}
+					{options.slice(0, visibleCount).map((option) => (
+						<img
+							key={option.filePath}
+							src={option.thumbSrc}
+							alt={altText}
+							className={
+								loadedPaths.has(option.filePath)
+									? `${styles.option} ${styles.option_loaded}`
+									: styles.option
+							}
+							style={
+								optionAspectRatio
+									? { aspectRatio: optionAspectRatio }
+									: undefined
+							}
+							onLoad={() =>
+								setLoadedPaths((prev) =>
+									prev.has(option.filePath)
+										? prev
+										: new Set(prev).add(option.filePath),
+								)
+							}
+							onClick={() => onPick(option)}
+						/>
+					))}
 					{visibleCount < options.length && (
 						<div className={styles.sentinel} ref={sentinelRef} />
 					)}

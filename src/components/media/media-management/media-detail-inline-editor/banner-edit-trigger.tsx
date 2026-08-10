@@ -7,7 +7,7 @@ import {
 	updateMediaBanner,
 	updateMediaBannerFocus,
 } from "@/components/media/media-management/media-editor/media-editor-actions";
-import { useIsAdminStore } from "@/lib/is-admin-store";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import { useImageEditPopover } from "@/components/media/media-management/media-detail-inline-editor/use-image-edit-popover";
 import { EditImagePopover } from "@/components/media/media-management/media-detail-inline-editor/edit-image-popover";
 import styles from "./banner-edit-trigger.module.sass";
@@ -54,7 +54,7 @@ export function BannerEditTrigger({
 	backdropClassName,
 	grainOpacity,
 }: Props) {
-	const isAdmin = useIsAdminStore((s) => s.isAdmin);
+	const isAdmin = useIsAdmin();
 	// Destructured rather than kept as one `popover` object — see the same
 	// note in poster-edit-trigger.tsx: an object holding a ref taints every
 	// property read off it as far as the react-hooks lint rule is concerned.

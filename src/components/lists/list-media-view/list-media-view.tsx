@@ -2,7 +2,7 @@
 import { MediaRecord } from "@/components/media/types";
 import { RatedTierGrid } from "@/components/media/media-grids/rated-tier-grid/rated-tier-grid";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
-import { useIsAdminStore } from "@/lib/is-admin-store";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import { useListItemRemoval } from "@/components/lists/use-list-item-removal";
 import { useMediaFilter } from "@/components/media/media-grids/media-filter/use-media-filter";
 import { MediaFilterPopover } from "@/components/media/media-grids/media-filter/media-filter-popover";
@@ -21,7 +21,7 @@ type Props = {
 // no tiering. Neither one has any built-in notion of "remove from list", so
 // that's supplied here via renderOverlay (see LazyMediaGrid's own note).
 export function ListMediaView({ listId, media, sortMode }: Props) {
-	const isAdmin = useIsAdminStore((s) => s.isAdmin);
+	const isAdmin = useIsAdmin();
 	const { removingId, handleRemove } = useListItemRemoval(listId);
 	const { filter, setFilter, filteredMedia } = useMediaFilter(media);
 

@@ -4,6 +4,7 @@ import React from "react";
 import Navbar from "@/components/navbar/nav-bar";
 import { DevMenu } from "@/components/dev-menu/dev-menu";
 import MediaEditorModal from "@/components/media/media-management/media-editor/media-editor-modal";
+import { AuthSessionProvider } from "@/components/auth/session-provider";
 import { fontVariables } from "./fonts";
 
 export const metadata: Metadata = {
@@ -27,10 +28,12 @@ export default function RootLayout({
 			className={fontVariables}
 		>
 			<body>
-				<Navbar />
-				<DevMenu />
-				<MediaEditorModal />
-				<main>{children}</main>
+				<AuthSessionProvider>
+					<Navbar />
+					<DevMenu />
+					<MediaEditorModal />
+					<main>{children}</main>
+				</AuthSessionProvider>
 			</body>
 		</html>
 	);

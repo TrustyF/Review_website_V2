@@ -6,7 +6,7 @@ import {
 	ListMediaSearchResult,
 	searchMediaForList,
 } from "@/components/lists/list-actions";
-import { useIsAdminStore } from "@/lib/is-admin-store";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import styles from "./add-media-to-list.module.sass";
 
 type Props = {
@@ -19,7 +19,7 @@ type Props = {
 const DEBOUNCE_MS = 400;
 
 export function AddMediaToList({ listId }: Props) {
-	const isAdmin = useIsAdminStore((s) => s.isAdmin);
+	const isAdmin = useIsAdmin();
 	const [query, setQuery] = useState("");
 	const [results, setResults] = useState<ListMediaSearchResult[]>([]);
 	const [isSearching, setIsSearching] = useState(false);

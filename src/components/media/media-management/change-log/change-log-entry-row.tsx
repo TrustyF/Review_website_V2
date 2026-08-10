@@ -1,6 +1,6 @@
 "use client";
 import { ReactNode, useState, useTransition } from "react";
-import { useIsAdminStore } from "@/lib/is-admin-store";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import { deleteChangeLogEntry } from "./change-log-actions";
 import styles from "./change-log-list.module.sass";
 
@@ -23,7 +23,7 @@ type Props = {
 export function ChangeLogEntryRow({ id, initialDeletedAt, children, alt }: Props) {
 	const [deletedAt, setDeletedAt] = useState(initialDeletedAt);
 	const [isPending, startTransition] = useTransition();
-	const isAdmin = useIsAdminStore((s) => s.isAdmin);
+	const isAdmin = useIsAdmin();
 
 	function handleDelete() {
 		startTransition(async () => {

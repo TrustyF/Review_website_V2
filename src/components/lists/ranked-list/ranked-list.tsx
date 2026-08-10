@@ -15,7 +15,7 @@ import {
 import { MediaRecord } from "@/components/media/types";
 import { reorderListItems } from "@/components/lists/list-actions";
 import { useListItemRemoval } from "@/components/lists/use-list-item-removal";
-import { useIsAdminStore } from "@/lib/is-admin-store";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import { useMediaFilter } from "@/components/media/media-grids/media-filter/use-media-filter";
 import { MediaFilterPopover } from "@/components/media/media-grids/media-filter/media-filter-popover";
 import { isFilterActive } from "@/components/media/media-grids/media-filter/media-filter";
@@ -35,7 +35,7 @@ type Props = {
 // not by unmounting the DnD context — whenever a filter is narrowing what's
 // currently visible, or the viewer isn't an admin.
 export function RankedList({ listId, media }: Props) {
-	const isAdmin = useIsAdminStore((s) => s.isAdmin);
+	const isAdmin = useIsAdmin();
 	const { removingId, handleRemove } = useListItemRemoval(listId);
 	const [reorderError, setReorderError] = useState<string | null>(null);
 	const { filter, setFilter, filteredMedia } = useMediaFilter(media);

@@ -8,7 +8,7 @@ model Review {
   liked      Boolean @default(false)
   difficulty Int     @default(0)
 
-  body  String?
+  body String?
 
   // Set once, the first time body actually goes from unset to set — see
   // saveReview. "Watched on" reads createDate below instead (a rating is

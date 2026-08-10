@@ -2,11 +2,11 @@
 import { saveCroppedImage } from "@/server/resolvers/image-crop-resolver";
 import { CROP_SHAPES, CropShapeId } from "@/app/dev/image-crop/crop-shapes";
 
-// No auth check here, same as every other mutation in this app (addMediaToList,
-// updateMediaBannerFocus, deleteList, ...) — isAdmin (see is-admin-store.ts)
-// is a client-only stand-in for real auth, with nothing server-side to check
-// yet. That comment's own note applies here too: swap for a real session
-// check later and nothing else needs to change.
+// No auth check here yet — real accounts/sessions exist now (see
+// src/auth.ts), and list-actions.ts's mutations already call
+// require-admin.ts, but this action (and most other admin-gated mutations
+// outside list-actions.ts) hasn't been swept to add the same check. Still
+// only client-side gated (see ImageCropTool's useIsAdmin) until that pass.
 export async function saveCroppedImageAction(formData: FormData): Promise<string> {
 	const file = formData.get("file");
 	if (!(file instanceof File)) throw new Error("No file provided");

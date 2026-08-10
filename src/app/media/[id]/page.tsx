@@ -13,6 +13,8 @@ import { PosterEditTrigger } from "@/components/media/media-management/media-det
 import { BannerEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/banner-edit-trigger";
 import { ReviewBodyEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/review-body-edit-trigger";
 import { AddToListButton } from "@/components/lists/add-to-list-button/add-to-list-button";
+import { AddToWatchlistButton } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-button";
+import { auth } from "@/auth";
 import { MediaType } from "@prisma/client";
 import { BANNER_GRAIN_OPACITY } from "@/server/resolvers/poster-resolver";
 import styles from "./media-detail.module.sass";
@@ -192,10 +194,11 @@ export default async function MediaDetailPage({
 	const mediaId = Number(id);
 	if (!Number.isFinite(mediaId)) notFound();
 
-	// allLists only depends on mediaId (already known from the route param),
-	// not on raw — the two queries don't depend on each other, so there's no
-	// reason to make this page wait on them one after another.
-	const [raw, allLists] = await Promise.all([
+	// allLists/watchlistItem only depend on mediaId (already known from the
+	// route param), not on raw — none of these queries depend on each other,
+	// so there's no reason to make this page wait on them one after another.
+	const session = await auth();
+	const [raw, allLists, watchlistItem] = await Promise.all([
 		db.media.findUnique({
 			where: { id: mediaId },
 			include: {
@@ -226,6 +229,13 @@ export default async function MediaDetailPage({
 			},
 			orderBy: { createDate: "desc" },
 		}),
+		// For AddToWatchlistButton — only signed-in visitors have a watchlist
+		// to belong to.
+		session?.user
+			? db.watchlistItem.findUnique({
+					where: { userId_mediaId: { userId: session.user.id, mediaId } },
+				})
+			: null,
 	]);
 	if (!raw) notFound();
 
@@ -330,6 +340,12 @@ export default async function MediaDetailPage({
 								allLists={allLists}
 								memberListIds={memberListIds}
 							/>
+							{session?.user && (
+								<AddToWatchlistButton
+									mediaId={media.id}
+									initialIsInWatchlist={!!watchlistItem}
+								/>
+							)}
 							<MediaEditButton media={media} className={styles.edit_button} />
 						</div>
 						{media.alternateTitle && (

@@ -3,7 +3,7 @@ import { ChangeEvent, useEffect, useState } from "react";
 import Cropper, { Area, Point } from "react-easy-crop";
 import { CROP_SHAPES, CropShapeId } from "./crop-shapes";
 import { fetchImportedImage, saveCroppedImageAction } from "./crop-actions";
-import { useIsAdminStore } from "@/lib/is-admin-store";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import styles from "./image-crop-dev.module.sass";
 
 const DEFAULT_SHAPE: CropShapeId = "poster-2-3";
@@ -12,11 +12,11 @@ const DEFAULT_SHAPE: CropShapeId = "poster-2-3";
 // to position the crop, save — the result is a path meant to be copied out
 // and pasted wherever it's needed (a list thumbnail URL field, etc.).
 // Nothing in the app calls this automatically. Admin-gated (see
-// is-admin-store.ts) rather than dev-gated, since this is meant for
+// use-is-admin.ts) rather than dev-gated, since this is meant for
 // production use — see crop-actions.ts's own note on why that action still
 // has no server-side check either.
 export function ImageCropTool() {
-	const isAdmin = useIsAdminStore((s) => s.isAdmin);
+	const isAdmin = useIsAdmin();
 	const [file, setFile] = useState<File | null>(null);
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const [shapeId, setShapeId] = useState<CropShapeId>(DEFAULT_SHAPE);

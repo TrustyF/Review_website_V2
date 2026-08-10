@@ -1,0 +1,15 @@
+// Direct mirror of ListItem (see list.prisma) minus rank — a personal
+// watchlist has no manual ordering UI, so addedAt alone (newest first) is
+// the only sort a page needs.
+model WatchlistItem {
+  userId  String
+  mediaId Int
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  addedAt DateTime @default(now())
+
+  @@id([userId, mediaId])
+  @@index([mediaId])
+}

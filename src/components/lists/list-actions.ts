@@ -6,6 +6,7 @@ import { toPosterSrc } from "@/server/resolvers/poster-resolver";
 import { fuzzySearch } from "@/lib/fuzzy-search";
 import { saveListThumbnail } from "@/server/resolvers/list-thumbnail-resolver";
 import { readCroppedFile } from "@/server/resolvers/image-crop-resolver";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 type ListInput = {
 	title: string;
@@ -34,6 +35,7 @@ async function resolveThumbnailUrl(raw: string | null | undefined): Promise<stri
 }
 
 export async function createList(input: ListInput): Promise<number> {
+	await requireAdmin();
 	if (!input.title.trim()) throw new Error("Title is required");
 
 	const list = await db.list.create({
@@ -50,6 +52,7 @@ export async function createList(input: ListInput): Promise<number> {
 }
 
 export async function updateList(id: number, input: ListInput): Promise<void> {
+	await requireAdmin();
 	if (!input.title.trim()) throw new Error("Title is required");
 
 	await db.list.update({
@@ -71,6 +74,7 @@ export async function updateList(id: number, input: ListInput): Promise<void> {
 // saveListThumbnail, returning a URL that slots into the same thumbnailUrl
 // field a pasted URL would.
 export async function uploadListThumbnail(formData: FormData): Promise<string> {
+	await requireAdmin();
 	const file = formData.get("file");
 	if (!(file instanceof File)) throw new Error("No file provided");
 
@@ -79,6 +83,7 @@ export async function uploadListThumbnail(formData: FormData): Promise<string> {
 }
 
 export async function deleteList(id: number): Promise<void> {
+	await requireAdmin();
 	await db.list.delete({ where: { id } });
 	revalidatePath("/lists");
 }
@@ -87,6 +92,7 @@ export async function addMediaToList(
 	listId: number,
 	mediaId: number,
 ): Promise<void> {
+	await requireAdmin();
 	// New items always append to the bottom of the ranking, never jump ahead
 	// of what's already there — same idea as appending to an array.
 	const { _max } = await db.listItem.aggregate({
@@ -108,6 +114,7 @@ export async function removeMediaFromList(
 	listId: number,
 	mediaId: number,
 ): Promise<void> {
+	await requireAdmin();
 	await db.listItem.delete({
 		where: { listId_mediaId: { listId, mediaId } },
 	});
@@ -130,6 +137,7 @@ export async function reorderListItems(
 	listId: number,
 	orderedMediaIds: number[],
 ): Promise<void> {
+	await requireAdmin();
 	await db.$transaction(
 		orderedMediaIds.map((mediaId, index) =>
 			db.listItem.update({

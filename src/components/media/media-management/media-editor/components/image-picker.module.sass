@@ -16,29 +16,30 @@
 
 .option
   height: 10rem
+  // Reserves width up front (typical poster ratio) instead of leaving it to
+  // the image's own natural size, which the browser can't know until it's
+  // loaded — without this, .options collapses too short on first render and
+  // the sentinel below sits inside the visible area immediately, firing the
+  // IntersectionObserver before any option has actually loaded (see
+  // image-picker.tsx's own note on why root is .options). Overridden by the
+  // inline aspectRatio style when the caller passes optionAspectRatio (e.g.
+  // banners' 16/9).
+  aspect-ratio: 2 / 3
   max-width: 100%
+  // Placeholder color, same idea as MediaPoster's .poster_frame — shows
+  // through while opacity is 0 below, so each option is a calm, correctly-
+  // sized box the instant the grid mounts instead of a blank gap until its
+  // image request finishes.
+  background-color: rgba(102, 102, 102, 0.25)
   object-fit: cover
   object-position: center
   border-radius: 0.25rem
   cursor: pointer
+  opacity: 0
+  transition: opacity 0.25s ease
 
-// Used instead of .option directly whenever a top/bottom clip is in play —
-// width/height come from an inline style per option (see image-picker.tsx),
-// since they depend on that option's own ratio/clip percentages. Clips its
-// .option child to those bounds via overflow: hidden, rather than via
-// clip-path on the image itself, so the box's *layout* size (what .options'
-// flex-wrap actually reserves space for) matches its visible size instead of
-// leaving a gap the size of whatever got clipped.
-.option_frame
-  overflow: hidden
-  max-width: 100%
-  border-radius: 0.25rem
-  cursor: pointer
-
-  .option
-    width: 100%
-    max-width: none
-    border-radius: 0
+.option_loaded
+  opacity: 1
 
 // Invisible marker the IntersectionObserver watches (root: .options — see
 // image-picker.tsx) — a full-width flex item of its own so it always sits on

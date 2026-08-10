@@ -1,6 +1,6 @@
 "use client";
 import { ReactNode } from "react";
-import { useIsAdminStore } from "@/lib/is-admin-store";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import styles from "./change-log-list.module.sass";
 
 type Props = {
@@ -14,7 +14,7 @@ type Props = {
 };
 
 export function ChangeLogEmptyGate({ totalCount, visibleCount, children }: Props) {
-	const isAdmin = useIsAdminStore((s) => s.isAdmin);
+	const isAdmin = useIsAdmin();
 	const count = isAdmin ? totalCount : visibleCount;
 
 	if (count === 0) {

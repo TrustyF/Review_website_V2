@@ -5,7 +5,7 @@ import {
 	addMediaToList,
 	removeMediaFromList,
 } from "@/components/lists/list-actions";
-import { useIsAdminStore } from "@/lib/is-admin-store";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import { useOutsideClick } from "@/lib/use-outside-click";
 import styles from "./add-to-list-button.module.sass";
 
@@ -33,7 +33,7 @@ export function AddToListButton({
 	memberListIds,
 	className,
 }: Props) {
-	const isAdmin = useIsAdminStore((s) => s.isAdmin);
+	const isAdmin = useIsAdmin();
 	const [isOpen, setIsOpen] = useState(false);
 	const [memberIds, setMemberIds] = useState(new Set(memberListIds));
 	const [pendingId, setPendingId] = useState<number | null>(null);

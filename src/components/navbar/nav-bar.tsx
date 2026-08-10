@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { signOut, useSession } from "next-auth/react";
 import { NavSearch } from "@/components/navbar/nav-search/nav-search";
 import style from "./nav-bar.module.sass";
 
@@ -13,6 +14,7 @@ const TOP_EXEMPT_PX = 200;
 const REVEAL_THRESHOLD_PX = 200;
 
 export default function Navbar() {
+	const { data: session } = useSession();
 	const [hidden, setHidden] = useState(false);
 	// Refs, not state — every scroll frame writes these, and re-rendering on
 	// each one (rather than only when `hidden` actually flips) would be pure
@@ -88,6 +90,26 @@ export default function Navbar() {
 			<Link href="/add" className={style.link}>
 				Add
 			</Link>
+			{session?.user ? (
+				<>
+					<Link href="/watchlist" className={style.link}>
+						Watchlist
+					</Link>
+					<Link href="/account" className={style.link}>
+						Account
+					</Link>
+					<button
+						type="button"
+						className={style.sign_out_button}
+						onClick={() => signOut({ callbackUrl: "/" })}>
+						Sign out
+					</button>
+				</>
+			) : (
+				<Link href="/login" className={style.link}>
+					Sign in
+				</Link>
+			)}
 		</nav>
 	);
 }
