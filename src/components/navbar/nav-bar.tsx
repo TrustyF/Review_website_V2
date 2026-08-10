@@ -79,6 +79,9 @@ export default function Navbar() {
 			<Link href="/comics" className={style.link}>
 				Comics
 			</Link>
+			<Link href="/books" className={style.link}>
+				Books
+			</Link>
 			<Link href="/lists" className={style.link}>
 				Lists
 			</Link>

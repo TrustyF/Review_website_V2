@@ -17,6 +17,7 @@ const IMPLEMENTED_TYPES: MediaType[] = [
 	MediaType.TVSHOW,
 	MediaType.MANGA,
 	MediaType.GAME,
+	MediaType.BOOK,
 ];
 
 // Plain helper (not a component), so the impure Math.random() call here
@@ -38,6 +39,7 @@ export default async function MediaCardsDevPage() {
 					manga: true,
 					comic: true,
 					game: true,
+					book: true,
 					review: true,
 				},
 			});

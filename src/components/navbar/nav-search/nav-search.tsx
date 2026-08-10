@@ -17,6 +17,7 @@ const TYPE_LABELS: Record<MediaType, string> = {
 	[MediaType.MANGA]: "Manga",
 	[MediaType.COMIC]: "Comic",
 	[MediaType.GAME]: "Game",
+	[MediaType.BOOK]: "Book",
 };
 
 // How long to wait after the last keystroke before actually querying the

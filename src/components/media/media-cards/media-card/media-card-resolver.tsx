@@ -3,6 +3,7 @@ import { TvShowCard } from "@/components/media/media-cards/media-card/tv-show-ca
 import { MangaCard } from "@/components/media/media-cards/media-card/manga-card";
 import { ComicCard } from "@/components/media/media-cards/media-card/comic-card";
 import { GameCard } from "@/components/media/media-cards/media-card/game-card";
+import { BookCard } from "@/components/media/media-cards/media-card/book-card";
 import { MediaRecord } from "@/components/media/types";
 
 type Props = {
@@ -23,6 +24,8 @@ export function MediaCardResolver({ media }: Props) {
 			return <ComicCard media={media} />;
 		case "GAME":
 			return <GameCard media={media} />;
+		case "BOOK":
+			return <BookCard media={media} />;
 		default:
 			throw new Error(`Unhandled media type: ${JSON.stringify(media)}`);
 	}

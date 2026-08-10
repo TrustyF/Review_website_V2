@@ -31,6 +31,7 @@ export async function ListDetailPage({ id }: Props) {
 							manga: true,
 							comic: true,
 							game: true,
+							book: true,
 							review: true,
 							// For MediaFilterPopover's genre filter (see ranked-list.tsx).
 							mediaGenres: { include: { genre: true } },

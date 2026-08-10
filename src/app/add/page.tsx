@@ -25,6 +25,7 @@ const TYPE_LABELS: Record<MediaType, string> = {
 	[MediaType.MANGA]: "Manga",
 	[MediaType.COMIC]: "Comic",
 	[MediaType.GAME]: "Game",
+	[MediaType.BOOK]: "Book",
 };
 
 const ALL_MEDIA_TYPES = Object.values(MediaType);

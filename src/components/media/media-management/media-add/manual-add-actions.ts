@@ -5,7 +5,7 @@ import { EnrichmentStatus, MediaType, Prisma } from "@prisma/client";
 
 type SubTableFields = Pick<
 	Prisma.MediaCreateInput,
-	"movie" | "tvShow" | "manga" | "comic" | "game"
+	"movie" | "tvShow" | "manga" | "comic" | "game" | "book"
 >;
 
 // Every real MediaType is manually creatable — unlike ADDABLE_TYPES (which
@@ -25,6 +25,8 @@ function subTableFor(type: MediaType): SubTableFields {
 			return { comic: { create: {} } };
 		case MediaType.GAME:
 			return { game: { create: {} } };
+		case MediaType.BOOK:
+			return { book: { create: {} } };
 	}
 }
 

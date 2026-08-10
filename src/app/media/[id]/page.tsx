@@ -30,6 +30,7 @@ const PROVIDER_LABELS: Record<MediaType, string> = {
 	[MediaType.MANGA]: "MangaDex",
 	[MediaType.COMIC]: "ComicVine",
 	[MediaType.GAME]: "IGDB",
+	[MediaType.BOOK]: "Google Books",
 };
 
 const CurrencyFormatter = new Intl.NumberFormat("en-US", {
@@ -168,6 +169,17 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 				</dl>
 			);
 		}
+		case "BOOK": {
+			const { pageCount, isbn } = media.book;
+			return (
+				<dl className={styles.facts}>
+					{pageCount != null && (
+						<Fact label="Pages" value={String(pageCount)} />
+					)}
+					{isbn && <Fact label="ISBN" value={isbn} />}
+				</dl>
+			);
+		}
 	}
 }
 
@@ -192,6 +204,7 @@ export default async function MediaDetailPage({
 				manga: true,
 				comic: true,
 				game: true,
+				book: true,
 				review: true,
 				originCountry: true,
 				mediaGenres: { include: { genre: true } },

@@ -102,6 +102,7 @@ const FILTERABLE_FIELDS_BY_TYPE: Record<MediaType, ReadonlySet<FilterField>> = {
 	[MediaType.MANGA]: new Set(["genre", "rating"]),
 	[MediaType.COMIC]: new Set(["genre", "rating"]),
 	[MediaType.GAME]: new Set(["genre", "rating"]),
+	[MediaType.BOOK]: new Set(["genre", "rating"]),
 };
 
 // Union of filterable fields across whatever media types are actually

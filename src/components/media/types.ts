@@ -1,4 +1,5 @@
 import {
+	Book,
 	Comic,
 	Credit,
 	Game,
@@ -23,6 +24,7 @@ export type RawMediaRecord = Media & {
 	manga?: Manga | null;
 	comic?: Comic | null;
 	game?: Game | null;
+	book?: Book | null;
 	review?: Review | null;
 	credits?: Credit[];
 	mediaGenres?: (MediaGenre & { genre: Genre })[];
@@ -56,7 +58,8 @@ export type MediaRecord =
 	| (BaseRecord & { type: "TVSHOW"; tvShow: TvShow })
 	| (BaseRecord & { type: "MANGA"; manga: Manga })
 	| (BaseRecord & { type: "COMIC"; comic: Comic })
-	| (BaseRecord & { type: "GAME"; game: Game });
+	| (BaseRecord & { type: "GAME"; game: Game })
+	| (BaseRecord & { type: "BOOK"; book: Book });
 
 // Synchronous and I/O-free: posterSrc/bannerSrc point at the /api/poster and
 // /api/banner routes rather than a pre-resolved local file, so reshaping a
@@ -126,6 +129,17 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				...raw,
 				type: raw.type,
 				game: raw.game,
+				posterSrc,
+				bannerSrc,
+				watchedDate,
+				genres,
+			};
+		case "BOOK":
+			if (!raw.book) break;
+			return {
+				...raw,
+				type: raw.type,
+				book: raw.book,
 				posterSrc,
 				bannerSrc,
 				watchedDate,

@@ -14,6 +14,7 @@ const ALLOWED_IMAGE_HOSTS = [
 	"uploads.mangadex.org",
 	"images.igdb.com",
 	"comicvine.gamespot.com",
+	"books.google.com",
 ];
 
 export function buildProxiedImageUrl(remoteUrl: string): string {

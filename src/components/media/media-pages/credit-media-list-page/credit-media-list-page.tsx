@@ -47,6 +47,7 @@ export async function CreditMediaListPage({ kind, id, role }: Props) {
 					manga: true,
 					comic: true,
 					game: true,
+					book: true,
 					review: true,
 					// For MediaFilterPopover's genre filter (see media-filter-grid.tsx).
 					mediaGenres: { include: { genre: true } },

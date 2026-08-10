@@ -11,6 +11,8 @@ import { fetchIgdbGameById } from "@/server/igdb/client";
 import { updateGameFromIgdb } from "@/server/igdb/ingest/game";
 import { fetchComicVineById } from "@/server/comicvine/client";
 import { updateComicFromComicVine } from "@/server/comicvine/ingest/comic";
+import { fetchGoogleBooksById } from "@/server/google-books/client";
+import { updateBookFromGoogleBooks } from "@/server/google-books/ingest/book";
 import { Media, MediaType } from "@prisma/client";
 
 async function enrichOne(media: Media) {
@@ -37,6 +39,9 @@ async function enrichOne(media: Media) {
 	} else if (media.type === MediaType.COMIC) {
 		const data = await fetchComicVineById(externalId);
 		await updateComicFromComicVine(data);
+	} else if (media.type === MediaType.BOOK) {
+		const data = await fetchGoogleBooksById(externalId);
+		await updateBookFromGoogleBooks(data);
 	} else {
 		console.log(
 			`skipping ${media.title}: no enrichment ingest for ${media.type} yet`,
@@ -78,10 +83,12 @@ async function main() {
 
 	const mediaList = await db.media.findMany({
 		where: {
+			// type: MediaType.COMIC,
 			externalId: { not: null },
 			OR: [{ lastEnrichedAt: null }, { lastEnrichedAt: { lt: enrichCutoff } }],
 		},
 		orderBy: { id: "asc" },
+		// take: 10,
 	});
 
 	const queues = new Map<MediaType, Media[]>();

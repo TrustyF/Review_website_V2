@@ -39,6 +39,7 @@ model Media {
   manga  Manga?
   comic  Comic?
   game   Game?
+  book   Book?
 
   review  Review?
   credits Credit[]
@@ -65,6 +66,7 @@ enum MediaType {
   MANGA
   COMIC
   GAME
+  BOOK
 }
 
 enum EnrichmentStatus {
@@ -122,4 +124,12 @@ model Game {
   media   Media @relation(fields: [mediaID], references: [id], onDelete: Cascade)
 
   platform  String?
+}
+
+model Book {
+  mediaID Int   @id
+  media   Media @relation(fields: [mediaID], references: [id], onDelete: Cascade)
+
+  pageCount Int?
+  isbn      String?
 }

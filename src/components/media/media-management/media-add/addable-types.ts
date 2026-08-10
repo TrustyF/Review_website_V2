@@ -14,6 +14,7 @@ export const ADDABLE_TYPES = [
 	MediaType.MANGA,
 	MediaType.COMIC,
 	MediaType.GAME,
+	MediaType.BOOK,
 ] as const;
 
 export type AddableType = (typeof ADDABLE_TYPES)[number];

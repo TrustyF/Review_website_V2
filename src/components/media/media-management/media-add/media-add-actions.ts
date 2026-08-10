@@ -20,6 +20,8 @@ import { fetchIgdbGameById, searchIgdbGames } from "@/server/igdb/client";
 import { addGameFromIgdb } from "@/server/igdb/ingest/game";
 import { fetchComicVineById, searchComicVine } from "@/server/comicvine/client";
 import { addComicFromComicVine } from "@/server/comicvine/ingest/comic";
+import { fetchGoogleBooksById, searchGoogleBooks } from "@/server/google-books/client";
+import { addBookFromGoogleBooks, upgradeToHttps } from "@/server/google-books/ingest/book";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
 import { posterUrlFor } from "@/server/resolvers/poster-resolver";
 import {
@@ -31,6 +33,15 @@ function yearOf(dateString: string | null): number | null {
 	if (!dateString) return null;
 	const year = new Date(dateString).getFullYear();
 	return Number.isFinite(year) ? year : null;
+}
+
+// Google Books' publishedDate is often a bare year ("1997") rather than a
+// full date — new Date("1997").getFullYear() misparses that (off by one in
+// UTC-negative timezones), so the year is read directly off the string
+// instead of round-tripping through Date.
+function bookYearOf(publishedDate: string | null | undefined): number | null {
+	const match = publishedDate?.match(/^\d{4}/);
+	return match ? Number(match[0]) : null;
 }
 
 export async function searchMediaSources(
@@ -112,6 +123,17 @@ export async function searchMediaSources(
 						: null,
 			}));
 		}
+		case MediaType.BOOK: {
+			const results = await searchGoogleBooks(query);
+			return results.map((r) => ({
+				externalId: r.id,
+				title: r.volumeInfo.title,
+				year: bookYearOf(r.volumeInfo.publishedDate),
+				posterSrc: r.volumeInfo.imageLinks?.thumbnail
+					? buildProxiedImageUrl(upgradeToHttps(r.volumeInfo.imageLinks.thumbnail))
+					: null,
+			}));
+		}
 	}
 }
 
@@ -148,6 +170,11 @@ export async function addMediaToLibrary(
 		case MediaType.COMIC: {
 			const data = await fetchComicVineById(externalId);
 			mediaId = (await addComicFromComicVine(data)).id;
+			break;
+		}
+		case MediaType.BOOK: {
+			const data = await fetchGoogleBooksById(externalId);
+			mediaId = (await addBookFromGoogleBooks(data)).id;
 			break;
 		}
 	}

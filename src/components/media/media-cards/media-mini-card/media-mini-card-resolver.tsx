@@ -3,6 +3,7 @@ import { TvShowMiniCard } from "@/components/media/media-cards/media-mini-card/t
 import { MangaMiniCard } from "@/components/media/media-cards/media-mini-card/manga-mini-card";
 import { ComicMiniCard } from "@/components/media/media-cards/media-mini-card/comic-mini-card";
 import { GameMiniCard } from "@/components/media/media-cards/media-mini-card/game-mini-card";
+import { BookMiniCard } from "@/components/media/media-cards/media-mini-card/book-mini-card";
 import { MediaRecord } from "@/components/media/types";
 
 type Props = {
@@ -23,6 +24,8 @@ export function MediaMiniCardResolver({ media }: Props) {
 			return <ComicMiniCard media={media} />;
 		case "GAME":
 			return <GameMiniCard media={media} />;
+		case "BOOK":
+			return <BookMiniCard media={media} />;
 		default:
 			throw new Error(`Unhandled media type: ${JSON.stringify(media)}`);
 	}
