@@ -58,7 +58,6 @@ next-env.d.ts
 /public/list-thumbnails/
 /public/cropped/
 /.idea/
-/prisma/migrations/
 /CLAUDE.md
 /AGENTS.md
 /public/ui/CT_35mm_Grain.png

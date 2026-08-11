@@ -2,7 +2,16 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+Copy `.env.example` to `.env` and fill in the values, then install dependencies and start the database:
+
+```bash
+npm install
+npm run compose
+```
+
+`npm run compose` starts the Postgres container via Docker Compose and applies the Prisma schema (`prisma migrate deploy`).
+
+Then run the development server:
 
 ```bash
 npm run dev
