@@ -1,8 +1,9 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
+import { readFile } from "fs/promises";
 import { createHash } from "crypto";
 import path from "path";
 import sharp from "sharp";
 import { MediaType } from "@prisma/client";
+import { getImageStorage } from "@/server/storage/image-storage";
 
 // The change log thumbnail only ever displays at 46x69 CSS px (~138px tall
 // at 2x DPI) — smallSourceUrlFor already asks each source for its smallest
@@ -54,43 +55,27 @@ export const POSTER_QUALITY = 50;
 // The change log thumbnail cache re-encodes to WebP at its own lower
 // quality — see resolveChangelogPosterThumb.
 
-export const POSTER_DIR = path.join(
-	process.cwd(),
-	"public",
-	"posters",
-	"cache",
-);
+// Every *_DIR constant below is a logical key handed to ImageStorage, not a
+// real filesystem path — see src/server/storage/image-storage.ts. Local
+// storage joins it onto public/ itself; a remote backend would use it as a
+// key prefix instead.
+export const POSTER_DIR = "posters/cache";
 
 // Separate from POSTER_DIR: change log thumbnails are deliberately the
 // smallest size each source offers (see smallSourceUrlFor) rather than the
 // main poster's w500-equivalent, so they get their own cache directory
 // instead of colliding on the same filename with a different-sized file.
-export const CHANGELOG_THUMB_DIR = path.join(
-	process.cwd(),
-	"public",
-	"posters",
-	"changelog-cache",
-);
+export const CHANGELOG_THUMB_DIR = "posters/changelog-cache";
 
 // Separate again from the two above: banners are a different asset (wide
 // backdrop/artwork, not a poster) with their own cache, even though they
 // share every other bit of machinery in this file.
-export const BANNER_DIR = path.join(
-	process.cwd(),
-	"public",
-	"banners",
-	"cache",
-);
+export const BANNER_DIR = "banners/cache";
 
 // Change log's own banner thumbnail cache — same reasoning as
 // CHANGELOG_THUMB_DIR vs POSTER_DIR: a different size than BANNER_DIR, own
 // directory rather than risk colliding on a same-hash-different-size file.
-export const CHANGELOG_BANNER_THUMB_DIR = path.join(
-	process.cwd(),
-	"public",
-	"banners",
-	"changelog-cache",
-);
+export const CHANGELOG_BANNER_THUMB_DIR = "banners/changelog-cache";
 
 // A JPEG-specific cache purely for the og:image tag a shared link's preview
 // card reads (see resolveLinkEmbedImage) — separate from POSTER_DIR because
@@ -102,12 +87,7 @@ export const CHANGELOG_BANNER_THUMB_DIR = path.join(
 // POSTER_DIR alongside the WebP files — different format/size/quality
 // settings (below) means it isn't the same asset the rest of the site
 // wants, just derived from the same source.
-export const LINK_EMBED_DIR = path.join(
-	process.cwd(),
-	"public",
-	"posters",
-	"link-embed-cache",
-);
+export const LINK_EMBED_DIR = "posters/link-embed-cache";
 // 1200x630 (~1.91:1) is the de facto standard og:image shape — the one
 // dimension both Discord and WhatsApp render consistently as a clean
 // rectangle. A poster's own 2:3 (or 3:4) crop doesn't fit that box, and
@@ -211,13 +191,10 @@ export function posterUrlFor(
 // size URL to fetch, and whether/how the downloaded bytes get resized down
 // before being written — all three re-encode to WebP.
 //
-// Returns the bytes alongside filePath, not just the path — resolvePoster/
-// resolveBanner hand these straight to their API route callers, which used
-// to re-read the same file right back off disk themselves immediately after
-// (a redundant syscall on every cache hit, and on a miss an outright waste:
-// writing the just-encoded buffer to disk only to read it straight back).
-// The hit path reads the file directly (rather than a cheaper existence-only
-// stat) specifically so those bytes are available either way.
+// Goes through ImageStorage (see src/server/storage/image-storage.ts)
+// rather than fs directly, so this works unchanged against local disk today
+// or a remote object store in production — the only thing that differs
+// between backends is where read/write actually land.
 async function cacheOrDownload(
 	dir: string,
 	filename: string,
@@ -225,31 +202,28 @@ async function cacheOrDownload(
 	{ resize }: { resize?: { width?: number; height?: number } } = {},
 	quality = POSTER_QUALITY,
 	format: CacheFormat = "webp",
-): Promise<{ filePath: string; bytes: Buffer }> {
-	const filePath = path.join(dir, filename);
+): Promise<{ bytes: Buffer }> {
+	const storage = getImageStorage();
 
-	try {
-		const bytes = await readFile(filePath);
-		return { filePath, bytes };
-	} catch {
-		await mkdir(dir, { recursive: true });
-		const res = await fetch(sourceUrl);
-		if (!res.ok) throw new Error("Poster download failed");
-		const source = Buffer.from(await res.arrayBuffer());
-		let image = sharp(source);
-		if (resize) {
-			image = image.resize({ ...resize, withoutEnlargement: true });
-		}
-		const encoded =
-			format === "avif"
-				? image.avif({ quality })
-				: format === "jpeg"
-					? image.jpeg({ quality })
-					: image.webp({ quality });
-		const bytes = await encoded.toBuffer();
-		await writeFile(filePath, bytes);
-		return { filePath, bytes };
+	const cached = await storage.read(dir, filename);
+	if (cached) return { bytes: cached };
+
+	const res = await fetch(sourceUrl);
+	if (!res.ok) throw new Error("Poster download failed");
+	const source = Buffer.from(await res.arrayBuffer());
+	let image = sharp(source);
+	if (resize) {
+		image = image.resize({ ...resize, withoutEnlargement: true });
 	}
+	const encoded =
+		format === "avif"
+			? image.avif({ quality })
+			: format === "jpeg"
+				? image.jpeg({ quality })
+				: image.webp({ quality });
+	const bytes = await encoded.toBuffer();
+	await storage.write(dir, filename, bytes);
+	return { bytes };
 }
 
 // bytes typed as the plain Uint8Array rather than Node's own generic
@@ -344,15 +318,10 @@ export async function resolveLinkEmbedImage(
 		linkEmbedCacheKey(posterPath, bannerPath),
 		"jpeg",
 	);
-	const filePath = path.join(LINK_EMBED_DIR, filename);
+	const storage = getImageStorage();
 
-	try {
-		return { bytes: await readFile(filePath), contentType: "image/jpeg" };
-	} catch {
-		// Not cached yet — fall through and build it.
-	}
-
-	await mkdir(LINK_EMBED_DIR, { recursive: true });
+	const cached = await storage.read(LINK_EMBED_DIR, filename);
+	if (cached) return { bytes: cached, contentType: "image/jpeg" };
 
 	const posterBytes = await fetchImageBytes(
 		posterUrlFor(type, externalId, posterPath, "full"),
@@ -407,7 +376,7 @@ export async function resolveLinkEmbedImage(
 		.jpeg({ quality: LINK_EMBED_QUALITY })
 		.toBuffer();
 
-	await writeFile(filePath, bytes);
+	await storage.write(LINK_EMBED_DIR, filename, bytes);
 	return { bytes, contentType: "image/jpeg" };
 }
 
@@ -430,7 +399,7 @@ export async function resolveChangelogPosterThumb(
 		50,
 	);
 
-	return `/posters/changelog-cache/${filename}`;
+	return getImageStorage().urlFor(CHANGELOG_THUMB_DIR, filename);
 }
 
 // Only TMDB (backdrop_path) and IGDB (artworks) have a wide banner asset at
@@ -489,5 +458,5 @@ export async function resolveChangelogBannerThumb(
 		50,
 	);
 
-	return `/banners/changelog-cache/${filename}`;
+	return getImageStorage().urlFor(CHANGELOG_BANNER_THUMB_DIR, filename);
 }

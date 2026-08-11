@@ -1,7 +1,5 @@
-import { readdir, rm, stat } from "fs/promises";
-import path from "path";
-
-const CROPPED_ROOT = path.join(process.cwd(), "public", "cropped");
+import { CROPPED_DIR } from "@/server/resolvers/image-crop-resolver";
+import { getImageStorage } from "@/server/storage/image-storage";
 
 // Unlike cleanup-posters.ts/purge-deleted-change-log.ts, nothing in the DB
 // ever references a /cropped/... path directly — a promoted file has
@@ -14,20 +12,16 @@ const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 // Safe to re-run any time / on a schedule.
 async function main() {
-	const shapeDirs = await readdir(CROPPED_ROOT).catch(() => []);
+	const storage = getImageStorage();
 
 	const deleted: string[] = [];
 	const now = Date.now();
-	for (const shapeDir of shapeDirs) {
-		const dir = path.join(CROPPED_ROOT, shapeDir);
-		const files = await readdir(dir).catch(() => []);
-		for (const file of files) {
-			const filePath = path.join(dir, file);
-			const info = await stat(filePath);
-			if (now - info.mtimeMs > MAX_AGE_MS) {
-				await rm(filePath, { force: true });
-				deleted.push(`${shapeDir}/${file}`);
-			}
+	const files = await storage.list(CROPPED_DIR);
+	for (const file of files) {
+		const mtimeMs = await storage.statMtimeMs(CROPPED_DIR, file);
+		if (mtimeMs !== null && now - mtimeMs > MAX_AGE_MS) {
+			await storage.remove(CROPPED_DIR, file);
+			deleted.push(file);
 		}
 	}
 

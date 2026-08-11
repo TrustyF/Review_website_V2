@@ -1,6 +1,4 @@
-import { mkdir, readFile } from "fs/promises";
 import { createHash } from "crypto";
-import path from "path";
 import sharp from "sharp";
 import {
 	BANNER_FORMAT,
@@ -13,26 +11,19 @@ import {
 	LIST_THUMBNAIL_QUALITY,
 } from "@/server/resolvers/list-thumbnail-resolver";
 import { CropShapeId } from "@/app/dev/image-crop/crop-shapes";
+import { getImageStorage } from "@/server/storage/image-storage";
 
 type ShapeFormat = "webp" | "avif";
 
 export type CropRect = { x: number; y: number; width: number; height: number };
 
-// Named top-level constants (not inline path.join() calls at cropAndSave's
-// call sites), matching how poster-resolver.ts declares POSTER_DIR/
-// BANNER_DIR/etc — every directory this module can ever write to is one of
-// these four, fixed at build time.
-const POSTER_2_3_DIR = path.join(process.cwd(), "public", "cropped", "poster-2-3");
-const POSTER_3_4_DIR = path.join(process.cwd(), "public", "cropped", "poster-3-4");
-const BANNER_16_9_DIR = path.join(process.cwd(), "public", "cropped", "banner-16-9");
-const LIST_THUMBNAIL_16_9_DIR = path.join(
-	process.cwd(),
-	"public",
-	"cropped",
-	"list-thumbnail-16-9",
-);
-
-const CROPPED_ROOT = path.join(process.cwd(), "public", "cropped");
+// Every shape shares this one dir — filenames are already content-addressed
+// from {source bytes, shapeId, crop rect} (see cropAndSave's hash below), so
+// shapeId is baked into the hash and different shapes can never collide on
+// the same filename. Logical ImageStorage key, not a real filesystem path —
+// see src/server/storage/image-storage.ts. Exported so
+// cleanup-cropped-images.ts doesn't need its own copy.
+export const CROPPED_DIR = "cropped";
 
 // Reads a temp file previously produced by saveCroppedImage, if `url` points
 // at one — null for anything else (an external URL, an already-permanent
@@ -42,30 +33,29 @@ const CROPPED_ROOT = path.join(process.cwd(), "public", "cropped");
 // self-correcting user mistake, not a crash. What a caller does with the
 // bytes (copy them into its own real storage) is up to it — this function
 // only knows how to recognize and read one of its own temp files back out.
+//
+// The regex is the path-traversal guard here (replacing the old "resolve to
+// a real path and check it's still inside CROPPED_ROOT" check, which doesn't
+// apply once storage is no longer necessarily a real filesystem): url is
+// arbitrary pasted text (a form field), and this only matches a bare
+// hex-hash filename directly under /cropped/, so there's no `../`-style
+// segment for either backend to misinterpret.
+const CROPPED_FILE_URL = /^\/cropped\/([a-f0-9]+\.(?:webp|avif))$/;
+
 export async function readCroppedFile(url: string): Promise<Buffer | null> {
-	if (!url.startsWith("/cropped/")) return null;
+	const match = CROPPED_FILE_URL.exec(url);
+	if (!match) return null;
+	const [, filename] = match;
+	if (!filename) return null;
 
-	const resolved = path.join(process.cwd(), "public", url);
-	// Path traversal guard — url is arbitrary pasted text (a form field),
-	// not guaranteed to be a real prior saveCroppedImage output.
-	if (!resolved.startsWith(CROPPED_ROOT + path.sep)) return null;
-
-	try {
-		return await readFile(resolved);
-	} catch {
-		return null;
-	}
+	return getImageStorage().read(CROPPED_DIR, filename);
 }
 
-// Shared crop+resize+encode+write, parameterized on dir/urlPrefix passed in
-// by each case of saveCroppedImage below (one of the four fixed constants
-// above — never anything request-derived).
+// Shared crop+resize+encode+write for every case of saveCroppedImage below.
 async function cropAndSave(
 	source: Buffer,
 	shapeId: CropShapeId,
 	crop: CropRect,
-	dir: string,
-	urlPrefix: string,
 	maxWidth: number,
 	quality: number,
 	format: ShapeFormat,
@@ -89,25 +79,17 @@ async function cropAndSave(
 		.digest("hex")
 		.slice(0, 16);
 	const filename = `${hash}.${format}`;
-	// turbopackIgnore: dir is always one of the four literal constants above
-	// (never request-derived — shapeId only ever selects among them via
-	// saveCroppedImage's switch) and filename is a hex hash plus a fixed
-	// extension, so this can never escape public/cropped/. Turbopack's
-	// build-time filesystem tracer still flags it (tried named constants,
-	// parameter indirection, and removing the switch — same warning
-	// persisted through all of them) and, without this, traces the entire
-	// project into the server bundle as a result.
-	const filePath = path.join(/* turbopackIgnore: true */ dir, filename);
 
-	await mkdir(dir, { recursive: true });
 	const pipeline = sharp(source)
 		.extract({ left, top, width, height })
 		.resize({ width: maxWidth, withoutEnlargement: true });
 	const encoded =
 		format === "avif" ? pipeline.avif({ quality }) : pipeline.webp({ quality });
-	await encoded.toFile(filePath);
+	const bytes = await encoded.toBuffer();
 
-	return `${urlPrefix}/${filename}`;
+	const storage = getImageStorage();
+	await storage.write(CROPPED_DIR, filename, bytes);
+	return storage.urlFor(CROPPED_DIR, filename);
 }
 
 // Crops to an explicit pixel rect (already computed client-side by
@@ -124,34 +106,14 @@ export async function saveCroppedImage(
 ): Promise<string> {
 	switch (shapeId) {
 		case "poster-2-3":
-			return cropAndSave(
-				source,
-				shapeId,
-				crop,
-				POSTER_2_3_DIR,
-				"/cropped/poster-2-3",
-				500,
-				POSTER_QUALITY,
-				"webp",
-			);
+			return cropAndSave(source, shapeId, crop, 500, POSTER_QUALITY, "webp");
 		case "poster-3-4":
-			return cropAndSave(
-				source,
-				shapeId,
-				crop,
-				POSTER_3_4_DIR,
-				"/cropped/poster-3-4",
-				500,
-				POSTER_QUALITY,
-				"webp",
-			);
+			return cropAndSave(source, shapeId, crop, 500, POSTER_QUALITY, "webp");
 		case "banner-16-9":
 			return cropAndSave(
 				source,
 				shapeId,
 				crop,
-				BANNER_16_9_DIR,
-				"/cropped/banner-16-9",
 				BANNER_MAX_WIDTH,
 				BANNER_QUALITY,
 				BANNER_FORMAT,
@@ -161,8 +123,6 @@ export async function saveCroppedImage(
 				source,
 				shapeId,
 				crop,
-				LIST_THUMBNAIL_16_9_DIR,
-				"/cropped/list-thumbnail-16-9",
 				LIST_THUMBNAIL_MAX_WIDTH,
 				LIST_THUMBNAIL_QUALITY,
 				"webp",

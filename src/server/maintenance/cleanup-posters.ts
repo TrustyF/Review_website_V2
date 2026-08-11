@@ -1,5 +1,3 @@
-import { readdir, rm } from "fs/promises";
-import path from "path";
 import { db } from "@/server/db/client";
 import {
 	BANNER_DIR,
@@ -7,22 +5,19 @@ import {
 	mediaAssetFilename,
 	POSTER_DIR,
 } from "@/server/resolvers/poster-resolver";
+import { getImageStorage } from "@/server/storage/image-storage";
 
 // Deletes cached files under dir that no longer match any of validFilenames
 // — leftovers from switching a poster/banner (stale hash) or from media rows
 // that got deleted outright.
 async function cleanupOrphans(dir: string, validFilenames: Set<string>, label: string) {
-	let files: string[];
-	try {
-		files = await readdir(dir);
-	} catch {
-		files = [];
-	}
+	const storage = getImageStorage();
+	const files = await storage.list(dir);
 
 	const deleted: string[] = [];
 	for (const file of files) {
 		if (validFilenames.has(file)) continue;
-		await rm(path.join(dir, file), { force: true });
+		await storage.remove(dir, file);
 		deleted.push(file);
 	}
 

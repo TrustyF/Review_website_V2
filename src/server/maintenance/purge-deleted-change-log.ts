@@ -1,11 +1,10 @@
-import { access, unlink } from "fs/promises";
-import path from "path";
 import { db } from "@/server/db/client";
 import {
 	CHANGELOG_BANNER_THUMB_DIR,
 	CHANGELOG_THUMB_DIR,
 	mediaAssetFilename,
 } from "@/server/resolvers/poster-resolver";
+import { getImageStorage } from "@/server/storage/image-storage";
 
 // How long a soft-deleted entry stays visible (greyed out) before this
 // script permanently removes it — see change-log-actions.ts.
@@ -57,18 +56,16 @@ async function purgeThumbnails(
 		if (row.newValue) stillReferenced.add(`${row.mediaId}:${row.newValue}`);
 	}
 
+	const storage = getImageStorage();
 	let filesRemoved = 0;
 	for (const [key, { mediaId, value }] of candidates) {
 		if (stillReferenced.has(key)) continue;
 
-		const filePath = path.join(dir, mediaAssetFilename(mediaId, value));
-		try {
-			await access(filePath);
-			await unlink(filePath);
-			filesRemoved++;
-		} catch {
-			// Already gone, or never got cached in the first place — nothing to do.
-		}
+		// remove() itself reports whether a file was actually there — already
+		// gone, or never got cached in the first place, is just as fine as a
+		// successful removal here.
+		const removed = await storage.remove(dir, mediaAssetFilename(mediaId, value));
+		if (removed) filesRemoved++;
 	}
 	return filesRemoved;
 }
