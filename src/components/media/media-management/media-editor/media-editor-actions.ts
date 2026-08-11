@@ -1,6 +1,7 @@
 "use server";
 import { db } from "@/server/db/client";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/auth/require-admin";
 import { MediaType } from "@prisma/client";
 import Anthropic from "@anthropic-ai/sdk";
 import { fetchTmdbImages } from "@/server/tmdb/client";
@@ -67,6 +68,8 @@ export async function saveReview(
 		body: string | null;
 	},
 ) {
+	await requireAdmin();
+
 	// A rating is the one thing that has to exist for a review to mean
 	// anything here — "Watched on" reads straight off Review.createDate now
 	// (see toMediaRecord's watchedDate), which only holds up if createDate
@@ -132,6 +135,7 @@ export async function saveReview(
 // comparison. Repeatable (unlike "reviewed"): every call adds another
 // "Rewatched on" row, one per actual rewatch.
 export async function logRewatch(mediaId: number) {
+	await requireAdmin();
 	await db.mediaChangeLog.create({
 		data: { mediaId, field: "rewatched", oldValue: null, newValue: "true" },
 	});
@@ -150,6 +154,8 @@ export async function saveMediaDetails(
 		releaseDate: string | null;
 	},
 ) {
+	await requireAdmin();
+
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
 		select: { title: true, overview: true, releaseDate: true },
@@ -192,6 +198,8 @@ export async function saveMediaDetails(
 // constraint still holds while soft-deleted — re-adding the same title from
 // search will collide with it; restoring here is the way back, not search.
 export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
+	await requireAdmin();
+
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
 		select: { isDeleted: true },
@@ -219,6 +227,7 @@ export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
 // at. Cached poster/banner files on disk aren't touched here — they're
 // swept up as orphans by the next cleanup-posters run.
 export async function hardDeleteMedia(mediaId: number) {
+	await requireAdmin();
 	await db.media.delete({ where: { id: mediaId } });
 	revalidatePath("/");
 }
@@ -250,6 +259,7 @@ function restoreMarkup(text: string, spans: string[]): string {
 // Read-only — returns a suggested rewrite, never touches the draft or DB.
 // The caller decides what (if anything) to copy into the actual body field.
 export async function suggestReviewCorrection(body: string): Promise<string> {
+	await requireAdmin();
 	if (!body.trim()) return "";
 
 	const { stripped, spans } = extractMarkup(body);
@@ -273,6 +283,8 @@ export async function getAlternativePosters(
 	externalId: string,
 	type: MediaType,
 ) {
+	await requireAdmin();
+
 	if (type === MediaType.MANGA) {
 		const covers = await fetchMangaDexCovers(externalId);
 		return covers.map((cover) => ({
@@ -341,6 +353,8 @@ export async function getAlternativePosters(
 }
 
 export async function updateMediaPoster(mediaId: number, posterPath: string) {
+	await requireAdmin();
+
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
 		select: { posterPath: true, type: true, externalId: true },
@@ -380,6 +394,8 @@ export async function getAlternativeBanners(
 	externalId: string,
 	type: MediaType,
 ) {
+	await requireAdmin();
+
 	if (type === MediaType.MANGA || type === MediaType.COMIC) {
 		return [];
 	}
@@ -417,6 +433,8 @@ export async function getAlternativeBanners(
 }
 
 export async function updateMediaBanner(mediaId: number, bannerPath: string) {
+	await requireAdmin();
+
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
 		select: { bannerPath: true, type: true },
@@ -447,6 +465,7 @@ export async function updateMediaBanner(mediaId: number, bannerPath: string) {
 // framing" isn't a change worth a permanent record the way swapping the
 // banner image itself is.
 export async function updateMediaBannerFocus(mediaId: number, focusY: number) {
+	await requireAdmin();
 	const clamped = Math.max(0, Math.min(100, Math.round(focusY)));
 	await db.media.update({
 		where: { id: mediaId },

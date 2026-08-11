@@ -178,6 +178,7 @@ export async function searchMediaForList(
 	listId: number,
 	query: string,
 ): Promise<ListMediaSearchResult[]> {
+	await requireAdmin();
 	const trimmed = query.trim();
 	if (!trimmed) return [];
 

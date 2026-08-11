@@ -1,3 +1,5 @@
+@use "@/app/styles/variables" as *
+
 // Height here (1rem padding + ~1rem of line-height content + 1rem padding
 // = ~3rem, plus the 1px border below that box-sizing: border-box doesn't
 // absorb since this box's height is auto rather than an explicit value) is
@@ -61,15 +63,7 @@
   display: flex
   align-items: center
   gap: 0.4rem
-  color: inherit
-  text-shadow: var(--background) 2px 1px 3px
-
-  &:hover
-    color: var(--foreground)
-
-.link
-  &[aria-current="page"]
-    color: var(--brand)
+  @include nav-item-look
 
 // Same look as .link, but a real <button> reset — this triggers signOut()
 // rather than navigating anywhere.

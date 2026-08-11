@@ -1,20 +1,19 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 
-// Optimistic check only (cookie presence, no DB round-trip) — the actual
-// authorization for mutations still happens in the server actions
-// themselves (see require-admin.ts, watchlist-actions.ts). This just keeps
-// a signed-out visitor from landing on a blank/broken /watchlist or
-// /account page.
+// Optimistic only — req.auth is decoded straight off the JWT session cookie
+// (no DB hit, see auth.ts's session: { strategy: "jwt" }), so this is just a
+// fast, centralized "obviously not an admin" bounce before a page even
+// starts rendering, not the real enforcement. That still lives where it has
+// to regardless of what runs here: requireAdmin() in every admin-only
+// Server Action (see require-admin.ts) — a Server Function is a POST to
+// whatever route renders it, so a matcher mistake below would silently stop
+// protecting a page without ever touching that layer.
 export default auth((req) => {
-	if (!req.auth) {
-		const loginUrl = new URL("/login", req.nextUrl);
-		loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
-		return NextResponse.redirect(loginUrl);
-	}
-	return undefined;
+	if (req.auth?.user?.role === "ADMIN") return;
+	return NextResponse.redirect(new URL("/", req.url));
 });
 
 export const config = {
-	matcher: ["/watchlist/:path*", "/account/:path*"],
+	matcher: ["/add", "/lists/new", "/lists/:id/edit", "/dev/image-crop"],
 };

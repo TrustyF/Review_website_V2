@@ -1,13 +1,11 @@
 "use server";
 import { saveCroppedImage } from "@/server/resolvers/image-crop-resolver";
 import { CROP_SHAPES, CropShapeId } from "@/app/dev/image-crop/crop-shapes";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
-// No auth check here yet — real accounts/sessions exist now (see
-// src/auth.ts), and list-actions.ts's mutations already call
-// require-admin.ts, but this action (and most other admin-gated mutations
-// outside list-actions.ts) hasn't been swept to add the same check. Still
-// only client-side gated (see ImageCropTool's useIsAdmin) until that pass.
 export async function saveCroppedImageAction(formData: FormData): Promise<string> {
+	await requireAdmin();
+
 	const file = formData.get("file");
 	if (!(file instanceof File)) throw new Error("No file provided");
 
@@ -38,6 +36,8 @@ export async function saveCroppedImageAction(formData: FormData): Promise<string
 // (`fetch(dataUrl)` is same-origin, no CORS concern) and feed it through the
 // exact same path a locally-picked file already takes.
 export async function fetchImportedImage(url: string): Promise<string> {
+	await requireAdmin();
+
 	const res = await fetch(url);
 	if (!res.ok) throw new Error("Failed to fetch image");
 

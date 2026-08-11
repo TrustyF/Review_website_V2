@@ -15,11 +15,13 @@ const isDev = process.env.NODE_ENV === "development";
 // Two sections, gated independently rather than as a single dev-only block
 // — "Dev routes" is genuinely dev-only (the actual /dev/* pages besides
 // image-crop 404 outside development), but "Tools" also holds things
-// meant to work in production for an admin (Image crop).
+// meant to work in production for an admin (Image crop). The menu itself
+// is admin-only regardless of environment — running in development isn't
+// on its own a reason to expose it to a signed-out or non-admin visitor.
 export function DevMenu() {
 	const isAdmin = useIsAdmin();
 
-	if (!isDev && !isAdmin) return null;
+	if (!isAdmin) return null;
 
 	return (
 		<details className={styles.wrapper}>

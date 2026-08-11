@@ -16,3 +16,21 @@ $mini-card-min-width: 110px
 @mixin empty-text
   color: var(--accent1)
   font-size: 0.9rem
+
+// Shared color/hover/active-state look for a top-level nav item — a plain
+// link (nav-bar.module.sass's .link/.sign_out_button) and a dropdown's own
+// trigger (nav-dropdown.module.sass's .trigger) both want to read as the
+// same kind of control. Was two independently hand-copied blocks that had
+// already drifted (the trigger's gap silently diverged from .link's) before
+// being centralized here; layout bits (display, gap, cursor, ...) stay with
+// each caller since those legitimately differ (a trigger has an extra
+// chevron the plain links don't).
+@mixin nav-item-look
+  color: inherit
+  text-shadow: var(--background) 2px 1px 3px
+
+  &:hover
+    color: var(--brand)
+
+  &[aria-current="page"]
+    color: var(--brand)

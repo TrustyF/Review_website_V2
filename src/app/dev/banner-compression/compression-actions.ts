@@ -5,6 +5,7 @@ import {
 	CompressionResult,
 	DenoiseMethod,
 } from "./compression-types";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 function encode(image: Sharp, format: CompressionFormat, quality: number) {
 	switch (format) {
@@ -55,6 +56,8 @@ export async function compressPreview(
 	sourceUrl: string,
 	options: CompressOptions,
 ): Promise<CompressionResult> {
+	await requireAdmin();
+
 	const res = await fetch(sourceUrl);
 	if (!res.ok) throw new Error("Failed to fetch source image");
 	const bytes = Buffer.from(await res.arrayBuffer());
@@ -87,6 +90,8 @@ export async function compressPreview(
 // The "before" number the comparison percentages are relative to — the
 // source's own byte size, untouched.
 export async function getOriginalSize(sourceUrl: string): Promise<number> {
+	await requireAdmin();
+
 	const res = await fetch(sourceUrl);
 	if (!res.ok) throw new Error("Failed to fetch source image");
 	const bytes = Buffer.from(await res.arrayBuffer());

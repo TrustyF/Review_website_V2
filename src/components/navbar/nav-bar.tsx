@@ -15,6 +15,7 @@ import {
 	closeAllNavDropdowns,
 } from "@/components/navbar/nav-dropdown";
 import { isNavActive } from "@/lib/nav-active";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import style from "./nav-bar.module.sass";
 
 // Hides the instant you scroll down (past a small top-of-page exemption —
@@ -63,6 +64,7 @@ function NavLink({
 
 export default function Navbar() {
 	const { data: session } = useSession();
+	const isAdmin = useIsAdmin();
 	const pathname = usePathname();
 	const [hidden, setHidden] = useState(false);
 	// Refs, not state — every scroll frame writes these, and re-rendering on
@@ -161,9 +163,11 @@ export default function Navbar() {
 				<NavLink href="/lists" className={style.link} pathname={pathname}>
 					Lists
 				</NavLink>
-				<NavLink href="/add" className={style.link} pathname={pathname}>
-					Add
-				</NavLink>
+				{isAdmin && (
+					<NavLink href="/add" className={style.link} pathname={pathname}>
+						Add media
+					</NavLink>
+				)}
 			</div>
 
 			<div className={style.nav_group}>

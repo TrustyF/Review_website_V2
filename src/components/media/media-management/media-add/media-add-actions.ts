@@ -28,6 +28,7 @@ import {
 	AddableType,
 	MediaSearchResult,
 } from "@/components/media/media-management/media-add/addable-types";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 function yearOf(dateString: string | null): number | null {
 	if (!dateString) return null;
@@ -48,6 +49,7 @@ export async function searchMediaSources(
 	type: AddableType,
 	query: string,
 ): Promise<MediaSearchResult[]> {
+	await requireAdmin();
 	if (!query.trim()) return [];
 
 	switch (type) {
@@ -141,6 +143,7 @@ export async function addMediaToLibrary(
 	type: AddableType,
 	externalId: string,
 ): Promise<number> {
+	await requireAdmin();
 	let mediaId: number;
 
 	switch (type) {

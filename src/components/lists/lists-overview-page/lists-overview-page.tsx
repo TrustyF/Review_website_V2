@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { db } from "@/server/db/client";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
+import { NewListLink } from "@/components/lists/new-list-link/new-list-link";
 import styles from "./lists-overview-page.module.sass";
 
 // Server Component for /lists: every list, newest first, grouped together on
@@ -16,9 +16,7 @@ export async function ListsOverviewPage() {
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				<h1>Lists</h1>
-				<Link href="/lists/new" className={styles.new_link}>
-					New list
-				</Link>
+				<NewListLink />
 			</div>
 
 			{lists.length === 0 ? (

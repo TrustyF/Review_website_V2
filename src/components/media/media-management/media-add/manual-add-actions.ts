@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db/client";
 import { EnrichmentStatus, MediaType, Prisma } from "@prisma/client";
+import { requireAdmin } from "@/lib/auth/require-admin";
 
 type SubTableFields = Pick<
 	Prisma.MediaCreateInput,
@@ -37,6 +38,7 @@ export async function createManualMedia(input: {
 	releaseDate: string | null;
 	posterUrl: string | null;
 }): Promise<number> {
+	await requireAdmin();
 	if (!input.title.trim()) throw new Error("Title is required");
 
 	const media = await db.media.create({
