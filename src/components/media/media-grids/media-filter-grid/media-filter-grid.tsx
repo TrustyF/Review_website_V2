@@ -5,6 +5,7 @@ import { MediaRecord } from "@/components/media/types";
 import { RatedTierGrid } from "@/components/media/media-grids/rated-tier-grid/rated-tier-grid";
 import { useMediaFilter } from "@/components/media/media-grids/media-filter/use-media-filter";
 import { MediaFilterPopover } from "@/components/media/media-grids/media-filter/media-filter-popover";
+import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
 import styles from "./media-filter-grid.module.sass";
 
 // Avoids React's "useLayoutEffect does nothing on the server" warning — this
@@ -28,6 +29,8 @@ if (typeof window !== "undefined") {
 
 type Props = {
 	media: MediaRecord[];
+	showRating?: boolean | undefined;
+	showTitle?: boolean | undefined;
 };
 
 // Rating-tiered grid with a genre/rating/runtime filter popover — what every
@@ -36,7 +39,7 @@ type Props = {
 // matched); that moved to one media-agnostic search in the navbar instead of
 // living separately on every page (see nav-search.tsx), so this component
 // now only owns filtering.
-export function MediaFilterGrid({ media }: Props) {
+export function MediaFilterGrid({ media, showRating, showTitle }: Props) {
 	const pathname = usePathname();
 	const { filter, setFilter, filteredMedia } = useMediaFilter(media);
 
@@ -61,9 +64,15 @@ export function MediaFilterGrid({ media }: Props) {
 	}, [pathname]);
 
 	return (
-		<div className={styles.wrapper}>
-			<MediaFilterPopover media={media} filter={filter} onChange={setFilter} />
-			<RatedTierGrid media={filteredMedia} />
-		</div>
+		<MediaCardDisplayProvider showRating={showRating} showTitle={showTitle}>
+			<div className={styles.wrapper}>
+				<MediaFilterPopover
+					media={media}
+					filter={filter}
+					onChange={setFilter}
+				/>
+				<RatedTierGrid media={filteredMedia} />
+			</div>
+		</MediaCardDisplayProvider>
 	);
 }

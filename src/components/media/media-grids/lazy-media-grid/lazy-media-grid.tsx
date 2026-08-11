@@ -104,10 +104,7 @@ export function LazyMediaGrid({ items, restoreKey, renderOverlay }: Props) {
 				))}
 			</div>
 			{visibleCount < items.length && (
-				<div
-					className={styles.sentinel}
-					ref={sentinelRef}
-				/>
+				<div className={styles.sentinel} ref={sentinelRef} />
 			)}
 		</>
 	);

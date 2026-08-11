@@ -3,6 +3,8 @@ import { memo, ReactNode, useMemo } from "react";
 import { MediaRecord } from "@/components/media/types";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
 import styles from "./rated-tier-grid.module.sass";
+import "@/components/media/icons/star-icon.tsx";
+import { StarIcon } from "@/components/media/icons/star-icon";
 
 // Buckets media into whole-point rating tiers (9 covers a 9.0-9.5 rating,
 // etc.) — halfway steps would mean twenty collapsible sections, too many to
@@ -65,8 +67,9 @@ export const RatedTierGrid = memo(function RatedTierGrid({
 			{orderedTiers.map(([tier, items]) => (
 				<details key={tier ?? "unrated"} open>
 					<summary className={styles.tier_header}>
+						<StarIcon size={17} />
 						{tierLabel(tier)}
-						<span className={styles.tier_count}>- {items.length} items</span>
+						{/*<span className={styles.tier_count}>- {items.length} items</span>*/}
 					</summary>
 					<LazyMediaGrid
 						items={items}

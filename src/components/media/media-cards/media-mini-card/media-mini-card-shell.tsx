@@ -7,6 +7,7 @@ import { StarIcon } from "@/components/media/icons/star-icon";
 import styles from "./media-mini-card-shell.module.sass";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { ReviewIcon } from "@/components/media/icons/review-icon";
+import { useMediaCardDisplay } from "@/components/media/media-card-display-context";
 
 type Props = {
 	media: MediaRecord;
@@ -19,6 +20,8 @@ type Props = {
 // Per-type cards (MovieMiniCard, TvShowMiniCard, ...) supply only the bit of
 // secondary info that actually differs between media types.
 export function MediaMiniCardShell({ media, children }: Props) {
+	const { showRating, showTitle } = useMediaCardDisplay();
+
 	return (
 		<div className={styles.wrapper}>
 			<MediaPoster
@@ -28,9 +31,9 @@ export function MediaMiniCardShell({ media, children }: Props) {
 				ratio={posterRatioFor(media.type)}
 				difficulty={media.review?.difficulty}
 			/>
-			<MediaTitle title={media.title} className={styles.title} />
+			{showTitle && <MediaTitle title={media.title} className={styles.title} />}
 			<div className={styles.subtitle}>
-				{media.review && (
+				{showRating && media.review && (
 					<div className={styles.rating}>
 						{media.review.rating}
 						<StarIcon size={11} />
