@@ -1,8 +1,8 @@
 import { Fragment } from "react";
 import Image from "next/image";
+import { ArrowRight } from "lucide-react";
 import { MediaChangeLog, MediaType, Review } from "@prisma/client";
 import { StarIcon } from "@/components/media/icons/star-icon";
-import { ArrowRightIcon } from "@/components/media/icons/arrow-right-icon";
 import {
 	resolveChangelogBannerThumb,
 	resolveChangelogPosterThumb,
@@ -262,7 +262,7 @@ export function ChangeLogList({
 												externalId={externalId}
 											/>
 										</span>
-										<ArrowRightIcon className={styles.arrow_icon} />
+										<ArrowRight size={14} className={styles.arrow_icon} />
 										<span className={styles.new_value}>
 											<ChangeValue
 												field={entry.field}

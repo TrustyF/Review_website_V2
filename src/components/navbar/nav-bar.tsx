@@ -3,7 +3,18 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import {
+	BookOpen,
+	Clapperboard,
+	GamepadDirectional,
+	type LucideIcon,
+} from "lucide-react";
 import { NavSearch } from "@/components/navbar/nav-search/nav-search";
+import {
+	NavDropdown,
+	closeAllNavDropdowns,
+} from "@/components/navbar/nav-dropdown";
+import { isNavActive } from "@/lib/nav-active";
 import style from "./nav-bar.module.sass";
 
 // Hides the instant you scroll down (past a small top-of-page exemption —
@@ -13,6 +24,42 @@ import style from "./nav-bar.module.sass";
 // mid-downward-scroll would flicker it back in.
 const TOP_EXEMPT_PX = 200;
 const REVEAL_THRESHOLD_PX = 200;
+
+type NavLinkProps = {
+	href: string;
+	icon?: LucideIcon;
+	// CSS module class lookups are typed as possibly-undefined (an unknown
+	// key would silently produce `undefined`), so this matches that rather
+	// than requiring callers to non-null-assert every style.xxx they pass.
+	className: string | undefined;
+	pathname: string;
+	children: React.ReactNode;
+};
+
+// Every plain top-level item (as opposed to a NavDropdown) goes through
+// here so an icon stays optional without repeating the same "icon &&
+// <Icon />" line at every one of these call sites.
+function NavLink({
+	href,
+	icon: Icon,
+	className,
+	pathname,
+	children,
+}: NavLinkProps) {
+	const isActive = isNavActive(pathname, href);
+	return (
+		<Link
+			href={href}
+			className={className}
+			aria-current={isActive ? "page" : undefined}>
+			{/* Lucide ships outline-only icons — no separate filled set — so
+			"filled" here is just handing the same icon a fill color instead
+			of "none" on top of its existing stroke. */}
+			{Icon && <Icon size={14} fill={isActive ? "currentColor" : "none"} />}
+			{children}
+		</Link>
+	);
+}
 
 export default function Navbar() {
 	const { data: session } = useSession();
@@ -54,106 +101,99 @@ export default function Navbar() {
 		return () => window.removeEventListener("scroll", handleScroll);
 	}, []);
 
-	// Home ("/") only counts as active on an exact match — every other route
-	// starts with "/" too. Everything else matches on prefix, so a sub-route
-	// (e.g. /lists/[id]) still highlights its section's link.
-	function isActive(href: string) {
-		if (href === "/") return pathname === "/";
-		return pathname === href || pathname.startsWith(`${href}/`);
-	}
-
-	function current(href: string) {
-		return isActive(href) ? "page" : undefined;
+	// Delegated rather than one handler per Link — this catches both a
+	// dropdown item picking its own page (the panel should close behind it)
+	// and a plain top-level link being clicked while an unrelated dropdown
+	// happens to still be open. Keyed off "a, button" so it skips a
+	// dropdown's own <summary> trigger (neither tag), which already has its
+	// own open/close handling.
+	function handleNavClick(e: React.MouseEvent<HTMLElement>) {
+		if ((e.target as HTMLElement).closest("a, button")) {
+			closeAllNavDropdowns();
+		}
 	}
 
 	return (
-		<nav className={`${style.wrapper} ${hidden ? style.hidden : ""}`}>
+		<nav
+			className={`${style.wrapper} ${hidden ? style.hidden : ""}`}
+			onClick={handleNavClick}>
 			<Link href="/" className={style.title}>
 				Arthur&#39;s Corner
 			</Link>
 
 			<NavSearch />
 
-			<Link href="/" className={style.link} aria-current={current("/")}>
-				Home
-			</Link>
-			<Link
-				href="/movies"
-				className={style.link}
-				aria-current={current("/movies")}>
-				Movies
-			</Link>
-			<Link
-				href="/shorts"
-				className={style.link}
-				aria-current={current("/shorts")}>
-				Shorts
-			</Link>
-			<Link href="/tv" className={style.link} aria-current={current("/tv")}>
-				TV
-			</Link>
-			<Link
-				href="/manga"
-				className={style.link}
-				aria-current={current("/manga")}>
-				Manga
-			</Link>
-			<Link
-				href="/games"
-				className={style.link}
-				aria-current={current("/games")}>
-				Games
-			</Link>
-			<Link
-				href="/comics"
-				className={style.link}
-				aria-current={current("/comics")}>
-				Comics
-			</Link>
-			<Link
-				href="/books"
-				className={style.link}
-				aria-current={current("/books")}>
-				Books
-			</Link>
-			<Link
-				href="/lists"
-				className={style.link}
-				aria-current={current("/lists")}>
-				Lists
-			</Link>
-			<Link href="/add" className={style.link} aria-current={current("/add")}>
-				Add
-			</Link>
-			{session?.user ? (
-				<>
-					<Link
-						href="/watchlist"
-						className={style.link}
-						aria-current={current("/watchlist")}>
-						Watchlist
-					</Link>
-					<Link
-						href="/account"
-						className={style.link}
-						aria-current={current("/account")}>
-						Account
-					</Link>
-					<button
-						type="button"
+			<div className={style.nav_group}>
+				<NavLink href="/" className={style.link} pathname={pathname}>
+					Home
+				</NavLink>
+			</div>
+
+			<div className={style.nav_group}>
+				<NavDropdown
+					label="Media"
+					icon={Clapperboard}
+					items={[
+						{ href: "/movies", label: "Movies" },
+						{ href: "/shorts", label: "Shorts" },
+						{ href: "/tv", label: "TV" },
+					]}
+				/>
+				<NavDropdown
+					label="Reading"
+					icon={BookOpen}
+					items={[
+						{ href: "/manga", label: "Manga" },
+						{ href: "/comics", label: "Comics" },
+						{ href: "/books", label: "Books" },
+					]}
+				/>
+				<NavLink
+					href="/games"
+					icon={GamepadDirectional}
+					className={style.link}
+					pathname={pathname}>
+					Games
+				</NavLink>
+			</div>
+
+			<div className={style.nav_group}>
+				<NavLink href="/lists" className={style.link} pathname={pathname}>
+					Lists
+				</NavLink>
+				<NavLink href="/add" className={style.link} pathname={pathname}>
+					Add
+				</NavLink>
+			</div>
+
+			<div className={style.nav_group}>
+				{session?.user ? (
+					<>
+						<NavLink
+							href="/watchlist"
+							className={style.link}
+							pathname={pathname}>
+							Watchlist
+						</NavLink>
+						<NavLink href="/account" className={style.link} pathname={pathname}>
+							Account
+						</NavLink>
+						<button
+							type="button"
+							className={style.sign_out_button}
+							onClick={() => signOut({ callbackUrl: "/" })}>
+							Sign out
+						</button>
+					</>
+				) : (
+					<NavLink
+						href="/login"
 						className={style.sign_out_button}
-						onClick={() => signOut({ callbackUrl: "/" })}>
-						Sign out
-					</button>
-				</>
-			) : (
-				<Link
-					href="/login"
-					className={style.sign_out_button}
-					aria-current={current("/login")}>
-					Sign in
-				</Link>
-			)}
+						pathname={pathname}>
+						Sign in
+					</NavLink>
+				)}
+			</div>
 		</nav>
 	);
 }

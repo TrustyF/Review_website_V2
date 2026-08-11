@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
+import { Filter } from "lucide-react";
 import { MediaRecord } from "@/components/media/types";
 import {
 	availableFilterFields,
@@ -11,7 +12,6 @@ import {
 import { DualRangeSlider } from "@/components/media/media-grids/media-filter/dual-range-slider";
 import { formatRuntime } from "@/components/media/primitives/runtime";
 import { useOutsideClick } from "@/lib/use-outside-click";
-import { FilterIcon } from "@/components/media/icons/filter-icon";
 import { Hitbox } from "@/components/ui/hitbox";
 import styles from "./media-filter-popover.module.sass";
 
@@ -80,7 +80,7 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 		<div className={styles.wrapper} ref={containerRef}>
 			<Hitbox onClick={() => setIsOpen((v) => !v)} padding={15}>
 				<div className={styles.trigger}>
-					<FilterIcon />
+					<Filter size={16} />
 					{activeCount > 0 && (
 						<span className={styles.count_badge}>{activeCount}</span>
 					)}

@@ -9,7 +9,7 @@
 .wrapper
   display: flex
   align-items: center
-  gap: 1.5rem
+  gap: 3rem
   width: 100%
   padding: 1rem 3rem
   position: fixed
@@ -43,8 +43,24 @@
   margin-right: auto
   color: var(--brand)
 
+// Three clusters — browse (Home/Media/Reading/Games), collection (Lists/
+// Add), account (Watchlist/Account/sign in-out) — each a flex item of
+// .wrapper in its own right, so .wrapper's own gap already separates them;
+// the extra margin-left here is just a bit more breathing room on top of
+// that, marking them as distinct groups rather than one long run of links.
+.nav_group
+  display: flex
+  align-items: center
+  gap: 1.5rem
+
+  &:not(:first-child)
+    margin-left: 0.75rem
+
 .link,
 .sign_out_button
+  display: flex
+  align-items: center
+  gap: 0.4rem
   color: inherit
   text-shadow: var(--background) 2px 1px 3px
 

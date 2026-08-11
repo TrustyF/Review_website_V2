@@ -1,0 +1,92 @@
+.wrapper
+  position: relative
+
+  &::-webkit-details-marker
+    display: none
+
+// Matches nav-bar.module.sass's .link/.sign_out_button look (color:
+// inherit, same text-shadow, same hover/active-state colors) so a dropdown
+// trigger reads as just another nav item rather than a visually distinct
+// control.
+.trigger
+  display: flex
+  align-items: center
+  gap: 0.25rem
+  list-style: none
+  cursor: pointer
+  color: inherit
+  text-shadow: var(--background) 2px 1px 3px
+
+  &:hover
+    color: var(--foreground)
+
+  &[aria-current="page"]
+    color: var(--brand)
+
+.chevron
+  transition: transform 0.15s ease
+
+  .wrapper[open] &
+    transform: rotate(180deg)
+
+// All label variants (group label + each item's) sit in the same grid
+// cell, overlapping — the grid's implicit track sizes to the widest one,
+// so this box's width is fixed the moment it mounts and doesn't change as
+// the active variant switches. Only .active's opacity/transform move,
+// which is what makes the switch read as a slide rather than a jump.
+.label_stack
+  position: relative
+  display: grid
+  overflow: hidden
+
+// Default (unset) state sits a full line below, waiting — so a variant
+// that becomes active always slides up into place from the bottom. The
+// variant that just lost active status gets .exiting instead, which sits
+// a full line above, so leaving is always an upward exit rather than the
+// reverse of however the incoming one arrived.
+.label
+  grid-area: 1 / 1
+  white-space: nowrap
+  opacity: 0
+  transform: translateY(100%)
+  transition: opacity 0.2s ease, transform 0.2s ease
+  pointer-events: none
+
+  &.active
+    opacity: 1
+    transform: translateY(0)
+
+  &.exiting
+    transform: translateY(-100%)
+
+  @media (prefers-reduced-motion: reduce)
+    transition: opacity 0.2s ease
+    transform: none
+
+.panel
+  position: absolute
+  top: calc(100% + 0.5rem)
+  left: 0
+  z-index: 20
+  display: flex
+  flex-flow: column
+  gap: 0.5rem
+  min-width: 140px
+  padding: 0.6rem
+  background-color: var(--surface)
+  border: 1px solid var(--surface-border)
+  border-radius: 0.5rem
+  box-shadow: 0 4px 16px var(--overlay-backdrop)
+
+.link
+  display: flex
+  align-items: center
+  gap: 0.4rem
+  color: var(--foreground)
+  text-shadow: none
+
+  &:hover
+    color: var(--brand)
+
+  &[aria-current="page"]
+    color: var(--brand)
