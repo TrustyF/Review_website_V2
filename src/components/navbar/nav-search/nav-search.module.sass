@@ -5,20 +5,22 @@
 
 .input
   width: 14rem
-  padding: 0.3rem 0.1rem
+  padding: 0.5rem
+  border-radius: 0.5rem
   border: none
-  border-bottom: 1px solid var(--accent2)
-  background: transparent
+  //border-bottom: 1px solid var(--brand-active)
+  //background: color-mix(in srgb,var(--background) 50%,var(--brand-active) 20%)
+  background-color: var(--brand-muted)
   color: var(--foreground)
   font-family: $font-body
   font-size: 0.9rem
 
   &:focus
     outline: none
-    border-color: var(--foreground)
+    border-color: var(--brand)
 
-  &::placeholder
-    color: var(--accent3)
+  //&::placeholder
+  //  color: var(--accent1)
 
 .dropdown
   position: absolute
@@ -30,8 +32,8 @@
   overflow-y: auto
   display: flex
   flex-flow: column
-  background: var(--darkaccent2)
-  border: 1px solid var(--darkaccent4)
+  background: var(--surface)
+  border: 1px solid var(--surface-border)
   border-radius: 0.5rem
   padding: 0.35rem
 
@@ -54,7 +56,7 @@
   cursor: pointer
 
   &:hover
-    background: var(--darkaccent4)
+    background: var(--surface-border)
 
 .result_poster
   //width: 64px

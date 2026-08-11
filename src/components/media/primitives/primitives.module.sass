@@ -14,9 +14,9 @@
 // here needs to clip anything.
 .poster_frame
   width: 100%
-  background-color: rgba(102, 102, 102, 0.25)
+  background-color: var(--accent1-tint)
   border-radius: 0.25rem
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5)
+  box-shadow: 0 2px 6px var(--overlay-backdrop)
 
 // position: absolute + inset: 0, *and* explicit width/height: 100% — for a
 // replaced element (img) specifically, inset: 0 alone only positions it
@@ -73,10 +73,10 @@
 // the plain <div> in between — fill/stroke inherit through the DOM tree the
 // same as color does, not just through other SVG elements.
 .difficulty_notch_1
-  fill: #F1C40FFF
+  fill: var(--warning)
 
 .difficulty_notch_2
-  fill: #E64432FF
+  fill: var(--danger)
 
 // Explicit width, not just display:block — without it, this is a flex item
 // in some parents (mini-card's align-items: flex-start column) that

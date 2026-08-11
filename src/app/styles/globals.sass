@@ -4,35 +4,68 @@
   --background: #151315
   --foreground: #ededed
 
+  // Single brand color, plus the interaction-state and on-color variants
+  // derived from it — the shape most sites with one primary color use
+  // (base fill, a lighter hover, a darker pressed/active, a low-opacity
+  // tint for subtle backgrounds, and the text/icon color for placement on
+  // top of --brand itself). Everything below is color-mix()'d off this one
+  // value, so re-branding is a one-line change here.
+  --brand: #ff860d
+  --brand-hover: color-mix(in srgb, var(--brand) 85%, white 15%)
+  --brand-active: color-mix(in srgb, var(--brand) 80%, black 20%)
+  --brand-muted: color-mix(in srgb, var(--brand) 15%, var(--background) 85%)
+  --on-brand: var(--foreground)
+
+  // Muted-text/border grey scale — accent1 is the workhorse (icons,
+  // dividers, secondary text); accent2/3 are lighter steps reached for
+  // occasionally. Used to run to accent5, but 4 and 5 had never once been
+  // referenced, and a separate --darkaccent1..5 + --color1accent1..5 sat
+  // alongside it in the same shape, both mostly dead (see --surface/
+  // --surface-border and --link below for the two pieces of those that
+  // actually were in use).
   --accent1: #666666
   --accent2: #808080
   --accent3: #999999
-  --accent4: #b3b3b3
-  --accent5: #cccccc
 
-  --darkaccent1: #0d0d0d
-  --darkaccent2: #1a1a1a
-  --darkaccent3: #262626
-  --darkaccent4: #333333
-  --darkaccent5: #404040
+  // The recurring "raised surface on the dark background" pair — card/
+  // popover/tooltip fill plus its border — factored out of what used to be
+  // --darkaccent2/--darkaccent4. --surface-border is derived from --surface
+  // (lightened toward --foreground) rather than its own hardcoded value, so
+  // the two can't drift out of step the way the old pair eventually did.
+  --surface: #1a1a1a
+  --surface-border: color-mix(in srgb, var(--surface) 88%, var(--foreground) 12%)
 
-  --color1accent1: #334d66
-  --color1accent2: #406080
-  --color1accent3: #4d7399
-  --color1accent4: #5986b3
-  --color1accent5: #6699cc
+  // Was --color1accent5, the one survivor of an otherwise-unused
+  // --color1accent1..5 blue scale.
+  --link: #6699cc
 
   --body: #cccccc
 
-  // Reserves the space Navbar's own fixed-position box takes up (see main
-  // below) — position: fixed removes it from flow entirely, so without
-  // this every page's content would start right at the top of the
-  // viewport and sit underneath it. Kept in sync by hand with nav-bar.
-  // module.sass's own .wrapper padding/height, not derived from it.
-  --navbar-height: 3rem
+  // Semantic status colors — consolidated from ~15 files that each
+  // hardcoded their own copy of the same error red.
+  --danger: #e05656
+  --danger-tint: rgba(224, 86, 86, 0.15)
+  --success: #50c878
+  --success-tint: rgba(80, 200, 120, 0.25)
+  --success-tint-strong: rgba(80, 200, 120, 0.45)
+  // Shared by the rating-distribution bar and the star icon it labels —
+  // previously two independent hardcoded copies of the same value.
+  --warning: #fcca00
 
-  // Permanent breathing room below every page's content, same idea as
-  // --navbar-height above but for the bottom — see main below.
+  // Recurring overlay treatments — a scrim behind text on a poster/banner
+  // image, a modal/menu backdrop dim, and the light hairline border used
+  // on dark preview cards throughout the /dev pages. Previously copy-pasted
+  // literals in every file that needed them.
+  --overlay-scrim: rgba(0, 0, 0, 0.65)
+  --overlay-backdrop: rgba(0, 0, 0, 0.5)
+  --border-highlight: rgba(255, 255, 255, 0.15)
+  // --accent1 at low opacity, used as an image placeholder fill while a
+  // poster/banner is still loading.
+  --accent1-tint: rgba(102, 102, 102, 0.25)
+  --modal-bg: #191919
+
+
+  --navbar-height: 3rem
   --footer-margin: 3rem
 
 

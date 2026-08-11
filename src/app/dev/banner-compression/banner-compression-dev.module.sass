@@ -1,7 +1,7 @@
 .wrapper
   width: 1280px
   margin: 20px auto
-  color: #ddd
+  color: var(--foreground)
 
 .controls
   position: fixed
@@ -15,12 +15,12 @@
   display: flex
   flex-flow: column
   gap: 10px
-  border: 1px solid rgba(255, 255, 255, 0.15)
+  border: 1px solid var(--border-highlight)
   border-radius: 4px
   padding: 20px
   margin-bottom: 20px
   width: 19rem
-  background: #1a1a1a
+  background: var(--surface)
 
 // Label (+ value, for sliders) stacked above the control rather than beside
 // it — the row's width is then just whatever the control itself needs, so
@@ -71,7 +71,7 @@
     min-width: 0
 
 .error
-  color: #e05656
+  color: var(--danger)
 
 .comparison
   position: relative
@@ -124,7 +124,7 @@
   top: 0
   bottom: 0
   width: 2px
-  background: #fff
+  background: var(--foreground)
   transform: translateX(-50%)
   pointer-events: none
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.6)
@@ -137,7 +137,7 @@
     width: 28px
     height: 28px
     border-radius: 50%
-    background: #fff
+    background: var(--foreground)
     transform: translate(-50%, -50%)
     box-shadow: 0 0 4px rgba(0, 0, 0, 0.6)
 
@@ -157,7 +157,7 @@
   right: 8px
 
 .reduction
-  color: #6fc47e
+  color: var(--success)
 
 .hint
   margin: 0
@@ -201,7 +201,7 @@
 // aspect-ratio box with a placeholder background, image stretched
 // (object-fit: fill, not cover) to exactly fill it.
 .practical_frame
-  background-color: rgba(102, 102, 102, 0.25)
+  background-color: var(--accent1-tint)
   border-radius: 0.5rem
   overflow: hidden
 

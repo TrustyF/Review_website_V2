@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { NavSearch } from "@/components/navbar/nav-search/nav-search";
 import style from "./nav-bar.module.sass";
@@ -15,6 +16,7 @@ const REVEAL_THRESHOLD_PX = 200;
 
 export default function Navbar() {
 	const { data: session } = useSession();
+	const pathname = usePathname();
 	const [hidden, setHidden] = useState(false);
 	// Refs, not state — every scroll frame writes these, and re-rendering on
 	// each one (rather than only when `hidden` actually flips) would be pure
@@ -52,50 +54,89 @@ export default function Navbar() {
 		return () => window.removeEventListener("scroll", handleScroll);
 	}, []);
 
+	// Home ("/") only counts as active on an exact match — every other route
+	// starts with "/" too. Everything else matches on prefix, so a sub-route
+	// (e.g. /lists/[id]) still highlights its section's link.
+	function isActive(href: string) {
+		if (href === "/") return pathname === "/";
+		return pathname === href || pathname.startsWith(`${href}/`);
+	}
+
+	function current(href: string) {
+		return isActive(href) ? "page" : undefined;
+	}
+
 	return (
 		<nav className={`${style.wrapper} ${hidden ? style.hidden : ""}`}>
 			<Link href="/" className={style.title}>
-				Review app
+				Arthur&#39;s Corner
 			</Link>
 
 			<NavSearch />
 
-			<Link href="/" className={style.link}>
+			<Link href="/" className={style.link} aria-current={current("/")}>
 				Home
 			</Link>
-			<Link href="/movies" className={style.link}>
+			<Link
+				href="/movies"
+				className={style.link}
+				aria-current={current("/movies")}>
 				Movies
 			</Link>
-			<Link href="/shorts" className={style.link}>
+			<Link
+				href="/shorts"
+				className={style.link}
+				aria-current={current("/shorts")}>
 				Shorts
 			</Link>
-			<Link href="/tv" className={style.link}>
+			<Link href="/tv" className={style.link} aria-current={current("/tv")}>
 				TV
 			</Link>
-			<Link href="/manga" className={style.link}>
+			<Link
+				href="/manga"
+				className={style.link}
+				aria-current={current("/manga")}>
 				Manga
 			</Link>
-			<Link href="/games" className={style.link}>
+			<Link
+				href="/games"
+				className={style.link}
+				aria-current={current("/games")}>
 				Games
 			</Link>
-			<Link href="/comics" className={style.link}>
+			<Link
+				href="/comics"
+				className={style.link}
+				aria-current={current("/comics")}>
 				Comics
 			</Link>
-			<Link href="/books" className={style.link}>
+			<Link
+				href="/books"
+				className={style.link}
+				aria-current={current("/books")}>
 				Books
 			</Link>
-			<Link href="/lists" className={style.link}>
+			<Link
+				href="/lists"
+				className={style.link}
+				aria-current={current("/lists")}>
 				Lists
 			</Link>
-			<Link href="/add" className={style.link}>
+			<Link href="/add" className={style.link} aria-current={current("/add")}>
 				Add
 			</Link>
 			{session?.user ? (
 				<>
-					<Link href="/watchlist" className={style.link}>
+					<Link
+						href="/watchlist"
+						className={style.link}
+						aria-current={current("/watchlist")}>
 						Watchlist
 					</Link>
-					<Link href="/account" className={style.link}>
+					<Link
+						href="/account"
+						className={style.link}
+						aria-current={current("/account")}>
 						Account
 					</Link>
 					<button
@@ -106,7 +147,10 @@ export default function Navbar() {
 					</button>
 				</>
 			) : (
-				<Link href="/login" className={style.link}>
+				<Link
+					href="/login"
+					className={style.sign_out_button}
+					aria-current={current("/login")}>
 					Sign in
 				</Link>
 			)}

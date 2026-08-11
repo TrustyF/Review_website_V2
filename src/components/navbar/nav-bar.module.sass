@@ -8,38 +8,48 @@
   align-items: center
   gap: 1.5rem
   width: 100%
-  padding: 1rem 2rem
+  padding: 1rem 3rem
   position: fixed
   top: 0
   left: 0
   z-index: 10
-  //background: linear-gradient(to bottom, var(--background) -100%, transparent 100%)
   transition: transform 0.25s ease
+
+  //border-bottom: 1px solid var(--brand-muted)
+  //background-color: var(--background)
+  //backdrop-filter: blur(10)
+
+  color: var(--body)
 
 .hidden
   transform: translateY(-100%)
 
 .title
+  font-size: 1.5rem
   font-weight: 700
   margin-right: auto
+  color: var(--brand)
 
-.link
-  color: #e6e6e6
-  text-shadow: #151315 1px 1px 3px
+.link,
+.sign_out_button
+  color: inherit
+  text-shadow: var(--background) 2px 1px 3px
 
   &:hover
     color: var(--foreground)
+
+.link
+  &[aria-current="page"]
+    color: var(--brand)
 
 // Same look as .link, but a real <button> reset — this triggers signOut()
 // rather than navigating anywhere.
 .sign_out_button
   border: none
-  background: transparent
-  padding: 0
   font: inherit
   cursor: pointer
-  color: #e6e6e6
-  text-shadow: #151315 1px 1px 3px
-
-  &:hover
-    color: var(--foreground)
+  color: var(--brand)
+  background-color: var(--brand-muted)
+  padding: 0.5rem 0.75rem
+  border-radius: 0.5rem
+  text-shadow: unset

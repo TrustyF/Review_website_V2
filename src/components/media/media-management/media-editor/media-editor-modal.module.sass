@@ -1,7 +1,7 @@
 @use "@/app/styles/variables" as *
 
 .wrapper
-  background-color: rgba(25, 25, 25, 1)
+  background-color: var(--modal-bg)
   position: fixed
   left: 0
   top: 0
@@ -184,7 +184,7 @@
     padding: 5px 8px
 
 .save_error
-  color: #e05656
+  color: var(--danger)
   padding: 0 20px
 
 .picker_group
@@ -211,11 +211,11 @@
   padding: 0 20px
 
 .danger_zone_label
-  color: #e05656
+  color: var(--danger)
   font-size: 0.8rem
 
 .deleted_notice
-  color: #e05656
+  color: var(--danger)
   font-size: 0.85rem
 
 .danger_actions
@@ -229,14 +229,14 @@
     cursor: pointer
 
 .danger_button
-  border-color: #e05656
-  color: #e05656
+  border-color: var(--danger)
+  color: var(--danger)
 
 .confirm_delete
   display: flex
   flex-flow: row
   align-items: center
   gap: 0.5rem
-  color: #e05656
+  color: var(--danger)
   font-size: 0.85rem
 

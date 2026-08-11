@@ -1,7 +1,7 @@
 import { CSSProperties, SVGProps } from "react";
 
 const DEFAULT_STYLE: CSSProperties = {
-	color: "#FCCA00",
+	color: "var(--warning)",
 	marginTop: "-0.1rem",
 	aspectRatio: "1",
 	objectFit: "scale-down",
