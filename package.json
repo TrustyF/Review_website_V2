@@ -20,7 +20,8 @@
 		"enrich_db": "tsx src/server/maintenance/enrich-db.ts",
 		"purge_deleted_changelogs": "tsx src/server/maintenance/purge-deleted-change-log.ts",
 		"add_movies_to_list": "tsx src/scripts/dev/add-movies-to-list.ts",
-		"promote_admin": "tsx src/scripts/dev/promote-admin.ts"
+		"promote_admin": "tsx src/scripts/dev/promote-admin.ts",
+		"email_dev": "email dev --dir ./src/emails --port 3001"
 	},
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.115.0",
@@ -30,6 +31,7 @@
 		"@dnd-kit/utilities": "^3.2.2",
 		"@prisma/adapter-pg": "^7.8.0",
 		"@prisma/client": "^7.8.0",
+		"@react-email/components": "^1.0.12",
 		"arktype": "^2.0.0",
 		"bcryptjs": "^3.0.3",
 		"diff": "^9.0.0",
@@ -49,6 +51,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.4",
+		"@react-email/ui": "^6.9.2",
 		"@types/node": "^20",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
@@ -61,6 +64,7 @@
 		"husky": "^9.1.7",
 		"mysql2": "^3.22.5",
 		"prisma": "^7.8.0",
+		"react-email": "^6.9.2",
 		"sass": "^1.101.0",
 		"tsx": "^4.23.12",
 		"typescript": "^5"
