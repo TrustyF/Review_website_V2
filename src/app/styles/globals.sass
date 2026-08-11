@@ -82,10 +82,17 @@ html
 html,
 body
   max-width: 100vw
-  overflow-x: hidden
 
-
+// overflow-x here only, not on html too — html and body both setting
+// overflow-x confuses which one the viewport's scroll/clip propagates from
+// (CSS overflow propagation: body's overflow propagates to the viewport in
+// HTML documents, but with html *also* setting it, the propagation gets
+// inconsistent across engines) and that in turn breaks position: sticky for
+// every descendant, since sticky offsets are computed relative to the
+// nearest actual scrolling ancestor. Confirmed by removing this from html
+// alone: the RatedTierGrid's sticky tier_header started working immediately.
 body
+  overflow-x: hidden
   min-height: 100%
   display: flex
   flex-direction: column

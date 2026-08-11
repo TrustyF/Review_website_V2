@@ -10,7 +10,6 @@
   cursor: pointer
   //border: 1px solid var(--accent1)
   padding: 0.5rem
-  left: -0.5rem
   border-radius: 0.5rem
   display: flex
   flex-flow: row
@@ -19,6 +18,22 @@
   font-size: 1.25rem
   font-weight: 600
   width: fit-content
+  // Sticks to the top of the viewport while its <details> is scrolling
+  // past, then scrolls away with the rest of that tier once the next
+  // <details> pushes it out — sticky's containing block is the parent
+  // <details>, so it naturally can't overstay into the next tier. top: 0
+  // rather than var(--navbar-height) — the navbar auto-hides on scroll-down
+  // (nav-bar.tsx), which is the direction you're in for most of a scroll
+  // through this grid, and offsetting for a navbar that's usually gone
+  // would leave a permanent gap above the stuck header; z-index below the
+  // navbar's so it tucks behind it during the brief top-of-page window
+  // where the navbar is still visible. Opaque background is needed since
+  // the grid scrolls underneath it once stuck.
+  position: sticky
+  top: 2rem
+  z-index: 5
+  background: var(--background)
+  transform: translateX(-1rem)
 
 .tier_count
   color: var(--accent1)
