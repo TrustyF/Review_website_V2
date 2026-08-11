@@ -19,7 +19,7 @@ type Props = {
 };
 
 // Marks every NavDropdown's root <details> so the "close other dropdowns"
-// effect below (and closeAllNavDropdowns, called from nav-bar.tsx) can find
+// helper below (and closeAllNavDropdowns, called from nav-bar.tsx) can find
 // them all, regardless of how many are rendered.
 const DROPDOWN_SELECTOR = "details[data-nav-dropdown]";
 
@@ -34,6 +34,27 @@ export function closeAllNavDropdowns() {
 			el.open = false;
 		});
 }
+
+// <details> has no built-in mutually-exclusive group (that's <input
+// type="radio"> only) — shared by the toggle listener (a click/keyboard
+// open) and handleMouseEnter (a hover open) below, so both paths agree on
+// what "opening this one" does to every other dropdown.
+function closeOtherDropdowns(current: HTMLDetailsElement) {
+	document
+		.querySelectorAll<HTMLDetailsElement>(DROPDOWN_SELECTOR)
+		.forEach((other) => {
+			if (other !== current) other.open = false;
+		});
+}
+
+// How long the panel stays open after the pointer leaves before it actually
+// closes — the trigger-to-panel gap itself is already bridged with padding
+// rather than a raw offset (see .panel in nav-dropdown.module.sass) so
+// crossing it doesn't fire a real mouseleave in the first place; this delay
+// is just a grace window for everything else (a brief overshoot past the
+// panel's own edge, a diagonal move that clips the corner), canceled the
+// instant the pointer lands back on the trigger or the panel.
+const CLOSE_DELAY_MS = 200;
 
 // Key for the group's own default label ("Media"), alongside each item's
 // href as the key for its label variant ("Movies").
@@ -50,6 +71,7 @@ export function NavDropdown({ label, icon: Icon, items }: Props) {
 	const activeItem = items.find((item) => isNavActive(pathname, item.href));
 	const activeLabelKey = activeItem ? activeItem.href : GROUP_LABEL_KEY;
 	const detailsRef = useRef<HTMLDetailsElement>(null);
+	const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	// State adjusted during render (the React-sanctioned alternative to
 	// reading a ref's value while rendering) rather than a ref written from
@@ -63,28 +85,49 @@ export function NavDropdown({ label, icon: Icon, items }: Props) {
 		setLastActiveLabelKey(activeLabelKey);
 	}
 
-	// <details> has no built-in mutually-exclusive group (that's <input
-	// type="radio"> only), so opening one leaves any other already-open
-	// dropdown sitting open too. This listens for this dropdown's own native
-	// "toggle" event and, on open, reaches out to close every other one —
-	// simpler than routing shared open state through context for two
-	// siblings that otherwise don't need to know about each other.
+	// Covers a click/keyboard-driven open (the native "toggle" event) — a
+	// hover-driven open below calls closeOtherDropdowns directly instead,
+	// since not every browser queues "toggle" for a script-set `.open` the
+	// same way it does for a real interaction.
 	useEffect(() => {
 		const el = detailsRef.current;
 		if (!el) return;
 
 		function handleToggle() {
-			if (!el?.open) return;
-			document
-				.querySelectorAll<HTMLDetailsElement>(DROPDOWN_SELECTOR)
-				.forEach((other) => {
-					if (other !== el) other.open = false;
-				});
+			if (el?.open) closeOtherDropdowns(el);
 		}
 
 		el.addEventListener("toggle", handleToggle);
 		return () => el.removeEventListener("toggle", handleToggle);
 	}, []);
+
+	// Clears any pending close if this dropdown (or another one) unmounts
+	// mid-timeout — e.g. the label variants above change on navigation, but
+	// this covers the panel itself going away entirely.
+	useEffect(() => {
+		return () => {
+			if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+		};
+	}, []);
+
+	function handleMouseEnter() {
+		if (closeTimeoutRef.current) {
+			clearTimeout(closeTimeoutRef.current);
+			closeTimeoutRef.current = null;
+		}
+		const el = detailsRef.current;
+		if (!el) return;
+		if (!el.open) el.open = true;
+		closeOtherDropdowns(el);
+	}
+
+	function handleMouseLeave() {
+		closeTimeoutRef.current = setTimeout(() => {
+			const el = detailsRef.current;
+			if (el) el.open = false;
+			closeTimeoutRef.current = null;
+		}, CLOSE_DELAY_MS);
+	}
 
 	// Every label variant (the group label plus each item's) stays mounted,
 	// stacked into the same CSS grid cell in nav-dropdown.module.sass — the
@@ -98,7 +141,12 @@ export function NavDropdown({ label, icon: Icon, items }: Props) {
 	];
 
 	return (
-		<details ref={detailsRef} data-nav-dropdown className={style.wrapper}>
+		<details
+			ref={detailsRef}
+			data-nav-dropdown
+			className={style.wrapper}
+			onMouseEnter={handleMouseEnter}
+			onMouseLeave={handleMouseLeave}>
 			<summary
 				className={style.trigger}
 				aria-current={activeItem ? "page" : undefined}>
@@ -129,25 +177,27 @@ export function NavDropdown({ label, icon: Icon, items }: Props) {
 				<ChevronDown size={14} className={style.chevron} />
 			</summary>
 			<div className={style.panel}>
-				{items.map((item) => {
-					const ItemIcon = item.icon;
-					const isItemActive = isNavActive(pathname, item.href);
-					return (
-						<Link
-							key={item.href}
-							href={item.href}
-							className={style.link}
-							aria-current={isItemActive ? "page" : undefined}>
-							{ItemIcon && (
-								<ItemIcon
-									size={14}
-									fill={isItemActive ? "currentColor" : "none"}
-								/>
-							)}
-							{item.label}
-						</Link>
-					);
-				})}
+				<div className={style.panel_content}>
+					{items.map((item) => {
+						const ItemIcon = item.icon;
+						const isItemActive = isNavActive(pathname, item.href);
+						return (
+							<Link
+								key={item.href}
+								href={item.href}
+								className={style.link}
+								aria-current={isItemActive ? "page" : undefined}>
+								{ItemIcon && (
+									<ItemIcon
+										size={14}
+										fill={isItemActive ? "currentColor" : "none"}
+									/>
+								)}
+								{item.label}
+							</Link>
+						);
+					})}
+				</div>
 			</div>
 		</details>
 	);

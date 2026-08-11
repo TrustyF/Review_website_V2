@@ -26,8 +26,20 @@ $mini-card-min-width: 110px
 // each caller since those legitimately differ (a trigger has an extra
 // chevron the plain links don't).
 @mixin nav-item-look
+  position: relative
   color: inherit
   text-shadow: var(--background) 2px 1px 3px
+
+  // Invisible hit-area padding — a ::before is generated content of this
+  // same element, not a separate overlapping one the way src/components/
+  // ui/hitbox.tsx's own hit_area div would be, so hovering or clicking
+  // anywhere in the expanded box still counts as hovering/clicking this
+  // link itself, with nothing painted on top of a neighboring element to
+  // block. Purely a bigger target; nothing about how the link looks changes.
+  &::before
+    content: ""
+    position: absolute
+    inset: -0.8rem
 
   &:hover
     color: var(--brand)

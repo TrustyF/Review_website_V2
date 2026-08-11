@@ -57,11 +57,23 @@
     transition: opacity 0.2s ease
     transform: none
 
+// Flush against the trigger (no top offset) and the visual gap moved into
+// padding-top instead — a position: absolute panel doesn't extend .wrapper's
+// own hoverable box (see NavDropdown's CLOSE_DELAY_MS comment), so a real
+// top offset here would leave a dead zone the pointer visibly exits and
+// re-enters crossing. Padding keeps that same space, just inside this
+// element's own box instead of between it and the trigger, so hovering
+// through it never leaves .panel at all. The visible chrome (background,
+// border, ...) moves to .panel_content so this padding stays invisible
+// rather than reading as a see-through band above the menu.
 .panel
   position: absolute
-  top: calc(100% + 0.5rem)
+  top: 100%
   left: 0
   z-index: 20
+  padding-top: 0.5rem
+
+.panel_content
   display: flex
   flex-flow: column
   gap: 0.5rem
