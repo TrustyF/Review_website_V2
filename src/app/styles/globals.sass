@@ -3,6 +3,12 @@
 :root
   --background: #151315
   --foreground: #ededed
+  // Translucent --background, for the navbar's frosted-glass scrim — mixed
+  // rather than a hand-picked rgba() so it can't drift out of sync with
+  // --background itself.
+  --nav-scrim: color-mix(in srgb, var(--background) 75%, transparent)
+
+  --ticket-accent: #ec3013
 
   // Single brand color, plus the interaction-state and on-color variants
   // derived from it — the shape most sites with one primary color use

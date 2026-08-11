@@ -1,8 +1,11 @@
 // Height here (1rem padding + ~1rem of line-height content + 1rem padding
-// = ~3rem) is what globals.sass's --navbar-height is standing in for, to
-// reserve the right amount of space at the top of every page — the two
-// aren't otherwise linked, so a padding/font change here that moves this
-// box's real height needs that variable nudged to match.
+// = ~3rem, plus the 1px border below that box-sizing: border-box doesn't
+// absorb since this box's height is auto rather than an explicit value) is
+// what globals.sass's --navbar-height is standing in for, to reserve the
+// right amount of space at the top of every page — the two aren't
+// otherwise linked, so a padding/font change here that moves this box's
+// real height needs that variable nudged to match. The 1px border is small
+// enough to not bother chasing.
 .wrapper
   display: flex
   align-items: center
@@ -14,12 +17,22 @@
   left: 0
   z-index: 10
   transition: transform 0.25s ease
+  color: var(--foreground)
 
-  //border-bottom: 1px solid var(--brand-muted)
-  //background-color: var(--background)
-  //backdrop-filter: blur(10)
-
-  color: var(--body)
+  // Plain color gradient, no blur — the frosted-glass version (backdrop-
+  // filter, masked to fade out) looked smudgy where it faded and darkened
+  // the banner more than wanted. This is just --nav-scrim fading to
+  // transparent, applied directly on .wrapper rather than needing a masked
+  // pseudo-element, since a plain gradient doesn't need protecting the text
+  // from a mask the way the blurred version did.
+  //
+  // Eased stops, not a plain 2-stop linear fade — a straight opaque-to-
+  // transparent ramp shows a visible seam partway through (alpha
+  // interpolates linearly, but the eye doesn't perceive it that way against
+  // busy content underneath), so this front-loads the fade — strong near
+  // the top, then a long soft tail — the standard "easing gradient" curve
+  // used to avoid that banding.
+  background: linear-gradient(to bottom, var(--nav-scrim) 0%, color-mix(in srgb, var(--nav-scrim) 74%, transparent) 19%, color-mix(in srgb, var(--nav-scrim) 54%, transparent) 34%, color-mix(in srgb, var(--nav-scrim) 38%, transparent) 47%, color-mix(in srgb, var(--nav-scrim) 21%, transparent) 62.5%, color-mix(in srgb, var(--nav-scrim) 11%, transparent) 75%, color-mix(in srgb, var(--nav-scrim) 4%, transparent) 87%, transparent 100%)
 
 .hidden
   transform: translateY(-100%)
