@@ -1,5 +1,6 @@
 import { mkdir, readdir, readFile, stat, unlink, writeFile } from "fs/promises";
 import path from "path";
+import { del, head, list as listBlobs, put } from "@vercel/blob";
 
 // Every caller addresses a file by a logical {dir, filename} pair instead of
 // a real filesystem path — dir is a slash-joined key like "posters/cache" or
@@ -94,36 +95,116 @@ class LocalImageStorage implements ImageStorage {
 	}
 }
 
-const NOT_IMPLEMENTED =
-	"IMAGE_STORAGE_DRIVER=vercel-blob is not implemented yet — this is a " +
-	"placeholder so the driver name is already wired up end-to-end. Fill in " +
-	"each method using @vercel/blob's put/list/del/head once that package is " +
-	"added, and point urlFor at the store's own public URL shape instead of " +
-	"a local /-prefixed path (next.config.ts's images.localPatterns will " +
-	"also need a matching remotePatterns entry for that host).";
+// Token shape Vercel issues is "vercel_blob_rw_<storeId>_<secret>" — every
+// public blob URL is deterministically `https://<storeId>.public.blob
+// .vercel-storage.com/<pathname>`, which is what lets urlFor stay a plain
+// sync string build (matching ImageStorage's contract) instead of needing a
+// round trip. @vercel/blob parses this same way internally, but doesn't
+// export the helper, so it's reproduced here rather than reached into via a
+// private import path.
+function parseBlobStoreId(token: string): string {
+	const storeId = token.split("_")[3];
+	if (!storeId) {
+		throw new Error(
+			'Malformed BLOB_READ_WRITE_TOKEN — expected the "vercel_blob_rw_<storeId>_<secret>" shape Vercel issues.',
+		);
+	}
+	return storeId;
+}
 
-// Selected by IMAGE_STORAGE_DRIVER=vercel-blob. Every method throws rather
-// than silently falling back to acting like local storage — a misconfigured
-// driver name should fail loudly at first use, not quietly write cache files
-// nobody can find.
+// Selected automatically whenever the app is running on Vercel (or
+// explicitly via IMAGE_STORAGE_DRIVER=vercel-blob) — see getImageStorage's
+// driver-selection comment below. Every cached asset here is
+// public (posters/banners/crops/thumbnails all get served straight to
+// browsers or link-preview crawlers), so every call uses access: "public"
+// and addRandomSuffix: false — filenames are already content-addressed by
+// the callers in poster-resolver.ts/image-crop-resolver.ts/etc, so a random
+// suffix would only break the "same input -> same URL" property those rely
+// on. allowOverwrite: true covers two racing requests both missing the same
+// cache key and writing the same bytes back — not an error case, just a
+// wasted duplicate upload either way.
 class VercelBlobImageStorage implements ImageStorage {
-	read(): Promise<Buffer | null> {
-		throw new Error(NOT_IMPLEMENTED);
+	private requireToken(): string {
+		const token = process.env.BLOB_READ_WRITE_TOKEN;
+		if (!token) {
+			throw new Error(
+				"BLOB_READ_WRITE_TOKEN is not set — required when " +
+					"IMAGE_STORAGE_DRIVER=vercel-blob. Connect a Blob store to this " +
+					"Vercel project (or set the var locally) to use it.",
+			);
+		}
+		return token;
 	}
-	write(): Promise<void> {
-		throw new Error(NOT_IMPLEMENTED);
+
+	private pathnameFor(dir: string, filename: string): string {
+		return `${dir}/${filename}`;
 	}
-	list(): Promise<string[]> {
-		throw new Error(NOT_IMPLEMENTED);
+
+	async read(dir: string, filename: string): Promise<Buffer | null> {
+		const token = this.requireToken();
+		let blob: { url: string };
+		try {
+			blob = await head(this.pathnameFor(dir, filename), { token });
+		} catch {
+			return null;
+		}
+		const res = await fetch(blob.url);
+		if (!res.ok) return null;
+		return Buffer.from(await res.arrayBuffer());
 	}
-	remove(): Promise<boolean> {
-		throw new Error(NOT_IMPLEMENTED);
+
+	async write(dir: string, filename: string, bytes: Buffer): Promise<void> {
+		await put(this.pathnameFor(dir, filename), bytes, {
+			access: "public",
+			addRandomSuffix: false,
+			allowOverwrite: true,
+			token: this.requireToken(),
+		});
 	}
-	statMtimeMs(): Promise<number | null> {
-		throw new Error(NOT_IMPLEMENTED);
+
+	async list(dir: string): Promise<string[]> {
+		const token = this.requireToken();
+		const prefix = `${dir}/`;
+		const filenames: string[] = [];
+		let cursor: string | undefined;
+		do {
+			const page = await listBlobs(
+				cursor ? { prefix, cursor, token } : { prefix, token },
+			);
+			for (const blob of page.blobs) {
+				filenames.push(blob.pathname.slice(prefix.length));
+			}
+			cursor = page.hasMore ? page.cursor : undefined;
+		} while (cursor);
+		return filenames;
 	}
-	urlFor(): string {
-		throw new Error(NOT_IMPLEMENTED);
+
+	async remove(dir: string, filename: string): Promise<boolean> {
+		const token = this.requireToken();
+		const pathname = this.pathnameFor(dir, filename);
+		try {
+			await head(pathname, { token });
+		} catch {
+			return false;
+		}
+		await del(pathname, { token });
+		return true;
+	}
+
+	async statMtimeMs(dir: string, filename: string): Promise<number | null> {
+		try {
+			const blob = await head(this.pathnameFor(dir, filename), {
+				token: this.requireToken(),
+			});
+			return blob.uploadedAt.getTime();
+		} catch {
+			return null;
+		}
+	}
+
+	urlFor(dir: string, filename: string): string {
+		const storeId = parseBlobStoreId(this.requireToken());
+		return `https://${storeId}.public.blob.vercel-storage.com/${this.pathnameFor(dir, filename)}`;
 	}
 }
 
@@ -136,7 +217,17 @@ let cached: ImageStorage | null = null;
 export function getImageStorage(): ImageStorage {
 	if (cached) return cached;
 
-	const driver = process.env.IMAGE_STORAGE_DRIVER ?? "local";
+	// IMAGE_STORAGE_DRIVER, if set, always wins. Otherwise default by
+	// environment: VERCEL is set to "1" automatically in every one of
+	// Vercel's own environments (Production, Preview, and `vercel dev`) —
+	// checking it here means there's nothing to remember to flip before a
+	// deploy, only an explicit var to set if a project ever wants to
+	// override the default (e.g. testing the blob driver from a local dev
+	// machine, or running local storage in some future self-hosted
+	// production deployment).
+	const driver =
+		process.env.IMAGE_STORAGE_DRIVER ??
+		(process.env.VERCEL === "1" ? "vercel-blob" : "local");
 	switch (driver) {
 		case "local":
 			cached = new LocalImageStorage();

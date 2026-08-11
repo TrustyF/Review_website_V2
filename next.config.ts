@@ -56,6 +56,19 @@ const nextConfig: NextConfig = {
 				pathname: "/api/banner/**",
 			},
 		],
+		// Only reachable when IMAGE_STORAGE_DRIVER=vercel-blob — resolveChangelogPosterThumb/
+		// resolveChangelogBannerThumb and saveListThumbnail/cropAndSave (see
+		// src/server/storage/image-storage.ts's VercelBlobImageStorage) hand
+		// out a direct https://<storeId>.public.blob.vercel-storage.com/...
+		// URL instead of a local path in that mode, so next/image needs this
+		// allowlisted alongside localPatterns above. Harmless to leave enabled
+		// under the local driver — it just never matches anything.
+		remotePatterns: [
+			{
+				protocol: "https",
+				hostname: "*.public.blob.vercel-storage.com",
+			},
+		],
 	},
 };
 

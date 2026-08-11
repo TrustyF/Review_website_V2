@@ -4,7 +4,8 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
-		"build": "next build",
+		"postinstall": "prisma generate",
+		"build": "prisma migrate deploy && next build",
 		"start": "next start",
 		"lint": "eslint && npm run lint:colors",
 		"lint:colors": "node scripts/check-color-literals.mjs",
@@ -33,6 +34,7 @@
 		"@prisma/adapter-pg": "^7.8.0",
 		"@prisma/client": "^7.8.0",
 		"@react-email/components": "^1.0.12",
+		"@vercel/blob": "^2.8.0",
 		"arktype": "^2.0.0",
 		"bcryptjs": "^3.0.3",
 		"diff": "^9.0.0",
