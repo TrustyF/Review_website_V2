@@ -10,6 +10,9 @@ export type MediaFilterState = {
 	maxRating: number | null;
 	minRuntime: number | null;
 	maxRuntime: number | null;
+	// Same whitelist idea as includedGenres, over Review.difficulty's 0/1/2
+	// domain (see DIFFICULTY_LEVELS) rather than genre strings.
+	includedDifficulties: Set<number>;
 };
 
 export const EMPTY_MEDIA_FILTER: MediaFilterState = {
@@ -18,7 +21,18 @@ export const EMPTY_MEDIA_FILTER: MediaFilterState = {
 	maxRating: null,
 	minRuntime: null,
 	maxRuntime: null,
+	includedDifficulties: new Set(),
 };
+
+// Review.difficulty's own 0/1/2 domain (see media-editor-modal.tsx's number
+// input) — a fixed, always-the-same-three-options list, unlike genres, so
+// there's no need for a collectDifficulties() derived from the media the
+// way collectGenres() is.
+export const DIFFICULTY_LEVELS: { value: number; label: string }[] = [
+	{ value: 0, label: "Easy" },
+	{ value: 1, label: "Medium" },
+	{ value: 2, label: "Hard" },
+];
 
 // How long a grid waits after the last filter tweak (a slider tick, a
 // checkbox click) before actually re-filtering its list — same idea as
@@ -34,7 +48,8 @@ export function isFilterActive(filter: MediaFilterState): boolean {
 		filter.minRating != null ||
 		filter.maxRating != null ||
 		filter.minRuntime != null ||
-		filter.maxRuntime != null
+		filter.maxRuntime != null ||
+		filter.includedDifficulties.size > 0
 	);
 }
 
@@ -74,6 +89,16 @@ export function matchesMediaFilter(
 		if (filter.maxRuntime != null && runtime > filter.maxRuntime) return false;
 	}
 
+	if (filter.includedDifficulties.size > 0) {
+		// Unset counts as Easy (0), not "excluded" — same equivalence
+		// MediaPoster's own notch already draws (see its comment: "0/null
+		// means 'not rated for difficulty'", both rendering as no notch at
+		// all), so a media item nobody's flagged Medium/Hard reads as Easy
+		// here too rather than disappearing from every difficulty filter.
+		const difficulty = media.review?.difficulty ?? 0;
+		if (!filter.includedDifficulties.has(difficulty)) return false;
+	}
+
 	return true;
 }
 
@@ -88,21 +113,22 @@ export function collectGenres(media: MediaRecord[]): string[] {
 	return [...genres].sort((a, b) => a.localeCompare(b));
 }
 
-export type FilterField = "genre" | "rating" | "runtime";
+export type FilterField = "genre" | "rating" | "runtime" | "difficulty";
 
 // The one place that says which filter dimensions make sense for which
 // media type — e.g. a game has no runtime to filter by, so MediaFilterPopover
 // shouldn't offer a Runtime slider on a page that's showing only games.
 // Extend this, not a scattered set of per-type `if`s elsewhere, whenever a
 // new filterable field (or a new media type) needs this decision made.
+// difficulty lives on Review, same as rating — every type gets it.
 const FILTERABLE_FIELDS_BY_TYPE: Record<MediaType, ReadonlySet<FilterField>> = {
-	[MediaType.MOVIE]: new Set(["genre", "rating", "runtime"]),
-	[MediaType.SHORT]: new Set(["genre", "rating", "runtime"]),
-	[MediaType.TVSHOW]: new Set(["genre", "rating"]),
-	[MediaType.MANGA]: new Set(["genre", "rating"]),
-	[MediaType.COMIC]: new Set(["genre", "rating"]),
-	[MediaType.GAME]: new Set(["genre", "rating"]),
-	[MediaType.BOOK]: new Set(["genre", "rating"]),
+	[MediaType.MOVIE]: new Set(["genre", "rating", "runtime", "difficulty"]),
+	[MediaType.SHORT]: new Set(["genre", "rating", "runtime", "difficulty"]),
+	[MediaType.TVSHOW]: new Set(["genre", "rating", "difficulty"]),
+	[MediaType.MANGA]: new Set(["genre", "rating", "difficulty"]),
+	[MediaType.COMIC]: new Set(["genre", "rating", "difficulty"]),
+	[MediaType.GAME]: new Set(["genre", "rating", "difficulty"]),
+	[MediaType.BOOK]: new Set(["genre", "rating", "difficulty"]),
 };
 
 // Union of filterable fields across whatever media types are actually

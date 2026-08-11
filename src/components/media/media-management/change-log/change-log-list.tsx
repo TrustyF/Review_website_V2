@@ -32,10 +32,23 @@ const FIELD_LABELS: Record<string, string> = {
 	// naturally alongside it. "watched"/"reviewed" are never actually written
 	// to MediaChangeLog — see the synthetic entries built below, sourced from
 	// Review.createDate/reviewDate — only "rewatched" is a real row, from
-	// logRewatch.
-	watched: "Watched on",
+	// logRewatch. "watched" isn't listed here — see WATCHED_LABEL_BY_TYPE,
+	// its wording depends on the media's own type.
 	reviewed: "Reviewed on",
 	rewatched: "Rewatched on",
+};
+
+// "watched" is the one type-agnostic field MediaChangeLog/the synthetic
+// entry above actually write — the verb shown for it depends on the media's
+// own type instead of the field itself.
+const WATCHED_LABEL_BY_TYPE: Record<MediaType, string> = {
+	[MediaType.MOVIE]: "Watched on",
+	[MediaType.SHORT]: "Watched on",
+	[MediaType.TVSHOW]: "Watched on",
+	[MediaType.MANGA]: "Read on",
+	[MediaType.COMIC]: "Read on",
+	[MediaType.BOOK]: "Read on",
+	[MediaType.GAME]: "Played on",
 };
 
 // Rows for these fields are date-only markers — oldValue/newValue are just a
@@ -245,7 +258,9 @@ export function ChangeLogList({
 					const row = (
 						<>
 							<span className={styles.field}>
-								{FIELD_LABELS[entry.field] ?? entry.field}
+								{entry.field === "watched"
+									? WATCHED_LABEL_BY_TYPE[type]
+									: (FIELD_LABELS[entry.field] ?? entry.field)}
 							</span>
 							{/* Milestone fields skip the value diff — the empty span still
 							keeps its flex: 1 spacer role so .date stays right-aligned same

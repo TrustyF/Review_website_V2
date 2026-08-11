@@ -5,6 +5,7 @@ import { MediaRecord } from "@/components/media/types";
 import {
 	availableFilterFields,
 	collectGenres,
+	DIFFICULTY_LEVELS,
 	EMPTY_MEDIA_FILTER,
 	isFilterActive,
 	MediaFilterState,
@@ -67,13 +68,21 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 		(filter.minRating != null ? 1 : 0) +
 		(filter.maxRating != null ? 1 : 0) +
 		(filter.minRuntime != null ? 1 : 0) +
-		(filter.maxRuntime != null ? 1 : 0);
+		(filter.maxRuntime != null ? 1 : 0) +
+		filter.includedDifficulties.size;
 
 	function toggleGenre(genre: string) {
 		const next = new Set(filter.includedGenres);
 		if (next.has(genre)) next.delete(genre);
 		else next.add(genre);
 		onChange({ ...filter, includedGenres: next });
+	}
+
+	function toggleDifficulty(value: number) {
+		const next = new Set(filter.includedDifficulties);
+		if (next.has(value)) next.delete(value);
+		else next.add(value);
+		onChange({ ...filter, includedDifficulties: next });
 	}
 
 	return (
@@ -137,7 +146,7 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 					{availableFields.has("genre") && availableGenres.length > 0 && (
 						<div className={styles.section}>
 							<div className={styles.section_title}>Genres</div>
-							<ul className={styles.genre_list}>
+							<ul className={styles.checkbox_list}>
 								{availableGenres.map((genre) => (
 									<li key={genre}>
 										<label className={styles.label}>
@@ -147,6 +156,26 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 												onChange={() => toggleGenre(genre)}
 											/>
 											{genre}
+										</label>
+									</li>
+								))}
+							</ul>
+						</div>
+					)}
+
+					{availableFields.has("difficulty") && (
+						<div className={styles.section}>
+							<div className={styles.section_title}>Difficulty</div>
+							<ul className={styles.checkbox_list}>
+								{DIFFICULTY_LEVELS.map((level) => (
+									<li key={level.value}>
+										<label className={styles.label}>
+											<input
+												type="checkbox"
+												checked={filter.includedDifficulties.has(level.value)}
+												onChange={() => toggleDifficulty(level.value)}
+											/>
+											{level.label}
 										</label>
 									</li>
 								))}

@@ -60,6 +60,11 @@ const CLOSE_DELAY_MS = 200;
 // href as the key for its label variant ("Movies").
 const GROUP_LABEL_KEY = "__group__";
 
+// Matches .label's own transition duration in nav-dropdown.module.sass —
+// how long a variant needs to stay flagged "exiting" before it's safe to
+// drop that flag (see the effect below for why dropping it matters).
+const LABEL_TRANSITION_MS = 200;
+
 // Native <details>/<summary> rather than useState + useOutsideClick — same
 // pattern DevMenu already uses for its own floating panel, and it comes
 // with open/close and keyboard support for free.
@@ -84,6 +89,27 @@ export function NavDropdown({ label, icon: Icon, items }: Props) {
 		setPreviousActiveKey(lastActiveLabelKey);
 		setLastActiveLabelKey(activeLabelKey);
 	}
+
+	// previousActiveKey has to survive long enough for its variant to
+	// actually play the exit transition (translateY(0) -> translateY(-100%)),
+	// but not a moment longer — left alone, it would stay equal to whatever
+	// key last exited forever (nothing overwrites it once navigation stops),
+	// pinning that variant at translateY(-100%) instead of letting it settle
+	// back to the same translateY(100%) resting spot every other inactive
+	// variant sits in. That's invisible in the moment (opacity: 0 either
+	// way), but the next time that variant becomes active again, it would
+	// then animate downward into place from above instead of upward from
+	// below — the exact "sometimes slides the wrong way" bug this avoids.
+	// Setting it back to activeLabelKey (rather than some null/none sentinel)
+	// is enough: it makes isExiting false for everyone, same as if this
+	// variant had never exited in the first place.
+	useEffect(() => {
+		if (previousActiveKey === activeLabelKey) return;
+		const timeout = setTimeout(() => {
+			setPreviousActiveKey(activeLabelKey);
+		}, LABEL_TRANSITION_MS);
+		return () => clearTimeout(timeout);
+	}, [previousActiveKey, activeLabelKey]);
 
 	// Covers a click/keyboard-driven open (the native "toggle" event) — a
 	// hover-driven open below calls closeOtherDropdowns directly instead,

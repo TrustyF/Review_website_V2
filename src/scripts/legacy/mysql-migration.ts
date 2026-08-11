@@ -106,6 +106,13 @@ async function main() {
 					// Review.difficulty in prisma/schema/rating.prisma) — shift down
 					// so it lands on the same none/medium/hard meaning.
 					difficulty: u.difficulty != null ? u.difficulty - 1 : null,
+					// Otherwise defaults to now() (see Review.createDate in
+					// rating.prisma) — "Watched on" would read as the moment this
+					// migration ran instead of the actual old date. The old schema
+					// never split "added to the catalog" from "watched/rated" into
+					// two dates the way Media.createDate/Review.createDate do now, so
+					// this reuses the same created_at the Media row above it does.
+					createDate: u.created_at,
 				},
 			};
 		}
