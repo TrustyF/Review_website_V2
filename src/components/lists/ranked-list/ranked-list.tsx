@@ -113,10 +113,10 @@ export function RankedList({ listId, media }: Props) {
 	}
 
 	return (
-		<div>
-			<div className={styles.controls}>
-				<MediaFilterPopover media={media} filter={filter} onChange={setFilter} />
-				{isAdmin && (
+		<div className={styles.wrapper}>
+			<MediaFilterPopover media={media} filter={filter} onChange={setFilter} />
+			{isAdmin && (
+				<div className={styles.controls}>
 					<button
 						type="button"
 						className={styles.sort_button}
@@ -129,8 +129,8 @@ export function RankedList({ listId, media }: Props) {
 						onClick={handleSortByRating}>
 						Sort by rating
 					</button>
-				)}
-			</div>
+				</div>
+			)}
 			{reorderError && <div className={styles.error}>{reorderError}</div>}
 			{orderedMedia.length === 0 ? (
 				<p className={styles.empty}>No media matches the current filter.</p>

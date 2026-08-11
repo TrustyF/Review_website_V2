@@ -39,7 +39,7 @@ interface LegacyUserRow extends RowDataPacket {
 	createDate: Date;
 	updateDate: Date;
 	externalId: number;
-	difficulty: number;
+	difficulty: number | null;
 }
 
 async function main() {
@@ -80,7 +80,7 @@ async function main() {
 		switch (mediaType) {
 			case "MOVIE":
 				mapped_entry.movie = {
-					create: { runtime: 0 },
+					create: {},
 				};
 				break;
 			case "TVSHOW":
@@ -102,7 +102,10 @@ async function main() {
 			mapped_entry.review = {
 				create: {
 					rating: u.user_rating ?? 0,
-					difficulty: u.difficulty ?? 0,
+					// Old schema's scale is one higher than the new one (see
+					// Review.difficulty in prisma/schema/rating.prisma) — shift down
+					// so it lands on the same none/medium/hard meaning.
+					difficulty: u.difficulty != null ? u.difficulty - 1 : null,
 				},
 			};
 		}

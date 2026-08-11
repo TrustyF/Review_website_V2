@@ -255,7 +255,7 @@ export default function MediaEditorModal() {
 				mediaId: prev.id,
 				rating: prev.review?.rating ?? null,
 				liked: prev.review?.liked ?? false,
-				difficulty: prev.review?.difficulty ?? 0,
+				difficulty: prev.review?.difficulty ?? null,
 				body: prev.review?.body ?? null,
 				reviewDate: prev.review?.reviewDate ?? null,
 				createDate: prev.review?.createDate ?? new Date(),
@@ -432,9 +432,18 @@ export default function MediaEditorModal() {
 								step={1}
 								className={styles.field_input}
 								value={draft?.review?.difficulty ?? 0}
-								onChange={(e) =>
-									patchReview({ difficulty: Number(e.target.value) })
-								}
+								onChange={(e) => {
+									// min/max on the input only affect the spinner arrows, not
+									// a typed/pasted value — clamp by hand so a stray "-3" or
+									// "99" can't reach patchReview. Server-side, saveReview
+									// rejects anything outside 0-2 too, for callers that skip
+									// this input entirely.
+									const parsed = Number(e.target.value);
+									const clamped = Number.isFinite(parsed)
+										? Math.min(2, Math.max(0, Math.round(parsed)))
+										: 0;
+									patchReview({ difficulty: clamped });
+								}}
 							/>
 						</label>
 						<div className={styles.field}>

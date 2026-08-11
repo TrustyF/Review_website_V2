@@ -30,7 +30,8 @@ export function ReviewIcon({ style, size = 15, title, ...props }: Props) {
 			<path
 				fill="currentColor"
 				fillRule="evenodd"
-				d="m0 0h10v2H0zm0 4h9v2H0zM5 8H0v2h5Z"
+				clipRule="evenodd"
+				d="m0 1c0-.5523.4477-1 1-1h12c.5523 0 1 .4477 1 1s-.4477 1-1 1h-12c-.5523 0-1-.4477-1-1m0 4c0-.5523.4477-1 1-1h12c.5523 0 1 .4477 1 1s-.4477 1-1 1h-12c-.5523 0-1-.4477-1-1m0 4c0-.5523.4477-1 1-1h5c.5523 0 1 .4477 1 1s-.4477 1-1 1h-5c-.5523 0-1-.4477-1-1z"
 			/>
 		</svg>
 	);

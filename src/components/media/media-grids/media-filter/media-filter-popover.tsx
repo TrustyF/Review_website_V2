@@ -11,6 +11,8 @@ import {
 import { DualRangeSlider } from "@/components/media/media-grids/media-filter/dual-range-slider";
 import { formatRuntime } from "@/components/media/primitives/runtime";
 import { useOutsideClick } from "@/lib/use-outside-click";
+import { FilterIcon } from "@/components/media/icons/filter-icon";
+import { Hitbox } from "@/components/ui/hitbox";
 import styles from "./media-filter-popover.module.sass";
 
 type Props = {
@@ -76,15 +78,14 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 
 	return (
 		<div className={styles.wrapper} ref={containerRef}>
-			<button
-				type="button"
-				className={styles.trigger}
-				onClick={() => setIsOpen((v) => !v)}>
-				Filter
-				{activeCount > 0 && (
-					<span className={styles.count_badge}>{activeCount}</span>
-				)}
-			</button>
+			<Hitbox onClick={() => setIsOpen((v) => !v)} padding={15}>
+				<div className={styles.trigger}>
+					<FilterIcon />
+					{activeCount > 0 && (
+						<span className={styles.count_badge}>{activeCount}</span>
+					)}
+				</div>
+			</Hitbox>
 			{isOpen && (
 				<div className={styles.popover}>
 					{availableFields.has("rating") && (

@@ -62,13 +62,7 @@ export function MediaFilterGrid({ media }: Props) {
 
 	return (
 		<div className={styles.wrapper}>
-			<div className={styles.controls}>
-				<MediaFilterPopover
-					media={media}
-					filter={filter}
-					onChange={setFilter}
-				/>
-			</div>
+			<MediaFilterPopover media={media} filter={filter} onChange={setFilter} />
 			<RatedTierGrid media={filteredMedia} />
 		</div>
 	);

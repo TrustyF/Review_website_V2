@@ -1,12 +1,19 @@
+// Floats over its caller's own wrapper instead of taking a row in normal
+// flow — every caller (MediaFilterGrid, RankedList, ListMediaView) is
+// responsible for being position: relative itself so this actually anchors
+// to its own top-right corner rather than some unrelated ancestor's.
 .wrapper
-  display: inline-block
+  position: absolute
+  z-index: 5
+  top: 0
+  right: 0
 
 .trigger
   display: flex
   flex-flow: row
   align-items: center
   gap: 0.35rem
-  padding: 0.3rem 0.9rem
+  padding: 0.3rem 0.5rem
   border: 1px solid var(--accent1)
   border-radius: 1rem
   background: transparent
@@ -23,7 +30,7 @@
   align-items: center
   justify-content: center
   min-width: 1.1rem
-  height: 1.1rem
+  height: 1rem
   padding: 0 0.3rem
   border-radius: 999px
   background: var(--accent1)
@@ -35,6 +42,7 @@
   position: absolute
   z-index: 20
   margin-top: 0.4rem
+  right: 0
   padding: 0.7rem
   width: 15rem
   display: flex

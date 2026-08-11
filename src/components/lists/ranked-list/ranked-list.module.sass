@@ -1,5 +1,11 @@
 @use "@/app/styles/variables" as *
 
+// position: relative — anchors MediaFilterPopover's own absolutely-
+// positioned .wrapper to this box's top-right corner (see that component's
+// own note).
+.wrapper
+  position: relative
+
 .controls
   display: flex
   flex-flow: row

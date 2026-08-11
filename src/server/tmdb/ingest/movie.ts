@@ -45,7 +45,7 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 				enrichmentStatus: EnrichmentStatus.DONE,
 				movie: {
 					create: {
-						runtime: data.runtime ?? 0,
+						runtime: data.runtime,
 						budget: data.budget,
 						revenue: data.revenue,
 						tagline: data.tagline,

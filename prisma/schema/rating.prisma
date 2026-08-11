@@ -6,7 +6,10 @@ model Review {
 
   rating     Float?
   liked      Boolean @default(false)
-  difficulty Int     @default(0)
+  // null and 0 are equivalent — both mean "no difficulty notch" (see
+  // MediaPoster's own difficulty === 1 || difficulty === 2 check); 1 is
+  // medium, 2 is hard.
+  difficulty Int?
 
   body String?
 

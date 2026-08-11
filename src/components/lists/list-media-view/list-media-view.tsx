@@ -40,10 +40,8 @@ export function ListMediaView({ listId, media, sortMode }: Props) {
 		: undefined;
 
 	return (
-		<div>
-			<div className={styles.controls}>
-				<MediaFilterPopover media={media} filter={filter} onChange={setFilter} />
-			</div>
+		<div className={styles.wrapper}>
+			<MediaFilterPopover media={media} filter={filter} onChange={setFilter} />
 			{filteredMedia.length === 0 ? (
 				<p className={styles.empty}>No media matches the current filter.</p>
 			) : sortMode === "RATED" ? (

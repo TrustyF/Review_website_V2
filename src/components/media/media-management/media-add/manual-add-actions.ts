@@ -16,7 +16,7 @@ function subTableFor(type: MediaType): SubTableFields {
 	switch (type) {
 		case MediaType.MOVIE:
 		case MediaType.SHORT:
-			return { movie: { create: { runtime: 0 } } };
+			return { movie: { create: {} } };
 		case MediaType.TVSHOW:
 			return { tvShow: { create: {} } };
 		case MediaType.MANGA:

@@ -63,7 +63,7 @@ export async function saveReview(
 	review: {
 		rating: number | null;
 		liked: boolean;
-		difficulty: number;
+		difficulty: number | null;
 		body: string | null;
 	},
 ) {
@@ -74,6 +74,19 @@ export async function saveReview(
 	// a UI nicety so it can't be bypassed by any other caller either.
 	if (review.rating == null) {
 		throw new Error("A rating is required to save a review.");
+	}
+
+	// Same 0/1/2 (or null) domain the editor's own number input clamps to
+	// (see media-editor-modal.tsx) — enforced here too so a caller that
+	// skips the UI can't write something MediaPoster's notch logic was
+	// never meant to see.
+	if (
+		review.difficulty != null &&
+		(!Number.isInteger(review.difficulty) ||
+			review.difficulty < 0 ||
+			review.difficulty > 2)
+	) {
+		throw new Error("Difficulty must be 0, 1, or 2.");
 	}
 
 	const existing = await db.review.findUnique({ where: { mediaId } });
