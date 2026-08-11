@@ -42,8 +42,14 @@
 .title
   font-size: 1.5rem
   font-weight: 700
-  margin-right: auto
   color: var(--brand)
+
+// Pushes everything after the search bar (the nav groups) over to the
+// right edge, leaving the search bar itself sitting left-aligned right
+// next to .title instead of bunched together with the nav groups.
+.search
+  margin-right: auto
+  margin-left: 10rem
 
 // Three clusters — browse (Home/Media/Reading/Games), collection (Lists/
 // Add), account (Watchlist/Account/sign in-out) — each a flex item of

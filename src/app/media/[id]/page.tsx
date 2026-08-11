@@ -323,6 +323,7 @@ export default async function MediaDetailPage({
 				</div>
 			)}
 			{media.bannerSrc && <div className={styles.banner_spacer} />}
+			{!media.bannerSrc && <div className={styles.no_banner_spacer} />}
 
 			<div className={styles.details_wrapper}>
 				<div className={styles.header}>

@@ -123,7 +123,9 @@ export default function Navbar() {
 				Arthur&#39;s Corner
 			</Link>
 
-			<NavSearch />
+			<div className={style.search}>
+				<NavSearch />
+			</div>
 
 			<div className={style.nav_group}>
 				<NavLink href="/" className={style.link} pathname={pathname}>

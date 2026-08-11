@@ -17,11 +17,23 @@
   cursor: pointer
   @include nav-item-look
 
+// Wraps the icon + label (everything but the chevron) in an actual <a> so a
+// mouse click there navigates to the group's first item — see the comment
+// above this in nav-dropdown.tsx. Inherits .trigger's color (including its
+// :hover/[aria-current] states) rather than picking up the browser's default
+// link styling.
+.trigger_link
+  display: flex
+  align-items: center
+  gap: 0.25rem
+  color: inherit
+  text-decoration: none
+
 .chevron
   transition: transform 0.15s ease
 
-  .wrapper[open] &
-    transform: rotate(180deg)
+  //.wrapper[open] &
+  //  transform: rotate(180deg)
 
 // All label variants (group label + each item's) sit in the same grid
 // cell, overlapping — the grid's implicit track sizes to the widest one,

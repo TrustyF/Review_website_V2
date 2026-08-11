@@ -176,30 +176,42 @@ export function NavDropdown({ label, icon: Icon, items }: Props) {
 			<summary
 				className={style.trigger}
 				aria-current={activeItem ? "page" : undefined}>
-				{/* Lucide has no separate filled icon set, so "filled" is just
-				this icon's own fill switched on rather than a different asset. */}
-				{Icon && <Icon size={14} fill={activeItem ? "currentColor" : "none"} />}
-				<span className={style.label_stack}>
-					{labelVariants.map((variant) => {
-						const isActive = variant.key === activeLabelKey;
-						// Only the variant that just lost active status gets
-						// "exiting" — everything else rests in the default
-						// (below, invisible) position, ready to slide up into
-						// place if it becomes active later.
-						const isExiting =
-							!isActive &&
-							variant.key === previousActiveKey &&
-							previousActiveKey !== activeLabelKey;
-						return (
-							<span
-								key={variant.key}
-								className={`${style.label} ${isActive ? style.active : isExiting ? style.exiting : ""}`}
-								aria-hidden={!isActive}>
-								{variant.text}
-							</span>
-						);
-					})}
-				</span>
+				{/* A click landing here (rather than on the bare chevron) is
+				handed to this Link, whose own preventDefault on click also
+				suppresses <summary>'s native open-toggle as a side effect — so
+				a mouse click navigates straight to the first item instead of
+				just opening the panel, while the panel is still reachable by
+				hover, by keyboard (Enter on the focused <summary> targets
+				<summary> itself, not this Link, so toggling still applies),
+				or by clicking the chevron directly. */}
+				<Link href={items[0]?.href ?? "#"} className={style.trigger_link}>
+					{/* Lucide has no separate filled icon set, so "filled" is just
+					this icon's own fill switched on rather than a different asset. */}
+					{Icon && (
+						<Icon size={14} fill={activeItem ? "currentColor" : "none"} />
+					)}
+					<span className={style.label_stack}>
+						{labelVariants.map((variant) => {
+							const isActive = variant.key === activeLabelKey;
+							// Only the variant that just lost active status gets
+							// "exiting" — everything else rests in the default
+							// (below, invisible) position, ready to slide up into
+							// place if it becomes active later.
+							const isExiting =
+								!isActive &&
+								variant.key === previousActiveKey &&
+								previousActiveKey !== activeLabelKey;
+							return (
+								<span
+									key={variant.key}
+									className={`${style.label} ${isActive ? style.active : isExiting ? style.exiting : ""}`}
+									aria-hidden={!isActive}>
+									{variant.text}
+								</span>
+							);
+						})}
+					</span>
+				</Link>
 				<ChevronDown size={14} className={style.chevron} />
 			</summary>
 			<div className={style.panel}>
