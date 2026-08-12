@@ -2,6 +2,7 @@ import { readFile } from "fs/promises";
 import { createHash } from "crypto";
 import path from "path";
 import sharp from "sharp";
+import { after } from "next/server";
 import { MediaType } from "@prisma/client";
 import { getImageStorage } from "@/server/storage/image-storage";
 
@@ -417,29 +418,63 @@ export function bannerUrlFor(type: MediaType, bannerPath: string) {
 	return `https://image.tmdb.org/t/p/w1280${bannerPath}`;
 }
 
-// Same content-addressable cache-or-download as resolvePoster, own directory
-// (BANNER_DIR) since it's a different asset. Capped to BANNER_MAX_WIDTH —
-// the source is already display-ready otherwise, it's just wider than the
-// page ever renders it.
-// Same "return bytes, not a URL" reasoning as resolvePoster.
+// Doesn't share cacheOrDownload's shape — a banner source (TMDB w1280
+// backdrop / IGDB t_1080p artwork) is large enough that the resize + AVIF
+// re-encode is the slow part of a cache miss, not the download. Blocking the
+// very first viewer of a given banner on that encode (plus the storage
+// write, itself a network round trip on the Blob backend) is what made a
+// first-time banner load noticeably slow on Vercel. Instead, a miss returns
+// the raw source bytes immediately and does the resize/encode/write in
+// `after()`, off the request's critical path — the next request for this
+// banner finds it cached (see the `fresh` flag below) and gets the small,
+// long-lived-cacheable AVIF.
 export async function resolveBanner(
 	mediaId: number,
 	type: MediaType,
 	bannerPath: string | null,
-): Promise<ResolvedAsset | null> {
+	// media-editor-actions.ts's save handler wants the opposite trade-off:
+	// it's not racing a browser for a fast first byte, and its whole point in
+	// calling this at all is to have the cache warm *before* it returns, so
+	// it awaits the encode inline instead of deferring it.
+	{ awaitEncode = false }: { awaitEncode?: boolean } = {},
+): Promise<(ResolvedAsset & { fresh: boolean }) | null> {
 	if (!bannerPath) return null;
 
 	const filename = mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT);
-	const { bytes } = await cacheOrDownload(
-		BANNER_DIR,
-		filename,
-		bannerUrlFor(type, bannerPath),
-		{ resize: { width: BANNER_MAX_WIDTH } },
-		BANNER_QUALITY,
-		BANNER_FORMAT,
-	);
+	const storage = getImageStorage();
 
-	return { bytes, contentType: `image/${BANNER_FORMAT}` };
+	const cached = await storage.read(BANNER_DIR, filename);
+	if (cached) {
+		return {
+			bytes: cached,
+			contentType: `image/${BANNER_FORMAT}`,
+			fresh: false,
+		};
+	}
+
+	const res = await fetch(bannerUrlFor(type, bannerPath));
+	if (!res.ok) throw new Error("Banner download failed");
+	const source = Buffer.from(await res.arrayBuffer());
+	// TMDB backdrops and IGDB artworks are both plain JPEGs, but reading it
+	// off the response rather than hardcoding "image/jpeg" costs nothing and
+	// stays correct if either source ever changes format.
+	const sourceContentType = res.headers.get("content-type") || "image/jpeg";
+
+	const encode = async () => {
+		const encoded = await sharp(source)
+			.resize({ width: BANNER_MAX_WIDTH, withoutEnlargement: true })
+			.avif({ quality: BANNER_QUALITY })
+			.toBuffer();
+		await storage.write(BANNER_DIR, filename, encoded);
+	};
+
+	if (awaitEncode) {
+		await encode();
+	} else {
+		after(encode);
+	}
+
+	return { bytes: source, contentType: sourceContentType, fresh: true };
 }
 
 // Same content-addressable caching as resolveChangelogPosterThumb, but for a

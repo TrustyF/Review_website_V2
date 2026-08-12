@@ -39,7 +39,15 @@ export async function GET(
 	return new NextResponse(resolved.bytes as BodyInit, {
 		headers: {
 			"Content-Type": resolved.contentType,
-			"Cache-Control": "public, max-age=31536000, immutable",
+			// A `fresh` response is the raw, not-yet-compressed source — see
+			// resolveBanner's own comment. It must NOT get the long-lived
+			// immutable treatment: the compressed version lands in storage
+			// moments later (via `after()`), and a CDN/browser that cached
+			// this raw response as immutable would never see it. `no-store`
+			// means the very next request re-resolves and finds it cached.
+			"Cache-Control": resolved.fresh
+				? "no-store"
+				: "public, max-age=31536000, immutable",
 		},
 	});
 }

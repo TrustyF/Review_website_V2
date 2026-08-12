@@ -453,8 +453,12 @@ export async function updateMediaBanner(mediaId: number, bannerPath: string) {
 		});
 	}
 
-	// Same eager cache-on-save reasoning as updateMediaPoster above.
-	await resolveBanner(mediaId, existing!.type, bannerPath);
+	// Same eager cache-on-save reasoning as updateMediaPoster above —
+	// awaitEncode so the cache is actually warm by the time this returns,
+	// not deferred like the /api/banner route's fast-first-byte path.
+	await resolveBanner(mediaId, existing!.type, bannerPath, {
+		awaitEncode: true,
+	});
 	revalidatePath("/");
 	return `/api/banner/${mediaId}/${mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT)}`;
 }
