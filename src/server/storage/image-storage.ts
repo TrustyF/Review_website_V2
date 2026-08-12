@@ -225,8 +225,15 @@ export function getImageStorage(): ImageStorage {
 	// override the default (e.g. testing the blob driver from a local dev
 	// machine, or running local storage in some future self-hosted
 	// production deployment).
+	//
+	// `||`, not `??` — .env files (and Vercel's own env var UI) commonly
+	// leave an unused var present but blank (`IMAGE_STORAGE_DRIVER=`) rather
+	// than omitting the line entirely, which sets it to "" rather than
+	// leaving it undefined. `??` only falls back on null/undefined, so a
+	// blank value would reach the switch below as "" and fail as an unknown
+	// driver instead of falling through to the auto-detect default.
 	const driver =
-		process.env.IMAGE_STORAGE_DRIVER ??
+		process.env.IMAGE_STORAGE_DRIVER ||
 		(process.env.VERCEL === "1" ? "vercel-blob" : "local");
 	switch (driver) {
 		case "local":
