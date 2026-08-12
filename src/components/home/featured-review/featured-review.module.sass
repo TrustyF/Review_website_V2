@@ -1,0 +1,109 @@
+@use "@/app/styles/variables" as *
+
+.wrapper
+  position: relative
+  display: block
+  color: inherit
+  text-decoration: none
+  border-radius: 0.75rem
+  overflow: hidden
+  background: var(--background)
+
+  &:hover .read_more
+    text-decoration-color: var(--brand)
+
+.banner
+  position: relative
+  width: 100%
+  aspect-ratio: 21/9
+  background-color: var(--background)
+
+.banner_image
+  object-fit: cover
+
+.banner_backdrop
+  position: absolute
+  inset: 0
+  pointer-events: none
+  //mix-blend-mode: soft-light
+  background-image: linear-gradient(to top, var(--background) 0%, color-mix(in srgb, var(--background) 60%, transparent) 15%, transparent 50%)
+
+.content
+  position: relative
+  display: flex
+  flex-flow: row
+  gap: 1.5rem
+  padding: 1.5rem
+
+// Pulled up over the banner's gradient fade so the poster/title read as
+// sitting on top of the backdrop rather than in a separate block below it —
+// same visual idea as media-detail.module.sass's banner/header overlap.
+.content_overlap
+  margin-top: -6rem
+
+.poster
+  flex-shrink: 0
+  width: 180px
+
+.info
+  display: flex
+  flex-flow: column
+  gap: 0.5rem
+  min-width: 0
+  justify-content: flex-end
+
+.eyebrow
+  color: var(--brand)
+  font-size: 0.8rem
+  font-weight: 600
+  text-transform: uppercase
+  letter-spacing: 0.03em
+
+.title
+  font-size: 2rem
+  text-shadow: var(--background) 2px 2px 4px
+
+.meta_row
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 1rem
+  color: var(--accent1)
+  font-family: $font-mono
+  font-size: 0.95rem
+
+.rating
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.2rem
+  font-weight: bold
+  color: var(--body)
+
+// A row of <p> per paragraph (see featured-review.tsx), not a single text
+// node — -webkit-line-clamp only clamps one box's own inline content, not
+// several block-level children, so the cutoff here is a max-height + fade
+// instead, same "more than the old 3-line clamp, but still capped" intent.
+.excerpt
+  display: flex
+  flex-flow: column
+  gap: 0.75rem
+  color: var(--body)
+  font-family: $font-body
+  font-size: 1rem
+  line-height: 1.5rem
+  max-height: 9rem
+  overflow: hidden
+  mask-image: linear-gradient(to bottom, black 70%, transparent 100%)
+  -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%)
+
+.excerpt_line
+  white-space: pre-wrap
+
+.read_more
+  color: var(--brand-active)
+  font-size: 0.9rem
+  text-decoration: underline
+  text-decoration-color: transparent
+  transition: text-decoration-color 0.15s ease
+  width: fit-content
