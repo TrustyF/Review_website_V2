@@ -1,6 +1,8 @@
 "use client";
+import { useTransition } from "react";
 import Link from "next/link";
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { forceRevalidateAll } from "./dev-menu-actions";
 import styles from "./dev-menu.module.sass";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -20,6 +22,7 @@ const isDev = process.env.NODE_ENV === "development";
 // on its own a reason to expose it to a signed-out or non-admin visitor.
 export function DevMenu() {
 	const isAdmin = useIsAdmin();
+	const [isPending, startTransition] = useTransition();
 
 	if (!isAdmin) return null;
 
@@ -49,6 +52,16 @@ export function DevMenu() {
 						<Link href="/dev/image-crop" className={styles.link}>
 							Image crop
 						</Link>
+						<button
+							type="button"
+							className={styles.tool_button}
+							disabled={isPending}
+							// After a manual DB edit, not a substitute for the
+							// server actions' own revalidatePath calls — see
+							// dev-menu-actions.ts.
+							onClick={() => startTransition(() => forceRevalidateAll())}>
+							{isPending ? "Refreshing…" : "Force DB refresh"}
+						</button>
 					</div>
 				)}
 			</div>

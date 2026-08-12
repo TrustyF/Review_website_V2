@@ -59,3 +59,22 @@
 
   &:hover
     color: var(--foreground)
+
+// Same look as .link, plus the reset a <button> needs to actually read as
+// one of these rows instead of browser-default button chrome.
+.tool_button
+  border: none
+  background: none
+  padding: 0
+  font: inherit
+  text-align: left
+  color: var(--foreground)
+  text-shadow: var(--background) 1px 1px 3px
+  cursor: pointer
+
+  &:hover
+    color: var(--foreground)
+
+  &:disabled
+    color: var(--accent1)
+    cursor: default
