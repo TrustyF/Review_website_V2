@@ -1,0 +1,73 @@
+// Self-positioned in the same top-right corner as MediaFilterPopover (its
+// only caller, MediaFilterGrid, is already position: relative for that
+// reason) but offset left by MediaFilterPopover's own worst-case width (its
+// trigger plus its count badge, plus a bit of breathing room) so the two
+// triggers sit side by side instead of overlapping. Fixed rather than
+// measured — cheaper than a ResizeObserver for two triggers that never
+// change size at runtime, just occasionally width (the badge appearing/
+// disappearing).
+.wrapper
+  position: absolute
+  z-index: 5
+  top: 0
+  right: 3.75rem
+
+.trigger
+  position: relative
+  display: flex
+  flex-flow: row
+  align-items: center
+  padding: 0.3rem 0.5rem
+  border: 1px solid var(--accent1)
+  border-radius: 1rem
+  background: transparent
+  color: var(--accent1)
+  font-size: 0.8rem
+  cursor: pointer
+
+  &:hover
+    color: var(--foreground)
+    border-color: var(--foreground)
+
+.active_dot
+  position: absolute
+  top: -0.1rem
+  right: -0.1rem
+  width: 0.5rem
+  height: 0.5rem
+  border-radius: 50%
+  background: var(--brand)
+
+// Same shape as nav-dropdown.module.sass's .panel_content — this popover and
+// a nav dropdown's are both "a short list of plain link-like rows floating
+// over the page", so they read as the same kind of menu.
+.popover
+  position: absolute
+  z-index: 20
+  margin-top: 0.4rem
+  right: 0
+  padding: 0.6rem
+  width: 10rem
+  display: flex
+  flex-flow: column
+  gap: 0.5rem
+  background-color: var(--surface)
+  border: 1px solid var(--surface-border)
+  border-radius: 0.5rem
+  box-shadow: 0 4px 16px var(--overlay-backdrop)
+
+// Same look as nav-dropdown.module.sass's .link — a plain span (role=
+// "button", not an actual <button>; see media-sort-popover.tsx) styled the
+// same way, since a real <button> here rendered with its native chrome
+// (background, sharp-cornered border/focus box) showing through instead of
+// reading as just another link-like row in the menu.
+.option
+  display: flex
+  align-items: center
+  gap: 0.4rem
+  color: var(--foreground)
+  font-size: 1rem
+  cursor: pointer
+
+  &[aria-current="true"]
+    color: var(--brand)

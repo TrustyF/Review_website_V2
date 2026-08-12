@@ -47,11 +47,6 @@ export async function MediaTypeListPage({
 
 	return (
 		<div className={styles.wrapper}>
-			{recentHref && (
-				<Link href={recentHref} className={styles.recent_link}>
-					Recent
-				</Link>
-			)}
 			<MediaFilterGrid media={media} showRating={false} showTitle={false} />
 		</div>
 	);

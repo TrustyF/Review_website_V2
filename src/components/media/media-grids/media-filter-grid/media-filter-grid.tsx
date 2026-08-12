@@ -1,10 +1,12 @@
 "use client";
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { MediaRecord } from "@/components/media/types";
-import { RatedTierGrid } from "@/components/media/media-grids/rated-tier-grid/rated-tier-grid";
 import { useMediaFilter } from "@/components/media/media-grids/media-filter/use-media-filter";
 import { MediaFilterPopover } from "@/components/media/media-grids/media-filter/media-filter-popover";
+import { MediaSortPopover } from "@/components/media/media-grids/media-sort/media-sort-popover";
+import { MediaSortedGrid } from "@/components/media/media-grids/media-sort/media-sorted-grid";
+import { MediaSortOption } from "@/components/media/media-grids/media-sort/media-sort";
 import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
 import styles from "./media-filter-grid.module.sass";
 
@@ -42,6 +44,15 @@ type Props = {
 export function MediaFilterGrid({ media, showRating, showTitle }: Props) {
 	const pathname = usePathname();
 	const { filter, setFilter, filteredMedia } = useMediaFilter(media);
+	const [sort, setSort] = useState<MediaSortOption>("rating");
+
+	// A caller's showRating={false} (e.g. MediaTypeListPage) means "the
+	// rating tier headers already say this, don't repeat it on every card" —
+	// true only for the default rating-tiered view. Sorted by release/watch
+	// date instead, there's no tier header carrying that information
+	// anymore, so the rating shows on the cards regardless of what the
+	// caller passed.
+	const effectiveShowRating = sort === "rating" ? showRating : true;
 
 	// Restores window scroll position on a back-navigation into this page.
 	// Can't lean on the browser's/Next's own scroll restoration here — every
@@ -64,14 +75,15 @@ export function MediaFilterGrid({ media, showRating, showTitle }: Props) {
 	}, [pathname]);
 
 	return (
-		<MediaCardDisplayProvider showRating={showRating} showTitle={showTitle}>
+		<MediaCardDisplayProvider showRating={effectiveShowRating} showTitle={showTitle}>
 			<div className={styles.wrapper}>
+				<MediaSortPopover sort={sort} onChange={setSort} />
 				<MediaFilterPopover
 					media={media}
 					filter={filter}
 					onChange={setFilter}
 				/>
-				<RatedTierGrid media={filteredMedia} />
+				<MediaSortedGrid media={filteredMedia} sort={sort} />
 			</div>
 		</MediaCardDisplayProvider>
 	);

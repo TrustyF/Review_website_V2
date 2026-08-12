@@ -1,14 +1,11 @@
-@use "@/app/styles/variables" as *
-
-.tiers
+.groups
   display: flex
   flex-flow: column
   gap: 1rem
   margin-top: 1rem
 
-.tier_header
+.group_header
   cursor: pointer
-  //border: 1px solid var(--accent1)
   padding: 0.5rem
   border-radius: 0.5rem
   display: flex
@@ -19,9 +16,9 @@
   font-weight: 600
   width: fit-content
   // Sticks to the top of the viewport while its <details> is scrolling
-  // past, then scrolls away with the rest of that tier once the next
+  // past, then scrolls away with the rest of that group once the next
   // <details> pushes it out — sticky's containing block is the parent
-  // <details>, so it naturally can't overstay into the next tier. top: 0
+  // <details>, so it naturally can't overstay into the next group. top: 0
   // rather than var(--navbar-height) — the navbar auto-hides on scroll-down
   // (nav-bar.tsx), which is the direction you're in for most of a scroll
   // through this grid, and offsetting for a navbar that's usually gone
@@ -34,19 +31,3 @@
   z-index: 5
   background: var(--background)
   transform: translateX(-1rem)
-
-.tier_count
-  color: var(--accent1)
-  font-size: 0.7rem
-  font-weight: 400
-
-.tier_grid
-  display: grid
-  grid-template-columns: repeat(auto-fill, minmax($mini-card-min-width, 1fr))
-  gap: 1.25rem
-  padding: 0.5rem 0 1.25rem
-
-// Invisible marker the IntersectionObserver watches — sits below the grid
-// so scrolling near it reveals the next batch before you actually reach it.
-.sentinel
-  height: 1px
