@@ -1,79 +1,133 @@
 import { MediaType, Prisma, Source } from "@prisma/client";
 import { TmdbTvResponse } from "@/server/tmdb/schema";
 import {
-	resolveCompany,
-	resolveCountry,
-	resolveGenre,
-	resolvePerson,
-	resolveRole,
-} from "@/server/resolvers/entity-resolver";
+	resolveCompaniesBatch,
+	resolveCountriesBatch,
+	resolveGenresBatch,
+	resolvePeopleBatch,
+	resolveRolesBatch,
+} from "@/server/resolvers/batch-entity-resolver";
 
 type t_client = Prisma.TransactionClient;
 
 // Replaces a TV show's genres and credits with the latest TMDB data. Safe to
-// call for a brand-new media row (nothing to delete/upsert over) or to
+// call for a brand-new media row (nothing to delete/recreate over) or to
 // re-sync an existing one on re-enrichment.
+//
+// Batched rather than one round trip per cast/crew/company member — see
+// movie-credits.ts's own comment (this is the same shape, just
+// MediaType.TVSHOW) and batch-entity-resolver.ts for how each resolve*
+// below collapses a whole show's worth of references into one findMany +
+// createMany instead of one round trip per person/role/company.
 export async function syncTvShowCreditsAndGenres(
 	tx: t_client,
 	mediaId: number,
 	data: TmdbTvResponse,
 ) {
 	await tx.credit.deleteMany({ where: { mediaId } });
+	await tx.mediaGenre.deleteMany({ where: { mediaId } });
 
-	for (const g of data.genres ?? []) {
-		const genre = await resolveGenre(tx, g.name, MediaType.TVSHOW);
-		await tx.mediaGenre.upsert({
-			where: { mediaId_genreId: { mediaId, genreId: genre.id } },
-			update: {},
-			create: { mediaId, genreId: genre.id },
-		});
-	}
+	// --- Collect every reference this show needs, no DB calls yet ---
 
-	// Cast credits
-	const actorRole = data.credits?.cast?.length
-		? await resolveRole(tx, "Actor", MediaType.TVSHOW)
+	const genreInputs = (data.genres ?? []).map((g) => ({
+		name: g.name,
+		origin: MediaType.TVSHOW,
+	}));
+
+	const cast = data.credits?.cast ?? [];
+	const crew = data.credits?.crew ?? [];
+	const companies = data.production_companies ?? [];
+
+	const personInputs = [
+		...cast.map((c) => ({
+			externalId: String(c.id),
+			source: Source.TMDB,
+			name: c.name,
+		})),
+		...crew.map((c) => ({
+			externalId: String(c.id),
+			source: Source.TMDB,
+			name: c.name,
+		})),
+	];
+
+	// Every role this show's credits could need, resolved in one call:
+	// "Actor" (only if there's a cast), each crew member's own job title
+	// (e.g. "Director", "Creator"), "Studio" (only if there are companies).
+	const roleInputs = [
+		...(cast.length ? [{ name: "Actor", origin: MediaType.TVSHOW }] : []),
+		...crew.map((c) => ({ name: c.job, origin: MediaType.TVSHOW })),
+		...(companies.length
+			? [{ name: "Studio", origin: MediaType.TVSHOW }]
+			: []),
+	];
+
+	// Countries have to resolve before companies — a company's countryId
+	// comes from this.
+	const countryInputs = companies
+		.filter((co) => co.origin_country)
+		.map((co) => ({ code2: co.origin_country! }));
+
+	// --- Resolve every reference type exactly once ---
+	// Sequential, not Promise.all — see movie-credits.ts's own comment on why.
+	const genreMap = await resolveGenresBatch(tx, genreInputs);
+	const personMap = await resolvePeopleBatch(tx, personInputs);
+	const roleMap = await resolveRolesBatch(tx, roleInputs);
+	const countryMap = await resolveCountriesBatch(tx, countryInputs);
+
+	const companyInputs = companies.map((co) => ({
+		externalId: String(co.id),
+		source: Source.TMDB,
+		name: co.name,
+		type: "studio",
+		logoPath: co.logo_path,
+		countryId: co.origin_country
+			? (countryMap.get(co.origin_country.toUpperCase()) ?? null)
+			: null,
+	}));
+	const companyMap = await resolveCompaniesBatch(tx, companyInputs);
+
+	// --- Build the final rows in memory, then insert in bulk ---
+	// Iterates the ORIGINAL (un-deduped) cast/crew/company arrays — resolve*
+	// dedupes references, but every credit itself still needs its own row
+	// even when it shares a person/role/company with another.
+
+	const mediaGenreRows = genreInputs.map((g) => ({
+		mediaId,
+		genreId: genreMap.get(`${g.origin}:${g.name}`)!,
+	}));
+
+	const actorRoleId = cast.length
+		? roleMap.get(`${MediaType.TVSHOW}:Actor`)!
 		: null;
-	for (const c of data.credits?.cast ?? []) {
-		const person = await resolvePerson(tx, String(c.id), Source.TMDB, c.name);
-		await tx.credit.create({
-			data: {
-				mediaId,
-				roleId: actorRole!.id,
-				personId: person.id,
-				order: c.order,
-				character: c.character,
-			},
-		});
-	}
-
-	// Crew credits (role name = job, e.g. "Director", "Creator")
-	for (const c of data.credits?.crew ?? []) {
-		const person = await resolvePerson(tx, String(c.id), Source.TMDB, c.name);
-		const role = await resolveRole(tx, c.job, MediaType.TVSHOW);
-		await tx.credit.create({
-			data: { mediaId, roleId: role.id, personId: person.id },
-		});
-	}
-
-	// Studio/network credits
-	const studioRole = data.production_companies?.length
-		? await resolveRole(tx, "Studio", MediaType.TVSHOW)
+	const studioRoleId = companies.length
+		? roleMap.get(`${MediaType.TVSHOW}:Studio`)!
 		: null;
-	for (const co of data.production_companies ?? []) {
-		const companyCountry = co.origin_country
-			? await resolveCountry(tx, co.origin_country)
-			: null;
-		const company = await resolveCompany(
-			tx,
-			String(co.id),
-			Source.TMDB,
-			co.name,
-			"studio",
-			co.logo_path,
-			companyCountry?.id ?? null,
-		);
-		await tx.credit.create({
-			data: { mediaId, roleId: studioRole!.id, companyId: company.id },
-		});
+
+	const creditRows: Prisma.CreditCreateManyInput[] = [
+		...cast.map((c) => ({
+			mediaId,
+			roleId: actorRoleId!,
+			personId: personMap.get(`${Source.TMDB}:${c.id}`)!,
+			order: c.order,
+			character: c.character,
+		})),
+		...crew.map((c) => ({
+			mediaId,
+			roleId: roleMap.get(`${MediaType.TVSHOW}:${c.job}`)!,
+			personId: personMap.get(`${Source.TMDB}:${c.id}`)!,
+		})),
+		...companies.map((co) => ({
+			mediaId,
+			roleId: studioRoleId!,
+			companyId: companyMap.get(`${Source.TMDB}:${co.id}`)!,
+		})),
+	];
+
+	if (mediaGenreRows.length) {
+		await tx.mediaGenre.createMany({ data: mediaGenreRows });
+	}
+	if (creditRows.length) {
+		await tx.credit.createMany({ data: creditRows });
 	}
 }

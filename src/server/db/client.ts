@@ -6,7 +6,21 @@ const adapter = new PrismaPg({
 	connectionString: process.env.DATABASE_URL!,
 });
 
-export const db = new PrismaClient({ adapter });
+export const db = new PrismaClient({
+	adapter,
+	// Prisma's 5s/2s defaults assume near-zero round-trip latency — true
+	// enough against local Postgres, but every ingest module (movie.ts,
+	// tv-show.ts, comic.ts, game.ts, manga.ts, book.ts) runs one sequential
+	// query per cast/crew/genre/company inside a single interactive
+	// transaction (see entity-resolver.ts's resolve* upserts), and a big
+	// ensemble cast times out against a remote DB like Neon where each round
+	// trip costs real network latency. Applies globally rather than patching
+	// all 14 $transaction call sites individually.
+	transactionOptions: {
+		timeout: 60_000, // default: 5_000ms — the transaction body itself; a movie with a large cast/crew (100+ sequential round trips) can still take tens of seconds over the network
+		maxWait: 10_000, // default: 2_000ms — time to acquire a connection/transaction slot, generous enough to ride out a Neon cold-start
+	},
+});
 
 // Merges isDeleted: false into a Media `where`, but only when the caller
 // hasn't already said anything about that field — an explicit isDeleted
