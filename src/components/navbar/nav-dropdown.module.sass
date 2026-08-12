@@ -22,12 +22,26 @@
 // above this in nav-dropdown.tsx. Inherits .trigger's color (including its
 // :hover/[aria-current] states) rather than picking up the browser's default
 // link styling.
+//
+// nav-item-look's own ::before (on .trigger) enlarges the *visual*/hover hit
+// box, but a click landing in that enlarged margin is still a click on
+// .trigger itself — the <summary> — not on this nested <a>, so it fell
+// through to <summary>'s native open/close toggle instead of this Link's
+// navigate-and-preventDefault handling (see nav-dropdown.tsx). Repeating the
+// same inset-0.8rem trick here, scoped to just this element, is what makes
+// clicking that padding actually navigate like clicking the label text does.
 .trigger_link
+  position: relative
   display: flex
   align-items: center
   gap: 0.25rem
   color: inherit
   text-decoration: none
+
+  &::before
+    content: ""
+    position: absolute
+    inset: -0.8rem
 
 .chevron
   transition: transform 0.15s ease

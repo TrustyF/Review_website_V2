@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import { MediaType } from "@prisma/client";
 import {
@@ -30,7 +30,6 @@ const DEBOUNCE_MS = 200;
 // MediaFilterGrid, filter-only). Type, see live results in a popout below
 // the input, click one to jump straight to its detail page.
 export function NavSearch() {
-	const router = useRouter();
 	const [input, setInput] = useState("");
 	const [results, setResults] = useState<GlobalSearchResult[]>([]);
 	const [isOpen, setIsOpen] = useState(false);
@@ -65,11 +64,13 @@ export function NavSearch() {
 		}
 	}
 
-	function handleSelect(id: number) {
+	// Link itself handles the navigation — this just resets the search's own
+	// state so the dropdown doesn't linger (with a stale query still typed
+	// in) once you've already landed on the result.
+	function handleSelect() {
 		setInput("");
 		setResults([]);
 		setIsOpen(false);
-		router.push(`/media/${id}`);
 	}
 
 	return (
@@ -91,11 +92,11 @@ export function NavSearch() {
 						<div className={styles.status}>{error}</div>
 					) : results.length > 0 ? (
 						results.map((result) => (
-							<button
-								type="button"
+							<Link
+								href={`/media/${result.id}`}
 								key={result.id}
 								className={styles.result}
-								onClick={() => handleSelect(result.id)}>
+								onClick={handleSelect}>
 								<Image
 									src={result.posterSrc}
 									alt=""
@@ -118,7 +119,7 @@ export function NavSearch() {
 										)}
 									</div>
 								</div>
-							</button>
+							</Link>
 						))
 					) : (
 						<div className={styles.status}>

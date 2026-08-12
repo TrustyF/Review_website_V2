@@ -42,25 +42,31 @@
   color: var(--accent1)
   font-size: 0.85rem
 
+// Fixed rather than content-driven — every row is exactly as tall as
+// .result_poster (80px) plus its own padding, so the dropdown's height
+// never jumps between "Searching…"/"No matches." (a single line, no image)
+// and a row of actual results, and results.map(...) never re-wraps a row's
+// text tall enough to grow past this either.
+$result-height: 5.7rem
+
 .result
   display: flex
   flex-flow: row
   align-items: center
   gap: 0.6rem
+  height: $result-height
   padding: 0.35rem
-  border: none
   border-radius: 0.35rem
   background: transparent
   color: inherit
-  text-align: left
-  cursor: pointer
+  text-decoration: none
 
   &:hover
     background: var(--surface-border)
 
 .result_poster
-  //width: 64px
-  height: 100%
+  width: 64px
+  height: 80px
   object-fit: cover
   border-radius: 0.25rem
   flex-shrink: 0
