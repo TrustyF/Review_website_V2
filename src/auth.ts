@@ -53,6 +53,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 		}),
 	],
 	callbacks: {
+		// `user` is only set on the request that actually signs in — a role
+		// change (promote-admin.ts) or an account-settings edit only takes
+		// effect on this token once that happens again, i.e. sign out/in.
+		// Deliberate: everything reads from the JWT, not a per-request DB
+		// lookup.
 		jwt({ token, user }) {
 			if (user) {
 				token.id = user.id as string;
