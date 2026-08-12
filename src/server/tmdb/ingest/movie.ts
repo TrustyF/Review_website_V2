@@ -51,6 +51,7 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 						tagline: data.tagline,
 						imdbID: data.imdb_id,
 						originalLanguage: data.original_language,
+						popularity: data.popularity,
 					},
 				},
 			},
@@ -91,8 +92,9 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 
 		// Re-enrichment only fills in fields that are still empty — anything
 		// already set (whether from a prior ingest or a hand edit in the media
-		// editor) is left alone. budget/revenue/publicRating are the exception:
-		// those genuinely change over time at the source, so they always refresh.
+		// editor) is left alone. budget/revenue/publicRating/popularity are the
+		// exception: those genuinely change over time at the source, so they
+		// always refresh.
 		await tx.media.update({
 			where: { id: existing.id },
 			data: {
@@ -117,6 +119,9 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 						imdbID: existing.movie?.imdbID ?? data.imdb_id,
 						originalLanguage:
 							existing.movie?.originalLanguage ?? data.original_language,
+						// Refreshed every re-enrich, not just filled in once — see
+						// the field's own comment in media.prisma.
+						popularity: data.popularity,
 					},
 				},
 			},

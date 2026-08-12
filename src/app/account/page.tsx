@@ -13,6 +13,7 @@ export default async function AccountPage() {
 		select: {
 			email: true,
 			name: true,
+			role: true,
 			preferredLanguage: true,
 			newsletterOptIn: true,
 		},
@@ -26,6 +27,7 @@ export default async function AccountPage() {
 				{user.name ? `${user.name} — ` : ""}
 				{user.email}
 			</p>
+			<p className={styles.role}>{user.role === "ADMIN" ? "Admin" : "Member"}</p>
 			<AccountSettingsForm
 				initial={{
 					preferredLanguage: user.preferredLanguage,

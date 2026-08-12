@@ -1,6 +1,5 @@
 "use client";
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { signUp } from "@/components/auth/auth-actions";
@@ -8,7 +7,6 @@ import { LANGUAGE_OPTIONS } from "@/lib/languages";
 import styles from "./signup-page.module.sass";
 
 export function SignupPage() {
-	const router = useRouter();
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -29,8 +27,9 @@ export function SignupPage() {
 			// own note on why) so the caller lands signed in instead of bouncing
 			// to /login to re-enter the password they just typed.
 			await signIn("credentials", { email, password, redirect: false });
-			router.push("/");
-			router.refresh();
+			// Hard navigation, not router.push + router.refresh — see
+			// login-page.tsx's own comment on why.
+			window.location.href = "/";
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to sign up. Try again.");
 			setIsSubmitting(false);

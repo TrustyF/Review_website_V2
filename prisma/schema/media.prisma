@@ -93,6 +93,11 @@ model Movie {
   tagline          String?
   imdbID           String?
   originalLanguage String?
+  // TMDB's own rolling popularity score — recomputed roughly daily from view
+  // counts, vote activity, watchlist/favorite adds, and release recency, not
+  // a stable fact like runtime/budget. Refreshed on every re-enrich the same
+  // way publicRating is (see movie.ts), not just filled in once.
+  popularity       Float?
 }
 
 model TvShow {
@@ -102,6 +107,9 @@ model TvShow {
   episodeCount Int?
   seasonCount  Int?
   network      String?
+  // Same TMDB rolling score as Movie.popularity — see that field's own
+  // comment.
+  popularity   Float?
 }
 
 model Manga {

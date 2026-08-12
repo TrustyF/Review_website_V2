@@ -1,12 +1,11 @@
 "use client";
 import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import styles from "./login-page.module.sass";
 
 export function LoginPage() {
-	const router = useRouter();
 	const searchParams = useSearchParams();
 	const callbackUrl = searchParams.get("callbackUrl") || "/";
 
@@ -31,8 +30,15 @@ export function LoginPage() {
 			return;
 		}
 
-		router.push(callbackUrl);
-		router.refresh();
+		// A hard navigation, not router.push + router.refresh — the session
+		// cookie is set, but a client-side transition can land on the
+		// destination route before Next's Router Cache has been busted for it
+		// (or before every already-mounted admin-gated component's useSession()
+		// has re-rendered), leaving admin-only nav links/edit buttons stuck
+		// showing the signed-out state until an unrelated refresh happens to
+		// come along. A full reload sidesteps all of that — same as the
+		// Google button's own redirect-based sign-in already does below.
+		window.location.href = callbackUrl;
 	}
 
 	return (

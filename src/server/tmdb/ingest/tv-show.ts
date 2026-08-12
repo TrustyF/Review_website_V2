@@ -40,6 +40,7 @@ export async function addTvShowFromTmdb(data: TmdbTvResponse) {
 						episodeCount: data.number_of_episodes,
 						seasonCount: data.number_of_seasons,
 						network: data.networks[0]?.name ?? null,
+						popularity: data.popularity,
 					},
 				},
 			},
@@ -80,8 +81,8 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 
 		// Re-enrichment only fills in fields that are still empty — anything
 		// already set (whether from a prior ingest or a hand edit in the media
-		// editor) is left alone. publicRating is the exception: it genuinely
-		// changes over time at the source, so it always refreshes.
+		// editor) is left alone. publicRating/popularity are the exception:
+		// they genuinely change over time at the source, so they always refresh.
 		await tx.media.update({
 			where: { id: existing.id },
 			data: {
@@ -103,6 +104,9 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 							existing.tvShow?.episodeCount ?? data.number_of_episodes,
 						seasonCount: existing.tvShow?.seasonCount ?? data.number_of_seasons,
 						network: existing.tvShow?.network ?? (data.networks[0]?.name ?? null),
+						// Refreshed every re-enrich, not just filled in once — see
+						// the field's own comment in media.prisma.
+						popularity: data.popularity,
 					},
 				},
 			},

@@ -16,6 +16,7 @@ export const TmdbMovieResponseSchema = type({
 	imdb_id: "string | null",
 	original_language: "string | null",
 	vote_average: "number | null",
+	popularity: "number | null",
 	origin_country: "string[]",
 	genres: type({
 		id: "number",
@@ -61,6 +62,7 @@ export const TmdbTvResponseSchema = type({
 	networks: type({ id: "number", name: "string" }).array(),
 	original_language: "string | null",
 	vote_average: "number | null",
+	popularity: "number | null",
 	origin_country: "string[]",
 	genres: type({
 		id: "number",
