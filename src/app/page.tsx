@@ -57,12 +57,12 @@ export default async function HomePage() {
 	]);
 
 	const reviewedList = reviewed.map(toMediaRecord);
-	const [featured, ...recentReviews] = reviewedList;
+	const [, ...recentReviews] = reviewedList;
 	const recentMovies = recentMoviesRaw.map(toMediaRecord);
 
 	return (
 		<div className={styles.wrapper}>
-			{featured && <FeaturedReview media={featured} />}
+			<FeaturedReview items={reviewedList} />
 			<RecentReviewsSection items={recentReviews} />
 			<RecentMoviesSection items={recentMovies} />
 		</div>

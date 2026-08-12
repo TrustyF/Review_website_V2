@@ -2,15 +2,35 @@
 
 .wrapper
   position: relative
+
+// Starts offset (--enter-offset, set inline per-card by FeaturedReviewCard
+// so the direction can differ per mount) and transparent, then
+// FeaturedReviewCard adds .settled a frame after mount to transition both
+// back to resting — see that component for why it's a frame later rather
+// than immediate. transform (not the custom property lookup itself) is what
+// prefers-reduced-motion below turns off, so the property stays defined
+// either way and only the actual motion is skipped.
+.card_link
   display: block
   color: inherit
   text-decoration: none
   border-radius: 0.75rem
   overflow: hidden
   background: var(--background)
+  opacity: 0
+  transform: translateX(var(--enter-offset, 0))
+  transition: transform 0.3s ease, opacity 0.3s ease
+
+  &.settled
+    opacity: 1
+    transform: translateX(0)
 
   &:hover .read_more
     text-decoration-color: var(--brand)
+
+  @media (prefers-reduced-motion: reduce)
+    transition: opacity 0.3s ease
+    transform: none
 
 .banner
   position: relative
@@ -107,3 +127,32 @@
   text-decoration-color: transparent
   transition: text-decoration-color 0.15s ease
   width: fit-content
+
+// Vertically centered on the whole card rather than just the banner strip —
+// the banner's own height is aspect-ratio-driven (responsive), so pinning
+// arrows to its exact midpoint would need a fixed height to measure against.
+.arrow
+  position: absolute
+  top: 50%
+  transform: translateY(-50%)
+  z-index: 5
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 2.25rem
+  height: 2.25rem
+  border-radius: 50%
+  border: none
+  background: color-mix(in srgb, var(--background) 65%, transparent)
+  color: var(--foreground)
+  cursor: pointer
+  transition: background 0.15s ease
+
+  &:hover
+    background: var(--background)
+
+.arrow_prev
+  left: 0.75rem
+
+.arrow_next
+  right: 0.75rem
