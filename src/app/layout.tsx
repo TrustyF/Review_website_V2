@@ -5,6 +5,9 @@ import Navbar from "@/components/navbar/nav-bar";
 import { DevMenu } from "@/components/dev-menu/dev-menu";
 import MediaEditorModal from "@/components/media/media-management/media-editor/media-editor-modal";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
+
 import { fontVariables } from "./fonts";
 
 export const metadata: Metadata = {
@@ -23,10 +26,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html
-			lang="en"
-			className={fontVariables}
-		>
+		<html lang="en" className={fontVariables}>
 			<body>
 				<AuthSessionProvider>
 					<Navbar />
@@ -35,6 +35,8 @@ export default function RootLayout({
 					<main>{children}</main>
 				</AuthSessionProvider>
 			</body>
+			<SpeedInsights />
+			<Analytics />
 		</html>
 	);
 }

@@ -49,16 +49,54 @@ async function enrichOne(media: Media) {
 	}
 }
 
+// Each media item's enrichOne() call is its own independent Prisma
+// transaction with no shared mutable state across items, and most of its
+// wall-clock time is spent waiting on network I/O (external API fetch + DB
+// round trips) rather than CPU — so items within a queue can safely run
+// concurrently up to a per-type limit, not just one at a time.
+async function runWithConcurrency<T>(
+	items: T[],
+	limit: number,
+	worker: (item: T) => Promise<void>,
+) {
+	let next = 0;
+	async function runNext(): Promise<void> {
+		const i = next++;
+		const item = items[i];
+		if (item === undefined) return;
+		await worker(item);
+		return runNext();
+	}
+	await Promise.all(
+		Array.from({ length: Math.min(limit, items.length) }, runNext),
+	);
+}
+
+// IGDB enforces a hard ~4 requests/second cap (see igdb/client.ts) and
+// already retries 429s with backoff, so its queue stays low to leave that
+// backoff headroom instead of tripping it constantly. The other sources have
+// no documented limit, but a moderate cap keeps this a good API citizen
+// rather than firing everything at once.
+const QUEUE_CONCURRENCY: Record<MediaType, number> = {
+	[MediaType.MOVIE]: 6,
+	[MediaType.SHORT]: 6,
+	[MediaType.TVSHOW]: 6,
+	[MediaType.MANGA]: 6,
+	[MediaType.GAME]: 3,
+	[MediaType.COMIC]: 6,
+	[MediaType.BOOK]: 6,
+};
+
 // Each media type talks to its own independent (and independently
 // rate-limited) API — TMDB, MangaDex, IGDB, ComicVine. Processing every
 // PENDING row as one big sequential queue meant the other three sources sat
 // idle whenever one of them was slow or backing off. Splitting into one
 // queue per type and running those queues concurrently keeps each type's
-// own pacing intact (still sequential *within* a type, so e.g. IGDB's
-// 429 retry/backoff still behaves the same) while letting all four sources
-// make progress at once instead of taking turns.
+// own pacing intact while letting all sources make progress at once instead
+// of taking turns — and within a single type's queue, items now also run up
+// to QUEUE_CONCURRENCY[type] at a time instead of strictly one by one.
 async function runQueue(type: MediaType, mediaList: Media[]) {
-	for (const media of mediaList) {
+	await runWithConcurrency(mediaList, QUEUE_CONCURRENCY[type], async (media) => {
 		console.log(`[${type}] trying ${media.title}`);
 		try {
 			await enrichOne(media);
@@ -71,7 +109,7 @@ async function runQueue(type: MediaType, mediaList: Media[]) {
 				err,
 			);
 		}
-	}
+	});
 }
 
 const ENRICH_INTERVAL_DAYS = 3;
