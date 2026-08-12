@@ -60,24 +60,24 @@ export function FeaturedReview({ items }: Props) {
 			    <button> inside the <a> would need preventDefault/
 			    stopPropagation on every click just to keep it from also
 			    navigating; sitting outside sidesteps that entirely. */}
-			{reviewed.length > 1 && (
-				<>
-					<button
-						type="button"
-						aria-label="Previous review"
-						className={`${styles.arrow} ${styles.arrow_prev}`}
-						onClick={() => step(-1)}>
-						<ChevronLeft size={20} />
-					</button>
-					<button
-						type="button"
-						aria-label="Next review"
-						className={`${styles.arrow} ${styles.arrow_next}`}
-						onClick={() => step(1)}>
-						<ChevronRight size={20} />
-					</button>
-				</>
-			)}
+			{/*{reviewed.length > 1 && (*/}
+			{/*	<>*/}
+			{/*		<button*/}
+			{/*			type="button"*/}
+			{/*			aria-label="Previous review"*/}
+			{/*			className={`${styles.arrow} ${styles.arrow_prev}`}*/}
+			{/*			onClick={() => step(-1)}>*/}
+			{/*			<ChevronLeft size={20} />*/}
+			{/*		</button>*/}
+			{/*		<button*/}
+			{/*			type="button"*/}
+			{/*			aria-label="Next review"*/}
+			{/*			className={`${styles.arrow} ${styles.arrow_next}`}*/}
+			{/*			onClick={() => step(1)}>*/}
+			{/*			<ChevronRight size={20} />*/}
+			{/*		</button>*/}
+			{/*	</>*/}
+			{/*)}*/}
 		</div>
 	);
 }
@@ -134,8 +134,7 @@ function FeaturedReviewCard({ media, direction }: CardProps) {
 				</div>
 			)}
 			<div
-				className={`${styles.content} ${media.bannerSrc ? styles.content_overlap : ""}`}
-			>
+				className={`${styles.content} ${media.bannerSrc ? styles.content_overlap : ""}`}>
 				<div className={styles.poster}>
 					<MediaPoster
 						src={media.posterSrc}

@@ -126,7 +126,7 @@ export async function saveReview(
 		}
 	}
 
-	revalidatePath("/");
+	revalidatePath("/", "layout");
 }
 
 // A rewatch has no field of its own to diff — it's not "rating changed",
@@ -139,7 +139,7 @@ export async function logRewatch(mediaId: number) {
 	await db.mediaChangeLog.create({
 		data: { mediaId, field: "rewatched", oldValue: null, newValue: "true" },
 	});
-	revalidatePath("/");
+	revalidatePath("/", "layout");
 }
 
 // Base Media fields (title/overview/releaseDate) are otherwise only ever
@@ -187,7 +187,7 @@ export async function saveMediaDetails(
 		await db.mediaChangeLog.createMany({ data: changes });
 	}
 
-	revalidatePath("/");
+	revalidatePath("/", "layout");
 }
 
 // Soft delete just flips Media.isDeleted — every public list query filters
@@ -216,8 +216,9 @@ export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
 		},
 	});
 
-	revalidatePath("/");
-	revalidatePath(`/media/${mediaId}`);
+	// "layout" already covers /media/${mediaId} too — see
+	// media-add-actions.ts's comment on this same pattern.
+	revalidatePath("/", "layout");
 }
 
 // Irreversible: the row itself is gone, and with it every relation that
@@ -229,7 +230,7 @@ export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
 export async function hardDeleteMedia(mediaId: number) {
 	await requireAdmin();
 	await db.media.delete({ where: { id: mediaId } });
-	revalidatePath("/");
+	revalidatePath("/", "layout");
 }
 
 const MARKUP_PLACEHOLDER_REGEX = /⟦MARKUP(\d+)⟧/g;
@@ -383,7 +384,7 @@ export async function updateMediaPoster(mediaId: number, posterPath: string) {
 		existing!.externalId,
 		posterPath,
 	);
-	revalidatePath("/");
+	revalidatePath("/", "layout");
 	return `/api/poster/${mediaId}/${mediaAssetFilename(mediaId, posterPath)}`;
 }
 
@@ -459,7 +460,7 @@ export async function updateMediaBanner(mediaId: number, bannerPath: string) {
 	await resolveBanner(mediaId, existing!.type, bannerPath, {
 		awaitEncode: true,
 	});
-	revalidatePath("/");
+	revalidatePath("/", "layout");
 	return `/api/banner/${mediaId}/${mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT)}`;
 }
 
@@ -475,5 +476,5 @@ export async function updateMediaBannerFocus(mediaId: number, focusY: number) {
 		where: { id: mediaId },
 		data: { bannerFocusY: clamped },
 	});
-	revalidatePath("/");
+	revalidatePath("/", "layout");
 }

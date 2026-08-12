@@ -5,9 +5,15 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
 	BookOpen,
+	CirclePlus,
+	CircleUserRound,
 	Clapperboard,
+	ClockFading,
 	GamepadDirectional,
+	List,
 	type LucideIcon,
+	User,
+	UserRound,
 } from "lucide-react";
 import { NavSearch } from "@/components/navbar/nav-search/nav-search";
 import {
@@ -162,11 +168,19 @@ export default function Navbar() {
 			</div>
 
 			<div className={style.nav_group}>
-				<NavLink href="/lists" className={style.link} pathname={pathname}>
+				<NavLink
+					href="/lists"
+					icon={List}
+					className={style.link}
+					pathname={pathname}>
 					Lists
 				</NavLink>
 				{isAdmin && (
-					<NavLink href="/add" className={style.link} pathname={pathname}>
+					<NavLink
+						href="/add"
+						icon={CirclePlus}
+						className={style.link}
+						pathname={pathname}>
 						Add media
 					</NavLink>
 				)}
@@ -177,11 +191,17 @@ export default function Navbar() {
 					<>
 						<NavLink
 							href="/watchlist"
+							icon={ClockFading}
 							className={style.link}
 							pathname={pathname}>
 							Watchlist
 						</NavLink>
-						<NavLink href="/account" className={style.link} pathname={pathname}>
+
+						<NavLink
+							href="/account"
+							icon={UserRound}
+							className={style.link}
+							pathname={pathname}>
 							Account
 						</NavLink>
 						<button

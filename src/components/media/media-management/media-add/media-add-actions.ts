@@ -182,6 +182,13 @@ export async function addMediaToLibrary(
 		}
 	}
 
-	revalidatePath("/");
+	// "layout" (not just "/") — a plain revalidatePath("/") only invalidated
+	// the homepage itself, leaving every per-type list page (/movies, /tv,
+	// ...) and the new item's own /media/[id] serving a stale cached render
+	// until something unrelated happened to touch that specific path later.
+	// Root path + "layout" invalidates every route nested under the root
+	// layout — i.e. the whole site — and also purges the client Router
+	// Cache, per next/cache's own "Revalidating all data" pattern.
+	revalidatePath("/", "layout");
 	return mediaId;
 }

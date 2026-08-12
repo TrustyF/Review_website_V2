@@ -59,6 +59,9 @@ export async function createManualMedia(input: {
 		},
 	});
 
-	revalidatePath("/");
+	// "layout" (not just "/") — see media-add-actions.ts's own comment on
+	// this same call: a plain "/" only revalidated the homepage, leaving
+	// every per-type list page and this item's own /media/[id] stale.
+	revalidatePath("/", "layout");
 	return media.id;
 }
