@@ -2,7 +2,7 @@ import { dbPublic } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
 import { FeaturedReview } from "@/components/home/featured-review/featured-review";
 import { RecentMoviesSection } from "@/components/home/recent-movies-section/recent-movies-section";
-import { EnrichmentStatus, MediaType } from "@prisma/client";
+import { EnrichmentStatus, MediaType, Prisma } from "@prisma/client";
 import styles from "./page.module.sass";
 
 // How many extra reviewed items ride along in FeaturedReview's own picker
@@ -59,29 +59,65 @@ async function getRecentMovies() {
 	});
 }
 
+// Same reviewed-body/DONE filter and reviewDate/createDate ordering as
+// before, shared by both queries below so a featured item and a plain
+// recent one are only ever distinguished by the `featured` condition, never
+// by drifting out of sync on anything else.
+const REVIEWED_REVIEW_WHERE: Prisma.ReviewWhereInput = {
+	AND: [{ body: { not: null } }, { body: { not: "" } }],
+};
+const REVIEWED_WHERE: Prisma.MediaWhereInput = {
+	enrichmentStatus: EnrichmentStatus.DONE,
+	review: REVIEWED_REVIEW_WHERE,
+};
+const REVIEWED_ORDER_BY: Prisma.MediaOrderByWithRelationInput[] = [
+	{ review: { reviewDate: { sort: "desc", nulls: "last" } } },
+	{ review: { createDate: "desc" } },
+];
+
+// Featured reviews (admin-curated, see featured-manager-modal.tsx) take
+// priority over plain recency in the hero. Two independent queries rather
+// than one clever `orderBy` — Prisma can't sort by "is this row featured"
+// ahead of a real column, so this fetches the featured set and a generously
+// overfetched recent set in parallel, then merges in JS: every featured
+// item first (in their own reviewDate order), topped up with recent
+// non-featured items to fill out the rest. Overfetching query B (2x) rather
+// than sizing it exactly is what keeps this a single round trip each,
+// instead of needing query A's ids before deciding how many of B to ask
+// for.
+async function getFeaturedReviewItems() {
+	const take = 1 + RECENT_REVIEWS_COUNT;
+	const [featured, recent] = await Promise.all([
+		dbPublic.media.findMany({
+			where: {
+				...REVIEWED_WHERE,
+				review: { ...REVIEWED_REVIEW_WHERE, featured: true },
+			},
+			include: { ...EVERY_TYPE_RELATION, review: true },
+			orderBy: REVIEWED_ORDER_BY,
+			take,
+		}),
+		dbPublic.media.findMany({
+			where: REVIEWED_WHERE,
+			include: { ...EVERY_TYPE_RELATION, review: true },
+			orderBy: REVIEWED_ORDER_BY,
+			take: take * 2,
+		}),
+	]);
+
+	const featuredIds = new Set(featured.map((m) => m.id));
+	return [...featured, ...recent.filter((m) => !featuredIds.has(m.id))].slice(
+		0,
+		take,
+	);
+}
+
 export default async function HomePage() {
 	// dbPublic (not db) — soft-deleted media is excluded automatically, see
 	// src/server/db/client.ts. The two queries don't depend on each other, so
 	// there's no reason to make one wait on the other.
 	const [reviewed, recentMoviesRaw] = await Promise.all([
-		// Ordered by Review.reviewDate — "when the review text itself first
-		// existed", the same "latest review" definition latest-activity-
-		// email.tsx's own comment describes. nulls: "last" pushes any row that
-		// predates reviewDate existing (body set, reviewDate never backfilled)
-		// to the back instead of floating to the front ahead of genuinely
-		// recent reviews.
-		dbPublic.media.findMany({
-			where: {
-				enrichmentStatus: EnrichmentStatus.DONE,
-				review: { AND: [{ body: { not: null } }, { body: { not: "" } }] },
-			},
-			include: { ...EVERY_TYPE_RELATION, review: true },
-			orderBy: [
-				{ review: { reviewDate: { sort: "desc", nulls: "last" } } },
-				{ review: { createDate: "desc" } },
-			],
-			take: 1 + RECENT_REVIEWS_COUNT,
-		}),
+		getFeaturedReviewItems(),
 		getRecentMovies(),
 	]);
 

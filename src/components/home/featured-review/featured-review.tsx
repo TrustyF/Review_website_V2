@@ -2,6 +2,7 @@
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Settings } from "lucide-react";
 import { MediaRecord } from "@/components/media/types";
 import { MediaPoster } from "@/components/media/primitives/poster";
 import { MediaMiniCardShell } from "@/components/media/media-cards/media-mini-card/media-mini-card-shell";
@@ -13,6 +14,8 @@ import {
 	ReviewBodyLine,
 	ReviewSpoilerProvider,
 } from "@/components/media/media-cards/media-card/review-body";
+import { useIsAdmin } from "@/lib/use-is-admin";
+import { useFeaturedManagerStore } from "@/components/home/featured-review/featured-manager/featured-manager-store";
 import styles from "./featured-review.module.sass";
 
 // Must match $card-transition-duration in featured-review.module.sass (the
@@ -42,6 +45,8 @@ type Props = {
 // and only a teaser of the review body (first few paragraphs), both of
 // which the grid-oriented cards don't do.
 export function FeaturedReview({ items }: Props) {
+	const isAdmin = useIsAdmin();
+	const openFeaturedManager = useFeaturedManagerStore((s) => s.open);
 	const [index, setIndex] = useState(0);
 	// Which way the picker selection last moved — determines which side the
 	// next card slides in from (see FeaturedReviewCard). Purely cosmetic, so
@@ -147,6 +152,22 @@ export function FeaturedReview({ items }: Props) {
 					direction={direction}
 				/>
 			</div>
+
+			{/* Manages the *global* featured set, not something scoped to
+			    whichever item the hero happens to be showing right now —
+			    a sibling of .card_stack (not something rendered inside
+			    FeaturedReviewCard's own <Link>, which already navigates to
+			    the media page on click) so this never fights that
+			    navigation or needs to suppress it. */}
+			{isAdmin && (
+				<button
+					type="button"
+					className={styles.manage_featured_button}
+					aria-label="Manage featured reviews"
+					onClick={openFeaturedManager}>
+					<Settings size={16} />
+				</button>
+			)}
 
 			{reviewed.length > 1 && (
 				<div className={styles.picker}>
@@ -277,7 +298,9 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 					/>
 				</div>
 				<div className={styles.info}>
-					<div className={styles.eyebrow}>Featured review</div>
+					<div className={styles.eyebrow}>
+						{review.featured ? "Featured review" : "New review"}
+					</div>
 					<h1 className={styles.title}>{media.title}</h1>
 					<div className={styles.meta_row}>
 						<MediaReleaseDate date={media.releaseDate} />

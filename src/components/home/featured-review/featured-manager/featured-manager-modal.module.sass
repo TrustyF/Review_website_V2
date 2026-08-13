@@ -1,0 +1,92 @@
+@use "@/app/styles/variables" as *
+
+// Same fixed-fullscreen shell as media-editor-modal.module.sass — no shared
+// Modal component exists in this codebase, so this hand-rolls the same
+// convention rather than introducing a second one.
+.wrapper
+  background-color: var(--modal-bg)
+  position: fixed
+  left: 0
+  top: 0
+  width: 100vw
+  height: 100vh
+  overflow-y: auto
+  z-index: 100
+
+.wrapper_body
+  width: 30rem
+  max-width: 90vw
+  margin: auto
+  padding: 2rem 0
+  display: flex
+  flex-flow: column
+  gap: 1.5rem
+
+.divider
+  background-color: var(--accent1)
+  width: 100%
+  height: 1px
+
+.section
+  display: flex
+  flex-flow: column
+  gap: 0.5rem
+
+.section_title
+  color: var(--accent1)
+  font-size: 0.9rem
+  font-weight: 600
+
+.status
+  color: var(--accent1)
+  font-size: 0.85rem
+
+.search_input
+  width: 100%
+  padding: 0.4rem 0.6rem
+  border-radius: 0.4rem
+  border: 1px solid var(--accent1-tint)
+  background: var(--background)
+  color: inherit
+  font: inherit
+
+.list
+  display: flex
+  flex-flow: column
+  gap: 0.5rem
+  list-style: none
+  max-height: 16rem
+  overflow-y: auto
+
+.row
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.6rem
+
+.row_poster
+  flex-shrink: 0
+  border-radius: 0.2rem
+  object-fit: cover
+
+.row_title
+  flex: 1
+  min-width: 0
+  overflow: hidden
+  text-overflow: ellipsis
+  white-space: nowrap
+  font-size: 0.9rem
+
+.row_action
+  flex-shrink: 0
+  padding: 0.25rem 0.6rem
+  border-radius: 0.4rem
+  border: none
+  background: var(--brand-muted)
+  color: var(--brand)
+  font-size: 0.8rem
+  cursor: pointer
+
+  &:disabled
+    opacity: 0.5
+    cursor: default

@@ -13,6 +13,14 @@ model Review {
 
   body String?
 
+  // Curated by an admin via the homepage's "manage featured reviews" modal
+  // (featured-manager-modal.tsx) — takes priority over plain recency in
+  // FeaturedReview's hero (see app/page.tsx's getFeaturedReviewItems). No
+  // expiry field on purpose: the modal already makes un-featuring a
+  // one-click action, so a separate auto-expiry would just be a second way
+  // to do the same thing.
+  featured Boolean @default(false)
+
   // Set once, the first time body actually goes from unset to set — see
   // saveReview. "Watched on" reads createDate below instead (a rating is
   // required to save at all now, so createDate can never predate one) —
