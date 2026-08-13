@@ -4,19 +4,24 @@
   display: flex
 
 
-// Carries the reserved aspect-ratio + a placeholder color, so there's a
-// calm, correctly-sized box on screen the instant a card mounts — before
-// the image has even started loading, let alone finished. No overflow:
-// hidden — that clipped anything touching this box's own edges (the
-// difficulty notch, a drop-shadow filter, ...), not just .poster below;
-// .poster rounds its own corners instead (same radius, kept in sync by
-// hand — it's sized to exactly fill this frame either way), so nothing
-// here needs to clip anything.
+// Carries the reserved aspect-ratio, so there's a correctly-sized box on
+// screen the instant a card mounts — before the image has even started
+// loading, let alone finished. No overflow: hidden — that clipped anything
+// touching this box's own edges (the difficulty notch, a drop-shadow
+// filter, ...), not just .poster below; .poster rounds its own corners
+// instead (same radius, kept in sync by hand — it's sized to exactly fill
+// this frame either way), so nothing here needs to clip anything.
 .poster_frame
   width: 100%
-  background-color: var(--accent1-tint)
   border-radius: 0.25rem
   box-shadow: 0 2px 6px var(--overlay-backdrop)
+
+// The placeholder color itself — only applied once poster.tsx decides the
+// load is actually slow enough to need one (see its own comment), instead
+// of unconditionally from mount, so a poster the browser already has
+// cached never flashes it at all.
+.poster_frame_placeholder
+  background-color: var(--accent1-tint)
 
 // position: absolute + inset: 0, *and* explicit width/height: 100% — for a
 // replaced element (img) specifically, inset: 0 alone only positions it

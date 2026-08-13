@@ -1,11 +1,12 @@
 import { dbPublic } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
 import { FeaturedReview } from "@/components/home/featured-review/featured-review";
-import { RecentReviewsSection } from "@/components/home/recent-reviews-section/recent-reviews-section";
 import { RecentMoviesSection } from "@/components/home/recent-movies-section/recent-movies-section";
 import { EnrichmentStatus, MediaType } from "@prisma/client";
 import styles from "./page.module.sass";
 
+// How many extra reviewed items ride along in FeaturedReview's own picker
+// strip, beyond the featured one itself.
 const RECENT_REVIEWS_COUNT = 6;
 const RECENT_MOVIES_COUNT = 14;
 
@@ -57,13 +58,11 @@ export default async function HomePage() {
 	]);
 
 	const reviewedList = reviewed.map(toMediaRecord);
-	const [, ...recentReviews] = reviewedList;
 	const recentMovies = recentMoviesRaw.map(toMediaRecord);
 
 	return (
 		<div className={styles.wrapper}>
 			<FeaturedReview items={reviewedList} />
-			<RecentReviewsSection items={recentReviews} />
 			<RecentMoviesSection items={recentMovies} />
 		</div>
 	);

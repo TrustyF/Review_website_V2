@@ -1,16 +1,40 @@
 @use "@/app/styles/variables" as *
 
+// $card-transition-duration governs the slide (both cards' transform) and
+// the outgoing card's fade-out — featured-review.tsx keeps its own
+// setTimeout in step with it (see the comment there, since JS can't read a
+// sass variable at runtime) so the outgoing card isn't unmounted before its
+// own fade finishes. $card-enter-opacity-duration only governs the incoming
+// card's fade-in, kept separate (and shorter) so it doesn't have to match
+// the exit's pace.
+$card-transition-duration: 0.25s
+$card-enter-opacity-duration: 0.1s
+$card-transition-easing: ease-out
+
 .wrapper
   position: relative
+
+// The outgoing and incoming FeaturedReviewCards are both rendered here at
+// once during a transition (see featured-review.tsx) — this stacks them
+// into the same grid cell instead of one appearing after the other in
+// document flow, so they crossfade in place. Auto-sized to the taller of
+// the two, so the picker/rest of the page below doesn't jump as they swap.
+.card_stack
+  position: relative
+  display: grid
 
 // Starts offset (--enter-offset, set inline per-card by FeaturedReviewCard
 // so the direction can differ per mount) and transparent, then
 // FeaturedReviewCard adds .settled a frame after mount to transition both
-// back to resting — see that component for why it's a frame later rather
-// than immediate. transform (not the custom property lookup itself) is what
+// back to resting. The outgoing card runs this in reverse — starts
+// .settled and drops it a frame after mount — which is what plays its
+// fade-and-slide-out instead of it just disappearing outright; see that
+// component for why it's a frame later rather than immediate either way.
+// transform (not the custom property lookup itself) is what
 // prefers-reduced-motion below turns off, so the property stays defined
 // either way and only the actual motion is skipped.
 .card_link
+  grid-area: 1 / 1
   display: block
   color: inherit
   text-decoration: none
@@ -19,7 +43,7 @@
   background: var(--background)
   opacity: 0
   transform: translateX(var(--enter-offset, 0))
-  transition: transform 0.3s ease, opacity 0.3s ease
+  transition: transform $card-transition-duration $card-transition-easing, opacity $card-enter-opacity-duration $card-transition-easing
 
   &.settled
     opacity: 1
@@ -29,8 +53,18 @@
     text-decoration-color: var(--brand)
 
   @media (prefers-reduced-motion: reduce)
-    transition: opacity 0.3s ease
+    transition: opacity $card-enter-opacity-duration $card-transition-easing
     transform: none
+
+// The outgoing card while it fades out — sits behind the incoming one and
+// ignores clicks so it doesn't intercept them while it's on its way out.
+// Overrides .card_link's opacity duration back to the slower, shared
+// $card-transition-duration — only the incoming card's fade-in gets the
+// faster one.
+.exiting
+  z-index: 0
+  pointer-events: none
+  transition: transform $card-transition-duration $card-transition-easing, opacity $card-transition-duration $card-transition-easing
 
 .banner
   position: relative
@@ -158,31 +192,47 @@
     background: linear-gradient(to bottom, transparent, var(--background) 100%)
     pointer-events: none
 
-// Vertically centered on the whole card rather than just the banner strip —
-// the banner's own height is aspect-ratio-driven (responsive), so pinning
-// arrows to its exact midpoint would need a fixed height to measure against.
-.arrow
-  position: absolute
-  top: 50%
-  transform: translateY(-50%)
-  z-index: 5
+// Horizontal filmstrip of the other recent reviews — replaces the old
+// prev/next arrows. Scrolls rather than wraps so it never pushes the
+// homepage's layout width, however many reviews are in the feed.
+.picker
   display: flex
-  align-items: center
-  justify-content: center
-  width: 2.25rem
-  height: 2.25rem
-  border-radius: 50%
-  border: none
-  background: transparent
-  color: var(--foreground)
-  cursor: pointer
-  transition: background 0.15s ease
+  flex-flow: row
+  gap: 0.75rem
+  margin-top: 1rem
+  padding-bottom: 0.25rem
+  overflow-x: auto
+
+// The clickable unit is .picker_item_overlay (see below), not this — this
+// is just the positioning context + the opacity dimming for
+// non-active/hover, applied around both the inert MediaMiniCardShell and
+// its overlay so the dimming is visible without touching either of them
+// individually.
+.picker_item
+  position: relative
+  flex-shrink: 0
+  width: 4.5rem
+  opacity: 0.5
+  transition: opacity 0.15s ease
 
   &:hover
-    background: var(--background)
+    opacity: 0.8
 
-.arrow_prev
-  left: 0.75rem
+.picker_item_active
+  opacity: 1
 
-.arrow_next
-  right: 0.75rem
+  &:hover
+    opacity: 1
+
+.picker_item_inert
+  width: 100%
+
+.picker_item_overlay
+  position: absolute
+  inset: 0
+  width: 100%
+  height: 100%
+  border: none
+  background: none
+  padding: 0
+  cursor: pointer

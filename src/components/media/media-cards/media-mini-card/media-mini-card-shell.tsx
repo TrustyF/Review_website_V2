@@ -20,7 +20,7 @@ type Props = {
 // Per-type cards (MovieMiniCard, TvShowMiniCard, ...) supply only the bit of
 // secondary info that actually differs between media types.
 export function MediaMiniCardShell({ media, children }: Props) {
-	const { showRating, showTitle } = useMediaCardDisplay();
+	const { showRating, showTitle, showReviewIcon } = useMediaCardDisplay();
 
 	return (
 		<div className={styles.wrapper}>
@@ -39,7 +39,7 @@ export function MediaMiniCardShell({ media, children }: Props) {
 						<StarIcon size={11} />
 					</div>
 				)}
-				{media.review && media.review.body && (
+				{showReviewIcon && media.review && media.review.body && (
 					<ReviewIcon size={9} title="Has review" />
 				)}
 				{children}

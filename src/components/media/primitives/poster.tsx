@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import styles from "./primitives.module.sass";
@@ -27,6 +27,23 @@ export function MediaPoster({
 	// at once as you scroll (see LazyTierGrid). Fading the image in over a
 	// placeholder-colored frame makes that transition calm instead of abrupt.
 	const [isLoaded, setIsLoaded] = useState(false);
+	// The placeholder itself only shows up after a short delay, rather than
+	// unconditionally from mount — a src the browser already has cached
+	// (e.g. FeaturedReview remounting a fresh MediaPoster for a src that was
+	// just showing in its own picker strip) still resolves asynchronously on
+	// a brand-new <img> node, so checking img.complete right at/just-after
+	// mount is racy and can still let the placeholder paint for a frame
+	// before flipping. Gating the placeholder's *visibility* on a delay
+	// instead sidesteps that race entirely: a load that finishes within the
+	// delay (cached or otherwise fast) never shows any placeholder at all,
+	// while a genuinely slow load still gets one after the delay elapses —
+	// same as today, just not instant.
+	const [showPlaceholder, setShowPlaceholder] = useState(false);
+	useEffect(() => {
+		if (isLoaded) return;
+		const timeout = setTimeout(() => setShowPlaceholder(true), 100);
+		return () => clearTimeout(timeout);
+	}, [isLoaded]);
 
 	// next/image's own width/height are kept proportional to whatever ratio
 	// is passed in (not just hardcoded to 2/3's 500x750) — object-fit:cover
@@ -38,7 +55,9 @@ export function MediaPoster({
 	const height = ratioW && ratioH ? Math.round((width * ratioH) / ratioW) : 750;
 
 	const image = (
-		<div className={styles.poster_frame} style={{ aspectRatio: ratio }}>
+		<div
+			className={`${styles.poster_frame} ${showPlaceholder && !isLoaded ? styles.poster_frame_placeholder : ""}`}
+			style={{ aspectRatio: ratio }}>
 			<Image
 				src={src}
 				width={width}
