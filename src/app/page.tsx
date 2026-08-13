@@ -46,6 +46,7 @@ async function getRecentMovies() {
 			type: MediaType.MOVIE,
 			enrichmentStatus: EnrichmentStatus.DONE,
 			releaseDate: { gte: cutoff },
+			isAdult: false,
 		},
 		include: { movie: true, review: true },
 		orderBy: { releaseDate: "desc" },
@@ -54,7 +55,11 @@ async function getRecentMovies() {
 	if (recent.length >= MIN_RECENT_MOVIES) return recent;
 
 	return dbPublic.media.findMany({
-		where: { type: MediaType.MOVIE, enrichmentStatus: EnrichmentStatus.DONE },
+		where: {
+			type: MediaType.MOVIE,
+			enrichmentStatus: EnrichmentStatus.DONE,
+			isAdult: false,
+		},
 		include: { movie: true, review: true },
 		orderBy: { releaseDate: "desc" },
 		take: MIN_RECENT_MOVIES,
@@ -70,6 +75,7 @@ async function getRecentlyWatchedMovies() {
 		where: {
 			type: MediaType.MOVIE,
 			enrichmentStatus: EnrichmentStatus.DONE,
+			isAdult: false,
 			review: {
 				rating: { not: null },
 				OR: [{ body: null }, { body: "" }],
@@ -91,6 +97,7 @@ const REVIEWED_REVIEW_WHERE: Prisma.ReviewWhereInput = {
 };
 const REVIEWED_WHERE: Prisma.MediaWhereInput = {
 	enrichmentStatus: EnrichmentStatus.DONE,
+	isAdult: false,
 	review: REVIEWED_REVIEW_WHERE,
 };
 const REVIEWED_ORDER_BY: Prisma.MediaOrderByWithRelationInput[] = [

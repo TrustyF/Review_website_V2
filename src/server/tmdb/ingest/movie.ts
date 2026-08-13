@@ -100,12 +100,12 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 			where: { id: existing.id },
 			data: {
 				title: existing.title ?? data.title,
-				// Same as publicRating/popularity below — TMDB's own classification
-				// of the title, not editorial content, so it always refreshes rather
-				// than only filling in once. A manual toggle in the editor (see
-				// media-editor-modal.tsx) survives until the next re-enrich pulls a
-				// fresh value from TMDB.
-				isAdult: data.adult,
+				// TMDB's own flag can turn this on, but never off — its adult flag
+				// is unreliable in practice (only ever true for hardcore listings,
+				// false even for plenty of softcore/erotic titles — see media 1433,
+				// "The Voyeur"), so a manual correction in the editor (see
+				// media-editor-modal.tsx) always wins over what TMDB re-reports.
+				isAdult: existing.isAdult || data.adult,
 				overview: existing.overview ?? data.overview,
 				releaseDate:
 					existing.releaseDate ??

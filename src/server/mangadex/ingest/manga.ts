@@ -71,6 +71,7 @@ async function buildMediaFields(
 		releaseDate: Date | null;
 		posterPath: string | null;
 		countryId: number | null;
+		isAdult: boolean;
 	} | null,
 ) {
 	const country = manga.attributes.originalLanguage
@@ -91,10 +92,11 @@ async function buildMediaFields(
 			existing?.releaseDate ??
 			(manga.attributes.year ? new Date(manga.attributes.year, 0, 1) : null),
 		status: STATUS_MAP[manga.attributes.status] ?? MediaStatus.RELEASED,
-		// Refreshed every re-enrich, not just filled in once — same reasoning
-		// as publicRating just below (a source-reported fact, not editorial
-		// content a hand edit should stick over).
-		isAdult: ADULT_CONTENT_RATINGS.has(manga.attributes.contentRating ?? ""),
+		// MangaDex's own rating can turn this on, but never off — see movie.ts's
+		// updateMovieFromTmdb for why a manual correction in the editor wins.
+		isAdult:
+			(existing?.isAdult ?? false) ||
+			ADULT_CONTENT_RATINGS.has(manga.attributes.contentRating ?? ""),
 		publicRating: statistics?.rating.bayesian ?? null,
 		posterPath: existing?.posterPath ?? extractCoverFileName(manga),
 		countryId:

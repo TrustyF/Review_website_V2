@@ -88,9 +88,9 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 			where: { id: existing.id },
 			data: {
 				title: existing.title ?? data.name,
-				// Same as publicRating/popularity below — see movie.ts's own
-				// updateMovieFromTmdb for why this always refreshes.
-				isAdult: data.adult,
+				// TMDB's own flag can turn this on, but never off — see movie.ts's
+				// own updateMovieFromTmdb for why a manual correction wins.
+				isAdult: existing.isAdult || data.adult,
 				overview: existing.overview ?? data.overview,
 				releaseDate:
 					existing.releaseDate ??
