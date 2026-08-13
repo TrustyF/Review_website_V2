@@ -1,0 +1,28 @@
+.groups
+  display: flex
+  flex-flow: column
+  gap: 1rem
+  margin-top: 1rem
+
+// Same sticky-header treatment as grouped-media-grid.module.sass's own
+// .group_header — see that file for why top/z-index/background/transition
+// are what they are (top tracks the navbar's own show/hide state via
+// globals.sass's --navbar-offset, rather than guessing a fixed value that's
+// only ever right in one of its two states).
+.group_header
+  cursor: pointer
+  padding: 0.5rem
+  border-radius: 0.5rem
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.25rem
+  font-size: 1.25rem
+  font-weight: 600
+  width: fit-content
+  position: sticky
+  top: calc(var(--navbar-offset) + 1rem)
+  z-index: 5
+  background: var(--background)
+  transform: translateX(-1rem)
+  transition: top 0.25s ease

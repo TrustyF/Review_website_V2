@@ -188,7 +188,11 @@ export function NavDropdown({ label, icon: Icon, items }: Props) {
 					{/* Lucide has no separate filled icon set, so "filled" is just
 					this icon's own fill switched on rather than a different asset. */}
 					{Icon && (
-						<Icon size={14} fill={activeItem ? "currentColor" : "none"} />
+						<Icon
+							size={14}
+							className={style.nav_icon}
+							fill={activeItem ? "currentColor" : "none"}
+						/>
 					)}
 					<span className={style.label_stack}>
 						{labelVariants.map((variant) => {
@@ -228,6 +232,7 @@ export function NavDropdown({ label, icon: Icon, items }: Props) {
 								{ItemIcon && (
 									<ItemIcon
 										size={14}
+										className={style.nav_icon}
 										fill={isItemActive ? "currentColor" : "none"}
 									/>
 								)}

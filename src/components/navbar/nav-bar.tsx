@@ -10,7 +10,9 @@ import {
 	Clapperboard,
 	ClockFading,
 	GamepadDirectional,
+	LayoutList,
 	List,
+	LucideProvider,
 	type LucideIcon,
 	User,
 	UserRound,
@@ -62,7 +64,13 @@ function NavLink({
 			{/* Lucide ships outline-only icons — no separate filled set — so
 			"filled" here is just handing the same icon a fill color instead
 			of "none" on top of its existing stroke. */}
-			{Icon && <Icon size={14} fill={isActive ? "currentColor" : "none"} />}
+			{Icon && (
+				<Icon
+					size={14}
+					className={style.nav_icon}
+					fill={isActive ? "currentColor" : "none"}
+				/>
+			)}
 			{children}
 		</Link>
 	);
@@ -109,6 +117,18 @@ export default function Navbar() {
 		return () => window.removeEventListener("scroll", handleScroll);
 	}, []);
 
+	// Mirrors `hidden` onto <html> as a class rather than only this
+	// component's own .hidden — lets globals.sass expose a --navbar-offset
+	// custom property that any sticky element elsewhere on the page (e.g.
+	// GroupedMediaGrid/GroupedMediaList's .group_header) can position itself
+	// against, instead of guessing a fixed offset that's only ever right in
+	// one of the navbar's two states. See globals.sass's own --navbar-offset
+	// comment for the other half of this.
+	useEffect(() => {
+		document.documentElement.classList.toggle("nav-hidden", hidden);
+		return () => document.documentElement.classList.remove("nav-hidden");
+	}, [hidden]);
+
 	// Delegated rather than one handler per Link — this catches both a
 	// dropdown item picking its own page (the panel should close behind it)
 	// and a plain top-level link being clicked while an unrelated dropdown
@@ -122,104 +142,129 @@ export default function Navbar() {
 	}
 
 	return (
-		<nav
-			className={`${style.wrapper} ${hidden ? style.hidden : ""}`}
-			onClick={handleNavClick}>
-			<Link href="/" className={style.title}>
-				Arthur&#39;s Corner
-			</Link>
+		// Every nav icon (here and in NavDropdown, which sits inside this
+		// tree) is rendered at a small size (14px) against Lucide's native
+		// 24px-viewBox design, which scales the default 2px stroke down to a
+		// non-integer ~1.17px — soft/anti-aliased rather than crisp at that
+		// size. absoluteStrokeWidth makes `strokeWidth` a real, fixed pixel
+		// width regardless of icon size (it inflates the pre-scale stroke by
+		// 24/size so the post-scale result comes out exactly 1.5px), instead
+		// of guessing a size that happens to divide 24 evenly. One provider
+		// here beats passing the same two props at every individual <Icon>
+		// call site (NavLink's own icon, NavDropdown's trigger and panel
+		// items, the chevron).
+		<LucideProvider strokeWidth={1.5} absoluteStrokeWidth>
+			<nav
+				className={`${style.wrapper} ${hidden ? style.hidden : ""}`}
+				onClick={handleNavClick}>
+				<Link href="/" className={style.title}>
+					Arthur&#39;s Corner
+				</Link>
 
-			<div className={style.search}>
-				<NavSearch />
-			</div>
+				<div className={style.search}>
+					<NavSearch />
+				</div>
 
-			<div className={style.nav_group}>
-				<NavLink href="/" className={style.link} pathname={pathname}>
-					Home
-				</NavLink>
-			</div>
+				<div className={style.nav_group}>
+					<NavLink href="/" className={style.link} pathname={pathname}>
+						Home
+					</NavLink>
+				</div>
 
-			<div className={style.nav_group}>
-				<NavDropdown
-					label="Media"
-					icon={Clapperboard}
-					items={[
-						{ href: "/movies", label: "Movies" },
-						{ href: "/shorts", label: "Shorts" },
-						{ href: "/tv", label: "TV" },
-					]}
-				/>
-				<NavDropdown
-					label="Reading"
-					icon={BookOpen}
-					items={[
-						{ href: "/manga", label: "Manga" },
-						{ href: "/comics", label: "Comics" },
-						{ href: "/books", label: "Books" },
-					]}
-				/>
-				<NavLink
-					href="/games"
-					icon={GamepadDirectional}
-					className={style.link}
-					pathname={pathname}>
-					Games
-				</NavLink>
-			</div>
+				<div className={style.nav_group}>
+					<NavDropdown
+						label="Media"
+						icon={Clapperboard}
+						items={[
+							{ href: "/movies", label: "Movies" },
+							{ href: "/shorts", label: "Shorts" },
+							{ href: "/tv", label: "TV" },
+						]}
+					/>
+					<NavDropdown
+						label="Reading"
+						icon={BookOpen}
+						items={[
+							{ href: "/manga", label: "Manga" },
+							{ href: "/comics", label: "Comics" },
+							{ href: "/books", label: "Books" },
+						]}
+					/>
+					<NavLink
+						href="/games"
+						icon={GamepadDirectional}
+						className={style.link}
+						pathname={pathname}>
+						Games
+					</NavLink>
+				</div>
 
-			<div className={style.nav_group}>
-				<NavLink
-					href="/lists"
-					icon={List}
-					className={style.link}
-					pathname={pathname}>
-					Lists
-				</NavLink>
+				<div className={style.nav_group}>
+					<NavLink
+						href="/reviews"
+						icon={LayoutList}
+						className={style.link}
+						pathname={pathname}>
+						Reviews
+					</NavLink>
+					<NavLink
+						href="/lists"
+						icon={List}
+						className={style.link}
+						pathname={pathname}>
+						Lists
+					</NavLink>
+				</div>
+
+				<div className={style.nav_group}>
+					{session?.user ? (
+						<>
+							<NavLink
+								href="/watchlist"
+								icon={ClockFading}
+								className={style.link}
+								pathname={pathname}>
+								Watchlist
+							</NavLink>
+
+							<NavLink
+								href="/account"
+								icon={UserRound}
+								className={style.link}
+								pathname={pathname}>
+								Account
+							</NavLink>
+							<button
+								type="button"
+								className={style.sign_out_button}
+								onClick={() => signOut({ callbackUrl: "/" })}>
+								Sign out
+							</button>
+						</>
+					) : (
+						<NavLink
+							href="/login"
+							className={style.sign_out_button}
+							pathname={pathname}>
+							Sign in
+						</NavLink>
+					)}
+				</div>
+
+				{/* Detached from the .nav_group flex flow and pinned to its own
+				    corner instead — still a child of <nav> (not a separate fixed
+				    element), so it still hides/reveals in step with the rest of
+				    the navbar on scroll. */}
 				{isAdmin && (
 					<NavLink
 						href="/add"
 						icon={CirclePlus}
-						className={style.link}
+						className={`${style.link} ${style.add_media_link}`}
 						pathname={pathname}>
 						Add media
 					</NavLink>
 				)}
-			</div>
-
-			<div className={style.nav_group}>
-				{session?.user ? (
-					<>
-						<NavLink
-							href="/watchlist"
-							icon={ClockFading}
-							className={style.link}
-							pathname={pathname}>
-							Watchlist
-						</NavLink>
-
-						<NavLink
-							href="/account"
-							icon={UserRound}
-							className={style.link}
-							pathname={pathname}>
-							Account
-						</NavLink>
-						<button
-							type="button"
-							className={style.sign_out_button}
-							onClick={() => signOut({ callbackUrl: "/" })}>
-							Sign out
-						</button>
-					</>
-				) : (
-					<NavLink
-						href="/login"
-						className={style.sign_out_button}
-						pathname={pathname}>
-						Sign in
-					</NavLink>
-				)}
-			</div>
-		</nav>
+			</nav>
+		</LucideProvider>
 	);
 }

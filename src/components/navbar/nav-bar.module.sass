@@ -72,6 +72,17 @@
   gap: 0.4rem
   @include nav-item-look
 
+// Pinned to its own corner instead of sitting in .nav_group's flex flow
+// (see nav-bar.tsx) — .wrapper's own position: fixed makes it the
+// containing block for this, and that containing block is the padding
+// box (not the border box), so right: 0 / bottom: 0 land exactly on
+// .wrapper's own padding edge — the same edge the rest of the flex content
+// naturally ends at — without duplicating .wrapper's padding values here.
+.add_media_link
+  position: absolute
+  right: 2rem
+  bottom: -1rem
+
 // Same look as .link, but a real <button> reset — this triggers signOut()
 // rather than navigating anywhere.
 .sign_out_button

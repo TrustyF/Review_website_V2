@@ -46,3 +46,17 @@ $mini-card-min-width: 110px
 
   &[aria-current="page"]
     color: var(--brand)
+
+  // Icons (nav-bar.tsx/nav-dropdown.tsx pass this as each <Icon>'s
+  // className) read as secondary to the label text at rest — a dimmer tone
+  // instead of inheriting this element's own (brighter) color via
+  // currentColor — but match the text's brand color on hover/active rather
+  // than staying muted, so the icon and its label always agree on emphasis
+  // together.
+  .nav_icon
+    color: var(--accent3)
+    transition: color 0.15s ease
+
+  &:hover .nav_icon,
+  &[aria-current="page"] .nav_icon
+    color: var(--brand)

@@ -73,6 +73,19 @@
 
   --navbar-height: 3rem
   --footer-margin: 3rem
+  // What a sticky element elsewhere on the page (GroupedMediaGrid/
+  // GroupedMediaList's .group_header) should offset itself by to sit right
+  // below the navbar instead of either colliding with it (offsetting 0
+  // while the navbar's still on screen) or leaving a permanent gap above
+  // itself (offsetting the full height once the navbar's auto-hidden
+  // itself away — see nav-bar.tsx's own scroll-hide effect). nav-bar.tsx
+  // mirrors its `hidden` state onto <html> as the .nav-hidden class below,
+  // which is the other half of this — plain CSS has no way to read a
+  // sibling/cousin component's own state, so that class is the bridge.
+  --navbar-offset: var(--navbar-height)
+
+:root.nav-hidden
+  --navbar-offset: 0rem
 
 
 html
