@@ -25,6 +25,7 @@ export async function addTvShowFromTmdb(data: TmdbTvResponse) {
 			data: {
 				title: data.name,
 				type: MediaType.TVSHOW,
+				isAdult: data.adult,
 				overview: data.overview,
 				externalId,
 				releaseDate: data.first_air_date ? new Date(data.first_air_date) : null,
@@ -87,6 +88,9 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 			where: { id: existing.id },
 			data: {
 				title: existing.title ?? data.name,
+				// Same as publicRating/popularity below — see movie.ts's own
+				// updateMovieFromTmdb for why this always refreshes.
+				isAdult: data.adult,
 				overview: existing.overview ?? data.overview,
 				releaseDate:
 					existing.releaseDate ??

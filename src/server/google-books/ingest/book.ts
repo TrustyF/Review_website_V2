@@ -50,6 +50,10 @@ function buildMediaFields(
 		// Google Books has no ongoing/completed/cancelled signal — every
 		// tracked volume is treated as a released, standalone book.
 		status: MediaStatus.RELEASED,
+		// Refreshed every re-enrich, not just filled in once — a source-reported
+		// fact rather than editorial content a hand edit should stick over, same
+		// as TMDB's adult flag (see tmdb/ingest/movie.ts).
+		isAdult: volume.volumeInfo.maturityRating === "MATURE",
 		publicRating: null,
 		posterPath: existing?.posterPath ?? (thumbnail ? upgradeToHttps(thumbnail) : null),
 		sourceUrl:

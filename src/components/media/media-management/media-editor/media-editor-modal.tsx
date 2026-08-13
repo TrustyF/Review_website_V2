@@ -221,6 +221,7 @@ export default function MediaEditorModal() {
 					releaseDate: draft.releaseDate
 						? draft.releaseDate.toISOString().slice(0, 10)
 						: null,
+					isAdult: draft.isAdult,
 				}),
 				pendingPosterPath
 					? updateMediaPoster(draft.id, pendingPosterPath)
@@ -274,6 +275,7 @@ export default function MediaEditorModal() {
 		title?: string;
 		overview?: string | null;
 		releaseDate?: Date | null;
+		isAdult?: boolean;
 	}) {
 		setDraft((prev) => (prev ? { ...prev, ...patch } : prev));
 	}
@@ -327,6 +329,15 @@ export default function MediaEditorModal() {
 											: null,
 									})
 								}
+							/>
+						</label>
+						<label className={styles.field}>
+							+18
+							<input
+								type="checkbox"
+								className={styles.field_checkbox}
+								checked={draft?.isAdult ?? false}
+								onChange={(e) => patchDetails({ isAdult: e.target.checked })}
 							/>
 						</label>
 						<label className={styles.field}>

@@ -33,6 +33,7 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 			data: {
 				title: data.title,
 				type: MediaType.MOVIE,
+				isAdult: data.adult,
 				overview: data.overview,
 				externalId,
 				releaseDate: data.release_date ? new Date(data.release_date) : null,
@@ -99,6 +100,12 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 			where: { id: existing.id },
 			data: {
 				title: existing.title ?? data.title,
+				// Same as publicRating/popularity below — TMDB's own classification
+				// of the title, not editorial content, so it always refreshes rather
+				// than only filling in once. A manual toggle in the editor (see
+				// media-editor-modal.tsx) survives until the next re-enrich pulls a
+				// fresh value from TMDB.
+				isAdult: data.adult,
 				overview: existing.overview ?? data.overview,
 				releaseDate:
 					existing.releaseDate ??

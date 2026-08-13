@@ -6,6 +6,11 @@ model Media {
   type           MediaType
   overview       String?
   status         MediaStatus @default(RELEASED)
+  // Manually toggled in the media editor (see media-editor-modal.tsx) — not
+  // sourced from any provider's own adult/mature flag yet. Not wired into
+  // media-filter.ts yet either; the field exists first so it can be set on
+  // existing media ahead of that.
+  isAdult        Boolean     @default(false)
   publicRating   Float?
   posterPath     String?
   bannerPath     String?

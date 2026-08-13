@@ -64,7 +64,7 @@ function eyebrowFor(
 	review: NonNullable<MediaRecord["review"]>,
 ): EyebrowVariant {
 	if (review.featured) return { label: "Featured review", icon: Heart };
-	return { label: "New review", icon: Pencil };
+	return { label: "New review", icon: Sparkles };
 }
 
 type Props = {

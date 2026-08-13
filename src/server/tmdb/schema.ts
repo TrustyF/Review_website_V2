@@ -5,6 +5,7 @@ const zeroToNull = type("number").pipe((n) => (n === 0 ? null : n));
 export const TmdbMovieResponseSchema = type({
 	id: "number",
 	title: "string",
+	adult: "boolean",
 	overview: "string | null",
 	release_date: "string | null",
 	poster_path: "string",
@@ -53,6 +54,7 @@ export type TmdbMovieResponse = typeof TmdbMovieResponseSchema.infer;
 export const TmdbTvResponseSchema = type({
 	id: "number",
 	name: "string",
+	adult: "boolean",
 	overview: "string | null",
 	first_air_date: "string | null",
 	poster_path: "string | null",

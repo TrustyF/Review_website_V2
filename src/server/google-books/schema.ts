@@ -21,6 +21,7 @@ const GoogleBooksVolumeInfoSchema = type({
 	"description?": "string | null",
 	"pageCount?": "number | null",
 	"categories?": "string[]",
+	"maturityRating?": "string | null",
 	"imageLinks?": GoogleBooksImageLinksSchema,
 	"industryIdentifiers?": GoogleBooksIndustryIdentifierSchema.array(),
 	"infoLink?": "string | null",

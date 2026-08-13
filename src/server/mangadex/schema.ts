@@ -28,6 +28,7 @@ export const MangaDexMangaResponseSchema = type({
 			status: "string",
 			year: "number | null",
 			originalLanguage: "string | null",
+			contentRating: "string | null",
 			lastVolume: "string | null",
 			lastChapter: "string | null",
 			tags: MangaDexTagSchema.array(),

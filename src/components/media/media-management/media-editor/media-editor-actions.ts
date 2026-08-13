@@ -152,13 +152,14 @@ export async function saveMediaDetails(
 		title: string;
 		overview: string | null;
 		releaseDate: string | null;
+		isAdult: boolean;
 	},
 ) {
 	await requireAdmin();
 
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
-		select: { title: true, overview: true, releaseDate: true },
+		select: { title: true, overview: true, releaseDate: true, isAdult: true },
 	});
 
 	const releaseDate = details.releaseDate
@@ -167,7 +168,12 @@ export async function saveMediaDetails(
 
 	await db.media.update({
 		where: { id: mediaId },
-		data: { title: details.title, overview: details.overview, releaseDate },
+		data: {
+			title: details.title,
+			overview: details.overview,
+			releaseDate,
+			isAdult: details.isAdult,
+		},
 	});
 
 	const changes = diffFields(
@@ -176,11 +182,13 @@ export async function saveMediaDetails(
 			title: existing?.title,
 			overview: existing?.overview,
 			releaseDate: existing?.releaseDate?.toISOString().slice(0, 10) ?? null,
+			isAdult: existing?.isAdult,
 		},
 		{
 			title: details.title,
 			overview: details.overview,
 			releaseDate: releaseDate?.toISOString().slice(0, 10) ?? null,
+			isAdult: details.isAdult,
 		},
 	);
 	if (changes.length) {

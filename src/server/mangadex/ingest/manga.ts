@@ -39,6 +39,10 @@ const STATUS_MAP: Record<string, MediaStatus> = {
 	cancelled: MediaStatus.COMPLETED,
 };
 
+// MangaDex's own four-tier content rating — the two most explicit tiers map
+// to isAdult, same as TMDB's adult flag (see tmdb/ingest/movie.ts).
+const ADULT_CONTENT_RATINGS = new Set(["erotica", "pornographic"]);
+
 function extractCoverFileName(manga: MangaDexManga): string | null {
 	const cover = manga.relationships.find((r) => r.type === "cover_art");
 	return cover?.attributes?.fileName ?? null;
@@ -87,6 +91,10 @@ async function buildMediaFields(
 			existing?.releaseDate ??
 			(manga.attributes.year ? new Date(manga.attributes.year, 0, 1) : null),
 		status: STATUS_MAP[manga.attributes.status] ?? MediaStatus.RELEASED,
+		// Refreshed every re-enrich, not just filled in once — same reasoning
+		// as publicRating just below (a source-reported fact, not editorial
+		// content a hand edit should stick over).
+		isAdult: ADULT_CONTENT_RATINGS.has(manga.attributes.contentRating ?? ""),
 		publicRating: statistics?.rating.bayesian ?? null,
 		posterPath: existing?.posterPath ?? extractCoverFileName(manga),
 		countryId:
