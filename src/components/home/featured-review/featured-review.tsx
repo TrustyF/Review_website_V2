@@ -19,14 +19,14 @@ import styles from "./featured-review.module.sass";
 // outgoing card's fade-out duration, not the faster incoming-only
 // $card-enter-opacity-duration) — JS can't read a sass variable at runtime,
 // so this is a separate constant kept in step with it by hand.
-const CARD_TRANSITION_MS = 250;
+const CARD_TRANSITION_MS = 350;
 
 // How long each auto-advanced review stays on screen before the hero moves
 // to the next one. Stops for good the moment the user interacts with the
 // picker (see `stoppedAutoAdvance` below) — this is a "welcome mat" for
 // people who land on the page and don't touch anything, not a persistent
 // slideshow that fights a reader who's already engaging with it.
-const AUTO_ADVANCE_MS = 10000;
+const AUTO_ADVANCE_MS = 15000;
 
 type Props = {
 	// Ordered most-recently-reviewed first (see app/page.tsx's query) — the
