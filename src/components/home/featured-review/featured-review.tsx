@@ -2,7 +2,18 @@
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Settings } from "lucide-react";
+import {
+	Pin,
+	Settings,
+	type LucideIcon,
+	Sparkles,
+	Bookmark,
+	BadgePlus,
+	Plus,
+	Heart,
+	Star,
+	Pencil,
+} from "lucide-react";
 import { MediaRecord } from "@/components/media/types";
 import { MediaPoster } from "@/components/media/primitives/poster";
 import { MediaMiniCardShell } from "@/components/media/media-cards/media-mini-card/media-mini-card-shell";
@@ -11,12 +22,20 @@ import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaReleaseDate } from "@/components/media/primitives/release-date";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import {
-	ReviewBodyLine,
+	ReviewBody,
 	ReviewSpoilerProvider,
 } from "@/components/media/media-cards/media-card/review-body";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useFeaturedManagerStore } from "@/components/home/featured-review/featured-manager/featured-manager-store";
 import styles from "./featured-review.module.sass";
+
+// Teaser only — the full body is one click away on the media page itself.
+// A few paragraphs rather than just the first, capped visually by
+// .excerpt's own line-clamp for anything longer. Passed to ReviewBody as
+// maxBlocks (a post-parse block count, not a raw \n\n split) so a spoiler
+// spanning the cutoff point is either included whole or excluded whole,
+// never cut mid-way — see that prop's own comment for what broke before.
+const EXCERPT_MAX_BLOCKS = 3;
 
 // Must match $card-transition-duration in featured-review.module.sass (the
 // outgoing card's fade-out duration, not the faster incoming-only
@@ -30,6 +49,23 @@ const CARD_TRANSITION_MS = 350;
 // people who land on the page and don't touch anything, not a persistent
 // slideshow that fights a reader who's already engaging with it.
 const AUTO_ADVANCE_MS = 15000;
+
+// One entry per possible .eyebrow state — an icon is optional per variant
+// (only "Featured review" has one today), so adding a future label (e.g.
+// something for a highly-rated review) is just another branch here with
+// or without its own icon, no change needed to how FeaturedReviewCard
+// renders it.
+type EyebrowVariant = {
+	label: string;
+	icon?: LucideIcon;
+};
+
+function eyebrowFor(
+	review: NonNullable<MediaRecord["review"]>,
+): EyebrowVariant {
+	if (review.featured) return { label: "Featured review", icon: Heart };
+	return { label: "New review", icon: Pencil };
+}
 
 type Props = {
 	// Ordered most-recently-reviewed first (see app/page.tsx's query) — the
@@ -250,10 +286,8 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 	}, []);
 
 	const review = media.review;
-	// Teaser only — the full body is one click away on the media page itself.
-	// A few paragraphs rather than just the first, capped visually by
-	// .excerpt's own line-clamp for anything longer.
-	const paragraphs = review.body!.split("\n\n").slice(0, 3);
+	const eyebrow = eyebrowFor(review);
+	const EyebrowIcon = eyebrow.icon;
 
 	// Only the incoming card slides; the outgoing one just fades in place
 	// (offset 0), so the two don't read as sliding past each other.
@@ -299,7 +333,21 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 				</div>
 				<div className={styles.info}>
 					<div className={styles.eyebrow}>
-						{review.featured ? "Featured review" : "New review"}
+						{EyebrowIcon && (
+							<EyebrowIcon
+								size={14}
+								fill="currentColor"
+								// Matches today's look (2 * 12/24 = 1px) but decoupled
+								// from size — absoluteStrokeWidth keeps this stroke
+								// weight exact regardless of what size ends up being
+								// later, rather than silently drifting (and risking the
+								// same blur a non-integer size/24 scale caused for the
+								// navbar's own icons — see nav-bar.tsx).
+								strokeWidth={0}
+								absoluteStrokeWidth
+							/>
+						)}
+						{eyebrow.label}
 					</div>
 					<h1 className={styles.title}>{media.title}</h1>
 					<div className={styles.meta_row}>
@@ -313,11 +361,18 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 					</div>
 					<div className={styles.excerpt} ref={excerptRef}>
 						<ReviewSpoilerProvider>
-							{paragraphs.map((paragraph, i) => (
-								<p className={styles.excerpt_line} key={i}>
-									<ReviewBodyLine text={paragraph} />
-								</p>
-							))}
+							<ReviewBody
+								text={review.body!}
+								paragraphClassName={styles.excerpt_line}
+								maxBlocks={EXCERPT_MAX_BLOCKS}
+								// This whole card is already a Link to the review page —
+								// a spoiler's own click-to-reveal would either fight that
+								// navigation or need to hijack the click to suppress it.
+								// Non-interactive here just lets every click fall through
+								// to that Link untouched, same as plain excerpt text
+								// already does.
+								spoilersInteractive={false}
+							/>
 						</ReviewSpoilerProvider>
 					</div>
 					{isOverflowing && (

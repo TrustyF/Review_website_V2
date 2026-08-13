@@ -38,17 +38,39 @@
   &:hover
     text-decoration-color: var(--foreground)
 
-// Background covers the text (color: transparent, not display:none) so the
-// paragraph keeps its normal width/wrapping — revealing it just swaps the
-// fill, nothing reflows.
+// display: block (a <span> still — see review-body.tsx's own comment — CSS
+// display doesn't change what tags are valid inside the surrounding <p>)
+// puts each spoiler marker on its own line as a standalone redaction area,
+// instead of sitting inline mid-sentence; width: fit-content keeps it sized
+// to its real (hidden) text's own natural wrapped shape, not stretched to
+// the full paragraph width.
 .spoiler
-  background: var(--accent2)
-  color: transparent
-  border-radius: 0.2rem
+  display: block
+  width: fit-content
   cursor: pointer
-  transition: background 0.15s ease, color 0.15s ease
+
+// The real spoiler text, laid out completely normally (plain inline flow,
+// wrapping same as any other text) — color: transparent either way so the
+// actual words are never legible, revealing just swaps that back to
+// inherit with no re-render needed. background here rather than as one
+// flat fill on .spoiler: a genuinely inline element's background paints
+// once per *wrapped line box*, not once for the whole run, so a multi-line
+// spoiler shows as a stack of separate bars matching its real line breaks/
+// lengths — closer to "hidden lines of text" than a single opaque block
+// would read. box-decoration-break: clone (the non-default) is what makes
+// border-radius apply to each of those line fragments individually instead
+// of only the first/last.
+.spoiler_text
+  color: transparent
+  background: var(--accent1-tint)
+  border-radius: 0.25rem
+  box-decoration-break: clone
+  -webkit-box-decoration-break: clone
+  transition: color 0.15s ease, background 0.15s ease
 
 .spoiler_revealed
-  background: transparent
-  color: inherit
   cursor: text
+
+  .spoiler_text
+    color: inherit
+    background: none

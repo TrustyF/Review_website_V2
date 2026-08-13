@@ -139,9 +139,20 @@ $card-transition-easing: ease-out
   min-width: 0
   padding-top: 1rem
   justify-content: flex-start
+  align-items: flex-start
 
+// Row layout is here unconditionally (not just when a variant actually has
+// an icon) so a future icon-less-to-icon-bearing label change never needs
+// a layout tweak alongside it — see featured-review.tsx's eyebrowFor.
 .eyebrow
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.3rem
   color: var(--brand)
+  //background-color: color-mix(in srgb, var(--brand-muted) 75%, transparent)
+  //padding: 0.3rem 0.4rem
+  //border-radius: 0.5rem
   font-size: 0.8rem
   font-weight: 600
   text-transform: uppercase

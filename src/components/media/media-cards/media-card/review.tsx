@@ -1,7 +1,7 @@
 import { Review } from "@prisma/client";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import {
-	ReviewBodyLine,
+	ReviewBody,
 	ReviewSpoilerProvider,
 } from "@/components/media/media-cards/media-card/review-body";
 import styles from "./review.module.sass";
@@ -29,11 +29,7 @@ export function MediaReview({ review, watchedDate }: Props) {
 	// rendered elsewhere on the same page (e.g. a grid of cards).
 	const SplitLineBody = review.body ? (
 		<ReviewSpoilerProvider>
-			{review.body.split("\n\n").map((line, index) => (
-				<p className={styles.body_line} key={index}>
-					<ReviewBodyLine text={line} />
-				</p>
-			))}
+			<ReviewBody text={review.body} paragraphClassName={styles.body_line} />
 		</ReviewSpoilerProvider>
 	) : null;
 
