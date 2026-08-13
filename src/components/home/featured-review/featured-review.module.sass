@@ -65,12 +65,19 @@
   flex-shrink: 0
   width: 180px
 
+// padding-top, not margin-top — .info is stretched (align-items' default)
+// to the poster's full height and its content is bottom-anchored (below),
+// so a margin above the box just eats into empty slack space above the
+// already-bottom-anchored content without actually moving it. Padding
+// reserves space inside the content box itself, which flex-end positions
+// against — that's what actually pushes the visible content down.
 .info
   display: flex
   flex-flow: column
   gap: 0.5rem
   min-width: 0
-  justify-content: flex-end
+  padding-top: 1rem
+  justify-content: flex-start
 
 .eyebrow
   color: var(--brand)
@@ -102,8 +109,10 @@
 
 // A row of <p> per paragraph (see featured-review.tsx), not a single text
 // node — -webkit-line-clamp only clamps one box's own inline content, not
-// several block-level children, so the cutoff here is a max-height + fade
-// instead, same "more than the old 3-line clamp, but still capped" intent.
+// several block-level children, so the cutoff here is a max-height instead,
+// same "more than the old 3-line clamp, but still capped" intent. No fade
+// of its own — see .read_more's own ::before, which only exists (and so
+// only fades anything) when .read_more itself is actually rendered.
 .excerpt
   display: flex
   flex-flow: column
@@ -114,19 +123,40 @@
   line-height: 1.5rem
   max-height: 9rem
   overflow: hidden
-  mask-image: linear-gradient(to bottom, black 70%, transparent 100%)
-  -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%)
 
 .excerpt_line
   white-space: pre-wrap
 
+// margin-top: auto — .info is a top-anchored (justify-content: flex-start)
+// flex column stretched to the poster's full height, so this is what pins
+// the link to the bottom of that box instead of sitting wherever .excerpt
+// happens to end. Full-width (not fit-content) so its own ::before fade
+// below spans the whole info column, not just the width of its own text.
 .read_more
+  position: relative
+  display: block
+  width: 100%
   color: var(--brand-active)
   font-size: 0.9rem
   text-decoration: underline
   text-decoration-color: transparent
   transition: text-decoration-color 0.15s ease
-  width: fit-content
+  margin-top: auto
+
+  // Sits directly above the link's own text, fading .excerpt's last visible
+  // line into the card's background — a background gradient owned by this
+  // element (only rendered when the excerpt actually overflows, see
+  // featured-review.tsx) rather than an unconditional mask on .excerpt
+  // itself, so a review that fits with room to spare never fades anything.
+  &::before
+    content: ""
+    position: absolute
+    left: 0
+    right: 0
+    bottom: 100%
+    height: 3rem
+    background: linear-gradient(to bottom, transparent, var(--background) 100%)
+    pointer-events: none
 
 // Vertically centered on the whole card rather than just the banner strip —
 // the banner's own height is aspect-ratio-driven (responsive), so pinning

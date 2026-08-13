@@ -1,5 +1,5 @@
 "use client";
-import { CSSProperties, useEffect, useState } from "react";
+import { CSSProperties, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -60,24 +60,24 @@ export function FeaturedReview({ items }: Props) {
 			    <button> inside the <a> would need preventDefault/
 			    stopPropagation on every click just to keep it from also
 			    navigating; sitting outside sidesteps that entirely. */}
-			{/*{reviewed.length > 1 && (*/}
-			{/*	<>*/}
-			{/*		<button*/}
-			{/*			type="button"*/}
-			{/*			aria-label="Previous review"*/}
-			{/*			className={`${styles.arrow} ${styles.arrow_prev}`}*/}
-			{/*			onClick={() => step(-1)}>*/}
-			{/*			<ChevronLeft size={20} />*/}
-			{/*		</button>*/}
-			{/*		<button*/}
-			{/*			type="button"*/}
-			{/*			aria-label="Next review"*/}
-			{/*			className={`${styles.arrow} ${styles.arrow_next}`}*/}
-			{/*			onClick={() => step(1)}>*/}
-			{/*			<ChevronRight size={20} />*/}
-			{/*		</button>*/}
-			{/*	</>*/}
-			{/*)}*/}
+			{reviewed.length > 1 && (
+				<>
+					<button
+						type="button"
+						aria-label="Previous review"
+						className={`${styles.arrow} ${styles.arrow_prev}`}
+						onClick={() => step(-1)}>
+						<ChevronLeft size={20} />
+					</button>
+					<button
+						type="button"
+						aria-label="Next review"
+						className={`${styles.arrow} ${styles.arrow_next}`}
+						onClick={() => step(1)}>
+						<ChevronRight size={20} />
+					</button>
+				</>
+			)}
 		</div>
 	);
 }
@@ -98,6 +98,19 @@ function FeaturedReviewCard({ media, direction }: CardProps) {
 	useEffect(() => {
 		const frame = requestAnimationFrame(() => setSettled(true));
 		return () => cancelAnimationFrame(frame);
+	}, []);
+
+	// "Read full review" is only useful (and only shown) when .excerpt is
+	// actually clipping something — no way to know that without measuring
+	// the rendered box, so it starts hidden and this flips it on once we can
+	// tell there's more text than the max-height fits. Runs once per mount,
+	// same as the settle effect above (this card remounts fresh per item —
+	// see FeaturedReview's key={media.id}).
+	const excerptRef = useRef<HTMLDivElement>(null);
+	const [isOverflowing, setIsOverflowing] = useState(false);
+	useEffect(() => {
+		const el = excerptRef.current;
+		if (el) setIsOverflowing(el.scrollHeight > el.clientHeight);
 	}, []);
 
 	const review = media.review;
@@ -154,7 +167,7 @@ function FeaturedReviewCard({ media, direction }: CardProps) {
 							</div>
 						)}
 					</div>
-					<div className={styles.excerpt}>
+					<div className={styles.excerpt} ref={excerptRef}>
 						<ReviewSpoilerProvider>
 							{paragraphs.map((paragraph, i) => (
 								<p className={styles.excerpt_line} key={i}>
@@ -163,7 +176,9 @@ function FeaturedReviewCard({ media, direction }: CardProps) {
 							))}
 						</ReviewSpoilerProvider>
 					</div>
-					<span className={styles.read_more}>Read full review →</span>
+					{isOverflowing && (
+						<span className={styles.read_more}>Read full review →</span>
+					)}
 				</div>
 			</div>
 		</Link>
