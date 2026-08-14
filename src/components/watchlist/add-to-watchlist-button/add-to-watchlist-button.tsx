@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
+import { Clock } from "lucide-react";
 import { addToWatchlist, removeFromWatchlist } from "@/components/watchlist/watchlist-actions";
+import { Clickable } from "@/components/ui/clickable";
 import styles from "./add-to-watchlist-button.module.sass";
 
 type Props = {
@@ -36,14 +38,17 @@ export function AddToWatchlistButton({
 		}
 	}
 
+	const label = isInWatchlist ? "In watchlist" : "Add to watchlist";
+
 	return (
-		<button
-			type="button"
+		<Clickable
 			className={className ? `${styles.trigger} ${className}` : styles.trigger}
 			disabled={isPending}
 			aria-pressed={isInWatchlist}
+			title={label}
+			aria-label={label}
 			onClick={toggle}>
-			{isInWatchlist ? "In watchlist" : "Add to watchlist"}
-		</button>
+			<Clock size={15} />
+		</Clickable>
 	);
 }

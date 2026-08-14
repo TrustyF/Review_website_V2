@@ -93,27 +93,104 @@
   display: flex
   gap: 2rem
 
-.poster
+.poster_column
+  display: flex
+  flex-flow: column
+  align-items: center
+  gap: 0.6rem
   flex-shrink: 0
   width: 220px
+
+.poster
+  position: relative
+  width: 100%
+
+.list_button_float
+  position: absolute
+  top: 0.5rem
+  right: 0.5rem
+  z-index: 5
 
 .header_info
   display: flex
   flex-flow: column
+  flex: 1
   gap: 0.75rem
   min-width: 0
 
 .title_row
   display: flex
   flex-flow: row
-  align-items: center
+  align-items: baseline
   justify-content: space-between
   gap: 1rem
 
+// Plain inline flow rather than flex — a flex row keeps .title and
+// .title_director as two separate boxes side by side, so once .title wraps
+// to a second line .title_director just stays pinned beside its first line
+// instead of flowing after wherever the title text actually ends. Letting
+// both sit inline (like two spans in a sentence) makes the browser wrap
+// them together as one run, same as ordinary text.
+.title_group
+  min-width: 0
+
 .title
+  display: inline
   text-align: left
   font-size: 1.8rem
   text-shadow: var(--background) 2px 2px 3px
+
+.title_director
+  display: inline
+  margin-left: 0.5rem
+  font-size: 1.1rem
+  line-height: 1.4rem
+  color: var(--accent1)
+
+  .credit_link
+    color: var(--accent1)
+
+  // .credit_names is display: flex (block-level) everywhere else it's used
+  // (credit rows, promoted facts) — here it needs to sit inline, wrapping
+  // along with the surrounding title text instead of forcing a line break
+  // before it or clipping its own descenders against a fixed line box.
+  .credit_names
+    display: inline
+    color: inherit
+
+.title_actions
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.5rem
+  flex-shrink: 0
+
+// Same bordered-pill treatment as .controls_bar below, for a plain-text
+// fact (currently just runtime) instead of an icon control. Sits between
+// the poster and .controls_bar in .poster_column.
+.poster_info
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 0.15rem 0.6rem
+  border: 1px solid var(--surface-border)
+  border-radius: 1rem
+  color: var(--accent1)
+  font-family: $font-mono
+  font-size: 0.85rem
+
+// Holder for icon-sized detail-page controls — today just the watchlist
+// toggle, styled as a bordered pill so more icons can join it later without
+// a redesign. Sits under the poster, centered in .poster_column.
+.controls_bar
+  display: flex
+  flex-flow: row
+  align-items: center
+  justify-content: center
+  gap: 0.3rem
+  padding: 0.15rem 0.4rem
+  border: 1px solid var(--surface-border)
+  border-radius: 1rem
 
 .edit_button
   flex-shrink: 0
@@ -132,22 +209,81 @@
   font-family: $font-mono
   font-size: 0.95rem
 
+.tagline
+  font-style: italic
+  color: var(--body)
+
 .source_link
   color: var(--accent1)
   text-decoration: underline
   text-underline-offset: 0.15rem
 
-.genres
+.review_row
   display: flex
-  flex-flow: row wrap
-  gap: 0.5rem
+  flex-flow: row
+  align-items: flex-start
+  gap: 1.5rem
+  margin-top: 0.5rem
 
-.genre
-  padding: 0.15rem 0.6rem
-  border: 1px solid var(--accent1)
-  border-radius: 1rem
-  font-size: 0.8rem
-  color: var(--accent3)
+.review_col
+  flex: 1
+  min-width: 0
+
+// Public rating + budget/revenue/ROI gauge, sitting beside the review
+// instead of down in the type-specific facts list.
+.secondary_facts
+  display: flex
+  flex-flow: column
+  gap: 0.75rem
+  flex-shrink: 0
+  padding: 0.75rem 1rem
+  border: 1px solid var(--surface-border)
+  border-radius: 0.5rem
+
+.public_rating
+  display: flex
+  align-items: center
+  gap: 0.2rem
+  color: var(--link)
+  font-size: 1.1rem
+
+.difficulty
+  display: flex
+  align-items: center
+  gap: 0.4rem
+  color: var(--accent1)
+  font-size: 0.9rem
+  cursor: default
+
+.difficulty_dot
+  width: 0.6rem
+  height: 0.6rem
+  border-radius: 50%
+
+.difficulty_dot_medium
+  background: var(--warning)
+
+.difficulty_dot_hard
+  background: var(--danger)
+
+.finance_group
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 1rem
+  padding-top: 0.75rem
+  border-top: 1px solid var(--surface-border)
+
+  // No public rating above it — no divider needed either, since there's
+  // nothing on the other side of it to separate from.
+  &:first-child
+    padding-top: 0
+    border-top: none
+
+.financials_facts
+  display: flex
+  flex-flow: column
+  gap: 0.5rem
 
 .overview
   color: var(--body)

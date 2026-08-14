@@ -1,16 +1,21 @@
 .trigger
-  padding: 0.3rem 0.9rem
-  border: 1px solid var(--accent1)
-  border-radius: 1rem
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 1.6rem
+  height: 1.6rem
+  border: none
+  border-radius: 50%
   background: transparent
   color: var(--accent1)
-  font-size: 0.8rem
   cursor: pointer
 
   &:hover
     color: var(--foreground)
-    border-color: var(--foreground)
 
   &[aria-pressed="true"]
-    color: var(--foreground)
-    border-color: var(--foreground)
+    color: var(--warning)
+
+  &[aria-disabled="true"]
+    cursor: default
+    opacity: 0.6

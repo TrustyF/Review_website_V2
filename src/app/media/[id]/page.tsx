@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/server/db/client";
 import { toMediaRecord, MediaRecord } from "@/components/media/types";
 import { posterRatioFor } from "@/components/media/poster-ratio";
+import { StarIcon } from "@/components/media/icons/star-icon";
 import { MediaTitle } from "@/components/media/primitives/title";
 import { MediaReleaseDate } from "@/components/media/primitives/release-date";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
@@ -19,6 +20,7 @@ import { MediaType } from "@prisma/client";
 import { BANNER_GRAIN_OPACITY } from "@/server/resolvers/poster-resolver";
 import styles from "./media-detail.module.sass";
 import { CircularGauge } from "@/components/ui/circular-gauge";
+import { Tooltip } from "@/components/ui/tooltip";
 import { generateMediaMetadata } from "./metadata";
 
 // See metadata.ts — kept there rather than inlined here so this file stays
@@ -100,41 +102,11 @@ function CreditNames({ entries }: { entries: CreditLink[] }) {
 // so this just picks the right one and lays out whichever fields are set.
 function MediaTypeFacts({ media }: { media: MediaRecord }) {
 	switch (media.type) {
+		// Budget/revenue/ROI render in the financials box beside the review
+		// instead — nothing left here for movies/shorts.
 		case "MOVIE":
-		case "SHORT": {
-			const { runtime, budget, revenue, tagline } = media.movie;
-			const roi =
-				budget != null && revenue != null && budget !== 0
-					? (revenue - budget) / budget
-					: null;
-			return (
-				<dl className={styles.facts}>
-					{tagline && <Fact label="Tagline" value={tagline} />}
-					{runtime != null && (
-						<Fact
-							label="Runtime"
-							value={formatRuntime(runtime) ?? `${runtime}m`}
-						/>
-					)}
-					{budget != null && (
-						<Fact label="Budget" value={CurrencyFormatter.format(budget)} />
-					)}
-					{revenue != null && (
-						<Fact label="Revenue" value={CurrencyFormatter.format(revenue)} />
-					)}
-					{roi != null && (
-						<CircularGauge
-							value={roi}
-							size={30}
-							strokeWidth={2}
-							max={1}
-							unit={"x"}
-							textScaling={0.35}
-						/>
-					)}
-				</dl>
-			);
-		}
+		case "SHORT":
+			return null;
 		case "TVSHOW": {
 			const { seasonCount, episodeCount, network } = media.tvShow;
 			return (
@@ -210,7 +182,6 @@ export default async function MediaDetailPage({
 				book: true,
 				review: true,
 				originCountry: true,
-				mediaGenres: { include: { genre: true } },
 				credits: {
 					include: { person: true, company: true, role: true },
 					orderBy: { order: "asc" },
@@ -241,11 +212,40 @@ export default async function MediaDetailPage({
 
 	const media = toMediaRecord(raw);
 
+	// Only movies/shorts carry a tagline (see MediaTypeFacts) — pulled out
+	// here too since it now sits in the header's meta row, next to the
+	// release date, rather than down in the type-specific facts list.
+	const tagline =
+		media.type === "MOVIE" || media.type === "SHORT"
+			? media.movie.tagline
+			: null;
+	// Same story for runtime — it now sits in the info container under the
+	// poster instead of the type-specific facts list.
+	const runtime =
+		media.type === "MOVIE" || media.type === "SHORT"
+			? media.movie.runtime
+			: null;
+	const runtimeLabel = runtime != null ? (formatRuntime(runtime) ?? `${runtime}m`) : null;
+	// Same story for budget/revenue/ROI — they now sit in the financials box
+	// beside the review instead of the type-specific facts list.
+	const budget =
+		media.type === "MOVIE" || media.type === "SHORT" ? media.movie.budget : null;
+	const revenue =
+		media.type === "MOVIE" || media.type === "SHORT" ? media.movie.revenue : null;
+	const roi =
+		budget != null && revenue != null && budget !== 0
+			? (revenue - budget) / budget
+			: null;
+	// Not type-specific (unlike tagline/runtime/budget/revenue above) — every
+	// media type can carry a source's public rating.
+	const publicRating = raw.publicRating;
+	// null/0 both mean "not rated for difficulty" — same convention
+	// MediaPoster's own corner notch uses (see poster.tsx).
+	const difficulty = raw.review?.difficulty;
+
 	const memberListIds = allLists
 		.filter((list) => list.items.length > 0)
 		.map((list) => list.id);
-
-	const genres = raw.mediaGenres.map((mediaGenre) => mediaGenre.genre.name);
 
 	// Same person/company can be attached to a role more than once (e.g.
 	// duplicate TMDB credit rows) — dedupe per role by id, not just name, so
@@ -327,27 +327,44 @@ export default async function MediaDetailPage({
 
 			<div className={styles.details_wrapper}>
 				<div className={styles.header}>
-					<div className={styles.poster}>
-						<PosterEditTrigger
-							media={media}
-							ratio={posterRatioFor(media.type)}
-						/>
-					</div>
-					<div className={styles.header_info}>
-						<div className={styles.title_row}>
-							<MediaTitle title={media.title} className={styles.title} />
+					<div className={styles.poster_column}>
+						<div className={styles.poster}>
+							<PosterEditTrigger
+								media={media}
+								ratio={posterRatioFor(media.type)}
+							/>
 							<AddToListButton
 								mediaId={media.id}
 								allLists={allLists}
 								memberListIds={memberListIds}
+								className={styles.list_button_float}
 							/>
-							{session?.user && (
+						</div>
+						{runtimeLabel && (
+							<div className={styles.poster_info}>{runtimeLabel}</div>
+						)}
+						{session?.user && (
+							<div className={styles.controls_bar}>
 								<AddToWatchlistButton
 									mediaId={media.id}
 									initialIsInWatchlist={!!watchlistItem}
 								/>
-							)}
-							<MediaEditButton media={media} className={styles.edit_button} />
+							</div>
+						)}
+					</div>
+					<div className={styles.header_info}>
+						<div className={styles.title_row}>
+							<div className={styles.title_group}>
+								<MediaTitle title={media.title} className={styles.title} />
+								{directorEntries.length > 0 && (
+									<span className={styles.title_director}>
+										by <CreditNames entries={directorEntries} />
+									</span>
+								)}
+							</div>
+							<div className={styles.title_actions}>
+								<MediaEditButton media={media} className={styles.edit_button} />
+							</div>
 						</div>
 						{media.alternateTitle && (
 							<div className={styles.alt_title}>{media.alternateTitle}</div>
@@ -355,87 +372,118 @@ export default async function MediaDetailPage({
 
 						<div className={styles.meta_row}>
 							<MediaReleaseDate date={media.releaseDate} />
-							{raw.originCountry && (
-								<span>
-									{raw.originCountry.flag} {raw.originCountry.name}
-								</span>
-							)}
-							{raw.sourceUrl && (
-								<a
-									className={styles.source_link}
-									href={raw.sourceUrl}
-									target="_blank"
-									rel="noopener noreferrer">
-									View on {PROVIDER_LABELS[media.type]}
-								</a>
-							)}
+							{tagline && <span className={styles.tagline}>{tagline}</span>}
 						</div>
 
-						{genres.length > 0 && (
-							<div className={styles.genres}>
-								{genres.map((genre) => (
-									<span className={styles.genre} key={genre}>
-										{genre}
-									</span>
-								))}
+						<div className={styles.review_row}>
+							<div className={styles.review_col}>
+								<ReviewBodyEditTrigger media={media} />
 							</div>
-						)}
-
-						{media.overview && (
-							<p className={styles.overview}>{media.overview}</p>
-						)}
-
-						<MediaTypeFacts media={media} />
-
-						{(directorEntries.length > 0 ||
-							actorEntries.length > 0 ||
-							studioEntries.length > 0) && (
-							<dl className={styles.facts}>
-								{directorEntries.length > 0 && (
-									<Fact
-										label="Director"
-										value={<CreditNames entries={directorEntries} />}
-									/>
-								)}
-								{actorEntries.length > 0 && (
-									<Fact
-										label="Cast"
-										value={<CreditNames entries={actorEntries} />}
-									/>
-								)}
-								{studioEntries.length > 0 && (
-									<Fact
-										label="Studio"
-										value={<CreditNames entries={studioEntries} />}
-									/>
-								)}
-							</dl>
-						)}
-
-						{otherRoles.length > 0 && (
-							<details className={styles.credits}>
-								<summary className={styles.credits_summary}>
-									Credits
-									<span className={styles.credits_count}>
-										{otherRoles.length}
-									</span>
-								</summary>
-								<div className={styles.credits_list}>
-									{otherRoles.map(([role, entries]) => (
-										<div className={styles.credit_row} key={role}>
-											<span className={styles.credit_role}>{role}</span>
-											<CreditNames entries={[...entries.values()]} />
+							{(publicRating != null ||
+								difficulty === 1 ||
+								difficulty === 2 ||
+								budget != null ||
+								revenue != null ||
+								roi != null) && (
+								<div className={styles.secondary_facts}>
+									{publicRating != null && (
+										<div className={styles.public_rating}>
+											{publicRating.toFixed(1)}
+											<StarIcon style={{ color: "var(--link)" }} />
 										</div>
-									))}
+									)}
+									{(difficulty === 1 || difficulty === 2) && (
+										<Tooltip
+											content={
+												difficulty === 1 ? "Medium difficulty" : "Hard difficulty"
+											}>
+											<div className={styles.difficulty}>
+												<span
+													className={`${styles.difficulty_dot} ${difficulty === 1 ? styles.difficulty_dot_medium : styles.difficulty_dot_hard}`}
+												/>
+												{difficulty === 1 ? "Medium" : "Hard"}
+											</div>
+										</Tooltip>
+									)}
+									{(budget != null || revenue != null || roi != null) && (
+										<div className={styles.finance_group}>
+											<dl className={styles.financials_facts}>
+												{budget != null && (
+													<Fact
+														label="Budget"
+														value={CurrencyFormatter.format(budget)}
+													/>
+												)}
+												{revenue != null && (
+													<Fact
+														label="Revenue"
+														value={CurrencyFormatter.format(revenue)}
+													/>
+												)}
+											</dl>
+											{roi != null && (
+												<Tooltip content="Return on investment">
+													<CircularGauge
+														value={roi}
+														size={40}
+														strokeWidth={3}
+														max={1}
+														unit={"x"}
+														textScaling={0.35}
+													/>
+												</Tooltip>
+											)}
+										</div>
+									)}
 								</div>
-							</details>
-						)}
+							)}
+						</div>
 					</div>
 				</div>
 
 				<section className={styles.section}>
-					<h2 className={styles.section_title}>Review</h2>
-					<ReviewBodyEditTrigger media={media} />
+					<h2 className={styles.section_title}>Details</h2>
+					{media.overview && (
+						<p className={styles.overview}>{media.overview}</p>
+					)}
+
+					<MediaTypeFacts media={media} />
+
+					{(actorEntries.length > 0 || studioEntries.length > 0) && (
+						<dl className={styles.facts}>
+							{actorEntries.length > 0 && (
+								<Fact
+									label="Cast"
+									value={<CreditNames entries={actorEntries} />}
+								/>
+							)}
+							{studioEntries.length > 0 && (
+								<Fact
+									label="Studio"
+									value={<CreditNames entries={studioEntries} />}
+								/>
+							)}
+						</dl>
+					)}
+
+					{otherRoles.length > 0 && (
+						<details className={styles.credits}>
+							<summary className={styles.credits_summary}>
+								Credits
+								<span className={styles.credits_count}>
+									{otherRoles.length}
+								</span>
+							</summary>
+							<div className={styles.credits_list}>
+								{otherRoles.map(([role, entries]) => (
+									<div className={styles.credit_row} key={role}>
+										<span className={styles.credit_role}>{role}</span>
+										<CreditNames entries={[...entries.values()]} />
+									</div>
+								))}
+							</div>
+						</details>
+					)}
 				</section>
 
 				<section className={styles.section}>

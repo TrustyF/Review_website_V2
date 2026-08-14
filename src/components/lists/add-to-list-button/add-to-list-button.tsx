@@ -5,8 +5,10 @@ import {
 	addMediaToList,
 	removeMediaFromList,
 } from "@/components/lists/list-actions";
+import { Plus } from "lucide-react";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useOutsideClick } from "@/lib/use-outside-click";
+import { Clickable } from "@/components/ui/clickable";
 import styles from "./add-to-list-button.module.sass";
 
 type ListOption = {
@@ -69,12 +71,13 @@ export function AddToListButton({
 
 	return (
 		<div className={className} ref={containerRef}>
-			<button
-				type="button"
+			<Clickable
 				className={styles.trigger}
+				title="Add to list"
+				aria-label="Add to list"
 				onClick={() => setIsOpen((v) => !v)}>
-				Add to list
-			</button>
+				<Plus size={14} />
+			</Clickable>
 			{isOpen && (
 				<div className={styles.popover}>
 					{allLists.length === 0 ? (
