@@ -3,11 +3,14 @@ import { db } from "@/server/db/client";
 import {
 	bannerUrlFor,
 	posterUrlFor,
+	personPhotoUrlFor,
 	BANNER_FORMAT,
 	BANNER_GRAIN_OPACITY,
 	BANNER_MAX_WIDTH,
 	BANNER_QUALITY,
 	POSTER_QUALITY,
+	PERSON_PHOTO_MAX_WIDTH,
+	PERSON_PHOTO_QUALITY,
 } from "@/server/resolvers/poster-resolver";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { CompressionPlayground } from "./compression-playground";
@@ -26,26 +29,33 @@ const POSTER_PLAYGROUND_WIDTH = 500;
 export default async function BannerCompressionDevPage() {
 	if (process.env.NODE_ENV !== "development") notFound();
 
-	const [bannerCandidates, posterCandidates] = await Promise.all([
-		db.media.findMany({
-			where: { bannerPath: { not: null } },
-			select: { id: true, title: true, type: true, bannerPath: true },
-			orderBy: { id: "desc" },
-			take: SAMPLE_SIZE,
-		}),
-		db.media.findMany({
-			where: { posterPath: { not: null } },
-			select: {
-				id: true,
-				title: true,
-				type: true,
-				externalId: true,
-				posterPath: true,
-			},
-			orderBy: { id: "desc" },
-			take: SAMPLE_SIZE,
-		}),
-	]);
+	const [bannerCandidates, posterCandidates, personCandidates] =
+		await Promise.all([
+			db.media.findMany({
+				where: { bannerPath: { not: null } },
+				select: { id: true, title: true, type: true, bannerPath: true },
+				orderBy: { id: "desc" },
+				take: SAMPLE_SIZE,
+			}),
+			db.media.findMany({
+				where: { posterPath: { not: null } },
+				select: {
+					id: true,
+					title: true,
+					type: true,
+					externalId: true,
+					posterPath: true,
+				},
+				orderBy: { id: "desc" },
+				take: SAMPLE_SIZE,
+			}),
+			db.person.findMany({
+				where: { photoPath: { not: null } },
+				select: { id: true, name: true, photoPath: true },
+				orderBy: { id: "desc" },
+				take: SAMPLE_SIZE,
+			}),
+		]);
 
 	const banners = bannerCandidates.map((media) => ({
 		id: media.id,
@@ -70,10 +80,20 @@ export default async function BannerCompressionDevPage() {
 		ratio: posterRatioFor(media.type),
 	}));
 
+	const people = personCandidates.map((person) => ({
+		id: person.id,
+		title: person.name,
+		// Same reasoning as banners/posters' sourceUrl — personPhotoUrlFor's
+		// w185 is exactly what resolvePersonPhoto itself downloads before
+		// re-encoding.
+		sourceUrl: personPhotoUrlFor(person.photoPath!),
+	}));
+
 	return (
 		<CompressionPlayground
 			banners={banners}
 			posters={posters}
+			people={people}
 			bannerSettings={{
 				format: BANNER_FORMAT,
 				quality: BANNER_QUALITY,
@@ -87,6 +107,14 @@ export default async function BannerCompressionDevPage() {
 				// Production never overlays grain on posters — only banners (see
 				// BannerEditTrigger's .grain) — 0 keeps the playground's default
 				// an honest reflection of that.
+				grainOpacity: 0,
+			}}
+			personSettings={{
+				format: "webp",
+				quality: PERSON_PHOTO_QUALITY,
+				width: PERSON_PHOTO_MAX_WIDTH,
+				// Same reasoning as posters — production never overlays grain on
+				// cast photos either.
 				grainOpacity: 0,
 			}}
 		/>

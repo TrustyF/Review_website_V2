@@ -45,6 +45,7 @@ export async function syncMovieCreditsAndGenres(
 			externalId: String(c.id),
 			source: Source.TMDB,
 			name: c.name,
+			photoPath: c.profile_path,
 		})),
 		...crew.map((c) => ({
 			externalId: String(c.id),

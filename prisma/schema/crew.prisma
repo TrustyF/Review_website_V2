@@ -17,6 +17,14 @@ model Person {
   source     Source
   credits    Credit[]
 
+  // Only ever populated from a cast credit (see syncMovieCreditsAndGenres/
+  // syncTvShowCreditsAndGenres) — deliberately never set for crew, so a
+  // person credited as e.g. both Director and Actor across different titles
+  // only ever surfaces a photo on their Actor credit. Keeps scope to "main
+  // cast get a photo, crew doesn't" without a separate table to track which
+  // credit a photo came from.
+  photoPath String?
+
   @@unique([externalId, source])
 }
 

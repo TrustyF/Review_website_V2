@@ -210,3 +210,13 @@
   width: 100%
   height: 100%
   object-fit: fill
+
+// Person photos render as a circle (CastPhotos' own .cast_photo) rather
+// than a stretched rectangle — border-radius: 50% on the frame, object-fit:
+// cover on the image so a non-square source still crops sensibly instead of
+// squashing into an oval.
+.practical_frame_circle
+  border-radius: 50%
+
+.practical_image_cover
+  object-fit: cover

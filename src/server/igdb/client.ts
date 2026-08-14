@@ -7,6 +7,7 @@ import {
 	IgdbGameSearchResult,
 } from "./schema";
 import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
+import { createRateLimiter } from "@/server/lib/rate-limited-fetch";
 
 const IGDB_BASE = "https://api.igdb.com/v4";
 const TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";
@@ -58,55 +59,32 @@ async function getAccessToken(): Promise<string> {
 	return cachedToken.value;
 }
 
-function sleep(ms: number) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 // IGDB enforces ~4 requests/second per app; a batch run (enrich-db) that
 // fires requests back-to-back can trip that even though each individual
-// call is well-formed. 429s are transient, so they're worth retrying with
-// backoff rather than failing the row outright — everything else (4xx/5xx)
-// still fails immediately since retrying won't fix those.
-const MAX_ATTEMPTS = 5;
+// call is well-formed. The limiter paces requests to stay under that, and
+// retries a 429 exactly once (see rate-limited-fetch.ts) rather than
+// failing the row outright — everything else (4xx/5xx) still fails
+// immediately since retrying won't fix those.
+const limiter = createRateLimiter({ minIntervalMs: 250 });
 
 async function igdbFetch(endpoint: string, body: string): Promise<unknown> {
 	const token = await getAccessToken();
 
-	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-		const res = await fetch(`${IGDB_BASE}/${endpoint}`, {
-			method: "POST",
-			headers: new Headers({
-				"Client-ID": process.env.IGDB_CLIENT_ID!,
-				Authorization: `Bearer ${token}`,
-				Accept: "application/json",
-			}),
-			body,
-		});
+	const res = await limiter.fetch(`${IGDB_BASE}/${endpoint}`, {
+		method: "POST",
+		headers: new Headers({
+			"Client-ID": process.env.IGDB_CLIENT_ID!,
+			Authorization: `Bearer ${token}`,
+			Accept: "application/json",
+		}),
+		body,
+	});
 
-		if (res.status === 429) {
-			if (attempt === MAX_ATTEMPTS) {
-				throw new Error(`IGDB rate limited after ${MAX_ATTEMPTS} attempts`);
-			}
-			const retryAfter = Number(res.headers.get("Retry-After"));
-			const delayMs =
-				Number.isFinite(retryAfter) && retryAfter > 0
-					? retryAfter * 1000
-					: attempt * 500;
-			await sleep(delayMs);
-			continue;
-		}
-
-		if (!res.ok) {
-			throw new Error(
-				`IGDB request failed (${res.status}): ${await res.text()}`,
-			);
-		}
-
-		return res.json();
+	if (!res.ok) {
+		throw new Error(`IGDB request failed (${res.status}): ${await res.text()}`);
 	}
 
-	// Unreachable — the loop above always either returns or throws.
-	throw new Error("IGDB request failed: exhausted retry attempts");
+	return res.json();
 }
 
 export async function fetchIgdbGameById(id: string): Promise<IgdbGame> {

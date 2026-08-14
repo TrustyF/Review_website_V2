@@ -6,12 +6,16 @@ import {
 	ComicVineVolumeSearchResponseSchema,
 } from "./schema";
 import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
+import { createRateLimiter } from "@/server/lib/rate-limited-fetch";
 
 const COMICVINE_BASE = "https://comicvine.gamespot.com/api";
 
 // ComicVine rejects requests with no User-Agent outright, and requires a
 // stable one to keep from being rate-limited as a bot.
 const USER_AGENT = "review-website-nextjs/1.0 (personal media tracker)";
+
+// ComicVine's own guidance is ~1 request/second.
+const limiter = createRateLimiter({ minIntervalMs: 1000 });
 
 // Every "volume" (what this app tracks a comic as — a full series/run, not
 // a single issue) is addressed by a resource-typed id: the 4050- prefix
@@ -29,7 +33,7 @@ function apiKey(): string {
 }
 
 async function comicVineFetch(url: URL): Promise<unknown> {
-	const res = await fetch(url, {
+	const res = await limiter.fetch(url, {
 		headers: new Headers({ "User-Agent": USER_AGENT }),
 	});
 	if (!res.ok) {

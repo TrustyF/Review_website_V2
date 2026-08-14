@@ -9,16 +9,26 @@ import {
 	MangaDexStatisticsResponseSchema,
 } from "./schema";
 import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
+import { createRateLimiter } from "@/server/lib/rate-limited-fetch";
 
 const MANGADEX_BASE = "https://api.mangadex.org";
+
+// MangaDex documents a ~5 request/second per-IP limit. Also directly caps
+// enrich-db.ts's per-item fetchMangaDexById + fetchMangaDexStatistics pair
+// (issued together via Promise.all) — both share this one limiter, so real
+// request rate stays capped regardless of how many items enrich concurrently.
+const limiter = createRateLimiter({ minIntervalMs: 200 });
+
+function mangaDexFetch(url: string): Promise<Response> {
+	return limiter.fetch(url, { headers: new Headers({ Accept: "application/json" }) });
+}
 
 // MangaDex's read API is public — no API key/auth needed for these endpoints.
 export async function fetchMangaDexById(
 	id: string,
 ): Promise<MangaDexMangaResponse> {
-	const res = await fetch(
+	const res = await mangaDexFetch(
 		`${MANGADEX_BASE}/manga/${id}?includes[]=author&includes[]=artist&includes[]=cover_art`,
-		{ headers: new Headers({ Accept: "application/json" }) },
 	);
 
 	if (!res.ok) {
@@ -36,9 +46,7 @@ export async function fetchMangaDexById(
 export async function fetchMangaDexStatistics(
 	id: string,
 ): Promise<MangaDexStatisticsEntry | null> {
-	const res = await fetch(`${MANGADEX_BASE}/statistics/manga/${id}`, {
-		headers: new Headers({ Accept: "application/json" }),
-	});
+	const res = await mangaDexFetch(`${MANGADEX_BASE}/statistics/manga/${id}`);
 
 	if (!res.ok) {
 		const errorText = await res.text();
@@ -62,9 +70,7 @@ export async function searchMangaDex(
 	});
 	params.append("includes[]", "cover_art");
 
-	const res = await fetch(`${MANGADEX_BASE}/manga?${params}`, {
-		headers: new Headers({ Accept: "application/json" }),
-	});
+	const res = await mangaDexFetch(`${MANGADEX_BASE}/manga?${params}`);
 
 	if (!res.ok) {
 		const errorText = await res.text();
@@ -84,9 +90,7 @@ export async function fetchMangaDexCovers(
 	const params = new URLSearchParams({ limit: "100", "order[volume]": "asc" });
 	params.append("manga[]", mangaId);
 
-	const res = await fetch(`${MANGADEX_BASE}/cover?${params}`, {
-		headers: new Headers({ Accept: "application/json" }),
-	});
+	const res = await mangaDexFetch(`${MANGADEX_BASE}/cover?${params}`);
 
 	if (!res.ok) {
 		const errorText = await res.text();

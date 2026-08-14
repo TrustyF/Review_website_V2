@@ -357,6 +357,53 @@
   &:hover
     text-decoration: underline
 
+.cast_photos
+  display: flex
+  flex-flow: row wrap
+  align-items: flex-start
+  gap: 0.5rem
+
+.cast_photo_link
+  display: flex
+  flex-flow: column
+  align-items: center
+  gap: 0.5rem
+  width: 6rem
+  color: inherit
+  text-decoration: none
+  opacity: 0.85
+  transition: opacity 0.15s
+
+  &:hover
+    opacity: 1
+
+.cast_photo
+  width: 6rem
+  height: 6rem
+  border-radius: 50%
+  object-position: top
+  object-fit: cover
+
+.cast_photo_placeholder
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 6rem
+  height: 6rem
+  border-radius: 50%
+  background: var(--surface)
+  border: 1px solid var(--surface-border)
+  color: var(--accent1)
+
+.cast_photo_name
+  font-size: 0.7rem
+  text-align: center
+  line-height: 1.1
+  // Long names still wrap onto a second line rather than overflowing —
+  // truncating to one line would leave e.g. "Robert..." unreadable at this
+  // width, and there's no tooltip anymore to fall back on for the full name.
+  overflow-wrap: break-word
+
 .section
   display: flex
   flex-flow: column

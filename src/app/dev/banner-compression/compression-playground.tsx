@@ -28,7 +28,23 @@ const POSTER_PRACTICAL_SIZES = [
 	{ label: "Detail page", width: 220 },
 ];
 
-type AssetType = "banner" | "poster";
+// CastPhotos' own .cast_photo size (media-detail.module.sass) — the only
+// place a person photo renders on site today.
+const PERSON_PRACTICAL_SIZES = [{ label: "Cast avatar", width: 40 }];
+
+type AssetType = "banner" | "poster" | "person";
+
+// The big compare view's own box (see .compare_wrapper) is capped at a fixed
+// height but always full width — great for a banner (already wide, so
+// object-fit: cover just fills it), but a tall/narrow poster or person photo
+// under object-fit: cover in that shape gets cropped down to a thin sliver
+// blown up huge, more zoomed-in than useful for actually judging compression.
+// object-fit: contain instead shows the whole image, letterboxed.
+const COMPARE_OBJECT_FIT: Record<AssetType, "cover" | "contain"> = {
+	banner: "cover",
+	poster: "contain",
+	person: "contain",
+};
 
 type ProductionSettings = {
 	format: CompressionFormat;
@@ -40,17 +56,19 @@ type ProductionSettings = {
 type Props = {
 	banners: AssetOption[];
 	posters: AssetOption[];
-	// What resolveBanner/resolvePoster actually ship today — "Reset to
-	// production defaults" below re-baselines every control against
-	// whichever of these matches the current asset-type selection. Passed
-	// down from the server component rather than importing the BANNER_*/
-	// POSTER_* constants here directly: poster-resolver.ts pulls in
-	// fs/promises and sharp, and this is a "use client" module — any value
-	// imported from it drags the whole (server-only) module into the
-	// browser bundle, which fails outright on fs/promises having no browser
-	// equivalent.
+	people: AssetOption[];
+	// What resolveBanner/resolvePoster/resolvePersonPhoto actually ship today
+	// — "Reset to production defaults" below re-baselines every control
+	// against whichever of these matches the current asset-type selection.
+	// Passed down from the server component rather than importing the
+	// BANNER_*/POSTER_*/PERSON_PHOTO_* constants here directly: poster-
+	// resolver.ts pulls in fs/promises and sharp, and this is a "use client"
+	// module — any value imported from it drags the whole (server-only)
+	// module into the browser bundle, which fails outright on fs/promises
+	// having no browser equivalent.
 	bannerSettings: ProductionSettings;
 	posterSettings: ProductionSettings;
+	personSettings: ProductionSettings;
 };
 
 const FORMATS: CompressionFormat[] = ["webp", "avif", "jpeg"];
@@ -73,13 +91,24 @@ function formatBytes(bytes: number): string {
 export function CompressionPlayground({
 	banners,
 	posters,
+	people,
 	bannerSettings,
 	posterSettings,
+	personSettings,
 }: Props) {
 	const [assetType, setAssetType] = useState<AssetType>("banner");
-	const options = assetType === "banner" ? banners : posters;
-	const productionSettings =
-		assetType === "banner" ? bannerSettings : posterSettings;
+	const optionsByType: Record<AssetType, AssetOption[]> = {
+		banner: banners,
+		poster: posters,
+		person: people,
+	};
+	const settingsByType: Record<AssetType, ProductionSettings> = {
+		banner: bannerSettings,
+		poster: posterSettings,
+		person: personSettings,
+	};
+	const options = optionsByType[assetType];
+	const productionSettings = settingsByType[assetType];
 
 	const [selectedId, setSelectedId] = useState<number | "custom">(
 		banners[0]?.id ?? "custom",
@@ -109,8 +138,8 @@ export function CompressionPlayground({
 	// than, say, carrying avif/60 over as a starting point for a poster,
 	// which was never encoded that way in production.
 	function selectAssetType(type: AssetType) {
-		const settings = type === "banner" ? bannerSettings : posterSettings;
-		const nextOptions = type === "banner" ? banners : posters;
+		const settings = settingsByType[type];
+		const nextOptions = optionsByType[type];
 		setAssetType(type);
 		setSelectedId(nextOptions[0]?.id ?? "custom");
 		setFormat(settings.format);
@@ -236,6 +265,7 @@ export function CompressionPlayground({
 						onChange={(e) => selectAssetType(e.target.value as AssetType)}>
 						<option value="banner">Banner</option>
 						<option value="poster">Poster</option>
+						<option value="person">Person photo</option>
 					</select>
 				</div>
 
@@ -415,7 +445,12 @@ export function CompressionPlayground({
 						{/* Original — the base layer, sized normally. It alone determines
 						    the box's height; the compressed layer below just fills it. */}
 						{/* eslint-disable-next-line @next/next/no-img-element */}
-						<img src={sourceUrl} alt="" className={styles.compare_image} />
+						<img
+							src={sourceUrl}
+							alt=""
+							className={styles.compare_image}
+							style={{ objectFit: COMPARE_OBJECT_FIT[assetType] }}
+						/>
 
 						{result && (
 							// clip-path (not a width on this box) does the reveal, so the
@@ -429,6 +464,7 @@ export function CompressionPlayground({
 									src={result.dataUrl}
 									alt=""
 									className={styles.compare_image}
+									style={{ objectFit: COMPARE_OBJECT_FIT[assetType] }}
 								/>
 								{grainOpacity > 0 && (
 									<div
@@ -492,6 +528,31 @@ export function CompressionPlayground({
 											src={result.dataUrl}
 											alt=""
 											className={styles.practical_image}
+										/>
+									</div>
+								</div>
+							))}
+						</div>
+					)}
+
+					{assetType === "person" && result && (
+						<div className={styles.practical_row}>
+							{PERSON_PRACTICAL_SIZES.map(({ label, width: sizeWidth }) => (
+								<div key={label} className={styles.practical_item}>
+									<span className={styles.hint}>
+										{label} ({sizeWidth}px)
+									</span>
+									<div
+										className={`${styles.practical_frame} ${styles.practical_frame_circle}`}
+										style={{ width: sizeWidth, aspectRatio: 1 }}>
+										{/* Same object-fit: cover treatment as CastPhotos' own
+										    .cast_photo — a crop, not a stretch, matching what
+										    production actually renders. */}
+										{/* eslint-disable-next-line @next/next/no-img-element */}
+										<img
+											src={result.dataUrl}
+											alt=""
+											className={`${styles.practical_image} ${styles.practical_image_cover}`}
 										/>
 									</div>
 								</div>

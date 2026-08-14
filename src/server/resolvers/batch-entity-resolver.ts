@@ -36,9 +36,23 @@ function dedupeByKey<T>(items: T[], keyFn: (item: T) => string): T[] {
 // the deduped input, so index-based zipping would be wrong here, unlike
 // mysql-migration.ts's simpler 1:1 createManyAndReturn usage.
 
+// Unlike resolveCompaniesBatch's logoPath (only ever set on create), an
+// existing person missing a photo gets backfilled here — see the loop below.
+// A person who already has one is never overwritten (TMDB's photo for a
+// given person doesn't change credit to credit, so there's nothing to
+// refresh once it's there).
 export async function resolvePeopleBatch(
 	tx: t_client,
-	inputs: { externalId: string; source: Source; name: string }[],
+	inputs: {
+		externalId: string;
+		source: Source;
+		name: string;
+		// Cast-only (see Person.photoPath's own comment) — omitted/undefined
+		// for crew inputs, so a person credited as both keeps whichever
+		// occurrence dedupeByKey lands on: movie/tv-show-credits.ts always list
+		// cast ahead of crew, so the cast occurrence (with a photo) wins.
+		photoPath?: string | null;
+	}[],
 ): Promise<Map<string, number>> {
 	const map = new Map<string, number>();
 	if (inputs.length === 0) return map;
@@ -51,14 +65,40 @@ export async function resolvePeopleBatch(
 		where: {
 			OR: deduped.map((i) => ({ externalId: i.externalId, source: i.source })),
 		},
-		select: { id: true, externalId: true, source: true },
+		select: { id: true, externalId: true, source: true, photoPath: true },
 	});
 	for (const row of existing) map.set(key(row), row.id);
+
+	// Backfill: a person who existed before Person.photoPath did (or was only
+	// ever seen as crew until now) still gets caught up on every subsequent
+	// re-enrichment, not just left permanently blank because they weren't
+	// newly created this time. One update per person needing it rather than a
+	// single batched call — Prisma has no "set a different value per row" bulk
+	// update, and this is sequential (not Promise.all) for the same reason
+	// every other resolve* call in this pipeline is: concurrent queries against
+	// one interactive transaction's shared session previously produced a real
+	// empty-result bug (see resolveRole's own comment in entity-resolver.ts).
+	const existingByKey = new Map(existing.map((row) => [key(row), row]));
+	for (const input of deduped) {
+		if (!input.photoPath) continue;
+		const row = existingByKey.get(key(input));
+		if (row && row.photoPath == null) {
+			await tx.person.update({
+				where: { id: row.id },
+				data: { photoPath: input.photoPath },
+			});
+		}
+	}
 
 	const missing = deduped.filter((i) => !map.has(key(i)));
 	if (missing.length > 0) {
 		const created = await tx.person.createManyAndReturn({
-			data: missing,
+			data: missing.map((i) => ({
+				externalId: i.externalId,
+				source: i.source,
+				name: i.name,
+				photoPath: i.photoPath ?? null,
+			})),
 			select: { id: true, externalId: true, source: true },
 		});
 		for (const row of created) map.set(key(row), row.id);

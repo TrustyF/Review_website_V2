@@ -12,8 +12,24 @@ import {
 } from "./schema";
 import { MediaType } from "@prisma/client";
 import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
+import { createRateLimiter } from "@/server/lib/rate-limited-fetch";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
+
+// No hard documented per-second limit — light defensive spacing so a batch
+// run (enrich-db) can't burst unbounded, without slowing normal enrichment.
+const limiter = createRateLimiter({ minIntervalMs: 100 });
+
+// Every TMDB request shares the same auth header and the same limiter — one
+// place for both instead of repeating them at each call site below.
+function tmdbFetch(url: string): Promise<Response> {
+	return limiter.fetch(url, {
+		headers: new Headers({
+			Accept: "application/json",
+			Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,
+		}),
+	});
+}
 
 function ConvertTypeToString(type: MediaType): string {
 	const TMDB_TYPE_MAP: Partial<Record<MediaType, string>> = {
@@ -30,14 +46,8 @@ export async function fetchTmdbById(
 	id: string,
 	media_type: MediaType,
 ): Promise<TmdbMovieResponse> {
-	const res = await fetch(
+	const res = await tmdbFetch(
 		`${TMDB_BASE}/${ConvertTypeToString(media_type)}/${id}?&language=en-US&append_to_response=content_ratings,credits,external_ids`,
-		{
-			headers: new Headers({
-				Accept: "application/json",
-				Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,
-			}),
-		},
 	);
 
 	if (!res.ok) {
@@ -53,14 +63,8 @@ export async function fetchTmdbByName(
 	media_type: MediaType,
 	page: number,
 ): Promise<TmdbMovieSearchResult[]> {
-	const res = await fetch(
+	const res = await tmdbFetch(
 		`${TMDB_BASE}/search/${ConvertTypeToString(media_type)}?query=${encodeURIComponent(name)}&include_adult=true&page=${page}`,
-		{
-			headers: new Headers({
-				Accept: "application/json",
-				Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,
-			}),
-		},
 	);
 
 	if (!res.ok)
@@ -71,14 +75,8 @@ export async function fetchTmdbByName(
 }
 
 export async function fetchTvShowById(id: string): Promise<TmdbTvResponse> {
-	const res = await fetch(
+	const res = await tmdbFetch(
 		`${TMDB_BASE}/tv/${id}?&language=en-US&append_to_response=content_ratings,credits,external_ids`,
-		{
-			headers: new Headers({
-				Accept: "application/json",
-				Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,
-			}),
-		},
 	);
 
 	if (!res.ok) {
@@ -97,14 +95,8 @@ export async function fetchTmdbImages(
 	id: string,
 	media_type: MediaType,
 ): Promise<TmdbImagesResponse> {
-	const res = await fetch(
+	const res = await tmdbFetch(
 		`${TMDB_BASE}/${ConvertTypeToString(media_type)}/${id}/images?include_image_language=en,null`,
-		{
-			headers: new Headers({
-				Accept: "application/json",
-				Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,
-			}),
-		},
 	);
 
 	if (!res.ok) {
@@ -138,14 +130,8 @@ export async function fetchTvShowByName(
 	name: string,
 	page: number,
 ): Promise<TmdbTvSearchResult[]> {
-	const res = await fetch(
+	const res = await tmdbFetch(
 		`${TMDB_BASE}/search/tv?query=${encodeURIComponent(name)}&include_adult=true&page=${page}`,
-		{
-			headers: new Headers({
-				Accept: "application/json",
-				Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,
-			}),
-		},
 	);
 
 	if (!res.ok)

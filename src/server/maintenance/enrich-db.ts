@@ -72,11 +72,12 @@ async function runWithConcurrency<T>(
 	);
 }
 
-// IGDB enforces a hard ~4 requests/second cap (see igdb/client.ts) and
-// already retries 429s with backoff, so its queue stays low to leave that
-// backoff headroom instead of tripping it constantly. The other sources have
-// no documented limit, but a moderate cap keeps this a good API citizen
-// rather than firing everything at once.
+// Real rate limiting now lives at the client layer (each source's own
+// client.ts has a rate-limited-fetch.ts throttle + single-retry-on-429 —
+// see e.g. igdb/client.ts's limiter), so this is purely a concurrency cap on
+// in-flight DB transactions/worker parallelism now, not the thing keeping
+// any source's request rate in check — workers just queue behind that
+// client-side throttle instead of firing real concurrent requests beyond it.
 const QUEUE_CONCURRENCY: Record<MediaType, number> = {
 	[MediaType.MOVIE]: 6,
 	[MediaType.SHORT]: 6,
@@ -96,20 +97,24 @@ const QUEUE_CONCURRENCY: Record<MediaType, number> = {
 // of taking turns — and within a single type's queue, items now also run up
 // to QUEUE_CONCURRENCY[type] at a time instead of strictly one by one.
 async function runQueue(type: MediaType, mediaList: Media[]) {
-	await runWithConcurrency(mediaList, QUEUE_CONCURRENCY[type], async (media) => {
-		console.log(`[${type}] trying ${media.title}`);
-		try {
-			await enrichOne(media);
-		} catch (err) {
-			// One title missing/renamed at the source (or otherwise broken)
-			// shouldn't stop the rest of its queue from enriching — log it and
-			// move on, leaving that row PENDING for a later look.
-			console.error(
-				`[${type}] Failed enriching media ${media.id} (${media.title})`,
-				err,
-			);
-		}
-	});
+	await runWithConcurrency(
+		mediaList,
+		QUEUE_CONCURRENCY[type],
+		async (media) => {
+			console.log(`[${type}] trying ${media.title}`);
+			try {
+				await enrichOne(media);
+			} catch (err) {
+				// One title missing/renamed at the source (or otherwise broken)
+				// shouldn't stop the rest of its queue from enriching — log it and
+				// move on, leaving that row PENDING for a later look.
+				console.error(
+					`[${type}] Failed enriching media ${media.id} (${media.title})`,
+					err,
+				);
+			}
+		},
+	);
 }
 
 const ENRICH_INTERVAL_DAYS = 3;
@@ -121,9 +126,9 @@ async function main() {
 
 	const mediaList = await db.media.findMany({
 		where: {
-			// type: MediaType.COMIC,
+			type: MediaType.MOVIE,
 			externalId: { not: null },
-			OR: [{ lastEnrichedAt: null }, { lastEnrichedAt: { lt: enrichCutoff } }],
+			// OR: [{ lastEnrichedAt: null }, { lastEnrichedAt: { lt: enrichCutoff } }],
 		},
 		orderBy: { id: "asc" },
 		// take: 10,

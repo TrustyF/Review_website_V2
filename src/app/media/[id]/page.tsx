@@ -16,8 +16,12 @@ import { ReviewBodyEditTrigger } from "@/components/media/media-management/media
 import { AddToListButton } from "@/components/lists/add-to-list-button/add-to-list-button";
 import { AddToWatchlistButton } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-button";
 import { auth } from "@/auth";
+import { UserRound } from "lucide-react";
 import { MediaType } from "@prisma/client";
-import { BANNER_GRAIN_OPACITY } from "@/server/resolvers/poster-resolver";
+import {
+	BANNER_GRAIN_OPACITY,
+	toPersonPhotoSrc,
+} from "@/server/resolvers/poster-resolver";
 import styles from "./media-detail.module.sass";
 import { CircularGauge } from "@/components/ui/circular-gauge";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -78,6 +82,11 @@ type CreditLink = {
 	href: string;
 	name: string;
 	order: number | null;
+	// Only ever set on Actor entries (see the credit-building loop below) —
+	// Person.photoPath itself is cast-only, and this is gated by role on top
+	// of that so a person who's also credited as e.g. Director elsewhere
+	// still never shows a photo there.
+	photoSrc: string | null;
 };
 
 // Comma-separated linked names — shared by the promoted Director/Cast/Studio
@@ -92,6 +101,37 @@ function CreditNames({ entries }: { entries: CreditLink[] }) {
 						{entry.name}
 					</Link>
 				</span>
+			))}
+		</span>
+	);
+}
+
+// Cast's own row, shown as a strip of small headshots (name underneath
+// each) instead of comma-separated text — an actor with no photo (never
+// backfilled yet, or TMDB just doesn't have one) gets a plain circular
+// placeholder instead of falling back to text, so the row stays a
+// consistent strip of circles either way.
+function CastPhotos({ entries }: { entries: CreditLink[] }) {
+	return (
+		<span className={styles.cast_photos}>
+			{entries.map((entry) => (
+				<Link key={entry.key} href={entry.href} className={styles.cast_photo_link}>
+					{entry.photoSrc ? (
+						// Proxied third-party photo, not a local/optimizable asset (same
+						// as ImagePicker's own thumbnails).
+						// eslint-disable-next-line @next/next/no-img-element
+						<img
+							src={entry.photoSrc}
+							alt={entry.name}
+							className={styles.cast_photo}
+						/>
+					) : (
+						<span className={styles.cast_photo_placeholder}>
+							<UserRound size={18} />
+						</span>
+					)}
+					<span className={styles.cast_photo_name}>{entry.name}</span>
+				</Link>
 			))}
 		</span>
 	);
@@ -265,6 +305,10 @@ export default async function MediaDetailPage({
 					href: `/credits/person/${credit.person.id}${roleQuery}`,
 					name: credit.person.name,
 					order: credit.order,
+					photoSrc:
+						credit.role.name === "Actor"
+							? toPersonPhotoSrc(credit.person.id, credit.person.photoPath)
+							: null,
 				}
 			: credit.company
 				? {
@@ -272,6 +316,7 @@ export default async function MediaDetailPage({
 						href: `/credits/company/${credit.company.id}${roleQuery}`,
 						name: credit.company.name,
 						order: credit.order,
+						photoSrc: null,
 					}
 				: null;
 		if (!entry) continue;
@@ -454,7 +499,7 @@ export default async function MediaDetailPage({
 							{actorEntries.length > 0 && (
 								<Fact
 									label="Cast"
-									value={<CreditNames entries={actorEntries} />}
+									value={<CastPhotos entries={actorEntries} />}
 								/>
 							)}
 							{studioEntries.length > 0 && (

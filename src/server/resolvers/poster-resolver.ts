@@ -14,6 +14,20 @@ import { getImageStorage } from "@/server/storage/image-storage";
 // guarantees a small cached file either way, instead of only when the
 // source happens to cooperate.
 const THUMB_MAX_HEIGHT = 140;
+// Cast headshots render at 2.5rem (40px, up to ~80px at 2x DPI) in a circle
+// — resizing TMDB's w185 source down before caching keeps the cached file
+// close to what's actually displayed instead of a bigger crop nothing on
+// site ever shows at full size. See resolvePersonPhoto. Exported for the
+// same reason as BANNER_MAX_WIDTH/POSTER_QUALITY: so the compression dev
+// tool can show "what production actually does today" instead of a number
+// that could silently drift out of sync with this file.
+export const PERSON_PHOTO_MAX_WIDTH = 185;
+// Same WebP quality as POSTER_QUALITY today, but its own constant rather
+// than reusing that one directly — a cast headshot and a poster are
+// different enough content (small, mostly-flat-color face crop vs. a full
+// poster's detail/typography) that they may not want to move together if
+// either gets tuned later. See resolvePersonPhoto.
+export const PERSON_PHOTO_QUALITY = 50;
 // The page's own content column tops out at 950px (see media-detail.module
 // .sass .wrapper) — a banner never renders any wider than that, so caching
 // TMDB's 1280px backdrops or IGDB's up-to-1920px artworks at full size was
@@ -77,6 +91,12 @@ export const BANNER_DIR = "banners/cache";
 // CHANGELOG_THUMB_DIR vs POSTER_DIR: a different size than BANNER_DIR, own
 // directory rather than risk colliding on a same-hash-different-size file.
 export const CHANGELOG_BANNER_THUMB_DIR = "banners/changelog-cache";
+
+// Cast headshot cache — keyed by personId rather than mediaId (nothing about
+// mediaAssetFilename's numeric-prefix-plus-hash scheme is actually
+// media-specific), since a person's photo is the same asset across every
+// media they're credited on.
+export const PERSON_PHOTO_DIR = "people/photo-cache";
 
 // A JPEG-specific cache purely for the og:image tag a shared link's preview
 // card reads (see resolveLinkEmbedImage) — separate from POSTER_DIR because
@@ -475,6 +495,48 @@ export async function resolveBanner(
 	}
 
 	return { bytes: source, contentType: sourceContentType, fresh: true };
+}
+
+// Only TMDB cast credits ever populate Person.photoPath (see
+// movie-credits.ts/tv-show-credits.ts and Person.photoPath's own comment) —
+// no per-source branching needed, same as companyLogoUrlFor. w185 is TMDB's
+// smallest profile size above the tiny w45 thumbnail, plenty for the small
+// avatar this renders as on the detail page.
+export function personPhotoUrlFor(photoPath: string): string {
+	if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) {
+		return photoPath;
+	}
+	return `https://image.tmdb.org/t/p/w185${photoPath}`;
+}
+
+// The lazy-resolve URL counterpart to resolvePersonPhoto, same shape as
+// toPosterSrc — points at /api/person-photo, which resolves-or-downloads the
+// moment a browser actually requests it. Returns null (not a placeholder)
+// when there's no photo — CastPhotos falls back to a plain text link in that
+// case rather than rendering a generic avatar.
+export function toPersonPhotoSrc(personId: number, photoPath: string | null) {
+	return photoPath
+		? `/api/person-photo/${personId}/${mediaAssetFilename(personId, photoPath)}`
+		: null;
+}
+
+// Same cache-or-download-and-re-encode shape as resolvePoster, just a
+// smaller resize target (see PERSON_PHOTO_MAX_WIDTH) and no placeholder
+// fallback — callers only ever reach this once toPersonPhotoSrc has already
+// confirmed there's a photoPath to resolve.
+export async function resolvePersonPhoto(
+	personId: number,
+	photoPath: string,
+): Promise<ResolvedAsset> {
+	const filename = mediaAssetFilename(personId, photoPath);
+	const { bytes } = await cacheOrDownload(
+		PERSON_PHOTO_DIR,
+		filename,
+		personPhotoUrlFor(photoPath),
+		{ resize: { width: PERSON_PHOTO_MAX_WIDTH } },
+		PERSON_PHOTO_QUALITY,
+	);
+	return { bytes, contentType: "image/webp" };
 }
 
 // Same content-addressable caching as resolveChangelogPosterThumb, but for a

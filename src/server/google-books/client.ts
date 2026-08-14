@@ -4,8 +4,14 @@ import {
 	GoogleBooksVolumeSchema,
 } from "./schema";
 import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
+import { createRateLimiter } from "@/server/lib/rate-limited-fetch";
 
 const GOOGLE_BOOKS_BASE = "https://www.googleapis.com/books/v1";
+
+// No documented per-second limit (quota is daily) — light defensive spacing
+// for consistency with the other sources rather than a response to a known
+// constraint.
+const limiter = createRateLimiter({ minIntervalMs: 100 });
 
 function apiKey(): string {
 	const key = process.env.GOOGLE_BOOKS_API_KEY;
@@ -14,7 +20,7 @@ function apiKey(): string {
 }
 
 async function googleBooksFetch(url: URL): Promise<unknown> {
-	const res = await fetch(url);
+	const res = await limiter.fetch(url);
 	if (!res.ok) {
 		throw new Error(`Google Books request failed (${res.status}): ${url}`);
 	}

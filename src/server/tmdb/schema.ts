@@ -34,11 +34,15 @@ export const TmdbMovieResponseSchema = type({
 		name: "string",
 	}).array(),
 	credits: {
+		// profile_path only requested on cast, not crew — Person.photoPath is
+		// deliberately cast-only too (see that field's own comment), so there's
+		// no point asking TMDB for a crew member's photo we'd throw away anyway.
 		cast: type({
 			id: "number",
 			name: "string",
 			character: "string",
 			order: "number",
+			profile_path: "string | null",
 		}).array(),
 		crew: type({
 			id: "number",
@@ -81,11 +85,15 @@ export const TmdbTvResponseSchema = type({
 		name: "string",
 	}).array(),
 	credits: {
+		// profile_path only requested on cast, not crew — Person.photoPath is
+		// deliberately cast-only too (see that field's own comment), so there's
+		// no point asking TMDB for a crew member's photo we'd throw away anyway.
 		cast: type({
 			id: "number",
 			name: "string",
 			character: "string",
 			order: "number",
+			profile_path: "string | null",
 		}).array(),
 		crew: type({
 			id: "number",
