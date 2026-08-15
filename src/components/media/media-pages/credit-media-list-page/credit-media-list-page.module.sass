@@ -3,6 +3,43 @@
 .wrapper
   width: 950px
   margin: 2rem auto
+  display: flex
+  flex-flow: row
+  align-items: flex-start
+  gap: 2.5rem
+
+.content
+  flex: 1
+  min-width: 0
+
+.sidebar
+  width: 150px
+  flex-shrink: 0
+  display: flex
+  flex-flow: column
+  align-items: center
+  gap: 0.75rem
+
+.photo
+  width: 100%
+  height: auto
+  border-radius: 0.5rem
+  object-fit: cover
+  object-position: 50% 30%
+
+.photo_placeholder
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 100%
+  aspect-ratio: 1
+  border-radius: 0.5rem
+  background: var(--surface)
+  border: 1px solid var(--surface-border)
+  color: var(--accent1)
+
+.name
+  text-align: center
 
 .empty
   @include empty-text
@@ -13,7 +50,7 @@
   flex-flow: row
   align-items: center
   gap: 0.75rem
-  margin-top: 0.25rem
+  margin-bottom: 1rem
   color: var(--accent1)
   font-size: 1rem
   font-weight: 600

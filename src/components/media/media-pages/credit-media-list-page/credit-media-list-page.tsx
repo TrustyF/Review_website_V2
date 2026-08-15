@@ -2,12 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db/client";
 import { RawMediaRecord, toMediaRecord } from "@/components/media/types";
-import { MediaFilterGrid } from "@/components/media/media-grids/media-filter-grid/media-filter-grid";
-// RatingDistribution is currently disabled below — its import is dropped
-// too so this doesn't trip an unused-import lint warning; re-add
-// `import { RatingDistribution } from "@/components/media/media-grids/rating-distribution/rating-distribution";`
-// alongside it if it comes back.
+import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
+import { PersonPhoto } from "@/components/media/primitives/person-photo";
 import { EnrichmentStatus } from "@prisma/client";
+import { toPersonPhotoSrc } from "@/server/resolvers/poster-resolver";
 import styles from "./credit-media-list-page.module.sass";
 
 type Props = {
@@ -29,6 +27,11 @@ export async function CreditMediaListPage({ kind, id, role }: Props) {
 			: await db.company.findUnique({ where: { id } });
 	if (!entity) notFound();
 
+	// Only Person carries a photoPath (see Credit.character's neighboring
+	// comment on Person.photoPath in the schema) — the "in" check also
+	// narrows entity's type for the toPersonPhotoSrc call below.
+	const photoSrc = "photoPath" in entity ? toPersonPhotoSrc(entity.id, entity.photoPath) : null;
+
 	// Queried from Credit rather than Media, so dbPublic's auto-filter can't
 	// reach it (Prisma extensions don't run for nested include/where — see
 	// dbPublic's own comment in src/server/db/client.ts) — isDeleted: false
@@ -49,17 +52,17 @@ export async function CreditMediaListPage({ kind, id, role }: Props) {
 					game: true,
 					book: true,
 					review: true,
-					// For MediaFilterPopover's genre filter (see media-filter-grid.tsx).
-					mediaGenres: { include: { genre: true } },
 				},
 			},
 		},
-		orderBy: { media: { id: "asc" } },
+		orderBy: { media: { releaseDate: "desc" } },
 	});
 
 	// The same person/company can be credited more than once on one title
 	// (e.g. actor + character listed twice, or a studio with two credit
-	// rows) — dedupe to one card per media.
+	// rows) — dedupe to one card per media. orderBy above already sorted the
+	// underlying credits by release date, and Map preserves insertion order,
+	// so this stays in that order too.
 	const byMediaId = new Map<number, RawMediaRecord>();
 	for (const credit of credits) {
 		if (!byMediaId.has(credit.media.id))
@@ -70,23 +73,33 @@ export async function CreditMediaListPage({ kind, id, role }: Props) {
 
 	return (
 		<div className={styles.wrapper}>
-			<h1>{entity.name}</h1>
-			{role && (
-				<div className={styles.role_filter}>
-					{role}
-					<Link href={`/credits/${kind}/${id}`} className={styles.role_clear}>
-						View all credits
-					</Link>
-				</div>
-			)}
-			{media.length === 0 ? (
-				<p className={styles.empty}>No credited media in the collection.</p>
-			) : (
-				<>
-					{/*<RatingDistribution media={media} />*/}
-					<MediaFilterGrid media={media} />
-				</>
-			)}
+			<div className={styles.content}>
+				{role && (
+					<div className={styles.role_filter}>
+						{role}
+						<Link href={`/credits/${kind}/${id}`} className={styles.role_clear}>
+							View all credits
+						</Link>
+					</div>
+				)}
+				{media.length === 0 ? (
+					<p className={styles.empty}>No credited media in the collection.</p>
+				) : (
+					<LazyMediaGrid items={media} />
+				)}
+			</div>
+			<div className={styles.sidebar}>
+				{(photoSrc || kind === "person") && (
+					<PersonPhoto
+						src={photoSrc}
+						alt={entity.name}
+						photoClassName={styles.photo}
+						placeholderClassName={styles.photo_placeholder}
+						iconSize={48}
+					/>
+				)}
+				<h1 className={styles.name}>{entity.name}</h1>
+			</div>
 		</div>
 	);
 }

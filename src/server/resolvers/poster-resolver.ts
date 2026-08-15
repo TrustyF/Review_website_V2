@@ -14,19 +14,23 @@ import { getImageStorage } from "@/server/storage/image-storage";
 // guarantees a small cached file either way, instead of only when the
 // source happens to cooperate.
 const THUMB_MAX_HEIGHT = 140;
-// Cast headshots render at 2.5rem (40px, up to ~80px at 2x DPI) in a circle
-// — resizing TMDB's w185 source down before caching keeps the cached file
-// close to what's actually displayed instead of a bigger crop nothing on
-// site ever shows at full size. See resolvePersonPhoto. Exported for the
-// same reason as BANNER_MAX_WIDTH/POSTER_QUALITY: so the compression dev
-// tool can show "what production actually does today" instead of a number
-// that could silently drift out of sync with this file.
-export const PERSON_PHOTO_MAX_WIDTH = 185;
-// Same WebP quality as POSTER_QUALITY today, but its own constant rather
-// than reusing that one directly — a cast headshot and a poster are
-// different enough content (small, mostly-flat-color face crop vs. a full
-// poster's detail/typography) that they may not want to move together if
-// either gets tuned later. See resolvePersonPhoto.
+// Largest a person photo renders at today is the credits page sidebar,
+// 150px CSS width (300px at 2x DPI) — resizing TMDB's w300 source down to
+// this before caching keeps the cached file close to what's actually
+// displayed instead of a bigger crop nothing on site ever shows at full
+// size. See resolvePersonPhoto. Exported for the same reason as
+// BANNER_MAX_WIDTH/POSTER_QUALITY: so the compression dev tool can show
+// "what production actually does today" instead of a number that could
+// silently drift out of sync with this file.
+export const PERSON_PHOTO_MAX_WIDTH = 300;
+// Higher than POSTER_QUALITY: a person photo used to only ever render as a
+// tiny 40px cast avatar (where compression artifacts were invisible
+// anyway), but now renders up to 150px in the credits page sidebar — big
+// enough that the old 50 started showing visible blockiness on faces. Own
+// constant rather than reusing POSTER_QUALITY directly, same reasoning as
+// before: a headshot and a poster are different enough content that they
+// may not want to move together if either gets tuned again later. See
+// resolvePersonPhoto.
 export const PERSON_PHOTO_QUALITY = 50;
 // The page's own content column tops out at 950px (see media-detail.module
 // .sass .wrapper) — a banner never renders any wider than that, so caching
@@ -499,14 +503,15 @@ export async function resolveBanner(
 
 // Only TMDB cast credits ever populate Person.photoPath (see
 // movie-credits.ts/tv-show-credits.ts and Person.photoPath's own comment) —
-// no per-source branching needed, same as companyLogoUrlFor. w185 is TMDB's
-// smallest profile size above the tiny w45 thumbnail, plenty for the small
-// avatar this renders as on the detail page.
+// no per-source branching needed, same as companyLogoUrlFor. w300 is TMDB's
+// next profile size up from w185 — needed so resolvePersonPhoto's own
+// resize to PERSON_PHOTO_MAX_WIDTH (300) isn't just upscaling an
+// already-too-small source.
 export function personPhotoUrlFor(photoPath: string): string {
 	if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) {
 		return photoPath;
 	}
-	return `https://image.tmdb.org/t/p/w185${photoPath}`;
+	return `https://image.tmdb.org/t/p/w300${photoPath}`;
 }
 
 // The lazy-resolve URL counterpart to resolvePersonPhoto, same shape as

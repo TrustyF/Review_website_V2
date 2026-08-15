@@ -16,12 +16,12 @@ import { ReviewBodyEditTrigger } from "@/components/media/media-management/media
 import { AddToListButton } from "@/components/lists/add-to-list-button/add-to-list-button";
 import { AddToWatchlistButton } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-button";
 import { auth } from "@/auth";
-import { UserRound } from "lucide-react";
 import { MediaType } from "@prisma/client";
 import {
 	BANNER_GRAIN_OPACITY,
 	toPersonPhotoSrc,
 } from "@/server/resolvers/poster-resolver";
+import { PersonPhoto } from "@/components/media/primitives/person-photo";
 import styles from "./media-detail.module.sass";
 import { CircularGauge } from "@/components/ui/circular-gauge";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -87,6 +87,8 @@ type CreditLink = {
 	// of that so a person who's also credited as e.g. Director elsewhere
 	// still never shows a photo there.
 	photoSrc: string | null;
+	// Only ever set on Actor entries, same gating as photoSrc.
+	character: string | null;
 };
 
 // Comma-separated linked names — shared by the promoted Director/Cast/Studio
@@ -116,21 +118,16 @@ function CastPhotos({ entries }: { entries: CreditLink[] }) {
 		<span className={styles.cast_photos}>
 			{entries.map((entry) => (
 				<Link key={entry.key} href={entry.href} className={styles.cast_photo_link}>
-					{entry.photoSrc ? (
-						// Proxied third-party photo, not a local/optimizable asset (same
-						// as ImagePicker's own thumbnails).
-						// eslint-disable-next-line @next/next/no-img-element
-						<img
-							src={entry.photoSrc}
-							alt={entry.name}
-							className={styles.cast_photo}
-						/>
-					) : (
-						<span className={styles.cast_photo_placeholder}>
-							<UserRound size={18} />
-						</span>
-					)}
+					<PersonPhoto
+						src={entry.photoSrc}
+						alt={entry.name}
+						photoClassName={styles.cast_photo}
+						placeholderClassName={styles.cast_photo_placeholder}
+					/>
 					<span className={styles.cast_photo_name}>{entry.name}</span>
+					{entry.character && (
+						<span className={styles.cast_photo_character}>{entry.character}</span>
+					)}
 				</Link>
 			))}
 		</span>
@@ -309,6 +306,7 @@ export default async function MediaDetailPage({
 						credit.role.name === "Actor"
 							? toPersonPhotoSrc(credit.person.id, credit.person.photoPath)
 							: null,
+					character: credit.role.name === "Actor" ? credit.character : null,
 				}
 			: credit.company
 				? {
@@ -317,6 +315,7 @@ export default async function MediaDetailPage({
 						name: credit.company.name,
 						order: credit.order,
 						photoSrc: null,
+						character: null,
 					}
 				: null;
 		if (!entry) continue;

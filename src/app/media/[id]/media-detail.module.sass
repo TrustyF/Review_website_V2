@@ -379,9 +379,9 @@
 
 .cast_photo
   width: 6rem
-  height: 6rem
-  border-radius: 50%
-  object-position: top
+  height: auto
+  border-radius: 0.5rem
+  //object-position: 50% 30%
   object-fit: cover
 
 .cast_photo_placeholder
@@ -402,6 +402,13 @@
   // Long names still wrap onto a second line rather than overflowing —
   // truncating to one line would leave e.g. "Robert..." unreadable at this
   // width, and there's no tooltip anymore to fall back on for the full name.
+  overflow-wrap: break-word
+
+.cast_photo_character
+  font-size: 0.65rem
+  text-align: center
+  line-height: 1.1
+  color: var(--body)
   overflow-wrap: break-word
 
 .section
