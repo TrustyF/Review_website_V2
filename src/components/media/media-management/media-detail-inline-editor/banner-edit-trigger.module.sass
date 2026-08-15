@@ -52,19 +52,17 @@
   &:hover, &:focus-visible
     opacity: 1
 
-// Same box geometry as media-detail.module.sass's .banner_backdrop (105%
-// width bleed, centered) so it lines up exactly with the image underneath.
-// z-index sits between the plain (non-positioned, so always-behind) image
-// and the backdrop's z-index: 1, painting over the image but still under
-// the edge-fade gradient.
+// Same box geometry as media-detail.module.sass's .banner_image (full
+// width) so it lines up exactly with the image underneath. z-index sits
+// between the plain (non-positioned, so always-behind) image and the
+// backdrop's z-index: 1, painting over the image but still under the
+// edge-fade gradient.
 .grain
   display: block
   position: absolute
-  width: 120%
+  width: 100%
   height: 370px
   top: 0
-  left: 50%
-  transform: translateX(-50%)
   z-index: 0
   pointer-events: none
   border-radius: 0.5rem

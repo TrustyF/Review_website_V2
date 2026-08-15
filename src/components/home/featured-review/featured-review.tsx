@@ -44,10 +44,9 @@ const EXCERPT_MAX_BLOCKS = 3;
 const CARD_TRANSITION_MS = 350;
 
 // How long each auto-advanced review stays on screen before the hero moves
-// to the next one. Stops for good the moment the user interacts with the
-// picker (see `stoppedAutoAdvance` below) — this is a "welcome mat" for
-// people who land on the page and don't touch anything, not a persistent
-// slideshow that fights a reader who's already engaging with it.
+// to the next one. Also reused as the idle delay before auto-advance resumes
+// after the user interacts with the picker (see `paused` below) — one knob
+// for "how long is this comfortable to sit and read" covers both.
 const AUTO_ADVANCE_MS = 15000;
 
 // One entry per possible .eyebrow state — an icon is optional per variant
@@ -98,10 +97,18 @@ export function FeaturedReview({ items }: Props) {
 	const [outgoing, setOutgoing] = useState<
 		(MediaRecord & { review: NonNullable<MediaRecord["review"]> }) | null
 	>(null);
-	// Once the picker's been clicked, auto-advance stops permanently for the
-	// rest of this page view — a reader who's already steering shouldn't have
-	// the hero change out from under them a few seconds later.
-	const [stoppedAutoAdvance, setStoppedAutoAdvance] = useState(false);
+	// True while the reader is (or just was) steering via the picker — auto-
+	// advance pauses immediately on interaction and resumes once they've left
+	// it alone for AUTO_ADVANCE_MS (see the resume-timer effect below), rather
+	// than stopping for good. A reader who's actively clicking around
+	// shouldn't have the hero change out from under them mid-click, but one
+	// who's wandered off from an already-open tab shouldn't be stuck on
+	// whatever they picked last forever either.
+	const [paused, setPaused] = useState(false);
+	// Bumped on every picker interaction, including a click on the already-
+	// active item — index alone wouldn't change in that case, and this is
+	// what the resume-timer effect below actually keys off to re-arm.
+	const [interactionTick, setInteractionTick] = useState(0);
 
 	useEffect(() => {
 		if (!outgoing) return;
@@ -121,7 +128,7 @@ export function FeaturedReview({ items }: Props) {
 
 	// Kept current every render via their own effect (refs can't be written
 	// during render itself) — the interval below is only ever set up once
-	// (per stoppedAutoAdvance) and reads through these refs at fire time to
+	// (per pause/resume cycle) and reads through these refs at fire time to
 	// get whatever index/list is current then, rather than closing over the
 	// values from whenever the interval itself was created.
 	const indexRef = useRef(index);
@@ -132,7 +139,7 @@ export function FeaturedReview({ items }: Props) {
 	});
 
 	useEffect(() => {
-		if (stoppedAutoAdvance || reviewedRef.current.length <= 1) return;
+		if (paused || reviewedRef.current.length <= 1) return;
 		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 		const interval = setInterval(() => {
 			const list = reviewedRef.current;
@@ -143,14 +150,25 @@ export function FeaturedReview({ items }: Props) {
 			setIndex(nextIndex);
 		}, AUTO_ADVANCE_MS);
 		return () => clearInterval(interval);
-	}, [stoppedAutoAdvance]);
+	}, [paused]);
+
+	// Un-pauses AUTO_ADVANCE_MS after the most recent picker interaction —
+	// re-armed on every select() call (see its own effect-cleanup below), so
+	// a reader still actively clicking around never gets un-paused mid-
+	// browse, only once they've actually stopped.
+	useEffect(() => {
+		if (!paused) return;
+		const timeout = setTimeout(() => setPaused(false), AUTO_ADVANCE_MS);
+		return () => clearTimeout(timeout);
+	}, [paused, interactionTick]);
 
 	if (reviewed.length === 0) return null;
 
 	const media = reviewed[index]!;
 
 	function select(nextIndex: number) {
-		setStoppedAutoAdvance(true);
+		setPaused(true);
+		setInteractionTick((t) => t + 1);
 		if (nextIndex === index) return;
 		setDirection(nextIndex > index ? 1 : -1);
 		setOutgoing(media);

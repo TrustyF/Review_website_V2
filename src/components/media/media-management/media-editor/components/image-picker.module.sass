@@ -13,6 +13,10 @@
   gap: 0.5rem
   max-height: 20rem
   overflow-y: auto
+  // Without this, wheel-scrolling past either end of this container "chains"
+  // to the modal/page behind it instead of just stopping — e.g. reaching the
+  // bottom while scrolling down keeps scrolling the page underneath.
+  overscroll-behavior: contain
 
 .option
   height: 10rem

@@ -1,5 +1,7 @@
 @use "@/app/styles/variables" as *
 
+$var_banner_width: 110%
+
 .wrapper
   position: relative
   width: 950px
@@ -60,7 +62,7 @@
   border-radius: 0.5rem
 
 .banner_image
-  width: 120%
+  width: $var_banner_width
   height: 370px
   object-fit: cover
   //object-position: top
@@ -70,7 +72,7 @@
 .banner_backdrop
   display: block
   position: absolute
-  width: 120%
+  width: $var_banner_width
   height: 470px
   z-index: 1
   pointer-events: none
