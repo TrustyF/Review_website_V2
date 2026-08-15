@@ -389,12 +389,15 @@ export async function updateMediaPoster(mediaId: number, posterPath: string) {
 	// Eagerly downloads/caches the new poster right now (its returned bytes
 	// aren't needed here — see resolvePoster's own comment) so it's already
 	// on disk the moment this save resolves, rather than lazily on whatever
-	// request happens to hit /api/poster next.
+	// request happens to hit /api/poster next. awaitEncode: true — resolvePoster
+	// now defers the encode to after() by default (same as resolveBanner), which
+	// would leave the cache cold here if not overridden.
 	await resolvePoster(
 		mediaId,
 		existing!.type,
 		existing!.externalId,
 		posterPath,
+		{ awaitEncode: true },
 	);
 	revalidatePath("/", "layout");
 	return `/api/poster/${mediaId}/${mediaAssetFilename(mediaId, posterPath)}`;

@@ -34,7 +34,7 @@ export async function GET(
 		return NextResponse.json({ error: "Media not found" }, { status: 404 });
 	}
 
-	const { bytes, contentType } = await resolvePoster(
+	const resolved = await resolvePoster(
 		id,
 		media.type,
 		media.externalId,
@@ -44,10 +44,18 @@ export async function GET(
 	// The cast is a known TS 5.9 + @types/node v20 friction (generic typed-
 	// array vs. lib.dom's BodyInit union), not a real mismatch — a Buffer/
 	// Uint8Array has always been a valid Response body at runtime.
-	return new NextResponse(bytes as BodyInit, {
+	return new NextResponse(resolved.bytes as BodyInit, {
 		headers: {
-			"Content-Type": contentType,
-			"Cache-Control": "public, max-age=31536000, immutable",
+			"Content-Type": resolved.contentType,
+			// Same reasoning as the /api/banner route: a `fresh` response is the
+			// raw, not-yet-compressed source (see resolvePoster's own comment) —
+			// it must NOT get the long-lived immutable treatment, since the
+			// re-encoded WebP lands in storage moments later via `after()`.
+			// `no-store` means the very next request re-resolves and finds it
+			// cached.
+			"Cache-Control": resolved.fresh
+				? "no-store"
+				: "public, max-age=31536000, immutable",
 		},
 	});
 }

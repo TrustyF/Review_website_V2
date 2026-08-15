@@ -137,6 +137,26 @@ const LINK_EMBED_QUALITY = 60;
 
 type CacheFormat = "webp" | "avif" | "jpeg";
 
+// Keyed by "dir/filename", so a resize/encode that's already running for a
+// given cache miss is reused instead of redone. Without this, several
+// concurrent requests for the same not-yet-cached asset (e.g. a handful of
+// tabs open on a title right after it's added, before anyone's request has
+// finished writing the cache) would each independently download, sharp-
+// encode, and storage.write the identical bytes — real duplicated Active CPU
+// for work whose result only ever needs computing once. Module-scope, so it
+// only dedupes concurrent requests landing on the same warm instance — which
+// is exactly the case Fluid's higher per-instance concurrency makes more
+// likely, not less.
+const inFlightEncodes = new Map<string, Promise<Buffer>>();
+
+function dedupeEncode(key: string, run: () => Promise<Buffer>): Promise<Buffer> {
+	const existing = inFlightEncodes.get(key);
+	if (existing) return existing;
+	const promise = run().finally(() => inFlightEncodes.delete(key));
+	inFlightEncodes.set(key, promise);
+	return promise;
+}
+
 // Content-addressable: the filename is derived from the source path itself
 // (posterPath or bannerPath), so switching a media's poster/banner naturally
 // produces a different filename/URL — no cache-busting query string or
@@ -233,21 +253,24 @@ async function cacheOrDownload(
 	const cached = await storage.read(dir, filename);
 	if (cached) return { bytes: cached };
 
-	const res = await fetch(sourceUrl);
-	if (!res.ok) throw new Error("Poster download failed");
-	const source = Buffer.from(await res.arrayBuffer());
-	let image = sharp(source);
-	if (resize) {
-		image = image.resize({ ...resize, withoutEnlargement: true });
-	}
-	const encoded =
-		format === "avif"
-			? image.avif({ quality })
-			: format === "jpeg"
-				? image.jpeg({ quality })
-				: image.webp({ quality });
-	const bytes = await encoded.toBuffer();
-	await storage.write(dir, filename, bytes);
+	const bytes = await dedupeEncode(`${dir}/${filename}`, async () => {
+		const res = await fetch(sourceUrl);
+		if (!res.ok) throw new Error("Poster download failed");
+		const source = Buffer.from(await res.arrayBuffer());
+		let image = sharp(source);
+		if (resize) {
+			image = image.resize({ ...resize, withoutEnlargement: true });
+		}
+		const encoded =
+			format === "avif"
+				? image.avif({ quality })
+				: format === "jpeg"
+					? image.jpeg({ quality })
+					: image.webp({ quality });
+		const bytes = await encoded.toBuffer();
+		await storage.write(dir, filename, bytes);
+		return bytes;
+	});
 	return { bytes };
 }
 
@@ -264,31 +287,62 @@ const PLACEHOLDER_POSTER_PATH = path.join(
 	"placeholder.jpg",
 );
 
-// Returns the actual bytes (not a URL) — its only caller, the /api/poster
-// route, used to take the returned path and read the file right back off
-// disk itself; this hands the bytes cacheOrDownload already has straight
-// through instead, see that function's own comment for why.
+// Returns the actual bytes (not a URL) — the /api/poster route hands these
+// straight back as the response body. Same fresh-miss/awaitEncode shape as
+// resolveBanner (see that function's own comment): on a cache miss, the raw
+// downloaded source is returned immediately and the resize/encode/storage
+// write happens in `after()`, off the response's critical path, so the
+// browser isn't blocked on sharp for a first-time poster the way it used to
+// be. updateMediaPoster (media-editor-actions.ts) still wants the opposite
+// trade — the cache warm *before* it returns — so it passes
+// `{ awaitEncode: true }` instead.
 export async function resolvePoster(
 	mediaId: number,
 	type: MediaType,
 	externalId: string | null,
 	posterPath: string | null,
-): Promise<ResolvedAsset> {
+	{ awaitEncode = false }: { awaitEncode?: boolean } = {},
+): Promise<ResolvedAsset & { fresh: boolean }> {
 	if (!posterPath) {
 		return {
 			bytes: await readFile(PLACEHOLDER_POSTER_PATH),
 			contentType: "image/jpeg",
+			fresh: false,
 		};
 	}
 
 	const filename = mediaAssetFilename(mediaId, posterPath);
-	const { bytes } = await cacheOrDownload(
-		POSTER_DIR,
-		filename,
-		posterUrlFor(type, externalId, posterPath, "full"),
-	);
+	const storage = getImageStorage();
 
-	return { bytes, contentType: "image/webp" };
+	const cached = await storage.read(POSTER_DIR, filename);
+	if (cached) {
+		return { bytes: cached, contentType: "image/webp", fresh: false };
+	}
+
+	const sourceUrl = posterUrlFor(type, externalId, posterPath, "full");
+	const res = await fetch(sourceUrl);
+	if (!res.ok) throw new Error("Poster download failed");
+	const source = Buffer.from(await res.arrayBuffer());
+	const sourceContentType = res.headers.get("content-type") || "image/jpeg";
+
+	// Posters are deliberately never resized down (see POSTER_QUALITY's own
+	// comment) — just re-encoded to WebP, unlike person photos/banners.
+	const encode = () =>
+		dedupeEncode(`${POSTER_DIR}/${filename}`, async () => {
+			const encoded = await sharp(source).webp({ quality: POSTER_QUALITY }).toBuffer();
+			await storage.write(POSTER_DIR, filename, encoded);
+			return encoded;
+		});
+
+	if (awaitEncode) {
+		await encode();
+	} else {
+		after(async () => {
+			await encode();
+		});
+	}
+
+	return { bytes: source, contentType: sourceContentType, fresh: true };
 }
 
 // The composite depends on both the poster and (when there is one) the
@@ -348,60 +402,63 @@ export async function resolveLinkEmbedImage(
 	const cached = await storage.read(LINK_EMBED_DIR, filename);
 	if (cached) return { bytes: cached, contentType: "image/jpeg" };
 
-	const posterBytes = await fetchImageBytes(
-		posterUrlFor(type, externalId, posterPath, "full"),
-	);
+	const bytes = await dedupeEncode(`${LINK_EMBED_DIR}/${filename}`, async () => {
+		const posterBytes = await fetchImageBytes(
+			posterUrlFor(type, externalId, posterPath, "full"),
+		);
 
-	let backgroundBytes = posterBytes;
-	if (bannerPath) {
-		try {
-			backgroundBytes = await fetchImageBytes(bannerUrlFor(type, bannerPath));
-		} catch {
-			// Falls back to the poster itself (still assigned above) — a
-			// broken/unreachable banner shouldn't block the whole embed image.
+		let backgroundBytes = posterBytes;
+		if (bannerPath) {
+			try {
+				backgroundBytes = await fetchImageBytes(bannerUrlFor(type, bannerPath));
+			} catch {
+				// Falls back to the poster itself (still assigned above) — a
+				// broken/unreachable banner shouldn't block the whole embed image.
+			}
 		}
-	}
-	const isBlurredPosterBackdrop = backgroundBytes === posterBytes;
+		const isBlurredPosterBackdrop = backgroundBytes === posterBytes;
 
-	let background = sharp(backgroundBytes).resize({
-		width: LINK_EMBED_WIDTH,
-		height: LINK_EMBED_HEIGHT,
-		fit: "cover",
+		let background = sharp(backgroundBytes).resize({
+			width: LINK_EMBED_WIDTH,
+			height: LINK_EMBED_HEIGHT,
+			fit: "cover",
+		});
+		if (isBlurredPosterBackdrop) {
+			background = background.blur(24);
+		}
+
+		// Darkens the backdrop either way — keeps the poster card readable
+		// against a bright banner/poster, same idea as the detail page's own
+		// banner gradient (see media-detail.module.sass's .banner_backdrop).
+		const scrim = Buffer.from(
+			`<svg width="${LINK_EMBED_WIDTH}" height="${LINK_EMBED_HEIGHT}"><rect width="100%" height="100%" fill="black" fill-opacity="0.35"/></svg>`,
+		);
+
+		// A thin solid border gives the poster a "card" edge against the
+		// backdrop instead of just floating with nothing to define it.
+		const posterCard = await sharp(posterBytes)
+			.resize({
+				height: LINK_EMBED_POSTER_HEIGHT - LINK_EMBED_POSTER_BORDER * 2,
+				withoutEnlargement: true,
+			})
+			.extend({
+				top: LINK_EMBED_POSTER_BORDER,
+				bottom: LINK_EMBED_POSTER_BORDER,
+				left: LINK_EMBED_POSTER_BORDER,
+				right: LINK_EMBED_POSTER_BORDER,
+				background: "#ffffff",
+			})
+			.png()
+			.toBuffer();
+
+		const bytes = await background
+			.composite([{ input: scrim }, { input: posterCard, gravity: "center" }])
+			.jpeg({ quality: LINK_EMBED_QUALITY })
+			.toBuffer();
+
+		await storage.write(LINK_EMBED_DIR, filename, bytes);
+		return bytes;
 	});
-	if (isBlurredPosterBackdrop) {
-		background = background.blur(24);
-	}
-
-	// Darkens the backdrop either way — keeps the poster card readable
-	// against a bright banner/poster, same idea as the detail page's own
-	// banner gradient (see media-detail.module.sass's .banner_backdrop).
-	const scrim = Buffer.from(
-		`<svg width="${LINK_EMBED_WIDTH}" height="${LINK_EMBED_HEIGHT}"><rect width="100%" height="100%" fill="black" fill-opacity="0.35"/></svg>`,
-	);
-
-	// A thin solid border gives the poster a "card" edge against the
-	// backdrop instead of just floating with nothing to define it.
-	const posterCard = await sharp(posterBytes)
-		.resize({
-			height: LINK_EMBED_POSTER_HEIGHT - LINK_EMBED_POSTER_BORDER * 2,
-			withoutEnlargement: true,
-		})
-		.extend({
-			top: LINK_EMBED_POSTER_BORDER,
-			bottom: LINK_EMBED_POSTER_BORDER,
-			left: LINK_EMBED_POSTER_BORDER,
-			right: LINK_EMBED_POSTER_BORDER,
-			background: "#ffffff",
-		})
-		.png()
-		.toBuffer();
-
-	const bytes = await background
-		.composite([{ input: scrim }, { input: posterCard, gravity: "center" }])
-		.jpeg({ quality: LINK_EMBED_QUALITY })
-		.toBuffer();
-
-	await storage.write(LINK_EMBED_DIR, filename, bytes);
 	return { bytes, contentType: "image/jpeg" };
 }
 
@@ -484,18 +541,26 @@ export async function resolveBanner(
 	// stays correct if either source ever changes format.
 	const sourceContentType = res.headers.get("content-type") || "image/jpeg";
 
-	const encode = async () => {
-		const encoded = await sharp(source)
-			.resize({ width: BANNER_MAX_WIDTH, withoutEnlargement: true })
-			.avif({ quality: BANNER_QUALITY })
-			.toBuffer();
-		await storage.write(BANNER_DIR, filename, encoded);
-	};
+	// Deduped for the same reason as cacheOrDownload/resolveLinkEmbedImage:
+	// several concurrent misses on this banner (e.g. `after()`-deferred
+	// encodes from more than one first-time viewer, or one racing an
+	// awaitEncode caller) would otherwise each redo the resize/encode/write.
+	const encode = () =>
+		dedupeEncode(`${BANNER_DIR}/${filename}`, async () => {
+			const encoded = await sharp(source)
+				.resize({ width: BANNER_MAX_WIDTH, withoutEnlargement: true })
+				.avif({ quality: BANNER_QUALITY })
+				.toBuffer();
+			await storage.write(BANNER_DIR, filename, encoded);
+			return encoded;
+		});
 
 	if (awaitEncode) {
 		await encode();
 	} else {
-		after(encode);
+		after(async () => {
+			await encode();
+		});
 	}
 
 	return { bytes: source, contentType: sourceContentType, fresh: true };
@@ -525,23 +590,41 @@ export function toPersonPhotoSrc(personId: number, photoPath: string | null) {
 		: null;
 }
 
-// Same cache-or-download-and-re-encode shape as resolvePoster, just a
-// smaller resize target (see PERSON_PHOTO_MAX_WIDTH) and no placeholder
-// fallback — callers only ever reach this once toPersonPhotoSrc has already
-// confirmed there's a photoPath to resolve.
+// Same fresh-miss/deferred-encode shape as resolvePoster/resolveBanner — see
+// resolvePoster's own comment — just a smaller resize target (see
+// PERSON_PHOTO_MAX_WIDTH) and no placeholder fallback, since callers only
+// ever reach this once toPersonPhotoSrc has already confirmed there's a
+// photoPath to resolve. No awaitEncode option — unlike poster/banner, no
+// caller needs the cache warmed before it returns.
 export async function resolvePersonPhoto(
 	personId: number,
 	photoPath: string,
-): Promise<ResolvedAsset> {
+): Promise<ResolvedAsset & { fresh: boolean }> {
 	const filename = mediaAssetFilename(personId, photoPath);
-	const { bytes } = await cacheOrDownload(
-		PERSON_PHOTO_DIR,
-		filename,
-		personPhotoUrlFor(photoPath),
-		{ resize: { width: PERSON_PHOTO_MAX_WIDTH } },
-		PERSON_PHOTO_QUALITY,
-	);
-	return { bytes, contentType: "image/webp" };
+	const storage = getImageStorage();
+
+	const cached = await storage.read(PERSON_PHOTO_DIR, filename);
+	if (cached) {
+		return { bytes: cached, contentType: "image/webp", fresh: false };
+	}
+
+	const res = await fetch(personPhotoUrlFor(photoPath));
+	if (!res.ok) throw new Error("Person photo download failed");
+	const source = Buffer.from(await res.arrayBuffer());
+	const sourceContentType = res.headers.get("content-type") || "image/jpeg";
+
+	after(async () => {
+		await dedupeEncode(`${PERSON_PHOTO_DIR}/${filename}`, async () => {
+			const encoded = await sharp(source)
+				.resize({ width: PERSON_PHOTO_MAX_WIDTH, withoutEnlargement: true })
+				.webp({ quality: PERSON_PHOTO_QUALITY })
+				.toBuffer();
+			await storage.write(PERSON_PHOTO_DIR, filename, encoded);
+			return encoded;
+		});
+	});
+
+	return { bytes: source, contentType: sourceContentType, fresh: true };
 }
 
 // Same content-addressable caching as resolveChangelogPosterThumb, but for a

@@ -25,17 +25,19 @@ export async function GET(
 		return NextResponse.json({ error: "Photo not found" }, { status: 404 });
 	}
 
-	const { bytes, contentType } = await resolvePersonPhoto(
-		id,
-		person.photoPath,
-	);
+	const resolved = await resolvePersonPhoto(id, person.photoPath);
 
 	// Same TS 5.9 + @types/node v20 BodyInit friction as /api/poster's own
 	// cast — see that route's comment.
-	return new NextResponse(bytes as BodyInit, {
+	return new NextResponse(resolved.bytes as BodyInit, {
 		headers: {
-			"Content-Type": contentType,
-			"Cache-Control": "public, max-age=31536000, immutable",
+			"Content-Type": resolved.contentType,
+			// Same reasoning as /api/poster and /api/banner — a `fresh` response
+			// is the raw source, not yet re-encoded (see resolvePersonPhoto's own
+			// comment), so it must not be cached as immutable.
+			"Cache-Control": resolved.fresh
+				? "no-store"
+				: "public, max-age=31536000, immutable",
 		},
 	});
 }
