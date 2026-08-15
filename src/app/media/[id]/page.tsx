@@ -493,20 +493,16 @@ export default async function MediaDetailPage({
 
 					<MediaTypeFacts media={media} />
 
-					{(actorEntries.length > 0 || studioEntries.length > 0) && (
+					{actorEntries.length > 0 && (
+						<div className={styles.cast_group}>
+							<span className={styles.fact_label}>Cast</span>
+							<CastPhotos entries={actorEntries} />
+						</div>
+					)}
+
+					{studioEntries.length > 0 && (
 						<dl className={styles.facts}>
-							{actorEntries.length > 0 && (
-								<Fact
-									label="Cast"
-									value={<CastPhotos entries={actorEntries} />}
-								/>
-							)}
-							{studioEntries.length > 0 && (
-								<Fact
-									label="Studio"
-									value={<CreditNames entries={studioEntries} />}
-								/>
-							)}
+							<Fact label="Studio" value={<CreditNames entries={studioEntries} />} />
 						</dl>
 					)}
 

@@ -297,6 +297,14 @@ $var_banner_width: 110%
   flex-flow: row wrap
   gap: 1.5rem
 
+// Cast gets its own full-width block instead of sharing .facts with Studio
+// — a row of headshots reads as a distinct group, not another label/value
+// pair alongside plain-text facts like Network or ISBN.
+.cast_group
+  display: flex
+  flex-flow: column
+  gap: 0.6rem
+
 .fact
   display: flex
   flex-flow: column
@@ -381,7 +389,11 @@ $var_banner_width: 110%
 
 .cast_photo
   width: 6rem
-  height: auto
+  // Fixed ratio (rather than height: auto) so every tile is the same size
+  // regardless of the source photo's own crop — TMDB headshots come in a
+  // mix of aspect ratios, and without this the row's tiles end up ragged,
+  // each ending at a different height.
+  aspect-ratio: 3/4
   border-radius: 0.5rem
   //object-position: 50% 30%
   object-fit: cover
@@ -416,7 +428,7 @@ $var_banner_width: 110%
 .section
   display: flex
   flex-flow: column
-  gap: 0.75rem
+  gap: 1.5rem
 
 .section_title
   font-size: 1.2rem

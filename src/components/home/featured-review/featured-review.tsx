@@ -2,18 +2,7 @@
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-	Pin,
-	Settings,
-	type LucideIcon,
-	Sparkles,
-	Bookmark,
-	BadgePlus,
-	Plus,
-	Heart,
-	Star,
-	Pencil,
-} from "lucide-react";
+import { Settings, type LucideIcon, Sparkles, Heart } from "lucide-react";
 import { MediaRecord } from "@/components/media/types";
 import { MediaPoster } from "@/components/media/primitives/poster";
 import { MediaMiniCardShell } from "@/components/media/media-cards/media-mini-card/media-mini-card-shell";
