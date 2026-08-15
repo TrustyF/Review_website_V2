@@ -292,14 +292,10 @@ export default async function MediaDetailPage({
 	// prominent) row for that person.
 	const creditsByRole = new Map<string, Map<string, CreditLink>>();
 	for (const credit of raw.credits) {
-		// Scopes the destination page to this role (e.g. clicking a name under
-		// "Director" lands on just their directing credits, not everything
-		// they've ever been credited for).
-		const roleQuery = `?role=${encodeURIComponent(credit.role.name)}`;
 		const entry = credit.person
 			? {
 					key: `person-${credit.person.id}`,
-					href: `/credits/person/${credit.person.id}${roleQuery}`,
+					href: `/credits/person/${credit.person.id}`,
 					name: credit.person.name,
 					order: credit.order,
 					photoSrc:
@@ -311,7 +307,7 @@ export default async function MediaDetailPage({
 			: credit.company
 				? {
 						key: `company-${credit.company.id}`,
-						href: `/credits/company/${credit.company.id}${roleQuery}`,
+						href: `/credits/company/${credit.company.id}`,
 						name: credit.company.name,
 						order: credit.order,
 						photoSrc: null,

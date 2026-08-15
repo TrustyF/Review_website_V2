@@ -3,21 +3,12 @@ import { CreditMediaListPage } from "@/components/media/media-pages/credit-media
 
 export default async function PersonCreditsPage({
 	params,
-	searchParams,
 }: {
 	params: Promise<{ id: string }>;
-	searchParams: Promise<{ role?: string }>;
 }) {
 	const { id } = await params;
-	const { role } = await searchParams;
 	const personId = Number(id);
 	if (!Number.isFinite(personId)) notFound();
 
-	return (
-		<CreditMediaListPage
-			kind="person"
-			id={personId}
-			role={role}
-		/>
-	);
+	return <CreditMediaListPage kind="person" id={personId} />;
 }
