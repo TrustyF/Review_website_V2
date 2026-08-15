@@ -128,7 +128,7 @@ async function main() {
 		where: {
 			type: MediaType.MOVIE,
 			externalId: { not: null },
-			// OR: [{ lastEnrichedAt: null }, { lastEnrichedAt: { lt: enrichCutoff } }],
+			OR: [{ lastEnrichedAt: null }, { lastEnrichedAt: { lt: enrichCutoff } }],
 		},
 		orderBy: { id: "asc" },
 		// take: 10,
