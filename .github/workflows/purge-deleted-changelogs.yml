@@ -16,6 +16,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - run: npm run purge_deleted_changelogs
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
