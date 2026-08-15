@@ -56,18 +56,29 @@ const nextConfig: NextConfig = {
 				pathname: "/api/banner/**",
 			},
 		],
-		// Only reachable when IMAGE_STORAGE_DRIVER=vercel-blob — resolveChangelogPosterThumb/
-		// resolveChangelogBannerThumb and saveListThumbnail/cropAndSave (see
-		// src/server/storage/image-storage.ts's VercelBlobImageStorage) hand
-		// out a direct https://<storeId>.public.blob.vercel-storage.com/...
-		// URL instead of a local path in that mode, so next/image needs this
-		// allowlisted alongside localPatterns above. Harmless to leave enabled
-		// under the local driver — it just never matches anything.
+		// Only reachable when IMAGE_STORAGE_DRIVER is r2 or vercel-blob —
+		// resolveChangelogPosterThumb/resolveChangelogBannerThumb and
+		// saveListThumbnail/cropAndSave (see src/server/storage/image-storage.ts)
+		// hand out a direct object-store URL instead of a local path in that
+		// mode, so next/image needs it allowlisted alongside localPatterns
+		// above. Harmless to leave both enabled under the local driver — they
+		// just never match anything. R2_PUBLIC_URL's host is read here rather
+		// than hardcoded because it's either a per-bucket *.r2.dev host or a
+		// custom domain, chosen when the bucket's public access is enabled.
 		remotePatterns: [
 			{
 				protocol: "https",
 				hostname: "*.public.blob.vercel-storage.com",
 			},
+			...(process.env.R2_PUBLIC_URL
+				? [
+						{
+							protocol: new URL(process.env.R2_PUBLIC_URL)
+								.protocol.replace(":", "") as "http" | "https",
+							hostname: new URL(process.env.R2_PUBLIC_URL).hostname,
+						},
+					]
+				: []),
 		],
 	},
 };

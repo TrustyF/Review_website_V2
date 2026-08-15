@@ -1,5 +1,13 @@
 import { mkdir, readdir, readFile, stat, unlink, writeFile } from "fs/promises";
 import path from "path";
+import {
+	DeleteObjectCommand,
+	GetObjectCommand,
+	HeadObjectCommand,
+	ListObjectsV2Command,
+	PutObjectCommand,
+	S3Client,
+} from "@aws-sdk/client-s3";
 import { del, head, list as listBlobs, put } from "@vercel/blob";
 
 // Every caller addresses a file by a logical {dir, filename} pair instead of
@@ -112,9 +120,9 @@ function parseBlobStoreId(token: string): string {
 	return storeId;
 }
 
-// Selected automatically whenever the app is running on Vercel (or
-// explicitly via IMAGE_STORAGE_DRIVER=vercel-blob) — see getImageStorage's
-// driver-selection comment below. Every cached asset here is
+// Superseded by R2ImageStorage as the driver auto-selected on Vercel — kept
+// around behind IMAGE_STORAGE_DRIVER=vercel-blob for rollback. Every cached
+// asset here is
 // public (posters/banners/crops/thumbnails all get served straight to
 // browsers or link-preview crawlers), so every call uses access: "public"
 // and addRandomSuffix: false — filenames are already content-addressed by
@@ -208,6 +216,130 @@ class VercelBlobImageStorage implements ImageStorage {
 	}
 }
 
+// Selected via IMAGE_STORAGE_DRIVER=r2 — Cloudflare R2 speaks the S3 API, so
+// this reuses @aws-sdk/client-s3 rather than a Cloudflare-specific package.
+// Same public/content-addressed assumptions as VercelBlobImageStorage above
+// (every object is public, filenames are already content-addressed by the
+// callers), so writes always pass a public-cacheable key and overwriting an
+// existing key with identical bytes is expected, not an error.
+class R2ImageStorage implements ImageStorage {
+	private client: S3Client | null = null;
+
+	private requireEnv(name: string): string {
+		const value = process.env[name];
+		if (!value) {
+			throw new Error(
+				`${name} is not set — required when IMAGE_STORAGE_DRIVER=r2. See ` +
+					".env.example.",
+			);
+		}
+		return value;
+	}
+
+	private getClient(): S3Client {
+		if (this.client) return this.client;
+		const accountId = this.requireEnv("R2_ACCOUNT_ID");
+		this.client = new S3Client({
+			region: "auto",
+			endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+			credentials: {
+				accessKeyId: this.requireEnv("R2_ACCESS_KEY_ID"),
+				secretAccessKey: this.requireEnv("R2_SECRET_ACCESS_KEY"),
+			},
+		});
+		return this.client;
+	}
+
+	private get bucket(): string {
+		return this.requireEnv("R2_BUCKET_NAME");
+	}
+
+	private keyFor(dir: string, filename: string): string {
+		return `${dir}/${filename}`;
+	}
+
+	async read(dir: string, filename: string): Promise<Buffer | null> {
+		try {
+			const res = await this.getClient().send(
+				new GetObjectCommand({
+					Bucket: this.bucket,
+					Key: this.keyFor(dir, filename),
+				}),
+			);
+			const bytes = await res.Body?.transformToByteArray();
+			return bytes ? Buffer.from(bytes) : null;
+		} catch {
+			return null;
+		}
+	}
+
+	async write(dir: string, filename: string, bytes: Buffer): Promise<void> {
+		await this.getClient().send(
+			new PutObjectCommand({
+				Bucket: this.bucket,
+				Key: this.keyFor(dir, filename),
+				Body: bytes,
+			}),
+		);
+	}
+
+	async list(dir: string): Promise<string[]> {
+		const prefix = `${dir}/`;
+		const filenames: string[] = [];
+		let continuationToken: string | undefined;
+		do {
+			const page = await this.getClient().send(
+				new ListObjectsV2Command({
+					Bucket: this.bucket,
+					Prefix: prefix,
+					ContinuationToken: continuationToken,
+				}),
+			);
+			for (const object of page.Contents ?? []) {
+				if (object.Key) filenames.push(object.Key.slice(prefix.length));
+			}
+			continuationToken = page.IsTruncated
+				? page.NextContinuationToken
+				: undefined;
+		} while (continuationToken);
+		return filenames;
+	}
+
+	async remove(dir: string, filename: string): Promise<boolean> {
+		const key = this.keyFor(dir, filename);
+		try {
+			await this.getClient().send(
+				new HeadObjectCommand({ Bucket: this.bucket, Key: key }),
+			);
+		} catch {
+			return false;
+		}
+		await this.getClient().send(
+			new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
+		);
+		return true;
+	}
+
+	async statMtimeMs(dir: string, filename: string): Promise<number | null> {
+		try {
+			const res = await this.getClient().send(
+				new HeadObjectCommand({
+					Bucket: this.bucket,
+					Key: this.keyFor(dir, filename),
+				}),
+			);
+			return res.LastModified ? res.LastModified.getTime() : null;
+		} catch {
+			return null;
+		}
+	}
+
+	urlFor(dir: string, filename: string): string {
+		const base = this.requireEnv("R2_PUBLIC_URL").replace(/\/$/, "");
+		return `${base}/${this.keyFor(dir, filename)}`;
+	}
+}
+
 // Cached rather than constructed per call — neither backend holds per-call
 // state, so there's nothing to gain from a fresh instance each time, and a
 // singleton means an unknown driver name fails once at first use instead of
@@ -222,9 +354,11 @@ export function getImageStorage(): ImageStorage {
 	// Vercel's own environments (Production, Preview, and `vercel dev`) —
 	// checking it here means there's nothing to remember to flip before a
 	// deploy, only an explicit var to set if a project ever wants to
-	// override the default (e.g. testing the blob driver from a local dev
+	// override the default (e.g. testing the r2 driver from a local dev
 	// machine, or running local storage in some future self-hosted
-	// production deployment).
+	// production deployment). R2 rather than Vercel Blob because that's this
+	// project's object store even though the app itself still deploys on
+	// Vercel — see .env.example.
 	//
 	// `||`, not `??` — .env files (and Vercel's own env var UI) commonly
 	// leave an unused var present but blank (`IMAGE_STORAGE_DRIVER=`) rather
@@ -234,7 +368,7 @@ export function getImageStorage(): ImageStorage {
 	// driver instead of falling through to the auto-detect default.
 	const driver =
 		process.env.IMAGE_STORAGE_DRIVER ||
-		(process.env.VERCEL === "1" ? "vercel-blob" : "local");
+		(process.env.VERCEL === "1" ? "r2" : "local");
 	switch (driver) {
 		case "local":
 			cached = new LocalImageStorage();
@@ -242,9 +376,12 @@ export function getImageStorage(): ImageStorage {
 		case "vercel-blob":
 			cached = new VercelBlobImageStorage();
 			break;
+		case "r2":
+			cached = new R2ImageStorage();
+			break;
 		default:
 			throw new Error(
-				`Unknown IMAGE_STORAGE_DRIVER "${driver}" — expected "local" or "vercel-blob".`,
+				`Unknown IMAGE_STORAGE_DRIVER "${driver}" — expected "local", "vercel-blob", or "r2".`,
 			);
 	}
 	return cached;

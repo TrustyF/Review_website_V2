@@ -1,0 +1,21 @@
+{
+	"files.watcherExclude": {
+		"**/node_modules/**": true,
+		"**/.next/**": true,
+		"**/.git/objects/**": true,
+		"**/.git/subtree-cache/**": true
+	},
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/.next": true,
+		"**/package-lock.json": true
+	},
+	"files.exclude": {
+		"**/.next": true
+	},
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"typescript.tsserver.watchOptions": {
+		"watchFile": "useFsEvents",
+		"watchDirectory": "useFsEvents"
+	}
+}
