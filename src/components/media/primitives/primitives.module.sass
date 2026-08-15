@@ -15,6 +15,12 @@
   width: 100%
   border-radius: 0.25rem
   box-shadow: 0 2px 6px var(--overlay-backdrop)
+  // Covers the placeholder color's own entrance below — without this, a
+  // grid revealing a whole batch of cards at once (see LazyMediaGrid) has
+  // most of their loads clear the 100ms mark at roughly the same time, so
+  // the color would otherwise pop in for all of them in the same frame
+  // instead of easing in individually.
+  transition: background-color 0.25s ease
 
 // The placeholder color itself — only applied once poster.tsx decides the
 // load is actually slow enough to need one (see its own comment), instead
