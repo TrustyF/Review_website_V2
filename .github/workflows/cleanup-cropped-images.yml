@@ -16,6 +16,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+        env:
+          # cleanup_cropped_images itself never touches the DB, but `npm ci`
+          # runs the postinstall `prisma generate` hook, and prisma.config.ts
+          # eagerly resolves DATABASE_URL at config-load time — so it has to
+          # be set here even though it's unused below.
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
       - run: npm run cleanup_cropped_images
         env:
           IMAGE_STORAGE_DRIVER: r2
