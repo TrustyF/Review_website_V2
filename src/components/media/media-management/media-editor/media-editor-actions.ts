@@ -22,6 +22,7 @@ import {
 } from "@/server/resolvers/poster-resolver";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
 import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/review-body-syntax";
+import { invalidateSearchIndex } from "@/components/search/search-actions";
 
 // Compares old/new values field by field and returns a MediaChangeLog row
 // for each one that actually changed — untouched fields produce no row. A
@@ -195,6 +196,7 @@ export async function saveMediaDetails(
 		await db.mediaChangeLog.createMany({ data: changes });
 	}
 
+	await invalidateSearchIndex();
 	revalidatePath("/", "layout");
 }
 
@@ -224,6 +226,7 @@ export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
 		},
 	});
 
+	await invalidateSearchIndex();
 	// "layout" already covers /media/${mediaId} too — see
 	// media-add-actions.ts's comment on this same pattern.
 	revalidatePath("/", "layout");
@@ -238,6 +241,7 @@ export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
 export async function hardDeleteMedia(mediaId: number) {
 	await requireAdmin();
 	await db.media.delete({ where: { id: mediaId } });
+	await invalidateSearchIndex();
 	revalidatePath("/", "layout");
 }
 

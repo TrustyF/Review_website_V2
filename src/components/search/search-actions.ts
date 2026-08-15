@@ -45,15 +45,49 @@ type SearchableMedia = {
 // instead of a fresh ~150-200ms DB round trip (the whole DONE-enriched
 // collection, credits join included) plus a Fuse index rebuild on every one
 // of them — that per-keystroke cost was the actual "slow, unresponsive"
-// search bar complaint this was added for. A short TTL rather than no
-// expiry at all: cheap enough to rebuild that it's not worth wiring up
-// explicit invalidation from every place media/credits can change, but still
-// bounds how stale a search result can be after an edit.
+// search bar complaint this was added for. On Vercel Fluid, module-scope
+// memory is per-instance, and instances churn far more often than a human
+// typing session lasts — a short TTL was mostly just forcing a rebuild (DB
+// fetch + Fuse indexing, the CPU-heavy part) on close to every cold
+// instance's first search, which is pure Active CPU cost for no freshness
+// anyone asked for. This collection only changes via admin edits and ingest
+// runs — both rare — so the TTL here is just a safety net; the actions that
+// actually change what search should show (saveMediaDetails,
+// setMediaDeleted, hardDeleteMedia, createManualMedia) call
+// invalidateSearchIndex() directly for immediate freshness on the instance
+// that served the edit. Ingest scripts run as a separate process, so they
+// can't reach this module-scope cache either way — the TTL is what bounds
+// staleness for those.
 let cachedIndex: { fuse: Fuse<SearchableMedia>; expiresAt: number } | null = null;
-const CACHE_TTL_MS = 60_000;
+const CACHE_TTL_MS = 60 * 60_000;
+
+// Called by the admin actions that change title/overview/isDeleted/DONE
+// status — the fields this index is actually built from. Only resets this
+// instance's cache (module-scope, per-instance on Fluid), so other warm
+// instances still converge via CACHE_TTL_MS rather than instantly; that's
+// an acceptable gap for how rarely and low-stakes these edits are.
+export async function invalidateSearchIndex() {
+	cachedIndex = null;
+	logSearchIndexEvent({ invalidated: true });
+}
+
+// CPU time (not wall clock) is what Vercel's Fluid "Active CPU" metric
+// bills, so process.cpuUsage() deltas are the closest thing to profiling
+// that cost directly from inside the app. Grep Vercel logs for
+// "[search-index]" to see rebuild frequency (cacheHit:false lines) and cost
+// (cpuMs) — e.g. before/after changing CACHE_TTL_MS.
+function logSearchIndexEvent(event: Record<string, unknown>) {
+	console.log("[search-index]", JSON.stringify(event));
+}
 
 async function getSearchIndex(): Promise<Fuse<SearchableMedia>> {
-	if (cachedIndex && cachedIndex.expiresAt > Date.now()) return cachedIndex.fuse;
+	if (cachedIndex && cachedIndex.expiresAt > Date.now()) {
+		logSearchIndexEvent({ cacheHit: true });
+		return cachedIndex.fuse;
+	}
+
+	const cpuBefore = process.cpuUsage();
+	const startedAt = performance.now();
 
 	const candidates = await dbPublic.media.findMany({
 		where: { enrichmentStatus: EnrichmentStatus.DONE },
@@ -76,6 +110,7 @@ async function getSearchIndex(): Promise<Fuse<SearchableMedia>> {
 		},
 		orderBy: { id: "asc" },
 	});
+	const dbDoneAt = performance.now();
 
 	const searchable: SearchableMedia[] = candidates.map(({ credits, ...m }) => ({
 		...m,
@@ -88,6 +123,18 @@ async function getSearchIndex(): Promise<Fuse<SearchableMedia>> {
 	}));
 
 	const fuse = new Fuse(searchable, FUSE_OPTIONS);
+	const indexDoneAt = performance.now();
+
+	const cpu = process.cpuUsage(cpuBefore);
+	logSearchIndexEvent({
+		cacheHit: false,
+		itemCount: searchable.length,
+		dbMs: Math.round(dbDoneAt - startedAt),
+		indexMs: Math.round(indexDoneAt - dbDoneAt),
+		totalMs: Math.round(indexDoneAt - startedAt),
+		cpuMs: Math.round((cpu.user + cpu.system) / 1000),
+	});
+
 	cachedIndex = { fuse, expiresAt: Date.now() + CACHE_TTL_MS };
 	return fuse;
 }

@@ -28,6 +28,7 @@ import {
 	AddableType,
 	MediaSearchResult,
 } from "@/components/media/media-management/media-add/addable-types";
+import { invalidateSearchIndex } from "@/components/search/search-actions";
 import { requireAdmin } from "@/lib/auth/require-admin";
 
 function yearOf(dateString: string | null): number | null {
@@ -182,6 +183,7 @@ export async function addMediaToLibrary(
 		}
 	}
 
+	await invalidateSearchIndex();
 	// "layout" (not just "/") — a plain revalidatePath("/") only invalidated
 	// the homepage itself, leaving every per-type list page (/movies, /tv,
 	// ...) and the new item's own /media/[id] serving a stale cached render
