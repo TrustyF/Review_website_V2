@@ -21,7 +21,7 @@ const MIN_RECENT_MOVIES = 7;
 
 // Every type-specific relation toMediaRecord might need — the reviewed feed
 // spans every media type, unlike RecentMoviesSection's own query below
-// which only ever needs `movie`.
+// which only ever needs `movie`/`tvShow`.
 const EVERY_TYPE_RELATION = {
 	movie: true,
 	tvShow: true,
@@ -31,10 +31,18 @@ const EVERY_TYPE_RELATION = {
 	book: true,
 } as const;
 
+// Screen releases only — the "Recent releases" and "Recently watched" home
+// sections cover movies, shorts, and TV shows, not the full catalog.
+const SCREEN_MEDIA_TYPES: MediaType[] = [
+	MediaType.MOVIE,
+	MediaType.SHORT,
+	MediaType.TVSHOW,
+];
+
 // "What's new on the site" (by releaseDate, same as RecentMediaListPage),
-// not "what was reviewed most recently" — a movie can appear here whether
-// or not it has a review yet. Scoped to the last RECENT_MOVIES_MONTHS so a
-// quiet stretch doesn't dredge up an old release, but never below
+// not "what was reviewed most recently" — a movie/short/show can appear here
+// whether or not it has a review yet. Scoped to the last RECENT_MOVIES_MONTHS
+// so a quiet stretch doesn't dredge up an old release, but never below
 // MIN_RECENT_MOVIES — if the window doesn't have enough, the date filter is
 // dropped entirely rather than showing a half-empty section.
 async function getRecentMovies() {
@@ -43,12 +51,12 @@ async function getRecentMovies() {
 
 	const recent = await dbPublic.media.findMany({
 		where: {
-			type: MediaType.MOVIE,
+			type: { in: SCREEN_MEDIA_TYPES },
 			enrichmentStatus: EnrichmentStatus.DONE,
 			releaseDate: { gte: cutoff },
 			isAdult: false,
 		},
-		include: { movie: true, review: true },
+		include: { movie: true, tvShow: true, review: true },
 		orderBy: { releaseDate: "desc" },
 		take: RECENT_MOVIES_COUNT,
 	});
@@ -56,32 +64,32 @@ async function getRecentMovies() {
 
 	return dbPublic.media.findMany({
 		where: {
-			type: MediaType.MOVIE,
+			type: { in: SCREEN_MEDIA_TYPES },
 			enrichmentStatus: EnrichmentStatus.DONE,
 			isAdult: false,
 		},
-		include: { movie: true, review: true },
+		include: { movie: true, tvShow: true, review: true },
 		orderBy: { releaseDate: "desc" },
 		take: MIN_RECENT_MOVIES,
 	});
 }
 
-// Movies that have been watched (a rating exists) but haven't been written
-// up yet — the mirror image of getFeaturedReviewItems' REVIEWED_WHERE.
-// Ordered by watchedDate (Review.createDate) since there's no reviewDate to
-// sort by yet.
+// Movies/shorts/shows that have been watched (a rating exists) but haven't
+// been written up yet — the mirror image of getFeaturedReviewItems'
+// REVIEWED_WHERE. Ordered by watchedDate (Review.createDate) since there's
+// no reviewDate to sort by yet.
 async function getRecentlyWatchedMovies() {
 	const recentlyWatched = await dbPublic.media.findMany({
 		where: {
-			type: MediaType.MOVIE,
+			type: { in: SCREEN_MEDIA_TYPES },
 			enrichmentStatus: EnrichmentStatus.DONE,
 			isAdult: false,
 			review: {
 				rating: { not: null },
-				OR: [{ body: null }, { body: "" }],
+				// OR: [{ body: null }, { body: "" }],
 			},
 		},
-		include: { movie: true, review: true },
+		include: { movie: true, tvShow: true, review: true },
 		orderBy: { review: { createDate: "desc" } },
 		take: RECENTLY_WATCHED_COUNT,
 	});

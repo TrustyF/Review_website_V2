@@ -36,7 +36,7 @@ const CARD_TRANSITION_MS = 350;
 // to the next one. Also reused as the idle delay before auto-advance resumes
 // after the user interacts with the picker (see `paused` below) — one knob
 // for "how long is this comfortable to sit and read" covers both.
-const AUTO_ADVANCE_MS = 15000;
+const AUTO_ADVANCE_MS = 25000;
 
 // One entry per possible .eyebrow state — an icon is optional per variant
 // (only "Featured review" has one today), so adding a future label (e.g.
@@ -239,6 +239,17 @@ export function FeaturedReview({ items }: Props) {
 								<div inert className={styles.picker_item_inert}>
 									<MediaMiniCardShell media={item} />
 								</div>
+								{/* Sits on the *next* item in line, not the active one —
+								    it's a countdown to when that item takes over, not a
+								    status of the current one. Only while auto-advance is
+								    actually counting down — hidden while paused (see
+								    `paused` above) rather than frozen mid-fill, since a
+								    resumed auto-advance restarts its interval from
+								    scratch rather than continuing where the reader left
+								    off. Keyed by index so every advance (auto or picked)
+								    remounts it and restarts the fill from empty instead
+								    of jumping backwards from whatever the previous
+								    "next" item's fill had reached. */}
 								<button
 									type="button"
 									className={styles.picker_item_overlay}
@@ -246,6 +257,25 @@ export function FeaturedReview({ items }: Props) {
 									aria-label={`Show featured review: ${item.title}`}
 									onClick={() => select(i)}
 								/>
+								{reviewed.length > 1 &&
+									!paused &&
+									i === (index + 1) % reviewed.length && (
+										<div
+											key={index}
+											className={styles.picker_item_progress}
+											// Set here (not on .picker_item_progress_fill) so the
+											// fade and the wedge sweep below share the exact same
+											// clock — the var inherits down to the fill's own
+											// animation rather than needing its own copy.
+											style={
+												{
+													"--picker-progress-duration": `${AUTO_ADVANCE_MS}ms`,
+												} as CSSProperties
+											}
+											aria-hidden="true">
+											<div className={styles.picker_item_progress_fill} />
+										</div>
+									)}
 							</div>
 						))}
 					</MediaCardDisplayProvider>
