@@ -135,12 +135,14 @@ async function runWithConcurrency<T>(
 	);
 }
 
-// Real rate limiting now lives at the client layer (each source's own
-// client.ts has a rate-limited-fetch.ts throttle + single-retry-on-429 —
-// see e.g. igdb/client.ts's limiter), so this is purely a concurrency cap on
-// in-flight DB transactions/worker parallelism now, not the thing keeping
-// any source's request rate in check — workers just queue behind that
-// client-side throttle instead of firing real concurrent requests beyond it.
+// Real rate limiting lives at the client layer (each source's own client.ts
+// has a rate-limited-fetch.ts throttle + single-retry-on-429 — see e.g.
+// igdb/client.ts's limiter), so this only bounds how many of a given type's
+// items can be in flight (fetching + writing) at once, letting each queue's
+// own worker pool size reflect that source's own pacing/rate-limit
+// character — it does NOT bound how many Prisma transactions are open
+// system-wide, since queues for every type run concurrently. That's what
+// dbSemaphore below is for.
 const QUEUE_CONCURRENCY: Record<MediaType, number> = {
 	[MediaType.MOVIE]: 6,
 	[MediaType.SHORT]: 6,
@@ -150,6 +152,42 @@ const QUEUE_CONCURRENCY: Record<MediaType, number> = {
 	[MediaType.COMIC]: 6,
 	[MediaType.BOOK]: 6,
 };
+
+// A simple counting semaphore — acquire() resolves immediately while under
+// the limit, otherwise waits for a release().
+function createSemaphore(limit: number) {
+	let active = 0;
+	const waiters: (() => void)[] = [];
+
+	async function acquire(): Promise<void> {
+		if (active >= limit) {
+			await new Promise<void>((resolve) => waiters.push(resolve));
+		}
+		active++;
+	}
+
+	function release() {
+		active--;
+		waiters.shift()?.();
+	}
+
+	return { acquire, release };
+}
+
+// Every type's queue runs concurrently (see runQueue below) and each item's
+// enrichOne() opens its own interactive Prisma transaction (see e.g.
+// tv-show.ts's db.$transaction) — summed across all of QUEUE_CONCURRENCY
+// above, that's up to ~39 transactions wanting a connection at once, far
+// more than the connection pool (db/client.ts's PrismaPg adapter, a plain
+// pg.Pool defaulting to 10) actually has. Without a cap here, most of those
+// requests just queue for a pool slot until Prisma's own maxWait elapses and
+// they fail with P2028 ("Unable to start a transaction in the given time")
+// instead of ever running. This gates entry to enrichOne itself (fetch +
+// write together, not just the transaction) so the number of connections
+// requested at once never exceeds what the pool can actually hand out,
+// regardless of how many types happen to be active in a given run.
+const GLOBAL_DB_CONCURRENCY = 8;
+const dbSemaphore = createSemaphore(GLOBAL_DB_CONCURRENCY);
 
 // Each media type talks to its own independent (and independently
 // rate-limited) API — TMDB, MangaDex, IGDB, ComicVine. Processing every
@@ -165,6 +203,7 @@ async function runQueue(type: MediaType, mediaList: Media[]) {
 		QUEUE_CONCURRENCY[type],
 		async (media) => {
 			console.log(`[${type}] trying ${media.title}`);
+			await dbSemaphore.acquire();
 			try {
 				await enrichOne(media);
 			} catch (err) {
@@ -175,6 +214,8 @@ async function runQueue(type: MediaType, mediaList: Media[]) {
 					`[${type}] Failed enriching media ${media.id} (${media.title})`,
 					err,
 				);
+			} finally {
+				dbSemaphore.release();
 			}
 		},
 	);
