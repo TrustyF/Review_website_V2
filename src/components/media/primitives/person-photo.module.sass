@@ -1,0 +1,23 @@
+// Default look for both the real photo and its no-photo placeholder — same
+// width/ratio/radius either way, so a person with no photo takes up exactly
+// the same tile size/shape as one with a photo. Lives here (not a shared
+// mixin in variables.sass) since PersonPhoto is the one place that should
+// own this — a caller only needs its own CSS when it wants something
+// *different* (see photoClassName/placeholderClassName in person-photo.tsx),
+// not just to repeat the same values again.
+.photo,
+.placeholder
+  width: 6rem
+  aspect-ratio: 3/4
+  border-radius: 0.5rem
+
+.photo
+  object-fit: cover
+
+.placeholder
+  display: flex
+  align-items: center
+  justify-content: center
+  background: var(--surface)
+  border: 1px solid var(--surface-border)
+  color: var(--accent1)

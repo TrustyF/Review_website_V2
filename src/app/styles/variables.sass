@@ -9,6 +9,14 @@ $font-body: var(--font-ibm-plex-sans), Arial, Helvetica, sans-serif
 // the cards can't leave that estimate stale.
 $mini-card-min-width: 110px
 
+// Below this, the navbar's nav items collapse from icon+label to icon-only
+// (see nav-bar.module.sass's .link_label and nav-dropdown.module.sass's
+// .label_stack) — the fixed desktop layout (nav_group gaps, search's own
+// 10rem left margin, every label's full text, ...) doesn't reflow on its
+// own, so without this it just overflows the viewport below this width
+// instead of shrinking to fit.
+$navbar-collapse-width: 1300px
+
 // Shared "nothing here yet" text treatment — was independently redefined in
 // four different module.sass files (change log, search results, credit
 // pages, add-media) with the same intent; centralized so the look only
@@ -60,3 +68,13 @@ $mini-card-min-width: 110px
   &:hover .nav_icon,
   &[aria-current="page"] .nav_icon
     color: var(--brand)
+
+  // Below $navbar-collapse-width the label text is hidden (see .link_label/
+  // .label_stack) and the icon is the item's only visible content — staying
+  // at the same dim accent3 it uses when it's merely a label's sidekick
+  // would make every collapsed nav item read as washed-out, so it steps up
+  // to full foreground brightness instead. Still yields to :hover/
+  // [aria-current] below it, same as the rest state above.
+  @media (max-width: $navbar-collapse-width)
+    .nav_icon
+      color: var(--foreground)

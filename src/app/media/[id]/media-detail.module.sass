@@ -387,27 +387,8 @@ $var_banner_width: 110%
   &:hover
     opacity: 1
 
-.cast_photo
-  width: 6rem
-  // Fixed ratio (rather than height: auto) so every tile is the same size
-  // regardless of the source photo's own crop — TMDB headshots come in a
-  // mix of aspect ratios, and without this the row's tiles end up ragged,
-  // each ending at a different height.
-  aspect-ratio: 3/4
-  border-radius: 0.5rem
-  //object-position: 50% 30%
-  object-fit: cover
-
-.cast_photo_placeholder
-  display: flex
-  align-items: center
-  justify-content: center
-  width: 6rem
-  height: 6rem
-  border-radius: 50%
-  background: var(--surface)
-  border: 1px solid var(--surface-border)
-  color: var(--accent1)
+// The photo/placeholder's own shape and look now live in PersonPhoto itself
+// (see person-photo.module.sass) — nothing to declare here anymore.
 
 .cast_photo_name
   font-size: 0.7rem

@@ -18,26 +18,15 @@
   flex-flow: column
   gap: 0.75rem
 
-.photo
-  width: 6rem
-  height: auto
-  aspect-ratio: 3/4
-  border-radius: 0.5rem
-  object-fit: cover
-  object-position: 50% 30%
+// Shape/look itself comes from PersonPhoto's own default (see
+// person-photo.module.sass) — these only add what's specific to sitting in
+// this page's flex .header row, on top of that default.
+.photo,
+.photo_placeholder
   flex-shrink: 0
 
-.photo_placeholder
-  display: flex
-  align-items: center
-  justify-content: center
-  width: 6rem
-  aspect-ratio: 3/4
-  border-radius: 0.5rem
-  background: var(--surface)
-  border: 1px solid var(--surface-border)
-  color: var(--accent1)
-  flex-shrink: 0
+.photo
+  object-position: 50% 30%
 
 .entity_name
   color: var(--foreground)

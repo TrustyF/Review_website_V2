@@ -59,6 +59,11 @@
   display: grid
   overflow: hidden
 
+  // Same collapse-to-icon behavior as nav-bar.module.sass's .link_label —
+  // the trigger's icon + chevron stay, just the sliding label text goes.
+  @media (max-width: $navbar-collapse-width)
+    display: none
+
 // Default (unset) state sits a full line below, waiting — so a variant
 // that becomes active always slides up into place from the bottom. The
 // variant that just lost active status gets .exiting instead, which sits

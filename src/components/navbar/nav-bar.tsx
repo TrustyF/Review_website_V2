@@ -6,15 +6,16 @@ import { signOut, useSession } from "next-auth/react";
 import {
 	BookOpen,
 	CirclePlus,
-	CircleUserRound,
 	Clapperboard,
 	ClockFading,
 	GamepadDirectional,
+	Home,
 	LayoutList,
 	List,
+	LogIn,
+	LogOut,
 	LucideProvider,
 	type LucideIcon,
-	User,
 	UserRound,
 } from "lucide-react";
 import { NavSearch } from "@/components/navbar/nav-search/nav-search";
@@ -71,7 +72,11 @@ function NavLink({
 					fill={isActive ? "currentColor" : "none"}
 				/>
 			)}
-			{children}
+			{/* Collapses away below $navbar-collapse-width (see nav-bar.module
+			.sass's .link_label), leaving just the icon above — every NavLink
+			call site is given an icon for exactly this reason, so nothing
+			disappears entirely at narrow widths. */}
+			<span className={style.link_label}>{children}</span>
 		</Link>
 	);
 }
@@ -161,94 +166,109 @@ export default function Navbar() {
 					Arthur&#39;s Corner
 				</Link>
 
-				<div className={style.search}>
-					<NavSearch />
-				</div>
+				{/* Both the search box and every nav link cluster live inside this
+				one absolutely-positioned container (see .nav_content's own
+				comment in nav-bar.module.sass) so the links flow immediately
+				after the search box wherever it ends up sitting, rather than
+				the two being positioned independently of each other. */}
+				<div className={style.nav_content}>
+					<div className={style.search}>
+						<NavSearch />
+					</div>
 
-				<div className={style.nav_group}>
-					<NavLink href="/" className={style.link} pathname={pathname}>
-						Home
-					</NavLink>
-				</div>
-
-				<div className={style.nav_group}>
-					<NavDropdown
-						label="Media"
-						icon={Clapperboard}
-						items={[
-							{ href: "/movies", label: "Movies" },
-							{ href: "/shorts", label: "Shorts" },
-							{ href: "/tv", label: "TV" },
-						]}
-					/>
-					<NavDropdown
-						label="Reading"
-						icon={BookOpen}
-						items={[
-							{ href: "/manga", label: "Manga" },
-							{ href: "/comics", label: "Comics" },
-							{ href: "/books", label: "Books" },
-						]}
-					/>
-					<NavLink
-						href="/games"
-						icon={GamepadDirectional}
-						className={style.link}
-						pathname={pathname}>
-						Games
-					</NavLink>
-				</div>
-
-				<div className={style.nav_group}>
-					<NavLink
-						href="/reviews"
-						icon={LayoutList}
-						className={style.link}
-						pathname={pathname}>
-						Reviews
-					</NavLink>
-					<NavLink
-						href="/lists"
-						icon={List}
-						className={style.link}
-						pathname={pathname}>
-						Lists
-					</NavLink>
-				</div>
-
-				<div className={style.nav_group}>
-					{session?.user ? (
-						<>
+					<div className={style.groups}>
+						<div className={style.nav_group}>
 							<NavLink
-								href="/watchlist"
-								icon={ClockFading}
+								href="/"
+								icon={Home}
 								className={style.link}
 								pathname={pathname}>
-								Watchlist
+								Home
 							</NavLink>
+						</div>
 
+						<div className={style.nav_group}>
+							<NavDropdown
+								label="Media"
+								icon={Clapperboard}
+								items={[
+									{ href: "/movies", label: "Movies" },
+									{ href: "/shorts", label: "Shorts" },
+									{ href: "/tv", label: "TV" },
+								]}
+							/>
+							<NavDropdown
+								label="Reading"
+								icon={BookOpen}
+								items={[
+									{ href: "/manga", label: "Manga" },
+									{ href: "/comics", label: "Comics" },
+									{ href: "/books", label: "Books" },
+								]}
+							/>
 							<NavLink
-								href="/account"
-								icon={UserRound}
+								href="/games"
+								icon={GamepadDirectional}
 								className={style.link}
 								pathname={pathname}>
-								Account
+								Games
 							</NavLink>
-							<button
-								type="button"
-								className={style.sign_out_button}
-								onClick={() => signOut({ callbackUrl: "/" })}>
-								Sign out
-							</button>
-						</>
-					) : (
-						<NavLink
-							href="/login"
-							className={style.sign_out_button}
-							pathname={pathname}>
-							Sign in
-						</NavLink>
-					)}
+						</div>
+
+						<div className={style.nav_group}>
+							<NavLink
+								href="/reviews"
+								icon={LayoutList}
+								className={style.link}
+								pathname={pathname}>
+								Reviews
+							</NavLink>
+							<NavLink
+								href="/lists"
+								icon={List}
+								className={style.link}
+								pathname={pathname}>
+								Lists
+							</NavLink>
+						</div>
+
+						<div className={style.nav_group}>
+							{session?.user ? (
+								<>
+									<NavLink
+										href="/watchlist"
+										icon={ClockFading}
+										className={style.link}
+										pathname={pathname}>
+										Watchlist
+									</NavLink>
+
+									<NavLink
+										href="/account"
+										icon={UserRound}
+										className={style.link}
+										pathname={pathname}>
+										Account
+									</NavLink>
+									<button
+										type="button"
+										className={style.sign_out_button}
+										onClick={() => signOut({ callbackUrl: "/" })}>
+										<LogOut size={14} className={style.nav_icon} />
+										<span className={style.link_label}>Sign out</span>
+									</button>
+								</>
+							) : (
+								<NavLink
+									href="/login"
+									icon={LogIn}
+									className={style.sign_out_button}
+									pathname={pathname}>
+									Sign in
+								</NavLink>
+							)}
+						</div>
+					</div>
 				</div>
 
 				{/* Detached from the .nav_group flex flow and pinned to its own

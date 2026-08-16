@@ -3,8 +3,17 @@
 .wrapper
   position: relative
 
+// Shrinks with the viewport instead of a fixed 20rem — 8rem is a hand-picked
+// floor (still fits a few words of a title before eliding), 20rem is the
+// old fixed size kept as the ceiling so this only ever shrinks, never grows
+// past what it always was on a wide screen. .dropdown below tracks this via
+// .wrapper's own width (rather than keeping its own independent value) but
+// floors at the old fixed 20rem regardless — a shrunk input is fine to type
+// into, but the results panel underneath it (poster thumbnail + title +
+// meta per row) gets cramped below that width, so it's allowed to render
+// wider than the input that opened it.
 .input
-  width: 20rem
+  width: clamp(8rem, 18vw, 20rem)
   padding: 0.5rem
   border-radius: 0.5rem
   border: none
@@ -27,7 +36,8 @@
   top: calc(100% + 0.5rem)
   left: 0
   z-index: 20
-  width: 20rem
+  width: 100%
+  min-width: 20rem
   max-height: 22rem
   overflow-y: auto
   display: flex

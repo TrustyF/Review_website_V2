@@ -23,7 +23,7 @@ const TYPE_LABELS: Record<MediaType, string> = {
 // How long to wait after the last keystroke before actually querying the
 // server — the input stays instantly responsive (it's just local state),
 // same idea as every other debounced search in this app.
-const DEBOUNCE_MS = 200;
+const DEBOUNCE_MS = 500;
 
 // Media-agnostic search reachable from every page via the navbar — replaces
 // the old per-page search that used to live inside MediaSearchGrid (now

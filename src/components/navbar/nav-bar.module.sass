@@ -44,17 +44,54 @@
   font-size: 1.5rem
   font-weight: 700
   color: var(--brand)
+  text-wrap: nowrap
 
-// Pushes everything after the search bar (the nav groups) over to the
-// right edge, leaving the search bar itself sitting left-aligned right
-// next to .title instead of bunched together with the nav groups.
-.search
-  margin-right: auto
-  margin-left: 10rem
+// Both .search and .groups sit inside this one container (rather than each
+// being positioned independently) so the nav links flow immediately after
+// the search box, wherever it ends up — not separately pinned to the far
+// right of the page regardless of where the search box lands. Out of the
+// flex flow entirely (unlike before, when .search itself was a flex item
+// pushed away from .title with a fixed margin-left) so this box's left edge
+// can be pinned to a viewport-relative position instead of one that depends
+// on .title's own rendered width — .wrapper's own position: fixed (with no
+// border, full width) makes its padding box's left edge sit exactly at
+// x = 0, so `left` here is effectively measured straight from the viewport
+// edge, same trick .add_media_link below already relies on.
+//
+// (100vw - 950px) / 2 is where every page's own centered content column
+// starts (950px is that column's width — see e.g. add-media.module.sass's
+// own .wrapper) — lining the search bar up with it visually connects the
+// navbar to the content sitting below it instead of the search bar
+// floating wherever .title's width happened to leave room. 20rem is a
+// hand-picked floor, not a derived one: plain CSS has no way to read
+// .title's actual rendered width to compute an exact non-overlap minimum,
+// so this is a safe distance past it for when the viewport is too narrow
+// for the content-column math above to clear .title on its own.
+//
+// Because this no longer pins .groups to the page's right edge, a wide
+// enough viewport can in principle push .groups past the right edge of the
+// screen instead of stopping there — traded deliberately for "the links sit
+// right after the search box" over "the links always hug the right edge."
+.nav_content
+  position: absolute
+  top: 50%
+  left: max(20rem, calc((100vw - 950px) / 2))
+  transform: translateY(-50%)
+  display: flex
+  align-items: center
+  gap: 3rem
+
+// Every .nav_group cluster's shared container — one flex item of
+// .nav_content. gap on .nav_group below still layers its own extra 0.75rem
+// spacing on top of this container's own gap, same as before.
+.groups
+  display: flex
+  align-items: center
+  gap: 3rem
 
 // Three clusters — browse (Home/Media/Reading/Games), collection (Lists/
 // Add), account (Watchlist/Account/sign in-out) — each a flex item of
-// .wrapper in its own right, so .wrapper's own gap already separates them;
+// .groups in its own right, so .groups's own gap already separates them;
 // the extra margin-left here is just a bit more breathing room on top of
 // that, marking them as distinct groups rather than one long run of links.
 .nav_group
@@ -70,7 +107,16 @@
   display: flex
   align-items: center
   gap: 0.4rem
+  white-space: nowrap
   @include nav-item-look
+
+// Wraps every NavLink's (and the sign-out button's) text — hidden below
+// $navbar-collapse-width so the item shrinks down to just its icon instead
+// of contributing to horizontal overflow. See nav-bar.tsx's own comment on
+// why every call site is given an icon.
+.link_label
+  @media (max-width: $navbar-collapse-width)
+    display: none
 
 // Pinned to its own corner instead of sitting in .nav_group's flex flow
 // (see nav-bar.tsx) — .wrapper's own position: fixed makes it the

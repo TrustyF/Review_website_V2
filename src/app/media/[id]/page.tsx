@@ -110,23 +110,23 @@ function CreditNames({ entries }: { entries: CreditLink[] }) {
 
 // Cast's own row, shown as a strip of small headshots (name underneath
 // each) instead of comma-separated text — an actor with no photo (never
-// backfilled yet, or TMDB just doesn't have one) gets a plain circular
-// placeholder instead of falling back to text, so the row stays a
-// consistent strip of circles either way.
+// backfilled yet, or TMDB just doesn't have one) gets PersonPhoto's own
+// placeholder tile instead of falling back to text, so the row stays a
+// consistent strip of same-shaped tiles either way.
 function CastPhotos({ entries }: { entries: CreditLink[] }) {
 	return (
 		<span className={styles.cast_photos}>
 			{entries.map((entry) => (
-				<Link key={entry.key} href={entry.href} className={styles.cast_photo_link}>
-					<PersonPhoto
-						src={entry.photoSrc}
-						alt={entry.name}
-						photoClassName={styles.cast_photo}
-						placeholderClassName={styles.cast_photo_placeholder}
-					/>
+				<Link
+					key={entry.key}
+					href={entry.href}
+					className={styles.cast_photo_link}>
+					<PersonPhoto src={entry.photoSrc} alt={entry.name} />
 					<span className={styles.cast_photo_name}>{entry.name}</span>
 					{entry.character && (
-						<span className={styles.cast_photo_character}>{entry.character}</span>
+						<span className={styles.cast_photo_character}>
+							{entry.character}
+						</span>
 					)}
 				</Link>
 			))}
@@ -262,13 +262,18 @@ export default async function MediaDetailPage({
 		media.type === "MOVIE" || media.type === "SHORT"
 			? media.movie.runtime
 			: null;
-	const runtimeLabel = runtime != null ? (formatRuntime(runtime) ?? `${runtime}m`) : null;
+	const runtimeLabel =
+		runtime != null ? (formatRuntime(runtime) ?? `${runtime}m`) : null;
 	// Same story for budget/revenue/ROI — they now sit in the financials box
 	// beside the review instead of the type-specific facts list.
 	const budget =
-		media.type === "MOVIE" || media.type === "SHORT" ? media.movie.budget : null;
+		media.type === "MOVIE" || media.type === "SHORT"
+			? media.movie.budget
+			: null;
 	const revenue =
-		media.type === "MOVIE" || media.type === "SHORT" ? media.movie.revenue : null;
+		media.type === "MOVIE" || media.type === "SHORT"
+			? media.movie.revenue
+			: null;
 	const roi =
 		budget != null && revenue != null && budget !== 0
 			? (revenue - budget) / budget
@@ -435,7 +440,9 @@ export default async function MediaDetailPage({
 									{(difficulty === 1 || difficulty === 2) && (
 										<Tooltip
 											content={
-												difficulty === 1 ? "Medium difficulty" : "Hard difficulty"
+												difficulty === 1
+													? "Medium difficulty"
+													: "Hard difficulty"
 											}>
 											<div className={styles.difficulty}>
 												<span
@@ -498,7 +505,10 @@ export default async function MediaDetailPage({
 
 					{studioEntries.length > 0 && (
 						<dl className={styles.facts}>
-							<Fact label="Studio" value={<CreditNames entries={studioEntries} />} />
+							<Fact
+								label="Studio"
+								value={<CreditNames entries={studioEntries} />}
+							/>
 						</dl>
 					)}
 
