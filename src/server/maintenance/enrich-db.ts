@@ -131,7 +131,7 @@ async function main() {
 			OR: [{ lastEnrichedAt: null }, { lastEnrichedAt: { lt: enrichCutoff } }],
 		},
 		orderBy: { id: "asc" },
-		// take: 10,
+		take: 1000,
 	});
 
 	const queues = new Map<MediaType, Media[]>();
