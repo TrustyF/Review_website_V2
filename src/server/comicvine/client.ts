@@ -32,14 +32,36 @@ function apiKey(): string {
 	return key;
 }
 
-async function comicVineFetch(url: URL): Promise<unknown> {
+async function comicVineFetch(
+	url: URL,
+	signal?: AbortSignal,
+): Promise<unknown> {
 	const res = await limiter.fetch(url, {
 		headers: new Headers({ "User-Agent": USER_AGENT }),
+		...(signal ? { signal } : {}),
 	});
 	if (!res.ok) {
 		throw new Error(`ComicVine request failed (${res.status}): ${url}`);
 	}
 	return res.json();
+}
+
+// ComicVine returns HTTP 200 even for a bad API key — the failure only shows
+// up as status_code !== 1 in the body — so a plain res.ok check would miss a
+// wrong/missing COMIC_VINE_KEY. This runs a real minimal query and checks
+// that field directly.
+export async function isComicVineReachable(): Promise<boolean> {
+	try {
+		const url = new URL(`${COMICVINE_BASE}/types/`);
+		url.searchParams.set("api_key", apiKey());
+		url.searchParams.set("format", "json");
+		url.searchParams.set("limit", "1");
+
+		const json = await comicVineFetch(url, AbortSignal.timeout(5000));
+		return (json as { status_code?: number }).status_code === 1;
+	} catch {
+		return false;
+	}
 }
 
 export async function fetchComicVineById(id: string): Promise<ComicVineVolume> {

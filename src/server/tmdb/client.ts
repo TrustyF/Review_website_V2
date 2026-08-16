@@ -22,12 +22,13 @@ const limiter = createRateLimiter({ minIntervalMs: 100 });
 
 // Every TMDB request shares the same auth header and the same limiter — one
 // place for both instead of repeating them at each call site below.
-function tmdbFetch(url: string): Promise<Response> {
+function tmdbFetch(url: string, signal?: AbortSignal): Promise<Response> {
 	return limiter.fetch(url, {
 		headers: new Headers({
 			Accept: "application/json",
 			Authorization: `Bearer ${process.env.TMDB_ACCESS_TOKEN}`,
 		}),
+		...(signal ? { signal } : {}),
 	});
 }
 
@@ -40,6 +41,22 @@ function ConvertTypeToString(type: MediaType): string {
 	const segment = TMDB_TYPE_MAP[type];
 	if (!segment) throw new Error(`No TMDB endpoint for media type ${type}`);
 	return segment;
+}
+
+// /authentication is TMDB's dedicated endpoint for validating a bearer
+// token — a wrong/missing TMDB_ACCESS_TOKEN gets a 401 here, same as it
+// would on every other endpoint, so this doubles as an env-var check without
+// needing a separate one.
+export async function isTmdbReachable(): Promise<boolean> {
+	try {
+		const res = await tmdbFetch(
+			`${TMDB_BASE}/authentication`,
+			AbortSignal.timeout(5000),
+		);
+		return res.ok;
+	} catch {
+		return false;
+	}
 }
 
 export async function fetchTmdbById(

@@ -19,8 +19,26 @@ const MANGADEX_BASE = "https://api.mangadex.org";
 // request rate stays capped regardless of how many items enrich concurrently.
 const limiter = createRateLimiter({ minIntervalMs: 200 });
 
-function mangaDexFetch(url: string): Promise<Response> {
-	return limiter.fetch(url, { headers: new Headers({ Accept: "application/json" }) });
+function mangaDexFetch(url: string, signal?: AbortSignal): Promise<Response> {
+	return limiter.fetch(url, {
+		headers: new Headers({ Accept: "application/json" }),
+		...(signal ? { signal } : {}),
+	});
+}
+
+// MangaDex publishes /ping specifically for reachability checks. No API key
+// is involved for this source, so a non-ok response here only ever means
+// the endpoint itself is down.
+export async function isMangaDexReachable(): Promise<boolean> {
+	try {
+		const res = await mangaDexFetch(
+			`${MANGADEX_BASE}/ping`,
+			AbortSignal.timeout(5000),
+		);
+		return res.ok;
+	} catch {
+		return false;
+	}
 }
 
 // MangaDex's read API is public — no API key/auth needed for these endpoints.

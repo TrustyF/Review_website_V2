@@ -1,19 +1,82 @@
 import { db } from "@/server/db/client";
-import { fetchTmdbById, fetchTvShowById } from "@/server/tmdb/client";
+import {
+	fetchTmdbById,
+	fetchTvShowById,
+	isTmdbReachable,
+} from "@/server/tmdb/client";
 import { updateMovieFromTmdb } from "@/server/tmdb/ingest/movie";
 import { updateTvShowFromTmdb } from "@/server/tmdb/ingest/tv-show";
 import {
 	fetchMangaDexById,
 	fetchMangaDexStatistics,
+	isMangaDexReachable,
 } from "@/server/mangadex/client";
 import { updateMangaFromMangaDex } from "@/server/mangadex/ingest/manga";
-import { fetchIgdbGameById } from "@/server/igdb/client";
+import { fetchIgdbGameById, isIgdbReachable } from "@/server/igdb/client";
 import { updateGameFromIgdb } from "@/server/igdb/ingest/game";
-import { fetchComicVineById } from "@/server/comicvine/client";
+import {
+	fetchComicVineById,
+	isComicVineReachable,
+} from "@/server/comicvine/client";
 import { updateComicFromComicVine } from "@/server/comicvine/ingest/comic";
-import { fetchGoogleBooksById } from "@/server/google-books/client";
+import {
+	fetchGoogleBooksById,
+	isGoogleBooksReachable,
+} from "@/server/google-books/client";
 import { updateBookFromGoogleBooks } from "@/server/google-books/ingest/book";
 import { Media, MediaType } from "@prisma/client";
+
+// One reachability check per underlying source (TMDB backs both MOVIE/SHORT
+// and TVSHOW, so they share a check) rather than per MediaType — run once up
+// front so a source that's down gets skipped as a whole queue instead of
+// burning through hundreds of doomed per-item requests against it.
+const SOURCE_HEALTH_CHECKS: Record<string, () => Promise<boolean>> = {
+	tmdb: isTmdbReachable,
+	mangadex: isMangaDexReachable,
+	igdb: isIgdbReachable,
+	comicvine: isComicVineReachable,
+	"google-books": isGoogleBooksReachable,
+};
+
+const MEDIA_TYPE_SOURCE: Partial<Record<MediaType, string>> = {
+	[MediaType.MOVIE]: "tmdb",
+	[MediaType.SHORT]: "tmdb",
+	[MediaType.TVSHOW]: "tmdb",
+	[MediaType.MANGA]: "mangadex",
+	[MediaType.GAME]: "igdb",
+	[MediaType.COMIC]: "comicvine",
+	[MediaType.BOOK]: "google-books",
+};
+
+// Checks only the sources actually needed for this run's queues, in
+// parallel, and returns which of those types are safe to process.
+async function reachableMediaTypes(
+	types: MediaType[],
+): Promise<Set<MediaType>> {
+	const sources = new Set(
+		types.map((type) => MEDIA_TYPE_SOURCE[type]).filter((s) => s !== undefined),
+	);
+
+	const results = await Promise.all(
+		[...sources].map(async (source) => {
+			const check = SOURCE_HEALTH_CHECKS[source];
+			const reachable = check ? await check() : true;
+			if (!reachable)
+				console.error(`[health check] ${source} is unreachable, skipping`);
+			return [source, reachable] as const;
+		}),
+	);
+	const reachableSources = new Set(
+		results.filter(([, reachable]) => reachable).map(([source]) => source),
+	);
+
+	return new Set(
+		types.filter((type) => {
+			const source = MEDIA_TYPE_SOURCE[type];
+			return source === undefined || reachableSources.has(source);
+		}),
+	);
+}
 
 async function enrichOne(media: Media) {
 	// Guaranteed non-null by main()'s where filter below — narrowed here just
@@ -141,8 +204,12 @@ async function main() {
 		else queues.set(media.type, [media]);
 	}
 
+	const reachable = await reachableMediaTypes([...queues.keys()]);
+
 	await Promise.all(
-		[...queues.entries()].map(([type, list]) => runQueue(type, list)),
+		[...queues.entries()]
+			.filter(([type]) => reachable.has(type))
+			.map(([type, list]) => runQueue(type, list)),
 	);
 }
 

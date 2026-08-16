@@ -67,7 +67,11 @@ async function getAccessToken(): Promise<string> {
 // immediately since retrying won't fix those.
 const limiter = createRateLimiter({ minIntervalMs: 250 });
 
-async function igdbFetch(endpoint: string, body: string): Promise<unknown> {
+async function igdbFetch(
+	endpoint: string,
+	body: string,
+	signal?: AbortSignal,
+): Promise<unknown> {
 	const token = await getAccessToken();
 
 	const res = await limiter.fetch(`${IGDB_BASE}/${endpoint}`, {
@@ -78,6 +82,7 @@ async function igdbFetch(endpoint: string, body: string): Promise<unknown> {
 			Accept: "application/json",
 		}),
 		body,
+		...(signal ? { signal } : {}),
 	});
 
 	if (!res.ok) {
@@ -85,6 +90,18 @@ async function igdbFetch(endpoint: string, body: string): Promise<unknown> {
 	}
 
 	return res.json();
+}
+
+// Exercises the full pipeline — Twitch OAuth (catches a wrong/missing
+// IGDB_CLIENT_ID/SECRET) followed by an actual IGDB query — so any failure
+// here (bad credentials, endpoint down, network error) resolves to false.
+export async function isIgdbReachable(): Promise<boolean> {
+	try {
+		await igdbFetch("games", "fields id; limit 1;", AbortSignal.timeout(5000));
+		return true;
+	} catch {
+		return false;
+	}
 }
 
 export async function fetchIgdbGameById(id: string): Promise<IgdbGame> {
