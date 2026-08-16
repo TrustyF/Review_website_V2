@@ -189,7 +189,6 @@ async function main() {
 
 	const mediaList = await db.media.findMany({
 		where: {
-			type: MediaType.MOVIE,
 			externalId: { not: null },
 			OR: [{ lastEnrichedAt: null }, { lastEnrichedAt: { lt: enrichCutoff } }],
 		},
