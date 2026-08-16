@@ -44,6 +44,19 @@
 .empty
   @include empty-text
 
+@keyframes spin
+  to
+    transform: rotate(360deg)
+
+.spinner
+  width: 1.5rem
+  height: 1.5rem
+  margin: 0.5rem auto
+  border: 2px solid var(--accent1)
+  border-top-color: transparent
+  border-radius: 50%
+  animation: spin 0.7s linear infinite
+
 .results
   display: grid
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr))

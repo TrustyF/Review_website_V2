@@ -9,6 +9,7 @@ import { fetchMangaDexCovers } from "@/server/mangadex/client";
 import { fetchComicVineIssuesForVolume } from "@/server/comicvine/client";
 import {
 	artworkAspectRatioDiff,
+	artworksWithDimensions,
 	fetchIgdbGameById,
 	fetchIgdbGameCoverOptions,
 } from "@/server/igdb/client";
@@ -423,7 +424,7 @@ export async function getAlternativeBanners(
 		// (t_thumb would square-crop it) — see poster-resolver.ts's bannerUrlFor
 		// for the full-size template the preview/save path uses.
 		const game = await fetchIgdbGameById(externalId);
-		return (game.artworks ?? [])
+		return artworksWithDimensions(game.artworks ?? [])
 			.slice()
 			.sort((a, b) => artworkAspectRatioDiff(a) - artworkAspectRatioDiff(b))
 			.map((artwork) => ({

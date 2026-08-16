@@ -164,11 +164,24 @@ export function artworkAspectRatioDiff(artwork: {
 	return diff < 0 ? Math.abs(diff) * NARROW_PENALTY_MULTIPLIER : diff;
 }
 
+// An artwork missing width/height (IGDB sometimes still processing it on
+// their CDN — see schema.ts) can't be scored against the target aspect
+// ratio, so it's excluded here rather than passed to artworkAspectRatioDiff.
+export function artworksWithDimensions(
+	artworks: NonNullable<IgdbGame["artworks"]>,
+): { image_id: string; width: number; height: number }[] {
+	return artworks.filter(
+		(a): a is { image_id: string; width: number; height: number } =>
+			a.width !== undefined && a.height !== undefined,
+	);
+}
+
 export function pickBestArtwork(
 	artworks: NonNullable<IgdbGame["artworks"]>,
 ): string | null {
-	if (artworks.length === 0) return null;
-	return artworks.reduce((best, artwork) =>
+	const scorable = artworksWithDimensions(artworks);
+	if (scorable.length === 0) return null;
+	return scorable.reduce((best, artwork) =>
 		artworkAspectRatioDiff(artwork) < artworkAspectRatioDiff(best)
 			? artwork
 			: best,

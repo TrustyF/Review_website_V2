@@ -20,8 +20,14 @@ import { fetchIgdbGameById, searchIgdbGames } from "@/server/igdb/client";
 import { addGameFromIgdb } from "@/server/igdb/ingest/game";
 import { fetchComicVineById, searchComicVine } from "@/server/comicvine/client";
 import { addComicFromComicVine } from "@/server/comicvine/ingest/comic";
-import { fetchGoogleBooksById, searchGoogleBooks } from "@/server/google-books/client";
-import { addBookFromGoogleBooks, upgradeToHttps } from "@/server/google-books/ingest/book";
+import {
+	fetchGoogleBooksById,
+	searchGoogleBooks,
+} from "@/server/google-books/client";
+import {
+	addBookFromGoogleBooks,
+	upgradeToHttps,
+} from "@/server/google-books/ingest/book";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
 import { posterUrlFor } from "@/server/resolvers/poster-resolver";
 import {
@@ -62,7 +68,12 @@ export async function searchMediaSources(
 				year: yearOf(r.release_date),
 				posterSrc: r.poster_path
 					? buildProxiedImageUrl(
-							posterUrlFor(MediaType.MOVIE, String(r.id), r.poster_path, "thumb"),
+							posterUrlFor(
+								MediaType.MOVIE,
+								String(r.id),
+								r.poster_path,
+								"full",
+							),
 						)
 					: null,
 			}));
@@ -75,7 +86,12 @@ export async function searchMediaSources(
 				year: yearOf(r.first_air_date),
 				posterSrc: r.poster_path
 					? buildProxiedImageUrl(
-							posterUrlFor(MediaType.TVSHOW, String(r.id), r.poster_path, "thumb"),
+							posterUrlFor(
+								MediaType.TVSHOW,
+								String(r.id),
+								r.poster_path,
+								"full",
+							),
 						)
 					: null,
 			}));
@@ -93,7 +109,7 @@ export async function searchMediaSources(
 					year: r.attributes.year,
 					posterSrc: fileName
 						? buildProxiedImageUrl(
-								posterUrlFor(MediaType.MANGA, r.id, fileName, "thumb"),
+								posterUrlFor(MediaType.MANGA, r.id, fileName, "full"),
 							)
 						: null,
 				};
@@ -109,7 +125,12 @@ export async function searchMediaSources(
 					: null,
 				posterSrc: r.cover?.image_id
 					? buildProxiedImageUrl(
-							posterUrlFor(MediaType.GAME, String(r.id), r.cover.image_id, "thumb"),
+							posterUrlFor(
+								MediaType.GAME,
+								String(r.id),
+								r.cover.image_id,
+								"full",
+							),
 						)
 					: null,
 			}));
@@ -121,8 +142,8 @@ export async function searchMediaSources(
 				title: r.name,
 				year: r.start_year ? Number(r.start_year) : null,
 				posterSrc:
-					r.image?.small_url || r.image?.medium_url
-						? buildProxiedImageUrl((r.image?.small_url ?? r.image?.medium_url)!)
+					r.image?.medium_url || r.image?.small_url
+						? buildProxiedImageUrl((r.image?.medium_url ?? r.image?.small_url)!)
 						: null,
 			}));
 		}
@@ -133,7 +154,9 @@ export async function searchMediaSources(
 				title: r.volumeInfo.title,
 				year: bookYearOf(r.volumeInfo.publishedDate),
 				posterSrc: r.volumeInfo.imageLinks?.thumbnail
-					? buildProxiedImageUrl(upgradeToHttps(r.volumeInfo.imageLinks.thumbnail))
+					? buildProxiedImageUrl(
+							upgradeToHttps(r.volumeInfo.imageLinks.thumbnail),
+						)
 					: null,
 			}));
 		}

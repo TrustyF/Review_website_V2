@@ -7,7 +7,9 @@ import { syncBookCreditsAndGenres } from "@/server/google-books/ingest/book-cred
 // ("1997-06-01") depending on how well-cataloged the volume is — `new
 // Date(...)` parses both fine, but a bare year needs an explicit day-of-month
 // or it's treated as a full ISO date-time string in some engines.
-function parsePublishedDate(publishedDate: string | null | undefined): Date | null {
+function parsePublishedDate(
+	publishedDate: string | null | undefined,
+): Date | null {
 	if (!publishedDate) return null;
 	const date = /^\d{4}$/.test(publishedDate)
 		? new Date(Number(publishedDate), 0, 1)
@@ -20,8 +22,14 @@ function parsePublishedDate(publishedDate: string | null | undefined): Date | nu
 // gets upgraded here before being stored as Media.posterPath. Exported for
 // media-add-actions.ts's search-result thumbnails, which hit the same issue
 // before a volume is ever imported.
+//
+// The API also defaults these URLs to zoom=1 — a ~128px-wide crop, visibly
+// blurry rendered at the search grid's 200px or a media page's full-size
+// poster. zoom=3 is the largest Google Books actually serves (bumping it
+// further just clamps back down); no dedicated field for a larger image
+// exists in the API response to use instead.
 export function upgradeToHttps(url: string): string {
-	return url.replace(/^http:\/\//, "https://");
+	return url.replace(/^http:\/\//, "https://").replace(/([?&]zoom=)\d+/, "$13");
 }
 
 function buildOverview(volume: GoogleBooksVolume): string | null {
@@ -47,7 +55,8 @@ function buildMediaFields(
 		title: existing?.title ?? volume.volumeInfo.title,
 		overview: existing?.overview ?? buildOverview(volume),
 		releaseDate:
-			existing?.releaseDate ?? parsePublishedDate(volume.volumeInfo.publishedDate),
+			existing?.releaseDate ??
+			parsePublishedDate(volume.volumeInfo.publishedDate),
 		// Google Books has no ongoing/completed/cancelled signal — every
 		// tracked volume is treated as a released, standalone book.
 		status: MediaStatus.RELEASED,
@@ -57,9 +66,11 @@ function buildMediaFields(
 			(existing?.isAdult ?? false) ||
 			volume.volumeInfo.maturityRating === "MATURE",
 		publicRating: null,
-		posterPath: existing?.posterPath ?? (thumbnail ? upgradeToHttps(thumbnail) : null),
+		posterPath:
+			existing?.posterPath ?? (thumbnail ? upgradeToHttps(thumbnail) : null),
 		sourceUrl:
-			volume.volumeInfo.infoLink ?? `https://books.google.com/books?id=${volume.id}`,
+			volume.volumeInfo.infoLink ??
+			`https://books.google.com/books?id=${volume.id}`,
 	};
 }
 
@@ -123,16 +134,16 @@ export async function updateBookFromGoogleBooks(volume: GoogleBooksVolume) {
 				book: {
 					update: {
 						pageCount:
-							existing.book?.pageCount ?? (volume.volumeInfo.pageCount ?? null),
+							existing.book?.pageCount ?? volume.volumeInfo.pageCount ?? null,
 						isbn:
 							existing.book?.isbn ??
-							(volume.volumeInfo.industryIdentifiers?.find(
+							volume.volumeInfo.industryIdentifiers?.find(
 								(i) => i.type === "ISBN_13",
 							)?.identifier ??
-								volume.volumeInfo.industryIdentifiers?.find(
-									(i) => i.type === "ISBN_10",
-								)?.identifier ??
-								null),
+							volume.volumeInfo.industryIdentifiers?.find(
+								(i) => i.type === "ISBN_10",
+							)?.identifier ??
+							null,
 					},
 				},
 			},

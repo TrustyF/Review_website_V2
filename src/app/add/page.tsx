@@ -1,5 +1,5 @@
 "use client";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, KeyboardEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { MediaType } from "@prisma/client";
@@ -32,8 +32,6 @@ const ALL_MEDIA_TYPES = Object.values(MediaType);
 
 type Mode = "search" | "manual";
 
-const DEBOUNCE_MS = 400;
-
 export default function AddMediaPage() {
 	const router = useRouter();
 
@@ -44,6 +42,11 @@ export default function AddMediaPage() {
 	const [results, setResults] = useState<MediaSearchResult[]>([]);
 	const [isSearching, setIsSearching] = useState(false);
 	const [searchError, setSearchError] = useState<string | null>(null);
+	// The query a search actually ran for — distinct from `query` itself so
+	// typing after a search (before hitting Enter again) doesn't make the
+	// "no results" message below claim the *new*, unsearched text got zero
+	// results.
+	const [searchedQuery, setSearchedQuery] = useState<string | null>(null);
 	const [addingId, setAddingId] = useState<string | null>(null);
 	const [addError, setAddError] = useState<string | null>(null);
 
@@ -57,26 +60,19 @@ export default function AddMediaPage() {
 	const [isCreating, setIsCreating] = useState(false);
 	const [createError, setCreateError] = useState<string | null>(null);
 
-	// Debounced: search fires DEBOUNCE_MS after typing stops, not on every
-	// keystroke. Re-runs whenever the type tab changes too, so switching
-	// tabs re-searches the current query against the new source. Nothing
-	// here calls setState synchronously in the effect body itself — the
-	// empty-query case is handled in the input's own onChange instead, and
-	// everything else only runs inside the timeout callback.
-	useEffect(() => {
-		if (!query.trim()) return;
-
-		const timeout = setTimeout(() => {
-			setIsSearching(true);
-			setSearchError(null);
-			searchMediaSources(type, query)
-				.then(setResults)
-				.catch(() => setSearchError("Search failed. Try again."))
-				.finally(() => setIsSearching(false));
-		}, DEBOUNCE_MS);
-
-		return () => clearTimeout(timeout);
-	}, [type, query]);
+	// Fires on Enter (see the input's onKeyDown below), not on every
+	// keystroke or type-tab switch — a manual trigger instead of a debounced
+	// effect.
+	function runSearch(searchType: AddableType, searchQuery: string) {
+		if (!searchQuery.trim()) return;
+		setIsSearching(true);
+		setSearchError(null);
+		setSearchedQuery(searchQuery);
+		searchMediaSources(searchType, searchQuery)
+			.then(setResults)
+			.catch(() => setSearchError("Search failed. Try again."))
+			.finally(() => setIsSearching(false));
+	}
 
 	function handleQueryChange(value: string) {
 		setQuery(value);
@@ -86,14 +82,20 @@ export default function AddMediaPage() {
 		}
 	}
 
+	function handleQueryKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+		if (e.key === "Enter") runSearch(type, query);
+		if (e.key === "Escape") handleQueryChange("");
+	}
+
 	async function handleAdd(result: MediaSearchResult) {
 		setAddingId(result.externalId);
 		setAddError(null);
 		try {
 			const mediaId = await addMediaToLibrary(type, result.externalId);
 			router.push(`/media/${mediaId}`);
-		} catch {
-			setAddError(`Failed to add "${result.title}". Try again.`);
+		} catch (err) {
+			const reason = err instanceof Error ? err.message : String(err);
+			setAddError(`Failed to add "${result.title}": ${reason}`);
 			setAddingId(null);
 		}
 	}
@@ -112,8 +114,9 @@ export default function AddMediaPage() {
 				posterUrl: manualPosterUrl.trim() || null,
 			});
 			router.push(`/media/${mediaId}`);
-		} catch {
-			setCreateError("Failed to create. Try again.");
+		} catch (err) {
+			const reason = err instanceof Error ? err.message : String(err);
+			setCreateError(`Failed to create: ${reason}`);
 			setIsCreating(false);
 		}
 	}
@@ -134,8 +137,8 @@ export default function AddMediaPage() {
 						onClick={() => {
 							setMode("search");
 							setType(t);
-						}}
-					>
+							runSearch(t, query);
+						}}>
 						{TYPE_LABELS[t]}
 					</button>
 				))}
@@ -143,29 +146,21 @@ export default function AddMediaPage() {
 					className={
 						mode === "manual" ? styles.type_tab_active : styles.type_tab
 					}
-					onClick={() => setMode("manual")}
-				>
+					onClick={() => setMode("manual")}>
 					Manual
 				</button>
 			</div>
 
 			{mode === "manual" ? (
-				<form
-					className={styles.manual_form}
-					onSubmit={handleManualCreate}
-				>
+				<form className={styles.manual_form} onSubmit={handleManualCreate}>
 					<label className={styles.manual_field}>
 						Type
 						<select
 							className={styles.manual_select}
 							value={manualType}
-							onChange={(e) => setManualType(e.target.value as MediaType)}
-						>
+							onChange={(e) => setManualType(e.target.value as MediaType)}>
 							{ALL_MEDIA_TYPES.map((t) => (
-								<option
-									key={t}
-									value={t}
-								>
+								<option key={t} value={t}>
 									{TYPE_LABELS[t]}
 								</option>
 							))}
@@ -223,8 +218,7 @@ export default function AddMediaPage() {
 					<button
 						type="submit"
 						className={styles.add_button}
-						disabled={isCreating || !manualTitle.trim()}
-					>
+						disabled={isCreating || !manualTitle.trim()}>
 						{isCreating ? "Creating…" : "Create"}
 					</button>
 				</form>
@@ -236,6 +230,7 @@ export default function AddMediaPage() {
 						placeholder={`Search for a ${TYPE_LABELS[type].toLowerCase()}…`}
 						value={query}
 						onChange={(e) => handleQueryChange(e.target.value)}
+						onKeyDown={handleQueryKeyDown}
 						onFocus={(e) => e.target.select()}
 						autoFocus
 					/>
@@ -243,12 +238,11 @@ export default function AddMediaPage() {
 					{searchError && <div className={styles.error}>{searchError}</div>}
 					{addError && <div className={styles.error}>{addError}</div>}
 
+					{isSearching && <div className={styles.spinner} />}
+
 					<div className={styles.results}>
 						{results.map((result) => (
-							<div
-								className={styles.result}
-								key={result.externalId}
-							>
+							<div className={styles.result} key={result.externalId}>
 								<Image
 									src={result.posterSrc ?? "/posters/placeholder.jpg"}
 									alt={result.title}
@@ -263,8 +257,7 @@ export default function AddMediaPage() {
 								<button
 									className={styles.add_button}
 									disabled={addingId === result.externalId}
-									onClick={() => handleAdd(result)}
-								>
+									onClick={() => handleAdd(result)}>
 									{addingId === result.externalId ? "Adding…" : "Add"}
 								</button>
 							</div>
@@ -273,6 +266,7 @@ export default function AddMediaPage() {
 
 					{!isSearching &&
 						query.trim() &&
+						searchedQuery === query &&
 						results.length === 0 &&
 						!searchError && (
 							<div className={styles.empty}>
