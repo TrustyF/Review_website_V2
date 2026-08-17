@@ -1,14 +1,6 @@
 import { mkdir, readdir, readFile, stat, unlink, writeFile } from "fs/promises";
 import path from "path";
-import {
-	DeleteObjectCommand,
-	GetObjectCommand,
-	HeadObjectCommand,
-	ListObjectsV2Command,
-	PutObjectCommand,
-	S3Client,
-} from "@aws-sdk/client-s3";
-import { del, head, list as listBlobs, put } from "@vercel/blob";
+import { AwsClient } from "aws4fetch";
 
 // Every caller addresses a file by a logical {dir, filename} pair instead of
 // a real filesystem path — dir is a slash-joined key like "posters/cache" or
@@ -132,6 +124,16 @@ function parseBlobStoreId(token: string): string {
 // cache key and writing the same bytes back — not an error case, just a
 // wasted duplicate upload either way.
 class VercelBlobImageStorage implements ImageStorage {
+	// Loaded on first use, not at module scope — same reasoning as
+	// R2ImageStorage's getClient() below: only the driver actually selected by
+	// IMAGE_STORAGE_DRIVER should pay for its SDK's cold-start weight.
+	private modPromise: Promise<typeof import("@vercel/blob")> | null = null;
+
+	private getMod() {
+		if (!this.modPromise) this.modPromise = import("@vercel/blob");
+		return this.modPromise;
+	}
+
 	private requireToken(): string {
 		const token = process.env.BLOB_READ_WRITE_TOKEN;
 		if (!token) {
@@ -149,6 +151,7 @@ class VercelBlobImageStorage implements ImageStorage {
 	}
 
 	async read(dir: string, filename: string): Promise<Buffer | null> {
+		const { head } = await this.getMod();
 		const token = this.requireToken();
 		let blob: { url: string };
 		try {
@@ -162,6 +165,7 @@ class VercelBlobImageStorage implements ImageStorage {
 	}
 
 	async write(dir: string, filename: string, bytes: Buffer): Promise<void> {
+		const { put } = await this.getMod();
 		await put(this.pathnameFor(dir, filename), bytes, {
 			access: "public",
 			addRandomSuffix: false,
@@ -171,6 +175,7 @@ class VercelBlobImageStorage implements ImageStorage {
 	}
 
 	async list(dir: string): Promise<string[]> {
+		const { list: listBlobs } = await this.getMod();
 		const token = this.requireToken();
 		const prefix = `${dir}/`;
 		const filenames: string[] = [];
@@ -188,6 +193,7 @@ class VercelBlobImageStorage implements ImageStorage {
 	}
 
 	async remove(dir: string, filename: string): Promise<boolean> {
+		const { head, del } = await this.getMod();
 		const token = this.requireToken();
 		const pathname = this.pathnameFor(dir, filename);
 		try {
@@ -201,6 +207,7 @@ class VercelBlobImageStorage implements ImageStorage {
 
 	async statMtimeMs(dir: string, filename: string): Promise<number | null> {
 		try {
+			const { head } = await this.getMod();
 			const blob = await head(this.pathnameFor(dir, filename), {
 				token: this.requireToken(),
 			});
@@ -216,14 +223,24 @@ class VercelBlobImageStorage implements ImageStorage {
 	}
 }
 
-// Selected via IMAGE_STORAGE_DRIVER=r2 — Cloudflare R2 speaks the S3 API, so
-// this reuses @aws-sdk/client-s3 rather than a Cloudflare-specific package.
+// Selected via IMAGE_STORAGE_DRIVER=r2 — Cloudflare R2 speaks the S3 API,
+// signed with aws4fetch (a ~10KB SigV4-signing fetch wrapper — the client
+// Cloudflare itself recommends for calling R2 from Workers/serverless)
+// instead of the official @aws-sdk/client-s3, which pulls in ~4.2MB across
+// its own package plus transitive deps (credential providers, the Smithy
+// HTTP runtime, ...) — one of the most commonly cited causes of slow
+// serverless cold starts, and R2 is this project's default driver on Vercel,
+// so every cold instance was paying that weight on requests as unrelated as
+// search-actions.ts's durable index read. aws4fetch only signs requests; the
+// handful of plain S3 REST calls (GET/PUT/HEAD/DELETE/list-objects-v2) are
+// built out by hand below instead of via command classes.
+//
 // Same public/content-addressed assumptions as VercelBlobImageStorage above
 // (every object is public, filenames are already content-addressed by the
 // callers), so writes always pass a public-cacheable key and overwriting an
 // existing key with identical bytes is expected, not an error.
 class R2ImageStorage implements ImageStorage {
-	private client: S3Client | null = null;
+	private awsClient: AwsClient | null = null;
 
 	private requireEnv(name: string): string {
 		const value = process.env[name];
@@ -236,107 +253,112 @@ class R2ImageStorage implements ImageStorage {
 		return value;
 	}
 
-	private getClient(): S3Client {
-		if (this.client) return this.client;
-		const accountId = this.requireEnv("R2_ACCOUNT_ID");
-		this.client = new S3Client({
+	private getClient(): AwsClient {
+		if (this.awsClient) return this.awsClient;
+		this.awsClient = new AwsClient({
+			accessKeyId: this.requireEnv("R2_ACCESS_KEY_ID"),
+			secretAccessKey: this.requireEnv("R2_SECRET_ACCESS_KEY"),
+			service: "s3",
 			region: "auto",
-			endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-			credentials: {
-				accessKeyId: this.requireEnv("R2_ACCESS_KEY_ID"),
-				secretAccessKey: this.requireEnv("R2_SECRET_ACCESS_KEY"),
-			},
 		});
-		return this.client;
+		return this.awsClient;
 	}
 
-	private get bucket(): string {
-		return this.requireEnv("R2_BUCKET_NAME");
-	}
-
-	private keyFor(dir: string, filename: string): string {
-		return `${dir}/${filename}`;
+	// R2's S3-compatible endpoint is path-style (bucket in the path, not a
+	// subdomain) — <account>.r2.cloudflarestorage.com/<bucket>/<key>, unlike
+	// AWS's own virtual-hosted-style default.
+	private urlForKey(dir: string, filename: string): string {
+		const accountId = this.requireEnv("R2_ACCOUNT_ID");
+		const bucket = this.requireEnv("R2_BUCKET_NAME");
+		const key = `${dir}/${filename}`;
+		return `https://${accountId}.r2.cloudflarestorage.com/${bucket}/${key
+			.split("/")
+			.map(encodeURIComponent)
+			.join("/")}`;
 	}
 
 	async read(dir: string, filename: string): Promise<Buffer | null> {
 		try {
-			const res = await this.getClient().send(
-				new GetObjectCommand({
-					Bucket: this.bucket,
-					Key: this.keyFor(dir, filename),
-				}),
-			);
-			const bytes = await res.Body?.transformToByteArray();
-			return bytes ? Buffer.from(bytes) : null;
+			const res = await this.getClient().fetch(this.urlForKey(dir, filename));
+			if (!res.ok) return null;
+			return Buffer.from(await res.arrayBuffer());
 		} catch {
 			return null;
 		}
 	}
 
 	async write(dir: string, filename: string, bytes: Buffer): Promise<void> {
-		await this.getClient().send(
-			new PutObjectCommand({
-				Bucket: this.bucket,
-				Key: this.keyFor(dir, filename),
-				Body: bytes,
-			}),
-		);
+		const res = await this.getClient().fetch(this.urlForKey(dir, filename), {
+			method: "PUT",
+			// Same lib.dom BodyInit-typing quirk as the /api/poster route's own
+			// NextResponse call (see its comment) — a real Uint8Array works fine
+			// at runtime, TS just doesn't resolve it against BodyInit cleanly here.
+			body: new Uint8Array(
+				bytes.buffer,
+				bytes.byteOffset,
+				bytes.byteLength,
+			) as BodyInit,
+		});
+		if (!res.ok) {
+			throw new Error(
+				`R2 write failed for ${dir}/${filename}: ${res.status} ${await res.text()}`,
+			);
+		}
 	}
 
 	async list(dir: string): Promise<string[]> {
+		const accountId = this.requireEnv("R2_ACCOUNT_ID");
+		const bucket = this.requireEnv("R2_BUCKET_NAME");
 		const prefix = `${dir}/`;
 		const filenames: string[] = [];
 		let continuationToken: string | undefined;
 		do {
-			const page = await this.getClient().send(
-				new ListObjectsV2Command({
-					Bucket: this.bucket,
-					Prefix: prefix,
-					ContinuationToken: continuationToken,
-				}),
-			);
-			for (const object of page.Contents ?? []) {
-				if (object.Key) filenames.push(object.Key.slice(prefix.length));
+			const params = new URLSearchParams({ "list-type": "2", prefix });
+			if (continuationToken) {
+				params.set("continuation-token", continuationToken);
 			}
-			continuationToken = page.IsTruncated
-				? page.NextContinuationToken
+			const res = await this.getClient().fetch(
+				`https://${accountId}.r2.cloudflarestorage.com/${bucket}?${params}`,
+			);
+			if (!res.ok) {
+				throw new Error(`R2 list failed for ${dir}: ${res.status}`);
+			}
+			const xml = await res.text();
+			// A hand-rolled scan rather than a full XML parser — the response is
+			// our own bucket's well-formed ListObjectsV2 output, and all we need
+			// out of it is each <Key> and the pagination markers.
+			for (const match of xml.matchAll(/<Key>([^<]*)<\/Key>/g)) {
+				const key = match[1] ?? "";
+				if (key.startsWith(prefix)) filenames.push(key.slice(prefix.length));
+			}
+			const isTruncated = /<IsTruncated>true<\/IsTruncated>/.test(xml);
+			continuationToken = isTruncated
+				? xml.match(/<NextContinuationToken>([^<]*)<\/NextContinuationToken>/)?.[1]
 				: undefined;
 		} while (continuationToken);
 		return filenames;
 	}
 
 	async remove(dir: string, filename: string): Promise<boolean> {
-		const key = this.keyFor(dir, filename);
-		try {
-			await this.getClient().send(
-				new HeadObjectCommand({ Bucket: this.bucket, Key: key }),
-			);
-		} catch {
-			return false;
-		}
-		await this.getClient().send(
-			new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
-		);
-		return true;
+		const url = this.urlForKey(dir, filename);
+		const head = await this.getClient().fetch(url, { method: "HEAD" });
+		if (!head.ok) return false;
+		const res = await this.getClient().fetch(url, { method: "DELETE" });
+		return res.ok;
 	}
 
 	async statMtimeMs(dir: string, filename: string): Promise<number | null> {
-		try {
-			const res = await this.getClient().send(
-				new HeadObjectCommand({
-					Bucket: this.bucket,
-					Key: this.keyFor(dir, filename),
-				}),
-			);
-			return res.LastModified ? res.LastModified.getTime() : null;
-		} catch {
-			return null;
-		}
+		const res = await this.getClient().fetch(this.urlForKey(dir, filename), {
+			method: "HEAD",
+		});
+		if (!res.ok) return null;
+		const lastModified = res.headers.get("last-modified");
+		return lastModified ? new Date(lastModified).getTime() : null;
 	}
 
 	urlFor(dir: string, filename: string): string {
 		const base = this.requireEnv("R2_PUBLIC_URL").replace(/\/$/, "");
-		return `${base}/${this.keyFor(dir, filename)}`;
+		return `${base}/${dir}/${filename}`;
 	}
 }
 
