@@ -240,6 +240,22 @@ export async function invalidateSearchIndex() {
 	logSearchIndexEvent({ invalidated: true });
 }
 
+// Called from build-search-index.ts's build-time script, so the durable
+// copy is already warm by the time the first real visitor searches — without
+// this, that visitor's request is the one that pays the DB-query-plus-Fuse-
+// build cost readPersistedIndex()'s miss path describes, on every fresh
+// deploy (a new persisted blob's builtAt always starts past CACHE_TTL_MS
+// worth of prior deploys). Always rebuilds from the DB rather than trusting
+// whatever's already persisted — the point of running this at build time is
+// a guaranteed-fresh copy, not just filling a cache.
+export async function rebuildPersistedSearchIndex(): Promise<number> {
+	const items = await fetchSearchEntriesFromDb();
+	await writePersistedIndex(items);
+	cachedIndex = null;
+	logSearchIndexEvent({ rebuiltAtBuild: true, itemCount: items.length });
+	return items.length;
+}
+
 // CPU time (not wall clock) is what Vercel's Fluid "Active CPU" metric
 // bills, so process.cpuUsage() deltas are the closest thing to profiling
 // that cost directly from inside the app. Grep Vercel logs for

@@ -9,10 +9,9 @@ type Props = {
 
 // Extracted from lucide-react's Clapperboard icon so the filled variant below
 // can be hand-edited independently of the outline — lucide only ships
-// outline artwork, no separate filled set. The filled branch is just the
-// arm/box shapes filled solid, with the diagonal stripe accents dropped —
-// hand-add them back in (e.g. via an SVG mask) if the solid silhouette isn't
-// enough on its own.
+// outline artwork, no separate filled set. The diagonal stripe subpaths
+// overlap the body and rely on fillRule="evenodd" to punch through it as
+// cutouts rather than filling solid.
 export function MovieIcon({ size = 24, className, fill = "none" }: Props) {
 	const filled = fill !== "none";
 	return (
@@ -30,22 +29,15 @@ export function MovieIcon({ size = 24, className, fill = "none" }: Props) {
 			{filled ? (
 				<>
 					<path
-						d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z"
-						stroke="none"
 						fill="currentColor"
-					/>
-					<path
-						d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
-						stroke="none"
-						fill="currentColor"
+						fillRule="evenodd"
+						clipRule="nonzero"
+						d="M6.332 6.271c-.172-.216-.136-.531.08-.703.216-.172.531-.136.703.08L9.061 8.096c.172.216.136.531-.08.703-.216.172-.531.136-.703-.08L6.332 6.271Zm6.081-1.829c-.168-.22-.125-.533.094-.701.22-.168.533-.125.701.094L15.181 6.42c.168.22.125.533-.094.701-.22.168-.533.125-.701-.094L12.413 4.442ZM2.5 11.089V19c.022.655.307 1.343.732 1.768.425.425 1.114.71 1.768.732H19c.655-.022 1.343-.307 1.768-.732s.71-1.114.732-1.768V10.5H6.51L20.828 6.338l-.949-3.085c-.202-.593-.666-1.154-1.195-1.433-.526-.278-1.265-.36-1.915-.203L3.259 5.62c-.593.201-1.159.667-1.438 1.196-.278.526-.36 1.265-.203 1.915Z"
 					/>
 				</>
 			) : (
 				<>
-					<path d="m12.296 3.464 3.02 3.956" />
-					<path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3z" />
-					<path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-					<path d="m6.18 5.276 3.1 3.899" />
+					<path d="M6.332 6.271c-.172-.216-.136-.531.08-.703.216-.172.531-.136.703.08L9.061 8.096c.172.216.136.531-.08.703-.216.172-.531.136-.703-.08L6.332 6.271Zm6.081-1.829c-.168-.22-.125-.533.094-.701.22-.168.533-.125.701.094L15.181 6.42c.168.22.125.533-.094.701-.22.168-.533.125-.701-.094L12.413 4.442ZM2.5 11.089V19c.022.655.307 1.343.732 1.768.425.425 1.114.71 1.768.732H19c.655-.022 1.343-.307 1.768-.732s.71-1.114.732-1.768V10.5H6.51L20.828 6.338l-.949-3.085c-.202-.593-.666-1.154-1.195-1.433-.526-.278-1.265-.36-1.915-.203L3.259 5.62c-.593.201-1.159.667-1.438 1.196-.278.526-.36 1.265-.203 1.915Z" />
 				</>
 			)}
 		</svg>
