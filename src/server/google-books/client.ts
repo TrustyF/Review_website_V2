@@ -5,6 +5,7 @@ import {
 } from "./schema";
 import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
 import { createRateLimiter } from "@/server/lib/rate-limited-fetch";
+import { cachedJson } from "@/server/lib/response-cache";
 
 const GOOGLE_BOOKS_BASE = "https://www.googleapis.com/books/v1";
 
@@ -53,7 +54,9 @@ export async function fetchGoogleBooksById(
 	const url = new URL(`${GOOGLE_BOOKS_BASE}/volumes/${id}`);
 	url.searchParams.set("key", apiKey());
 
-	const json = await googleBooksFetch(url);
+	const json = await cachedJson("google-books", `volume-${id}`, () =>
+		googleBooksFetch(url),
+	);
 	return parseOrThrow(GoogleBooksVolumeSchema, json);
 }
 

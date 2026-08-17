@@ -23,6 +23,7 @@
 		"cleanup_cropped_images": "tsx src/server/maintenance/cleanup-cropped-images.ts",
 		"enrich_db": "tsx src/server/maintenance/enrich-db.ts",
 		"purge_deleted_changelogs": "tsx src/server/maintenance/purge-deleted-change-log.ts",
+		"purge_non_notable_crew": "tsx src/server/maintenance/purge-non-notable-crew.ts",
 		"add_movies_to_list": "tsx src/scripts/dev/add-movies-to-list.ts",
 		"promote_admin": "tsx src/scripts/dev/promote-admin.ts",
 		"clear_image_caches": "tsx src/scripts/dev/clear-image-caches.ts",

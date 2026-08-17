@@ -10,6 +10,7 @@ import {
 } from "./schema";
 import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
 import { createRateLimiter } from "@/server/lib/rate-limited-fetch";
+import { cachedJson } from "@/server/lib/response-cache";
 
 const MANGADEX_BASE = "https://api.mangadex.org";
 
@@ -45,16 +46,18 @@ export async function isMangaDexReachable(): Promise<boolean> {
 export async function fetchMangaDexById(
 	id: string,
 ): Promise<MangaDexMangaResponse> {
-	const res = await mangaDexFetch(
-		`${MANGADEX_BASE}/manga/${id}?includes[]=author&includes[]=artist&includes[]=cover_art`,
-	);
+	const json = await cachedJson("mangadex", `manga-${id}`, async () => {
+		const res = await mangaDexFetch(
+			`${MANGADEX_BASE}/manga/${id}?includes[]=author&includes[]=artist&includes[]=cover_art`,
+		);
 
-	if (!res.ok) {
-		const errorText = await res.text();
-		throw new Error(`MangaDex fetch failed for manga ${id} : ${errorText}`);
-	}
+		if (!res.ok) {
+			const errorText = await res.text();
+			throw new Error(`MangaDex fetch failed for manga ${id} : ${errorText}`);
+		}
 
-	const json = await res.json();
+		return res.json();
+	});
 	return parseOrThrow(MangaDexMangaResponseSchema, json);
 }
 
@@ -64,16 +67,18 @@ export async function fetchMangaDexById(
 export async function fetchMangaDexStatistics(
 	id: string,
 ): Promise<MangaDexStatisticsEntry | null> {
-	const res = await mangaDexFetch(`${MANGADEX_BASE}/statistics/manga/${id}`);
+	const json = await cachedJson("mangadex", `statistics-${id}`, async () => {
+		const res = await mangaDexFetch(`${MANGADEX_BASE}/statistics/manga/${id}`);
 
-	if (!res.ok) {
-		const errorText = await res.text();
-		throw new Error(
-			`MangaDex statistics fetch failed for manga ${id} : ${errorText}`,
-		);
-	}
+		if (!res.ok) {
+			const errorText = await res.text();
+			throw new Error(
+				`MangaDex statistics fetch failed for manga ${id} : ${errorText}`,
+			);
+		}
 
-	const json = await res.json();
+		return res.json();
+	});
 	const parsed = parseOrThrow(MangaDexStatisticsResponseSchema, json);
 	return parsed.statistics[id] ?? null;
 }

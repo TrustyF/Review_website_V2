@@ -7,6 +7,7 @@ import {
 	resolvePeopleBatch,
 	resolveRolesBatch,
 } from "@/server/resolvers/batch-entity-resolver";
+import { capCast, filterNotableCrew } from "@/server/tmdb/ingest/credit-limits";
 
 type t_client = Prisma.TransactionClient;
 
@@ -34,8 +35,8 @@ export async function syncTvShowCreditsAndGenres(
 		origin: MediaType.TVSHOW,
 	}));
 
-	const cast = data.credits?.cast ?? [];
-	const crew = data.credits?.crew ?? [];
+	const cast = capCast(data.credits?.cast ?? []);
+	const crew = filterNotableCrew(data.credits?.crew ?? []);
 	const companies = data.production_companies ?? [];
 
 	// See movie-credits.ts's own comment on where the photo-eligibility

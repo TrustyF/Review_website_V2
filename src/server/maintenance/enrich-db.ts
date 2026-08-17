@@ -1,9 +1,6 @@
 import { db } from "@/server/db/client";
-import {
-	fetchTmdbById,
-	fetchTvShowById,
-	isTmdbReachable,
-} from "@/server/tmdb/client";
+import { fetchTmdbById, fetchTvShowById, isTmdbReachable } from "@/server/tmdb/client";
+import { runWithCacheUsageTracking } from "@/server/lib/response-cache";
 import { updateMovieFromTmdb } from "@/server/tmdb/ingest/movie";
 import { updateTvShowFromTmdb } from "@/server/tmdb/ingest/tv-show";
 import {
@@ -203,18 +200,23 @@ async function runQueue(type: MediaType, mediaList: Media[]) {
 		mediaList,
 		QUEUE_CONCURRENCY[type],
 		async (media) => {
-			console.log(`[${type}] trying ${media.title}`);
 			await dbSemaphore.acquire();
 			try {
-				await enrichOne(media);
-			} catch (err) {
-				// One title missing/renamed at the source (or otherwise broken)
-				// shouldn't stop the rest of its queue from enriching — log it and
-				// move on, leaving that row PENDING for a later look.
-				console.error(
-					`[${type}] Failed enriching media ${media.id} (${media.title})`,
-					err,
+				const { error, cacheUsage } = await runWithCacheUsageTracking(() =>
+					enrichOne(media),
 				);
+				const cacheTag = cacheUsage ? ` [${cacheUsage}]` : "";
+				if (error) {
+					// One title missing/renamed at the source (or otherwise broken)
+					// shouldn't stop the rest of its queue from enriching — log it and
+					// move on, leaving that row PENDING for a later look.
+					console.error(
+						`[${type}]${cacheTag} Failed enriching media ${media.id} (${media.title})`,
+						error,
+					);
+				} else {
+					console.log(`[${type}]${cacheTag} enriched ${media.title}`);
+				}
 			} finally {
 				dbSemaphore.release();
 			}
@@ -226,15 +228,22 @@ const ENRICH_INTERVAL_DAYS = 3;
 
 const ALL_MEDIA_TYPES = Object.values(MediaType);
 
+// Opt-in dev flag, e.g. `npm run enrich_db -- movie ignore-enrich-cutoff` —
+// re-enriches every matching row regardless of lastEnrichedAt instead of
+// only the ones stale enough per ENRICH_INTERVAL_DAYS. Handy for testing
+// ingest changes against titles that were already enriched recently.
+const IGNORE_CUTOFF_FLAG = "ignore-enrich-cutoff";
+
 // Space- and/or comma-separated MediaType names (case-insensitive), e.g.
 // `npm run enrich_db -- movie tvshow` or `npm run enrich_db -- movie,tvshow`
 // — no args at all (the normal cron invocation, see enrich-db.yml) still
-// enriches every type, same as before this existed.
+// enriches every type, same as before this existed. IGNORE_CUTOFF_FLAG is
+// stripped out here, not a MediaType, so it's filtered before validation.
 function parseRequestedTypes(argv: string[]): MediaType[] {
 	const raw = argv
 		.flatMap((arg) => arg.split(","))
 		.map((s) => s.trim().toUpperCase())
-		.filter(Boolean);
+		.filter((s) => s && s !== IGNORE_CUTOFF_FLAG.toUpperCase());
 	if (raw.length === 0) return ALL_MEDIA_TYPES;
 
 	const validNames = new Set<string>(ALL_MEDIA_TYPES);
@@ -250,8 +259,14 @@ function parseRequestedTypes(argv: string[]): MediaType[] {
 }
 
 async function main() {
-	const requestedTypes = parseRequestedTypes(process.argv.slice(2));
-	console.log(`Enriching: ${requestedTypes.join(", ")}`);
+	const args = process.argv.slice(2);
+	const requestedTypes = parseRequestedTypes(args);
+	const ignoreCutoff = args
+		.flatMap((arg) => arg.split(","))
+		.some((s) => s.trim().toLowerCase() === IGNORE_CUTOFF_FLAG);
+	console.log(
+		`Enriching: ${requestedTypes.join(", ")}${ignoreCutoff ? " (ignoring enrich cutoff)" : ""}`,
+	);
 
 	const enrichCutoff = new Date(
 		Date.now() - ENRICH_INTERVAL_DAYS * 24 * 60 * 60 * 1000,
@@ -261,7 +276,14 @@ async function main() {
 		where: {
 			type: { in: requestedTypes },
 			externalId: { not: null },
-			OR: [{ lastEnrichedAt: null }, { lastEnrichedAt: { lt: enrichCutoff } }],
+			...(ignoreCutoff
+				? {}
+				: {
+						OR: [
+							{ lastEnrichedAt: null },
+							{ lastEnrichedAt: { lt: enrichCutoff } },
+						],
+					}),
 		},
 		orderBy: { id: "asc" },
 		take: 1000,

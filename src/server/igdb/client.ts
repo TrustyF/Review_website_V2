@@ -8,6 +8,7 @@ import {
 } from "./schema";
 import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
 import { createRateLimiter } from "@/server/lib/rate-limited-fetch";
+import { cachedJson } from "@/server/lib/response-cache";
 
 const IGDB_BASE = "https://api.igdb.com/v4";
 const TWITCH_TOKEN_URL = "https://id.twitch.tv/oauth2/token";
@@ -109,9 +110,8 @@ export async function fetchIgdbGameById(id: string): Promise<IgdbGame> {
 		throw new Error(`fetchIgdbGameById: expected a numeric id, got "${id}"`);
 	}
 
-	const json = await igdbFetch(
-		"games",
-		`fields ${GAME_FIELDS}; where id = ${id};`,
+	const json = await cachedJson("igdb", `game-${id}`, () =>
+		igdbFetch("games", `fields ${GAME_FIELDS}; where id = ${id};`),
 	);
 	const games = parseOrThrow(IgdbGamesResponseSchema, json);
 	const game = games[0];

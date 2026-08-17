@@ -7,6 +7,7 @@ import {
 	resolvePeopleBatch,
 	resolveRolesBatch,
 } from "@/server/resolvers/batch-entity-resolver";
+import { capCast, filterNotableCrew } from "@/server/tmdb/ingest/credit-limits";
 
 type t_client = Prisma.TransactionClient;
 
@@ -36,8 +37,8 @@ export async function syncMovieCreditsAndGenres(
 		origin: MediaType.MOVIE,
 	}));
 
-	const cast = data.credits?.cast ?? [];
-	const crew = data.credits?.crew ?? [];
+	const cast = capCast(data.credits?.cast ?? []);
+	const crew = filterNotableCrew(data.credits?.crew ?? []);
 	const companies = data.production_companies ?? [];
 
 	// Every cast and crew member's own photoPath comes straight from TMDB

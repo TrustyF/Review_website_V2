@@ -7,6 +7,7 @@ import {
 } from "./schema";
 import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
 import { createRateLimiter } from "@/server/lib/rate-limited-fetch";
+import { cachedJson } from "@/server/lib/response-cache";
 
 const COMICVINE_BASE = "https://comicvine.gamespot.com/api";
 
@@ -69,7 +70,9 @@ export async function fetchComicVineById(id: string): Promise<ComicVineVolume> {
 	url.searchParams.set("api_key", apiKey());
 	url.searchParams.set("format", "json");
 
-	const json = await comicVineFetch(url);
+	const json = await cachedJson("comicvine", `volume-${id}`, () =>
+		comicVineFetch(url),
+	);
 	const parsed = parseOrThrow(ComicVineVolumeResponseSchema, json);
 	if (parsed.status_code !== 1) {
 		throw new Error(

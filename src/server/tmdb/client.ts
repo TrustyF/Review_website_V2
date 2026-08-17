@@ -15,6 +15,7 @@ import {
 import { MediaType } from "@prisma/client";
 import { parseOrThrow } from "@/lib/arktype/parse-or-throw";
 import { createRateLimiter } from "@/server/lib/rate-limited-fetch";
+import { cachedJson } from "@/server/lib/response-cache";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 
@@ -65,16 +66,24 @@ export async function fetchTmdbById(
 	id: string,
 	media_type: MediaType,
 ): Promise<TmdbMovieResponse> {
-	const res = await tmdbFetch(
-		`${TMDB_BASE}/${ConvertTypeToString(media_type)}/${id}?&language=en-US&append_to_response=content_ratings,credits,external_ids`,
+	const json = await cachedJson(
+		"tmdb",
+		`${ConvertTypeToString(media_type)}-${id}`,
+		async () => {
+			const res = await tmdbFetch(
+				`${TMDB_BASE}/${ConvertTypeToString(media_type)}/${id}?&language=en-US&append_to_response=content_ratings,credits,external_ids`,
+			);
+
+			if (!res.ok) {
+				const errorText = await res.text();
+				throw new Error(
+					`TMDB fetch failed for ${media_type} ${id} : ${errorText}`,
+				);
+			}
+
+			return res.json();
+		},
 	);
-
-	if (!res.ok) {
-		const errorText = await res.text();
-		throw new Error(`TMDB fetch failed for ${media_type} ${id} : ${errorText}`);
-	}
-
-	const json = await res.json();
 	return parseOrThrow(TmdbMovieResponseSchema, json);
 }
 export async function fetchTmdbByName(
@@ -94,16 +103,18 @@ export async function fetchTmdbByName(
 }
 
 export async function fetchTvShowById(id: string): Promise<TmdbTvResponse> {
-	const res = await tmdbFetch(
-		`${TMDB_BASE}/tv/${id}?&language=en-US&append_to_response=content_ratings,credits,external_ids`,
-	);
+	const json = await cachedJson("tmdb", `tv-${id}`, async () => {
+		const res = await tmdbFetch(
+			`${TMDB_BASE}/tv/${id}?&language=en-US&append_to_response=content_ratings,credits,external_ids`,
+		);
 
-	if (!res.ok) {
-		const errorText = await res.text();
-		throw new Error(`TMDB fetch failed for tv show ${id} : ${errorText}`);
-	}
+		if (!res.ok) {
+			const errorText = await res.text();
+			throw new Error(`TMDB fetch failed for tv show ${id} : ${errorText}`);
+		}
 
-	const json = await res.json();
+		return res.json();
+	});
 	return parseOrThrow(TmdbTvResponseSchema, json);
 }
 
@@ -114,18 +125,24 @@ export async function fetchTmdbImages(
 	id: string,
 	media_type: MediaType,
 ): Promise<TmdbImagesResponse> {
-	const res = await tmdbFetch(
-		`${TMDB_BASE}/${ConvertTypeToString(media_type)}/${id}/images?include_image_language=en,null`,
+	const json = await cachedJson(
+		"tmdb",
+		`${ConvertTypeToString(media_type)}-${id}-images`,
+		async () => {
+			const res = await tmdbFetch(
+				`${TMDB_BASE}/${ConvertTypeToString(media_type)}/${id}/images?include_image_language=en,null`,
+			);
+
+			if (!res.ok) {
+				const errorText = await res.text();
+				throw new Error(
+					`TMDB images fetch failed for ${media_type} ${id} : ${errorText}`,
+				);
+			}
+
+			return res.json();
+		},
 	);
-
-	if (!res.ok) {
-		const errorText = await res.text();
-		throw new Error(
-			`TMDB images fetch failed for ${media_type} ${id} : ${errorText}`,
-		);
-	}
-
-	const json = await res.json();
 	return parseOrThrow(TmdbImagesResponseSchema, json);
 }
 
