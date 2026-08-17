@@ -460,8 +460,21 @@ export async function searchAllMedia(
 	const trimmed = query.trim();
 	if (!trimmed) return [];
 
+	// Brackets the *whole* action, not just getSearchIndex() — its own
+	// [search-index] log only covers building/loading the Fuse index, not the
+	// fuse.search() call below or the person-reranking after it. If the
+	// network tab's total is still much bigger than [search-index]'s totalMs,
+	// this log is what tells us whether the gap is inside this function (e.g.
+	// fuse.search() itself paying the same cold-JIT tax getSearchIndex's own
+	// indexMs used to) or genuinely outside it (Next's own server action
+	// invocation/cold-start overhead, network, etc.) — the two need very
+	// different fixes.
+	const actionStartedAt = performance.now();
+
 	const fuse = await getSearchIndex();
+	const indexReadyAt = performance.now();
 	const matches = fuse.search(trimmed);
+	const searchDoneAt = performance.now();
 
 	// Fuse's own score already decided which entries are relevant matches at
 	// all, and where each one ranks against the media entries around it —
@@ -497,7 +510,7 @@ export async function searchAllMedia(
 		if (person) matches[slot] = person;
 	});
 
-	return matches.slice(0, SEARCH_LIMIT).map(
+	const results = matches.slice(0, SEARCH_LIMIT).map(
 		({ item }): GlobalSearchResult =>
 			item.kind === "media"
 				? {
@@ -517,4 +530,17 @@ export async function searchAllMedia(
 						creditCount: item.creditCount,
 					},
 	);
+
+	console.log(
+		"[search-action]",
+		JSON.stringify({
+			query: trimmed,
+			getIndexMs: Math.round(indexReadyAt - actionStartedAt),
+			fuseSearchMs: Math.round(searchDoneAt - indexReadyAt),
+			rerankAndMapMs: Math.round(performance.now() - searchDoneAt),
+			totalMs: Math.round(performance.now() - actionStartedAt),
+		}),
+	);
+
+	return results;
 }
