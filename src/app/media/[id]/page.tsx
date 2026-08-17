@@ -8,6 +8,7 @@ import { StarIcon } from "@/components/media/icons/star-icon";
 import { MediaTitle } from "@/components/media/primitives/title";
 import { MediaReleaseDate } from "@/components/media/primitives/release-date";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
+import { EnrichedAgo } from "@/components/media/primitives/enriched-ago";
 import { ChangeLogList } from "@/components/media/media-management/change-log/change-log-list";
 import { formatRuntime } from "@/components/media/primitives/runtime";
 import { PosterEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/poster-edit-trigger";
@@ -16,7 +17,6 @@ import { ReviewBodyEditTrigger } from "@/components/media/media-management/media
 import { AddToListButton } from "@/components/lists/add-to-list-button/add-to-list-button";
 import { AddToWatchlistButton } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-button";
 import { auth } from "@/auth";
-import { MediaType } from "@prisma/client";
 import {
 	BANNER_GRAIN_OPACITY,
 	toPersonPhotoSrc,
@@ -30,16 +30,6 @@ import { generateMediaMetadata } from "./metadata";
 // See metadata.ts — kept there rather than inlined here so this file stays
 // about rendering the page, not also building link-preview tags.
 export const generateMetadata = generateMediaMetadata;
-
-const PROVIDER_LABELS: Record<MediaType, string> = {
-	[MediaType.MOVIE]: "TMDB",
-	[MediaType.SHORT]: "TMDB",
-	[MediaType.TVSHOW]: "TMDB",
-	[MediaType.MANGA]: "MangaDex",
-	[MediaType.COMIC]: "ComicVine",
-	[MediaType.GAME]: "IGDB",
-	[MediaType.BOOK]: "Google Books",
-};
 
 const CurrencyFormatter = new Intl.NumberFormat("en-US", {
 	style: "currency",
@@ -418,6 +408,7 @@ export default async function MediaDetailPage({
 						<div className={styles.meta_row}>
 							<MediaReleaseDate date={media.releaseDate} />
 							{tagline && <span className={styles.tagline}>{tagline}</span>}
+							<EnrichedAgo lastEnrichedAt={media.lastEnrichedAt} />
 						</div>
 
 						<div className={styles.review_row}>

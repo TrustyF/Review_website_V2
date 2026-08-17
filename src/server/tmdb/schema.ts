@@ -34,9 +34,6 @@ export const TmdbMovieResponseSchema = type({
 		name: "string",
 	}).array(),
 	credits: {
-		// profile_path only requested on cast, not crew — Person.photoPath is
-		// deliberately cast-only too (see that field's own comment), so there's
-		// no point asking TMDB for a crew member's photo we'd throw away anyway.
 		cast: type({
 			id: "number",
 			name: "string",
@@ -44,11 +41,17 @@ export const TmdbMovieResponseSchema = type({
 			order: "number",
 			profile_path: "string | null",
 		}).array(),
+		// profile_path requested here too — every crew credit gets a stored
+		// photoPath the same as cast does (see Person.photoPath's own comment);
+		// which of those actually get downloaded is a separate, read-time
+		// decision (see person-photo-eligibility.ts), not something that
+		// affects what's parsed here.
 		crew: type({
 			id: "number",
 			name: "string",
 			job: "string",
 			department: "string",
+			profile_path: "string | null",
 		}).array(),
 	},
 });
@@ -85,9 +88,6 @@ export const TmdbTvResponseSchema = type({
 		name: "string",
 	}).array(),
 	credits: {
-		// profile_path only requested on cast, not crew — Person.photoPath is
-		// deliberately cast-only too (see that field's own comment), so there's
-		// no point asking TMDB for a crew member's photo we'd throw away anyway.
 		cast: type({
 			id: "number",
 			name: "string",
@@ -95,16 +95,34 @@ export const TmdbTvResponseSchema = type({
 			order: "number",
 			profile_path: "string | null",
 		}).array(),
+		// profile_path requested here too — every crew credit gets a stored
+		// photoPath the same as cast does (see Person.photoPath's own comment);
+		// which of those actually get downloaded is a separate, read-time
+		// decision (see person-photo-eligibility.ts), not something that
+		// affects what's parsed here.
 		crew: type({
 			id: "number",
 			name: "string",
 			job: "string",
 			department: "string",
+			profile_path: "string | null",
 		}).array(),
 	},
 });
 
 export type TmdbTvResponse = typeof TmdbTvResponseSchema.infer;
+
+// /person/{id} — only used by backfill-person-photos.ts to fetch a single
+// missing photoPath directly, far cheaper than re-running a whole movie/show
+// enrichment just for this one field. Deliberately minimal (id +
+// profile_path only) rather than the full person-detail response, since
+// that's all that script needs.
+export const TmdbPersonResponseSchema = type({
+	id: "number",
+	profile_path: "string | null",
+});
+
+export type TmdbPerson = typeof TmdbPersonResponseSchema.infer;
 
 // /search/movie and /search/tv return a paginated {results: [...]} envelope
 // of lightweight entries — a different (much smaller) shape than the full

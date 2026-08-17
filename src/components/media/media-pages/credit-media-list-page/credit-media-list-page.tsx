@@ -11,6 +11,7 @@ import { PersonPhoto } from "@/components/media/primitives/person-photo";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { EnrichmentStatus } from "@prisma/client";
 import { toPersonPhotoSrc } from "@/server/resolvers/poster-resolver";
+import { hasPhotoEligibleRole } from "@/server/resolvers/person-photo-eligibility";
 import styles from "./credit-media-list-page.module.sass";
 import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
 
@@ -107,17 +108,10 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 			: await db.company.findUnique({ where: { id } });
 	if (!entity) notFound();
 
-	// Only Person carries a photoPath (see Credit.character's neighboring
-	// comment on Person.photoPath in the schema) — the "in" check also
-	// narrows entity's type for the toPersonPhotoSrc call below.
-	const photoSrc =
-		"photoPath" in entity
-			? toPersonPhotoSrc(entity.id, entity.photoPath)
-			: null;
-
 	// Every role this entity has a DONE, non-deleted credit under. Actor is
 	// sorted first (it gets the avg-rating row below) and the rest follow
-	// alphabetically.
+	// alphabetically. Computed before photoSrc below since it also decides
+	// that.
 	const roleNames = [
 		...new Set(
 			(
@@ -139,6 +133,18 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 		if (b === "Actor") return 1;
 		return a.localeCompare(b);
 	});
+
+	// Only Person carries a photoPath (see Credit.character's neighboring
+	// comment on Person.photoPath in the schema) — the "in" check also
+	// narrows entity's type for the toPersonPhotoSrc call below. Gated by
+	// role like everywhere else a person's photo might show (see
+	// person-photo-eligibility.ts) — landing on this specific person's own
+	// page isn't itself treated as reason enough to download a photo for a
+	// role that isn't otherwise eligible.
+	const photoSrc =
+		"photoPath" in entity && hasPhotoEligibleRole(roleNames)
+			? toPersonPhotoSrc(entity.id, entity.photoPath)
+			: null;
 
 	const roleGroups = await Promise.all(
 		roleNames.map(async (name) => ({

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { UserRound } from "lucide-react";
 import { MediaType } from "@prisma/client";
 import {
 	GlobalSearchResult,
@@ -93,29 +94,59 @@ export function NavSearch() {
 					) : results.length > 0 ? (
 						results.map((result) => (
 							<Link
-								href={`/media/${result.id}`}
-								key={result.id}
+								href={
+									result.kind === "media"
+										? `/media/${result.id}`
+										: `/credits/person/${result.id}`
+								}
+								key={`${result.kind}-${result.id}`}
 								className={styles.result}
 								onClick={handleSelect}>
-								<Image
-									src={result.posterSrc}
-									alt=""
-									width={64}
-									height={80}
-									className={styles.result_poster}
-									// Same /api/poster cold-cache timeout reasoning as
-									// MediaPoster's own unoptimized (see primitives.tsx) —
-									// this renders a different fixed size than that
-									// component, but goes through the same lazy-resolve
-									// route on the same server-side-fixed encoding.
-									unoptimized
-								/>
+								{result.kind === "media" ? (
+									<Image
+										src={result.posterSrc}
+										alt=""
+										width={64}
+										height={80}
+										className={styles.result_poster}
+										// Same /api/poster cold-cache timeout reasoning as
+										// MediaPoster's own unoptimized (see primitives.tsx) —
+										// this renders a different fixed size than that
+										// component, but goes through the same lazy-resolve
+										// route on the same server-side-fixed encoding.
+										unoptimized
+									/>
+								) : result.photoSrc ? (
+									<Image
+										src={result.photoSrc}
+										alt=""
+										width={64}
+										height={80}
+										className={styles.result_poster}
+										unoptimized
+									/>
+								) : (
+									<span className={styles.result_poster_placeholder}>
+										<UserRound size={24} />
+									</span>
+								)}
 								<div className={styles.result_info}>
-									<div className={styles.result_title}>{result.title}</div>
+									<div className={styles.result_title}>
+										{result.kind === "media" ? result.title : result.name}
+									</div>
 									<div className={styles.result_meta}>
-										{TYPE_LABELS[result.type]}
-										{result.releaseDate && (
-											<> - {new Date(result.releaseDate).getFullYear()}</>
+										{result.kind === "media" ? (
+											<>
+												{TYPE_LABELS[result.type]}
+												{result.releaseDate && (
+													<> - {new Date(result.releaseDate).getFullYear()}</>
+												)}
+											</>
+										) : (
+											<>
+												{result.mainRole} - {result.creditCount}{" "}
+												{result.creditCount === 1 ? "credit" : "credits"}
+											</>
 										)}
 									</div>
 								</div>

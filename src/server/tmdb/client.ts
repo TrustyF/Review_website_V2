@@ -5,6 +5,8 @@ import {
 	TmdbMovieResponseSchema,
 	TmdbMovieSearchResponseSchema,
 	TmdbMovieSearchResult,
+	TmdbPerson,
+	TmdbPersonResponseSchema,
 	TmdbTvResponse,
 	TmdbTvResponseSchema,
 	TmdbTvSearchResponseSchema,
@@ -156,4 +158,18 @@ export async function fetchTvShowByName(
 
 	const json = await res.json();
 	return parseOrThrow(TmdbTvSearchResponseSchema, json).results;
+}
+
+// Only used by backfill-person-photos.ts — a single person's own profile
+// photo, without re-fetching an entire movie/show just to get it.
+export async function fetchTmdbPersonById(id: string): Promise<TmdbPerson> {
+	const res = await tmdbFetch(`${TMDB_BASE}/person/${id}`);
+
+	if (!res.ok) {
+		const errorText = await res.text();
+		throw new Error(`TMDB fetch failed for person ${id} : ${errorText}`);
+	}
+
+	const json = await res.json();
+	return parseOrThrow(TmdbPersonResponseSchema, json);
 }

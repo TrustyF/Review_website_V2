@@ -17,12 +17,15 @@ model Person {
   source     Source
   credits    Credit[]
 
-  // Only ever populated from a cast credit (see syncMovieCreditsAndGenres/
-  // syncTvShowCreditsAndGenres) — deliberately never set for crew, so a
-  // person credited as e.g. both Director and Actor across different titles
-  // only ever surfaces a photo on their Actor credit. Keeps scope to "main
-  // cast get a photo, crew doesn't" without a separate table to track which
-  // credit a photo came from.
+  // Populated from any cast or crew credit that TMDB itself hands back a
+  // profile_path for (see syncMovieCreditsAndGenres/syncTvShowCreditsAndGenres)
+  // — storing this is unconditional and cheap (just a string). Whether it's
+  // ever actually downloaded/cached is a separate, read-time decision gated
+  // by credited role (see person-photo-eligibility.ts's
+  // PHOTO_ELIGIBLE_CREDIT_ROLES) — that's what keeps a photo from being
+  // fetched for the long tail of crew jobs (Gaffer, Sound Editor, ...)
+  // nobody's realistically going to look up, without needing this field to
+  // stay blank for them forever.
   photoPath String?
 
   @@unique([externalId, source])

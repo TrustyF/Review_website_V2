@@ -47,11 +47,12 @@ export async function resolvePeopleBatch(
 		externalId: string;
 		source: Source;
 		name: string;
-		// Cast-only (see Person.photoPath's own comment) — omitted/undefined
-		// for crew inputs, so a person credited as both keeps whichever
-		// occurrence dedupeByKey lands on: movie/tv-show-credits.ts always list
-		// cast ahead of crew, so the cast occurrence (with a photo) wins.
-		photoPath?: string | null;
+		// Set from TMDB's profile_path for both cast and crew entries (see
+		// Person.photoPath's own comment) — which photos actually get
+		// downloaded/cached is a read-time decision (see
+		// person-photo-eligibility.ts), not something this ingest-side resolve
+		// step needs to know about.
+		photoPath?: string | null | undefined;
 	}[],
 ): Promise<Map<string, number>> {
 	const map = new Map<string, number>();

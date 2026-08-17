@@ -38,6 +38,8 @@ export async function syncTvShowCreditsAndGenres(
 	const crew = data.credits?.crew ?? [];
 	const companies = data.production_companies ?? [];
 
+	// See movie-credits.ts's own comment on where the photo-eligibility
+	// decision actually lives now — not here.
 	const personInputs = [
 		...cast.map((c) => ({
 			externalId: String(c.id),
@@ -49,6 +51,7 @@ export async function syncTvShowCreditsAndGenres(
 			externalId: String(c.id),
 			source: Source.TMDB,
 			name: c.name,
+			photoPath: c.profile_path,
 		})),
 	];
 
@@ -58,9 +61,7 @@ export async function syncTvShowCreditsAndGenres(
 	const roleInputs = [
 		...(cast.length ? [{ name: "Actor", origin: MediaType.TVSHOW }] : []),
 		...crew.map((c) => ({ name: c.job, origin: MediaType.TVSHOW })),
-		...(companies.length
-			? [{ name: "Studio", origin: MediaType.TVSHOW }]
-			: []),
+		...(companies.length ? [{ name: "Studio", origin: MediaType.TVSHOW }] : []),
 	];
 
 	// Countries have to resolve before companies — a company's countryId

@@ -81,6 +81,21 @@ $result-height: 5.7rem
   border-radius: 0.25rem
   flex-shrink: 0
 
+// A person result with no photo yet (see toPersonPhotoSrc's null case) —
+// same box as .result_poster so the row layout doesn't jump between photo
+// and no-photo results, just centered content instead of an image.
+.result_poster_placeholder
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 64px
+  height: 80px
+  border-radius: 0.25rem
+  flex-shrink: 0
+  background: var(--surface)
+  border: 1px solid var(--surface-border)
+  color: var(--accent1)
+
 .result_info
   display: flex
   flex-flow: column

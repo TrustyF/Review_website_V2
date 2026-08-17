@@ -29,11 +29,14 @@ const eslintConfig = defineConfig([
 	},
 	// Override default ignores of eslint-config-next.
 	globalIgnores([
-		// Default ignores of eslint-config-next:
-		".next/**",
-		"out/**",
-		"build/**",
-		"next-env.d.ts",
+		// Default ignores of eslint-config-next, made recursive so nested
+		// copies (e.g. inside .claude/worktrees/*) are excluded too — ESLint's
+		// flat config does not read .gitignore on its own.
+		"**/.next/**",
+		"**/out/**",
+		"**/build/**",
+		"**/next-env.d.ts",
+		".claude/**",
 	]),
 ]);
 

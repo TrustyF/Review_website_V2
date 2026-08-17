@@ -24,6 +24,7 @@ import {
 	isGoogleBooksReachable,
 } from "@/server/google-books/client";
 import { updateBookFromGoogleBooks } from "@/server/google-books/ingest/book";
+import { invalidateSearchIndex } from "@/components/search/search-actions";
 import { Media, MediaType } from "@prisma/client";
 
 // One reachability check per underlying source (TMDB backs both MOVIE/SHORT
@@ -223,13 +224,42 @@ async function runQueue(type: MediaType, mediaList: Media[]) {
 
 const ENRICH_INTERVAL_DAYS = 3;
 
+const ALL_MEDIA_TYPES = Object.values(MediaType);
+
+// Space- and/or comma-separated MediaType names (case-insensitive), e.g.
+// `npm run enrich_db -- movie tvshow` or `npm run enrich_db -- movie,tvshow`
+// — no args at all (the normal cron invocation, see enrich-db.yml) still
+// enriches every type, same as before this existed.
+function parseRequestedTypes(argv: string[]): MediaType[] {
+	const raw = argv
+		.flatMap((arg) => arg.split(","))
+		.map((s) => s.trim().toUpperCase())
+		.filter(Boolean);
+	if (raw.length === 0) return ALL_MEDIA_TYPES;
+
+	const validNames = new Set<string>(ALL_MEDIA_TYPES);
+	const invalid = raw.filter((t) => !validNames.has(t));
+	if (invalid.length > 0) {
+		console.error(
+			`Unknown media type(s): ${invalid.join(", ")}. Valid: ${ALL_MEDIA_TYPES.join(", ")}`,
+		);
+		process.exit(1);
+	}
+
+	return [...new Set(raw)] as MediaType[];
+}
+
 async function main() {
+	const requestedTypes = parseRequestedTypes(process.argv.slice(2));
+	console.log(`Enriching: ${requestedTypes.join(", ")}`);
+
 	const enrichCutoff = new Date(
 		Date.now() - ENRICH_INTERVAL_DAYS * 24 * 60 * 60 * 1000,
 	);
 
 	const mediaList = await db.media.findMany({
 		where: {
+			type: { in: requestedTypes },
 			externalId: { not: null },
 			OR: [{ lastEnrichedAt: null }, { lastEnrichedAt: { lt: enrichCutoff } }],
 		},
@@ -251,6 +281,13 @@ async function main() {
 			.filter(([type]) => reachable.has(type))
 			.map(([type, list]) => runQueue(type, list)),
 	);
+
+	// Runs as a separate process from anything that would normally trigger
+	// this (see saveMediaDetails/setMediaDeleted/etc. in the admin actions) —
+	// without it, search-actions.ts's own module-scope and durable caches
+	// would keep serving whatever title/poster/photoPath was true before this
+	// run, for up to their own 1-hour TTL, even though the DB just changed.
+	if (mediaList.length > 0) await invalidateSearchIndex();
 }
 
 main()

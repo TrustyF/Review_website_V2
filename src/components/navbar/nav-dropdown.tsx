@@ -6,15 +6,24 @@ import { ChevronDown, type LucideIcon } from "lucide-react";
 import { isNavActive } from "@/lib/nav-active";
 import style from "./nav-dropdown.module.sass";
 
+// Widened past lucide's own LucideIcon type so local icon components (e.g.
+// MovieIcon) — which only accept the size/className/fill subset this file
+// actually passes — satisfy it too.
+type DropdownIcon = React.ComponentType<{
+	size?: number | undefined;
+	className?: string | undefined;
+	fill?: string | undefined;
+}>;
+
 type Item = {
 	href: string;
 	label: string;
-	icon?: LucideIcon;
+	icon?: LucideIcon | DropdownIcon;
 };
 
 type Props = {
 	label: string;
-	icon?: LucideIcon;
+	icon?: LucideIcon | DropdownIcon;
 	items: Item[];
 };
 

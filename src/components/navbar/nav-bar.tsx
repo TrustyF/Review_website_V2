@@ -6,18 +6,18 @@ import { signOut, useSession } from "next-auth/react";
 import {
 	BookOpen,
 	CirclePlus,
-	Clapperboard,
-	ClockFading,
 	GamepadDirectional,
-	Home,
 	LayoutList,
 	List,
 	LogIn,
 	LogOut,
 	LucideProvider,
 	type LucideIcon,
-	UserRound,
 } from "lucide-react";
+import { HomeIcon } from "@/components/icons/home-icon";
+import { WatchlistIcon } from "@/components/icons/watchlist-icon";
+import { AccountIcon } from "@/components/icons/account-icon";
+import { MovieIcon } from "@/components/icons/movie-icon";
 import { NavSearch } from "@/components/navbar/nav-search/nav-search";
 import {
 	NavDropdown,
@@ -35,9 +35,18 @@ import style from "./nav-bar.module.sass";
 const TOP_EXEMPT_PX = 200;
 const REVEAL_THRESHOLD_PX = 200;
 
+// Widened past lucide's own LucideIcon type so the local icon components
+// (HomeIcon, WatchlistIcon, AccountIcon) — which only accept the size/
+// className/fill subset NavLink actually passes — satisfy it too.
+type NavIcon = React.ComponentType<{
+	size?: number | undefined;
+	className?: string | undefined;
+	fill?: string | undefined;
+}>;
+
 type NavLinkProps = {
 	href: string;
-	icon?: LucideIcon;
+	icon?: LucideIcon | NavIcon;
 	// CSS module class lookups are typed as possibly-undefined (an unknown
 	// key would silently produce `undefined`), so this matches that rather
 	// than requiring callers to non-null-assert every style.xxx they pass.
@@ -180,7 +189,7 @@ export default function Navbar() {
 						<div className={style.nav_group}>
 							<NavLink
 								href="/"
-								icon={Home}
+								icon={HomeIcon}
 								className={style.link}
 								pathname={pathname}>
 								Home
@@ -190,7 +199,7 @@ export default function Navbar() {
 						<div className={style.nav_group}>
 							<NavDropdown
 								label="Media"
-								icon={Clapperboard}
+								icon={MovieIcon}
 								items={[
 									{ href: "/movies", label: "Movies" },
 									{ href: "/shorts", label: "Shorts" },
@@ -237,7 +246,7 @@ export default function Navbar() {
 								<>
 									<NavLink
 										href="/watchlist"
-										icon={ClockFading}
+										icon={WatchlistIcon}
 										className={style.link}
 										pathname={pathname}>
 										Watchlist
@@ -245,7 +254,7 @@ export default function Navbar() {
 
 									<NavLink
 										href="/account"
-										icon={UserRound}
+										icon={AccountIcon}
 										className={style.link}
 										pathname={pathname}>
 										Account

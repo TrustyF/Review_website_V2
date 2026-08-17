@@ -40,6 +40,11 @@ export async function syncMovieCreditsAndGenres(
 	const crew = data.credits?.crew ?? [];
 	const companies = data.production_companies ?? [];
 
+	// Every cast and crew member's own photoPath comes straight from TMDB
+	// (profile_path is requested for both — see tmdb/schema.ts). Which of
+	// these actually gets downloaded/cached is a read-time decision, not an
+	// ingest one — see person-photo-eligibility.ts, applied wherever a photo
+	// might get shown for a non-Actor credit.
 	const personInputs = [
 		...cast.map((c) => ({
 			externalId: String(c.id),
@@ -51,6 +56,7 @@ export async function syncMovieCreditsAndGenres(
 			externalId: String(c.id),
 			source: Source.TMDB,
 			name: c.name,
+			photoPath: c.profile_path,
 		})),
 	];
 
