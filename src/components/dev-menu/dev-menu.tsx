@@ -52,9 +52,6 @@ export function DevMenu() {
 						<Link href="/dev/image-crop" className={styles.link}>
 							Image crop
 						</Link>
-						<Link href="/dev/ping" className={styles.link}>
-							Ping (search latency diag)
-						</Link>
 						<button
 							type="button"
 							className={styles.tool_button}
