@@ -4,6 +4,17 @@ import "dotenv/config";
 
 const adapter = new PrismaPg({
 	connectionString: process.env.DATABASE_URL!,
+	// Default pg.Pool max is 10 — fine for normal app traffic, but enrich-db's
+	// GLOBAL_DB_CONCURRENCY (maintenance/enrich-db.ts) needs enough slots to
+	// actually run that many transactions at once instead of queuing for a
+	// pool connection on top of already queuing for Neon's own network
+	// latency. DATABASE_URL is expected to be Neon's pooled (PgBouncer)
+	// endpoint (see .env.example), which multiplexes far more than this
+	// itself, so raising it here doesn't push load onto Neon directly. Kept
+	// well under Neon's own direct-connection ceiling (115 on this project's
+	// plan, per its dashboard) to leave room for the live app, Prisma
+	// Studio, etc. running against the same DB at the same time.
+	max: 60,
 });
 
 export const db = new PrismaClient({

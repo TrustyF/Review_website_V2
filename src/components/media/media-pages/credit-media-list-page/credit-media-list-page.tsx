@@ -26,6 +26,29 @@ type Props = {
 // constant rather than anything threaded through props or context.
 const SORT_MODE: "RATED" | "UNSORTED" = "RATED";
 
+// Roles that reflect someone actually shaping a work's own vision, not just
+// executing it or funding it — the avg-rating row below is scoped to these
+// when a person has any, judged separately from every other credit they've
+// had a smaller hand in (an acting or casting credit says much less about
+// someone's own creative output than a directing or writing credit does).
+// Producer/Executive Producer and pure-craft roles (Editor, Director of
+// Photography, ...) are deliberately left out even though they're on
+// NOTABLE_CREW_JOBS (credit-limits.ts) — notable enough to keep in the DB,
+// but not "authored this" the way these are. Covers every source's own
+// authorial role name, not just TMDB's (MangaDex/ComicVine use
+// Author/Artist, IGDB uses Developer), same reasoning as
+// search-actions.ts's ROLE_LABEL_PRIORITY.
+const CREATIVE_ROLES = new Set([
+	"Director",
+	"Writer",
+	"Screenplay",
+	"Story",
+	"Creator",
+	"Author",
+	"Artist",
+	"Developer",
+]);
+
 // Queries every DONE, non-deleted media row this entity is credited on,
 // optionally narrowed to one role name, deduped to one card per media and
 // sorted per SORT_MODE. Shared by the primary (possibly role-scoped) grid
@@ -82,12 +105,27 @@ async function loadRoleMedia(
 	return [...byMediaId.values()].map(toMediaRecord);
 }
 
-// Plain arithmetic mean, ignoring media with no value for the field in
-// question (unrated, or no public rating scraped yet) rather than treating
-// a missing rating as a 0 that would drag the average down.
-function average(values: number[]): number | null {
+// Self-weighted mean (Σr³ / Σr²) rather than a plain mean, ignoring media
+// with no value for the field in question (unrated, or no public rating
+// scraped yet) rather than treating a missing rating as a 0 that would drag
+// the average down. Weighting each rating by its own square means a 9 pulls
+// the result up more than a 5 pulls it down — a higher score is taken as a
+// stronger, more meaningful signal than a middling one, rather than every
+// credited title counting for the same one point regardless of how good or
+// mediocre it was. WEIGHT_POWER=3 chosen over the milder 2 after comparing
+// both against real credited-rating data — 3 pulled consistently higher
+// without swinging wildly for anyone in that sample. Falls back to a plain
+// mean when every value is 0 (Σr² would otherwise be 0, making Σr³/Σr²
+// divide by zero) — there's no meaningful "weight toward the higher score"
+// among a set of all-zero ratings anyway.
+const WEIGHT_POWER = 3;
+
+function weightedRating(values: number[]): number | null {
 	if (values.length === 0) return null;
-	return values.reduce((sum, value) => sum + value, 0) / values.length;
+	const weightSum = values.reduce((sum, v) => sum + v ** (WEIGHT_POWER - 1), 0);
+	if (weightSum === 0) return 0;
+	const poweredSum = values.reduce((sum, v) => sum + v ** WEIGHT_POWER, 0);
+	return poweredSum / weightSum;
 }
 
 // "Director, Producer and Screenplay" — Oxford-less list join for merged
@@ -153,22 +191,36 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 		})),
 	);
 
-	// Average of this person's own ratings and of the media's public rating,
-	// across every title they're credited on regardless of role — a title
-	// credited under more than one role (e.g. writer-director) is deduped so
-	// it isn't counted twice.
-	const allMedia = [
+	// Average of this person's own ratings and of the media's public rating.
+	// Scoped to just their creative-role credits when they have any, deduped
+	// so a title credited under more than one of those roles (e.g. a writer-
+	// director) isn't counted twice. Everyone else (pure actors, producers,
+	// studios, ...) falls back to every title they're credited on regardless
+	// of role, same as before this scoping existed.
+	const creativeMedia = [
 		...new Map(
-			roleGroups.flatMap((group) => group.media.map((item) => [item.id, item])),
+			roleGroups
+				.filter((group) => CREATIVE_ROLES.has(group.name))
+				.flatMap((group) => group.media.map((item) => [item.id, item])),
 		).values(),
 	];
-	const avgPersonalRating = average(
-		allMedia
+	const ratedMedia =
+		creativeMedia.length > 0
+			? creativeMedia
+			: [
+					...new Map(
+						roleGroups.flatMap((group) =>
+							group.media.map((item) => [item.id, item]),
+						),
+					).values(),
+				];
+	const avgPersonalRating = weightedRating(
+		ratedMedia
 			.map((item) => item.review?.rating)
 			.filter((rating): rating is number => rating != null),
 	);
-	const avgPublicRating = average(
-		allMedia
+	const avgPublicRating = weightedRating(
+		ratedMedia
 			.map((item) => item.publicRating)
 			.filter((rating): rating is number => rating != null),
 	);
@@ -198,7 +250,12 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 			});
 		}
 	}
-	const mergedGroups = [...groupByMediaKey.values()];
+	// Most-credited role group first — a more useful default than the
+	// Actor-first/alphabetical order roleNames was built in above (which only
+	// exists to decide *query* order, not display order).
+	const mergedGroups = [...groupByMediaKey.values()].sort(
+		(a, b) => b.media.length - a.media.length,
+	);
 
 	return (
 		<div className={styles.wrapper}>
@@ -219,13 +276,19 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 							{avgPersonalRating != null && (
 								<span className={styles.role_rating}>
 									<StarIcon size={13} />
-									{avgPersonalRating.toFixed(1)} avg
+									<span className={styles.role_rating_number}>
+										{avgPersonalRating.toFixed(1)}
+									</span>{" "}
+									<span>avg</span>
 								</span>
 							)}
 							{avgPublicRating != null && (
 								<span className={styles.role_rating}>
 									<StarIcon size={13} style={{ color: "var(--link)" }} />
-									{avgPublicRating.toFixed(1)} public avg
+									<span className={styles.role_rating_number}>
+										{avgPublicRating.toFixed(1)}
+									</span>{" "}
+									<span>public avg</span>
 								</span>
 							)}
 						</div>

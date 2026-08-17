@@ -58,6 +58,12 @@
   position: relative
   display: grid
   overflow: hidden
+  // globals.sass sets body { line-height: 1 }, tighter than most fonts' real
+  // ascent+descent — fine for text that isn't clipped, but this box's own
+  // overflow: hidden (needed for the slide animation below) then crops
+  // whatever doesn't fit, cutting off descenders like the "g" in "Reading".
+  // Scoped to just this stack rather than raised globally.
+  line-height: 1.3
 
   // Same collapse-to-icon behavior as nav-bar.module.sass's .link_label —
   // the trigger's icon + chevron stay, just the sliding label text goes.

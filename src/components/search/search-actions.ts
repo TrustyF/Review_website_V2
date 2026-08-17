@@ -48,6 +48,10 @@ const FUSE_OPTIONS = {
 	],
 	threshold: 0.35,
 	ignoreLocation: true,
+	// Needed so searchAllMedia's person re-ranking can see how good a match
+	// each result actually was, not just that it cleared `threshold` — off by
+	// default in Fuse.js.
+	includeScore: true,
 };
 
 type SearchableMedia = {
@@ -415,16 +419,17 @@ export async function searchAllMedia(
 
 	// Fuse's own score already decided which entries are relevant matches at
 	// all, and where each one ranks against the media entries around it —
-	// that positioning is left alone. But comparing two *people* purely on
-	// fuzzy string similarity is misleading: a two-credit extra who happens
-	// to share a surname with a prolific director can easily out-score the
-	// director on pure text match, since Fuse's score is sensitive to overall
-	// string length, not who's actually notable. So the person *slots* Fuse
-	// produced stay where they are, but which specific person fills each one
-	// is decided by (has a real photo, then credit count) instead —
-	// fetchSearchEntriesFromDb already sorts SearchableEntry's own person
-	// entries this same way, so re-filling in that same order is all this
-	// needs.
+	// that positioning is left alone. Among *people*, though, pure fuzzy
+	// string similarity is a weak notability signal: two matches that are
+	// both clearly good/bad hits for the query should stay ordered by how
+	// well they actually match, but two matches that are roughly equally
+	// good/bad hits are more usefully broken by (has a real photo, then
+	// credit count) than by Fuse's score, which is sensitive to overall
+	// string length rather than who's actually notable. So the person
+	// *slots* Fuse produced stay where they are, but which specific person
+	// fills each one is decided by score first, only falling back to
+	// notability to break a near-tie.
+	const PERSON_SCORE_TIE_THRESHOLD = 0.05; // Fuse scores 0 (perfect) to 1 (worst)
 	const personSlots = matches
 		.map((m, i) => (m.item.kind === "person" ? i : -1))
 		.filter((i) => i !== -1);
@@ -433,11 +438,14 @@ export async function searchAllMedia(
 			(m): m is (typeof matches)[number] & { item: SearchablePerson } =>
 				m.item.kind === "person",
 		)
-		.sort(
-			(a, b) =>
+		.sort((a, b) => {
+			const scoreDiff = (a.score ?? 0) - (b.score ?? 0);
+			if (Math.abs(scoreDiff) > PERSON_SCORE_TIE_THRESHOLD) return scoreDiff;
+			return (
 				Number(b.item.photoPath != null) - Number(a.item.photoPath != null) ||
-				b.item.creditCount - a.item.creditCount,
-		);
+				b.item.creditCount - a.item.creditCount
+			);
+		});
 	personSlots.forEach((slot, i) => {
 		const person = peopleRanked[i];
 		if (person) matches[slot] = person;

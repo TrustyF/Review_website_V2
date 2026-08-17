@@ -1,5 +1,9 @@
 import { db } from "@/server/db/client";
-import { fetchTmdbById, fetchTvShowById, isTmdbReachable } from "@/server/tmdb/client";
+import {
+	fetchTmdbById,
+	fetchTvShowById,
+	isTmdbReachable,
+} from "@/server/tmdb/client";
 import { runWithCacheUsageTracking } from "@/server/lib/response-cache";
 import { updateMovieFromTmdb } from "@/server/tmdb/ingest/movie";
 import { updateTvShowFromTmdb } from "@/server/tmdb/ingest/tv-show";
@@ -133,24 +137,6 @@ async function runWithConcurrency<T>(
 	);
 }
 
-// Real rate limiting lives at the client layer (each source's own client.ts
-// has a rate-limited-fetch.ts throttle + single-retry-on-429 — see e.g.
-// igdb/client.ts's limiter), so this only bounds how many of a given type's
-// items can be in flight (fetching + writing) at once, letting each queue's
-// own worker pool size reflect that source's own pacing/rate-limit
-// character — it does NOT bound how many Prisma transactions are open
-// system-wide, since queues for every type run concurrently. That's what
-// dbSemaphore below is for.
-const QUEUE_CONCURRENCY: Record<MediaType, number> = {
-	[MediaType.MOVIE]: 6,
-	[MediaType.SHORT]: 6,
-	[MediaType.TVSHOW]: 6,
-	[MediaType.MANGA]: 6,
-	[MediaType.GAME]: 3,
-	[MediaType.COMIC]: 6,
-	[MediaType.BOOK]: 6,
-};
-
 // A simple counting semaphore — acquire() resolves immediately while under
 // the limit, otherwise waits for a release().
 function createSemaphore(limit: number) {
@@ -174,18 +160,65 @@ function createSemaphore(limit: number) {
 
 // Every type's queue runs concurrently (see runQueue below) and each item's
 // enrichOne() opens its own interactive Prisma transaction (see e.g.
-// tv-show.ts's db.$transaction) — summed across all of QUEUE_CONCURRENCY
-// above, that's up to ~39 transactions wanting a connection at once, far
-// more than the connection pool (db/client.ts's PrismaPg adapter, a plain
-// pg.Pool defaulting to 10) actually has. Without a cap here, most of those
-// requests just queue for a pool slot until Prisma's own maxWait elapses and
-// they fail with P2028 ("Unable to start a transaction in the given time")
-// instead of ever running. This gates entry to enrichOne itself (fetch +
-// write together, not just the transaction) so the number of connections
-// requested at once never exceeds what the pool can actually hand out,
-// regardless of how many types happen to be active in a given run.
-const GLOBAL_DB_CONCURRENCY = 8;
+// tv-show.ts's db.$transaction) — summed across every type's own
+// QUEUE_CONCURRENCY below, that's far more transactions wanting a connection
+// at once than the connection pool (db/client.ts's PrismaPg adapter, sized
+// to 30 — see its own comment) actually has. Without a cap here, most of
+// those requests just queue for a pool slot until Prisma's own maxWait
+// elapses and they fail with P2028 ("Unable to start a transaction in the
+// given time") instead of ever running. This gates entry to enrichOne itself
+// (fetch + write together, not just the transaction) so the number of
+// connections requested at once never exceeds what the pool can actually
+// hand out, regardless of how many types happen to be active in a given run.
+//
+// Higher than you'd expect for pure throughput's sake — against a remote DB
+// (Neon) the wait per transaction is mostly network round-trip latency, not
+// local CPU/DB load, so more items in flight at once hides that latency
+// almost for free instead of just queuing behind it. There is a real cost to
+// pushing this up: batch-entity-resolver.ts's resolve*Batch calls are
+// findMany-then-createMany, not upserts, so two concurrent transactions that
+// both find the same genre/company/person "missing" (a real occurrence —
+// genres/companies especially are shared across many items) both try to
+// create it, and one blocks on the other's row lock until it commits or
+// rolls back — enough of that contention chained together can blow past
+// db/client.ts's 60s interactive-transaction timeout (seen in practice at
+// 24: a transaction that should've taken ~1s took 78s and hit P2028). That's
+// treated as an acceptable, self-healing failure mode, not a bug to design
+// around: runQueue below already just logs a lock/timeout failure and moves
+// on, leaving the row PENDING (lastEnrichedAt untouched) for the next run to
+// pick up — nothing partial-commits. So this is set high, trading a small,
+// naturally-retried failure rate for real throughput, rather than kept low
+// to avoid contention entirely.
+const GLOBAL_DB_CONCURRENCY = 40;
 const dbSemaphore = createSemaphore(GLOBAL_DB_CONCURRENCY);
+
+// Real rate limiting lives at the client layer (each source's own client.ts
+// has a rate-limited-fetch.ts throttle + single-retry-on-429 — see e.g.
+// igdb/client.ts's limiter), so this only bounds how many of a given type's
+// items can be in flight (fetching + writing) at once, letting each queue's
+// own worker pool size reflect that source's own pacing/rate-limit
+// character — it does NOT bound how many Prisma transactions are open
+// system-wide, since queues for every type run concurrently. That's what
+// dbSemaphore above is for.
+//
+// This does NOT need to stay under each source's real request rate — actual
+// network fetches are already paced by that source's own rate limiter (e.g.
+// tmdb/client.ts's/igdb/client.ts's createRateLimiter), so a higher number
+// here just means more items *waiting* on that limiter (or, when
+// CACHE_RESPONSES=1, replaying a cached fixture — which doesn't touch the
+// limiter at all) rather than more requests actually leaving the process.
+// It's set equal to GLOBAL_DB_CONCURRENCY so a single-type run (e.g. `--
+// movie`) can use the whole DB concurrency budget instead of being capped
+// well below it by its own queue.
+const QUEUE_CONCURRENCY: Record<MediaType, number> = {
+	[MediaType.MOVIE]: GLOBAL_DB_CONCURRENCY,
+	[MediaType.SHORT]: GLOBAL_DB_CONCURRENCY,
+	[MediaType.TVSHOW]: GLOBAL_DB_CONCURRENCY,
+	[MediaType.MANGA]: GLOBAL_DB_CONCURRENCY,
+	[MediaType.GAME]: GLOBAL_DB_CONCURRENCY,
+	[MediaType.COMIC]: GLOBAL_DB_CONCURRENCY,
+	[MediaType.BOOK]: GLOBAL_DB_CONCURRENCY,
+};
 
 // Each media type talks to its own independent (and independently
 // rate-limited) API — TMDB, MangaDex, IGDB, ComicVine. Processing every
@@ -286,7 +319,7 @@ async function main() {
 					}),
 		},
 		orderBy: { id: "asc" },
-		take: 1000,
+		// take: 1000,
 	});
 
 	const queues = new Map<MediaType, Media[]>();
