@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { MediaStatus, Prisma, PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import "dotenv/config";
 
@@ -49,6 +49,26 @@ function excludeDeleted(
 	return { ...where, isDeleted: false };
 }
 
+// Same "merge in unless the caller already said something about this field"
+// pattern as excludeDeleted above — a caller that explicitly filters on
+// `status` (e.g. the home page's "Anticipated releases" section, which wants
+// exactly the ANNOUNCED/UPCOMING rows this would otherwise hide) always wins.
+// Everywhere else, unreleased media (announced or upcoming, i.e. not yet out)
+// stays out of public listings/search by default so it doesn't show up
+// looking like a normal released title with just a future date.
+const UNRELEASED_STATUSES: MediaStatus[] = [
+	MediaStatus.ANNOUNCED,
+	MediaStatus.UPCOMING,
+];
+function excludeUnreleased(
+	where: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+	if (where && "status" in where && where.status !== undefined) {
+		return where;
+	}
+	return { ...where, status: { notIn: UNRELEASED_STATUSES } };
+}
+
 // For public-facing reads only — every page a visitor can actually browse to
 // (home, per-type lists, ...) should query through this instead of the raw
 // `db`, so a newly added list page can't forget to hide soft-deleted media
@@ -68,21 +88,27 @@ export const dbPublic = db.$extends({
 	query: {
 		media: {
 			findMany({ args, query }) {
-				args.where = excludeDeleted(args.where) as Prisma.MediaWhereInput;
+				args.where = excludeUnreleased(
+					excludeDeleted(args.where),
+				) as Prisma.MediaWhereInput;
 				return query(args);
 			},
 			findFirst({ args, query }) {
-				args.where = excludeDeleted(args.where) as Prisma.MediaWhereInput;
+				args.where = excludeUnreleased(
+					excludeDeleted(args.where),
+				) as Prisma.MediaWhereInput;
 				return query(args);
 			},
 			findUnique({ args, query }) {
-				args.where = excludeDeleted(
-					args.where,
+				args.where = excludeUnreleased(
+					excludeDeleted(args.where),
 				) as Prisma.MediaWhereUniqueInput;
 				return query(args);
 			},
 			count({ args, query }) {
-				args.where = excludeDeleted(args.where) as Prisma.MediaWhereInput;
+				args.where = excludeUnreleased(
+					excludeDeleted(args.where),
+				) as Prisma.MediaWhereInput;
 				return query(args);
 			},
 		},

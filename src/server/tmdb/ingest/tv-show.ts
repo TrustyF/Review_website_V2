@@ -1,9 +1,25 @@
-import { EnrichmentStatus, MediaType } from "@prisma/client";
+import { EnrichmentStatus, MediaStatus, MediaType } from "@prisma/client";
 import { TmdbTvResponse } from "@/server/tmdb/schema";
 import { db } from "@/server/db/client";
 import { resolveCountry } from "@/server/resolvers/entity-resolver";
 import { syncTvShowCreditsAndGenres } from "@/server/tmdb/ingest/tv-show-credits";
 import { fetchTmdbImages, pickBestBackdrop } from "@/server/tmdb/client";
+
+// TMDB's own TV `status` string — anything unrecognized (including missing)
+// falls back to RELEASED rather than guessed at, same convention as IGDB's
+// STATUS_MAP in server/igdb/ingest/game.ts.
+const TV_STATUS_MAP: Record<string, MediaStatus> = {
+	Planned: MediaStatus.ANNOUNCED,
+	Pilot: MediaStatus.ANNOUNCED,
+	"In Production": MediaStatus.UPCOMING,
+	"Returning Series": MediaStatus.ONGOING,
+	Ended: MediaStatus.COMPLETED,
+	Canceled: MediaStatus.COMPLETED,
+};
+
+function resolveTvStatus(data: TmdbTvResponse): MediaStatus {
+	return TV_STATUS_MAP[data.status] ?? MediaStatus.RELEASED;
+}
 
 export async function addTvShowFromTmdb(data: TmdbTvResponse) {
 	const externalId = String(data.id);
@@ -29,6 +45,7 @@ export async function addTvShowFromTmdb(data: TmdbTvResponse) {
 				overview: data.overview,
 				externalId,
 				releaseDate: data.first_air_date ? new Date(data.first_air_date) : null,
+				status: resolveTvStatus(data),
 				publicRating: data.vote_average,
 				posterPath: data.poster_path,
 				bannerPath,
@@ -82,8 +99,9 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 
 		// Re-enrichment only fills in fields that are still empty — anything
 		// already set (whether from a prior ingest or a hand edit in the media
-		// editor) is left alone. publicRating/popularity are the exception:
-		// they genuinely change over time at the source, so they always refresh.
+		// editor) is left alone. publicRating/popularity/status are the
+		// exception: they genuinely change over time at the source, so they
+		// always refresh.
 		await tx.media.update({
 			where: { id: existing.id },
 			data: {
@@ -92,6 +110,7 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 				// own updateMovieFromTmdb for why a manual correction wins.
 				isAdult: existing.isAdult || data.adult,
 				overview: existing.overview ?? data.overview,
+				status: resolveTvStatus(data),
 				releaseDate:
 					existing.releaseDate ??
 					(data.first_air_date ? new Date(data.first_air_date) : null),

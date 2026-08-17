@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { resolveLinkEmbedImage } from "@/server/resolvers/poster-resolver";
 
@@ -19,10 +20,24 @@ export async function GET(
 
 	const media = await db.media.findUnique({
 		where: { id },
-		select: { type: true, externalId: true, posterPath: true, bannerPath: true },
+		select: {
+			type: true,
+			externalId: true,
+			posterPath: true,
+			bannerPath: true,
+			isDeleted: true,
+		},
 	});
 	if (!media) {
 		return NextResponse.json({ error: "Media not found" }, { status: 404 });
+	}
+	// Soft-deleted media's bytes stay admin-only — see the /media/[id] page's
+	// own gate for the matching restore-flow reasoning.
+	if (media.isDeleted) {
+		const session = await auth();
+		if (session?.user?.role !== "ADMIN") {
+			return NextResponse.json({ error: "Media not found" }, { status: 404 });
+		}
 	}
 
 	const resolved = await resolveLinkEmbedImage(

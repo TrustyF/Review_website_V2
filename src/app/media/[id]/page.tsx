@@ -236,6 +236,10 @@ export default async function MediaDetailPage({
 			: null,
 	]);
 	if (!raw) notFound();
+	// Soft-deleted media stays visible to admins only, so the editor's own
+	// restore flow (the isDeleted banner further down) still works — everyone
+	// else gets the same 404 as a nonexistent id.
+	if (raw.isDeleted && session?.user?.role !== "ADMIN") notFound();
 
 	const media = toMediaRecord(raw);
 

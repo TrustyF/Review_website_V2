@@ -1,9 +1,16 @@
-import { dbPublic } from "@/server/db/client";
+import { db, dbPublic } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
 import { FeaturedReview } from "@/components/home/featured-review/featured-review";
 import { RecentMoviesSection } from "@/components/home/recent-movies-section/recent-movies-section";
 import { RecentlyWatchedSection } from "@/components/home/recently-watched-section/recently-watched-section";
-import { EnrichmentStatus, MediaType, Prisma } from "@prisma/client";
+import { AnticipatedReleasesSection } from "@/components/home/anticipated-releases-section/anticipated-releases-section";
+import {
+	EnrichmentStatus,
+	MediaStatus,
+	MediaType,
+	Prisma,
+	UserRole,
+} from "@prisma/client";
 import styles from "./page.module.sass";
 
 // How many extra reviewed items ride along in FeaturedReview's own picker
@@ -11,6 +18,7 @@ import styles from "./page.module.sass";
 const RECENT_REVIEWS_COUNT = 6;
 const RECENT_MOVIES_COUNT = 14;
 const RECENTLY_WATCHED_COUNT = 14;
+const ANTICIPATED_RELEASES_COUNT = 14;
 // "Recent movies" is scoped to genuinely recent releases, not just
 // whatever's newest on the site — see getRecentMovies.
 const RECENT_MOVIES_MONTHS = 5;
@@ -39,10 +47,11 @@ const SCREEN_MEDIA_TYPES: MediaType[] = [
 	MediaType.TVSHOW,
 ];
 
-// "What's new on the site" (by releaseDate, same as RecentMediaListPage),
-// not "what was reviewed most recently" — a movie/short/show can appear here
-// whether or not it has a review yet. Scoped to the last RECENT_MOVIES_MONTHS
-// so a quiet stretch doesn't dredge up an old release, but never below
+// Recent releases *you've rated* — not just "what's new on the site"
+// (that's RecentMediaListPage's job). A movie/short/show only shows up here
+// once it has a rating, same rating: { not: null } condition
+// getRecentlyWatchedMovies uses. Scoped to the last RECENT_MOVIES_MONTHS so a
+// quiet stretch doesn't dredge up an old release, but never below
 // MIN_RECENT_MOVIES — if the window doesn't have enough, the date filter is
 // dropped entirely rather than showing a half-empty section.
 async function getRecentMovies() {
@@ -55,6 +64,7 @@ async function getRecentMovies() {
 			enrichmentStatus: EnrichmentStatus.DONE,
 			releaseDate: { gte: cutoff },
 			isAdult: false,
+			review: { rating: { not: null } },
 		},
 		include: { movie: true, tvShow: true, review: true },
 		orderBy: { releaseDate: "desc" },
@@ -67,11 +77,60 @@ async function getRecentMovies() {
 			type: { in: SCREEN_MEDIA_TYPES },
 			enrichmentStatus: EnrichmentStatus.DONE,
 			isAdult: false,
+			review: { rating: { not: null } },
 		},
 		include: { movie: true, tvShow: true, review: true },
 		orderBy: { releaseDate: "desc" },
 		take: MIN_RECENT_MOVIES,
 	});
+}
+
+// What's on *the site owner's* watchlist that's actually worth anticipating —
+// narrowed to media that's either still upcoming (ANNOUNCED/UPCOMING) or was
+// released within the same RECENT_MOVIES_MONTHS window getRecentMovies uses,
+// and that hasn't already been rated (once rated, it belongs in "Recent
+// releases" or "Recently watched" instead, not here). Deliberately excludes
+// the rest of the watchlist — an old title still waiting to be gotten to
+// isn't "anticipated," it's just backlog.
+//
+// This site is fundamentally one person's library shared publicly — regular
+// visitors can sign up (see /signup) to keep their own personal watchlist
+// (see WatchlistPage), but that's a separate, unrelated feature from this
+// section: this reads only the ADMIN account's own watchlist, the one used to
+// curate the site itself, not an aggregate of every visitor's bookmarks.
+//
+// Queried from WatchlistItem rather than through dbPublic, so isDeleted has
+// to be spelled out by hand here (same as credit-media-list-page.tsx) — and
+// since this reads unreleased media on purpose, `status` is filtered
+// explicitly rather than going through dbPublic's default exclusion.
+async function getAnticipatedReleases() {
+	const cutoff = new Date();
+	cutoff.setMonth(cutoff.getMonth() - RECENT_MOVIES_MONTHS);
+
+	const items = await db.watchlistItem.findMany({
+		where: {
+			user: { role: UserRole.ADMIN },
+			media: {
+				type: { in: SCREEN_MEDIA_TYPES },
+				enrichmentStatus: EnrichmentStatus.DONE,
+				isAdult: false,
+				isDeleted: false,
+				OR: [
+					{ status: { in: [MediaStatus.ANNOUNCED, MediaStatus.UPCOMING] } },
+					{ releaseDate: { gte: cutoff } },
+				],
+				NOT: { review: { rating: { not: null } } },
+			},
+		},
+		include: {
+			media: { include: { movie: true, tvShow: true, review: true } },
+		},
+		orderBy: { media: { releaseDate: { sort: "asc", nulls: "last" } } },
+		take: ANTICIPATED_RELEASES_COUNT,
+		distinct: ["mediaId"],
+	});
+
+	return items.map((item) => item.media);
 }
 
 // Movies/shorts/shows that have been watched (a rating exists) but haven't
@@ -152,22 +211,26 @@ async function getFeaturedReviewItems() {
 
 export default async function HomePage() {
 	// dbPublic (not db) — soft-deleted media is excluded automatically, see
-	// src/server/db/client.ts. The two queries don't depend on each other, so
-	// there's no reason to make one wait on the other.
-	const [reviewed, recentMoviesRaw, recentlyWatchedRaw] = await Promise.all([
-		getFeaturedReviewItems(),
-		getRecentMovies(),
-		getRecentlyWatchedMovies(),
-	]);
+	// src/server/db/client.ts. None of these queries depend on each other, so
+	// there's no reason to make one wait on another.
+	const [reviewed, recentMoviesRaw, recentlyWatchedRaw, anticipatedRaw] =
+		await Promise.all([
+			getFeaturedReviewItems(),
+			getRecentMovies(),
+			getRecentlyWatchedMovies(),
+			getAnticipatedReleases(),
+		]);
 
 	const reviewedList = reviewed.map(toMediaRecord);
 	const recentMovies = recentMoviesRaw.map(toMediaRecord);
 	const recentlyWatched = recentlyWatchedRaw.map(toMediaRecord);
+	const anticipatedReleases = anticipatedRaw.map(toMediaRecord);
 
 	return (
 		<div className={styles.wrapper}>
 			<FeaturedReview items={reviewedList} />
 			<RecentMoviesSection items={recentMovies} />
+			<AnticipatedReleasesSection items={anticipatedReleases} />
 			<RecentlyWatchedSection items={recentlyWatched} />
 		</div>
 	);

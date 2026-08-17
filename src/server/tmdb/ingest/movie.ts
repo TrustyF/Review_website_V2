@@ -1,9 +1,24 @@
-import { EnrichmentStatus, MediaType } from "@prisma/client";
+import { EnrichmentStatus, MediaStatus, MediaType } from "@prisma/client";
 import { TmdbMovieResponse } from "@/server/tmdb/schema";
 import { db } from "@/server/db/client";
 import { resolveCountry } from "@/server/resolvers/entity-resolver";
 import { syncMovieCreditsAndGenres } from "@/server/tmdb/ingest/movie-credits";
 import { fetchTmdbImages, pickBestBackdrop } from "@/server/tmdb/client";
+
+// TMDB's own movie `status` string — anything unrecognized (including
+// missing) falls back to RELEASED rather than guessed at, same convention as
+// IGDB's STATUS_MAP in server/igdb/ingest/game.ts.
+const MOVIE_STATUS_MAP: Record<string, MediaStatus> = {
+	Rumored: MediaStatus.ANNOUNCED,
+	Planned: MediaStatus.ANNOUNCED,
+	"In Production": MediaStatus.UPCOMING,
+	"Post Production": MediaStatus.UPCOMING,
+	Released: MediaStatus.RELEASED,
+};
+
+function resolveMovieStatus(data: TmdbMovieResponse): MediaStatus {
+	return MOVIE_STATUS_MAP[data.status] ?? MediaStatus.RELEASED;
+}
 
 // A movie's externalId is looked up against both MOVIE and SHORT — TMDB
 // has no separate id space for shorts, they're plain movie entries, and
@@ -37,6 +52,7 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 				overview: data.overview,
 				externalId,
 				releaseDate: data.release_date ? new Date(data.release_date) : null,
+				status: resolveMovieStatus(data),
 				publicRating: data.vote_average,
 				posterPath: data.poster_path,
 				bannerPath,
@@ -93,8 +109,8 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 
 		// Re-enrichment only fills in fields that are still empty — anything
 		// already set (whether from a prior ingest or a hand edit in the media
-		// editor) is left alone. budget/revenue/publicRating/popularity are the
-		// exception: those genuinely change over time at the source, so they
+		// editor) is left alone. budget/revenue/publicRating/popularity/status are
+		// the exception: those genuinely change over time at the source, so they
 		// always refresh.
 		await tx.media.update({
 			where: { id: existing.id },
@@ -107,6 +123,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 				// media-editor-modal.tsx) always wins over what TMDB re-reports.
 				isAdult: existing.isAdult || data.adult,
 				overview: existing.overview ?? data.overview,
+				status: resolveMovieStatus(data),
 				releaseDate:
 					existing.releaseDate ??
 					(data.release_date ? new Date(data.release_date) : null),
