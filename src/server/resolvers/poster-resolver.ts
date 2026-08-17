@@ -1,10 +1,37 @@
 import { readFile } from "fs/promises";
-import { createHash } from "crypto";
 import path from "path";
 import sharp from "sharp";
 import { after } from "next/server";
 import { MediaType } from "@prisma/client";
 import { getImageStorage } from "@/server/storage/image-storage";
+import {
+	BANNER_DIR,
+	BANNER_FORMAT,
+	BANNER_MAX_WIDTH,
+	BANNER_QUALITY,
+	CHANGELOG_BANNER_THUMB_DIR,
+	CHANGELOG_THUMB_DIR,
+	LINK_EMBED_DIR,
+	PERSON_PHOTO_DIR,
+	PERSON_PHOTO_MAX_WIDTH,
+	PERSON_PHOTO_QUALITY,
+	POSTER_DIR,
+	POSTER_QUALITY,
+	bannerUrlFor,
+	linkEmbedCacheKey,
+	mediaAssetFilename,
+	personPhotoUrlFor,
+	posterUrlFor,
+	type CacheFormat,
+} from "@/server/resolvers/asset-paths";
+
+// Re-exported so existing callers that only need the pure URL/filename
+// helpers (no `sharp` dependency) can keep importing from this file — new
+// perf-sensitive callers (server actions on a hot path, like search) should
+// import straight from asset-paths.ts instead, so their bundle doesn't pull
+// in sharp's native binary just to build a URL. See asset-paths.ts's own
+// comment for the full story.
+export * from "@/server/resolvers/asset-paths";
 
 // The change log thumbnail only ever displays at 46x69 CSS px (~138px tall
 // at 2x DPI) — smallSourceUrlFor already asks each source for its smallest
@@ -14,105 +41,14 @@ import { getImageStorage } from "@/server/storage/image-storage";
 // guarantees a small cached file either way, instead of only when the
 // source happens to cooperate.
 const THUMB_MAX_HEIGHT = 140;
-// Largest a person photo renders at today is the credits page sidebar,
-// 150px CSS width (300px at 2x DPI) — resizing TMDB's w300 source down to
-// this before caching keeps the cached file close to what's actually
-// displayed instead of a bigger crop nothing on site ever shows at full
-// size. See resolvePersonPhoto. Exported for the same reason as
-// BANNER_MAX_WIDTH/POSTER_QUALITY: so the compression dev tool can show
-// "what production actually does today" instead of a number that could
-// silently drift out of sync with this file.
-export const PERSON_PHOTO_MAX_WIDTH = 300;
-// Higher than POSTER_QUALITY: a person photo used to only ever render as a
-// tiny 40px cast avatar (where compression artifacts were invisible
-// anyway), but now renders up to 150px in the credits page sidebar — big
-// enough that the old 50 started showing visible blockiness on faces. Own
-// constant rather than reusing POSTER_QUALITY directly, same reasoning as
-// before: a headshot and a poster are different enough content that they
-// may not want to move together if either gets tuned again later. See
-// resolvePersonPhoto.
-export const PERSON_PHOTO_QUALITY = 50;
-// The page's own content column tops out at 950px (see media-detail.module
-// .sass .wrapper) — a banner never renders any wider than that, so caching
-// TMDB's 1280px backdrops or IGDB's up-to-1920px artworks at full size was
-// pure waste. Measured against 12 real banners: capping width alone (still
-// at WEBP_QUALITY) cut total size 45%, the large majority of what's
-// possible — quality has much less room to give without visibly softening
-// an image shown this large. See resolveBanner.
-// Exported (unlike the other size/quality constants here) so the banner
-// compression dev tool can show "what production actually does today" as a
-// baseline alongside whatever it's experimenting with, instead of a
-// hardcoded number that could silently drift out of sync with this file.
-export const BANNER_MAX_WIDTH = 1280;
-// avif/60 tuned in the banner compression dev tool (/dev/banner-compression)
-// against real TMDB/IGDB banners — meaningfully smaller than webp at a
-// quality where the difference isn't visible at the size a banner actually
-// renders. Changing either requires updating every place that assumes
-// BANNER_FORMAT's extension: mediaAssetFilename's "avif" argument in
-// types.ts (bannerSrc) and cleanup-posters.ts (orphan filenames), and the
-// Content-Type in the /api/banner route — all four have to agree on what's
-// actually on disk.
-export const BANNER_FORMAT = "avif";
-export const BANNER_QUALITY = 60;
-// Decorative only — a CSS mix-blend-mode overlay applied where a banner is
-// actually displayed (see BannerEditTrigger's .grain), never baked into the
-// cached file itself. Sharing this constant with the compression dev tool's
-// default just keeps "what production does" accurate there too; the
-// playground's grain slider still isn't part of what gets encoded to disk.
-export const BANNER_GRAIN_OPACITY = 0.5;
 // Change log rows show a small landscape thumbnail for a bannerPath change,
 // the same idea as THUMB_MAX_HEIGHT for posterPath — sized down from
 // BANNER_MAX_WIDTH the same way THUMB_MAX_HEIGHT is sized down from the full
 // poster. See resolveChangelogBannerThumb.
 const BANNER_THUMB_MAX_WIDTH = 120;
-// The main poster cache re-encodes to WebP at this quality and keeps the
-// source's own dimensions — it's the one cached asset here that's deliberately
-// never resized down, unlike the thumbnail and banner. Exported for the same
-// reason as the BANNER_* constants: so the compression dev tool can show
-// this as a baseline instead of a number that could drift out of sync.
-export const POSTER_QUALITY = 50;
 // The change log thumbnail cache re-encodes to WebP at its own lower
 // quality — see resolveChangelogPosterThumb.
 
-// Every *_DIR constant below is a logical key handed to ImageStorage, not a
-// real filesystem path — see src/server/storage/image-storage.ts. Local
-// storage joins it onto public/ itself; a remote backend would use it as a
-// key prefix instead.
-export const POSTER_DIR = "posters/cache";
-
-// Separate from POSTER_DIR: change log thumbnails are deliberately the
-// smallest size each source offers (see smallSourceUrlFor) rather than the
-// main poster's w500-equivalent, so they get their own cache directory
-// instead of colliding on the same filename with a different-sized file.
-export const CHANGELOG_THUMB_DIR = "posters/changelog-cache";
-
-// Separate again from the two above: banners are a different asset (wide
-// backdrop/artwork, not a poster) with their own cache, even though they
-// share every other bit of machinery in this file.
-export const BANNER_DIR = "banners/cache";
-
-// Change log's own banner thumbnail cache — same reasoning as
-// CHANGELOG_THUMB_DIR vs POSTER_DIR: a different size than BANNER_DIR, own
-// directory rather than risk colliding on a same-hash-different-size file.
-export const CHANGELOG_BANNER_THUMB_DIR = "banners/changelog-cache";
-
-// Cast headshot cache — keyed by personId rather than mediaId (nothing about
-// mediaAssetFilename's numeric-prefix-plus-hash scheme is actually
-// media-specific), since a person's photo is the same asset across every
-// media they're credited on.
-export const PERSON_PHOTO_DIR = "people/photo-cache";
-
-// A JPEG-specific cache purely for the og:image tag a shared link's preview
-// card reads (see resolveLinkEmbedImage) — separate from POSTER_DIR because
-// the main poster cache is deliberately WebP (smaller, and every on-site
-// caller already supports it), but Discord and WhatsApp's link-preview
-// crawlers (the latter shares Meta's scraper) have long-standing,
-// well-documented unreliability rendering WebP for og:image, reliable only
-// with JPEG/PNG. Its own directory rather than writing JPEGs into
-// POSTER_DIR alongside the WebP files — different format/size/quality
-// settings (below) means it isn't the same asset the rest of the site
-// wants, just derived from the same source.
-export const LINK_EMBED_DIR = "posters/link-embed-cache";
 // 1200x630 (~1.91:1) is the de facto standard og:image shape — the one
 // dimension both Discord and WhatsApp render consistently as a clean
 // rectangle. A poster's own 2:3 (or 3:4) crop doesn't fit that box, and
@@ -135,8 +71,6 @@ const LINK_EMBED_POSTER_BORDER = 6;
 // above POSTER_QUALITY's 50 rather than reused from it.
 const LINK_EMBED_QUALITY = 60;
 
-type CacheFormat = "webp" | "avif" | "jpeg";
-
 // Keyed by "dir/filename", so a resize/encode that's already running for a
 // given cache miss is reused instead of redone. Without this, several
 // concurrent requests for the same not-yet-cached asset (e.g. a handful of
@@ -155,80 +89,6 @@ function dedupeEncode(key: string, run: () => Promise<Buffer>): Promise<Buffer> 
 	const promise = run().finally(() => inFlightEncodes.delete(key));
 	inFlightEncodes.set(key, promise);
 	return promise;
-}
-
-// Content-addressable: the filename is derived from the source path itself
-// (posterPath or bannerPath), so switching a media's poster/banner naturally
-// produces a different filename/URL — no cache-busting query string or
-// manual invalidation needed. Old files from a previous path become
-// orphaned; see poster-cleanup.ts (main posters) and
-// purge-deleted-change-log.ts (change log thumbnails).
-// extension must match whatever cacheOrDownload actually encoded to for
-// that asset (see BANNER_FORMAT) — every caller of this function is
-// independently guessing the filename an earlier resolve*/cache write
-// produced, not reading it off disk.
-export function mediaAssetFilename(
-	mediaId: number,
-	assetPath: string,
-	extension: CacheFormat = "webp",
-) {
-	const hash = createHash("sha256")
-		.update(assetPath)
-		.digest("hex")
-		.slice(0, 12);
-	return `${mediaId}-${hash}.${extension}`;
-}
-
-// The lazy-resolve poster URL for a media item — points at /api/poster,
-// which does the actual resolve-or-download the moment something requests
-// it (see that route), or the static placeholder when there's no poster at
-// all. Was copy-pasted identically in list-actions.ts's searchMediaForList
-// and search-actions.ts's searchAllMedia; both build search results shaped
-// around a MediaRecord-like {id, posterPath}, so this is the one place that
-// ternary needs to live.
-export function toPosterSrc(mediaId: number, posterPath: string | null) {
-	return posterPath
-		? `/api/poster/${mediaId}/${mediaAssetFilename(mediaId, posterPath)}`
-		: "/posters/placeholder.jpg";
-}
-
-export type PosterSize = "thumb" | "full";
-
-// The one place that knows how to turn a stored posterPath into an actual
-// CDN URL — used for the main poster cache, the change log thumbnail cache,
-// the editor's alternate-poster picker, and add-media's search-result
-// thumbnails, so a source's URL template only ever needs to change here.
-//
-// Each source stores posterPath differently: TMDB's is a path segment
-// appended to its image CDN, MangaDex's is just a cover filename that needs
-// the manga's own id (externalId) to locate on its upload host, IGDB's is an
-// image_id that slots into its own CDN path template. ComicVine and manually
-// entered posters (see manual-add-actions.ts) are already full URLs, with
-// nothing left to template — checked first, ahead of and independent of
-// type, since a manual entry can be any MediaType.
-//
-// "thumb" vs "full" only matters for the three templated sources — a
-// ComicVine/manual posterPath is a fixed URL either way. Callers that want a
-// smaller size than "thumb" gives (e.g. the change log's 46x69 display) rely
-// on resolveChangelogPosterThumb's own resize instead of a third tier here.
-export function posterUrlFor(
-	type: MediaType,
-	externalId: string | null,
-	posterPath: string,
-	size: PosterSize,
-) {
-	if (posterPath.startsWith("http://") || posterPath.startsWith("https://")) {
-		return posterPath;
-	}
-	if (type === MediaType.MANGA) {
-		// .512.jpg is MangaDex's downsized thumbnail rather than the
-		// full-resolution scan (often several MB); .256.jpg is smaller still.
-		return `https://uploads.mangadex.org/covers/${externalId}/${posterPath}.${size === "full" ? "512" : "256"}.jpg`;
-	}
-	if (type === MediaType.GAME) {
-		return `https://images.igdb.com/igdb/image/upload/t_cover_${size === "full" ? "big" : "small"}/${posterPath}.jpg`;
-	}
-	return `https://image.tmdb.org/t/p/${size === "full" ? "w500" : "w154"}${posterPath}`;
 }
 
 // Shared by resolvePoster, resolveChangelogPosterThumb, and resolveBanner:
@@ -343,29 +203,6 @@ export async function resolvePoster(
 	}
 
 	return { bytes: source, contentType: sourceContentType, fresh: true };
-}
-
-// The composite depends on both the poster and (when there is one) the
-// banner, so both need to be part of the content-address — shared between
-// toLinkEmbedImageSrc and resolveLinkEmbedImage so they can never compute
-// different filenames for the same inputs.
-function linkEmbedCacheKey(posterPath: string, bannerPath: string | null) {
-	return `${posterPath}::${bannerPath ?? ""}`;
-}
-
-// The lazy-resolve URL counterpart to resolveLinkEmbedImage, same shape as
-// toPosterSrc — points at /api/link-embed, which resolves-or-downloads the
-// moment a link-preview crawler actually requests it. Returns null (not a
-// placeholder) when there's no real poster — a generic placeholder image on
-// a preview card would misrepresent the title rather than just show nothing.
-export function toLinkEmbedImageSrc(
-	mediaId: number,
-	posterPath: string | null,
-	bannerPath: string | null,
-) {
-	return posterPath
-		? `/api/link-embed/${mediaId}/${mediaAssetFilename(mediaId, linkEmbedCacheKey(posterPath, bannerPath), "jpeg")}`
-		: null;
 }
 
 async function fetchImageBytes(url: string): Promise<Buffer> {
@@ -484,21 +321,6 @@ export async function resolveChangelogPosterThumb(
 	return getImageStorage().urlFor(CHANGELOG_THUMB_DIR, filename);
 }
 
-// Only TMDB (backdrop_path) and IGDB (artworks) have a wide banner asset at
-// all — MangaDex/ComicVine/manual entries never populate Media.bannerPath in
-// the first place (see the ingest files), so this never actually needs to
-// handle those. No externalId parameter: unlike posterUrlFor, neither TMDB's
-// backdrop_path nor IGDB's artwork image_id need scoping context to locate.
-export function bannerUrlFor(type: MediaType, bannerPath: string) {
-	if (bannerPath.startsWith("http://") || bannerPath.startsWith("https://")) {
-		return bannerPath;
-	}
-	if (type === MediaType.GAME) {
-		return `https://images.igdb.com/igdb/image/upload/t_1080p/${bannerPath}.jpg`;
-	}
-	return `https://image.tmdb.org/t/p/w1280${bannerPath}`;
-}
-
 // Doesn't share cacheOrDownload's shape — a banner source (TMDB w1280
 // backdrop / IGDB t_1080p artwork) is large enough that the resize + AVIF
 // re-encode is the slow part of a cache miss, not the download. Blocking the
@@ -564,30 +386,6 @@ export async function resolveBanner(
 	}
 
 	return { bytes: source, contentType: sourceContentType, fresh: true };
-}
-
-// Only TMDB cast credits ever populate Person.photoPath (see
-// movie-credits.ts/tv-show-credits.ts and Person.photoPath's own comment) —
-// no per-source branching needed, same as companyLogoUrlFor. w300 is TMDB's
-// next profile size up from w185 — needed so resolvePersonPhoto's own
-// resize to PERSON_PHOTO_MAX_WIDTH (300) isn't just upscaling an
-// already-too-small source.
-export function personPhotoUrlFor(photoPath: string): string {
-	if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) {
-		return photoPath;
-	}
-	return `https://image.tmdb.org/t/p/w300${photoPath}`;
-}
-
-// The lazy-resolve URL counterpart to resolvePersonPhoto, same shape as
-// toPosterSrc — points at /api/person-photo, which resolves-or-downloads the
-// moment a browser actually requests it. Returns null (not a placeholder)
-// when there's no photo — CastPhotos falls back to a plain text link in that
-// case rather than rendering a generic avatar.
-export function toPersonPhotoSrc(personId: number, photoPath: string | null) {
-	return photoPath
-		? `/api/person-photo/${personId}/${mediaAssetFilename(personId, photoPath)}`
-		: null;
 }
 
 // Same fresh-miss/deferred-encode shape as resolvePoster/resolveBanner — see

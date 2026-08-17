@@ -3,10 +3,13 @@ import { after } from "next/server";
 import Fuse from "fuse.js";
 import { db, dbPublic } from "@/server/db/client";
 import { EnrichmentStatus, MediaType } from "@prisma/client";
+// Imported from asset-paths.ts directly (not poster-resolver.ts) so this
+// server action's cold-start bundle doesn't pull in sharp's native binary —
+// see asset-paths.ts's own comment for why that matters here specifically.
 import {
 	toPersonPhotoSrc,
 	toPosterSrc,
-} from "@/server/resolvers/poster-resolver";
+} from "@/server/resolvers/asset-paths";
 import { getImageStorage } from "@/server/storage/image-storage";
 import { hasPhotoEligibleRole } from "@/server/resolvers/person-photo-eligibility";
 

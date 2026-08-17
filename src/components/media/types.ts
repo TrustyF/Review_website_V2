@@ -11,11 +11,15 @@ import {
 	Review,
 	TvShow,
 } from "@prisma/client";
+// asset-paths.ts directly (not poster-resolver.ts) — this type module is
+// imported from many server actions' hot paths, so keeping sharp's native
+// binary out of its dependency graph matters broadly, not just here. See
+// asset-paths.ts's own comment.
 import {
 	BANNER_FORMAT,
 	mediaAssetFilename,
 	toPosterSrc,
-} from "@/server/resolvers/poster-resolver";
+} from "@/server/resolvers/asset-paths";
 
 // What Prisma actually hands back — every relation still optional
 export type RawMediaRecord = Media & {

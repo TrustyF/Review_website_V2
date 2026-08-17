@@ -2,7 +2,10 @@
 import { revalidatePath } from "next/cache";
 import { db, dbPublic } from "@/server/db/client";
 import { EnrichmentStatus } from "@prisma/client";
-import { toPosterSrc } from "@/server/resolvers/poster-resolver";
+// asset-paths.ts directly (not poster-resolver.ts) so this action's
+// cold-start bundle skips sharp's native binary — see asset-paths.ts's own
+// comment.
+import { toPosterSrc } from "@/server/resolvers/asset-paths";
 import { fuzzySearch } from "@/lib/fuzzy-search";
 import { requireAdmin } from "@/lib/auth/require-admin";
 

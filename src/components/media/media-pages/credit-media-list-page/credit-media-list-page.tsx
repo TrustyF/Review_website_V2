@@ -10,7 +10,7 @@ import { MediaGridColumnsProvider } from "@/components/media/media-grids/lazy-me
 import { PersonPhoto } from "@/components/media/primitives/person-photo";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { EnrichmentStatus } from "@prisma/client";
-import { toPersonPhotoSrc } from "@/server/resolvers/poster-resolver";
+import { toPersonPhotoSrc } from "@/server/resolvers/asset-paths";
 import { hasPhotoEligibleRole } from "@/server/resolvers/person-photo-eligibility";
 import styles from "./credit-media-list-page.module.sass";
 import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
