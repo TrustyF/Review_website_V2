@@ -129,6 +129,19 @@ let cachedIndex: { fuse: Fuse<SearchableEntry>; expiresAt: number } | null =
 	null;
 const CACHE_TTL_MS = 60 * 60_000;
 
+// How long the *durable* blob is trusted before being treated as a miss.
+// Kept far longer than CACHE_TTL_MS on purpose: every edit path that actually
+// changes what search should show (saveMediaDetails, setMediaDeleted,
+// hardDeleteMedia, createManualMedia) already calls invalidateSearchIndex()
+// directly, so this TTL isn't what keeps the durable copy fresh day-to-day —
+// it's purely a safety net for the ingest script, which runs as a separate
+// process and can't call invalidateSearchIndex() either. A short TTL here
+// just meant the first search after any >1hr traffic gap (e.g. overnight)
+// paid a full DB-query-plus-Fuse-build instead of the much cheaper durable
+// read — see getSearchIndex's own comment on why that gap matters more than
+// it looks like it should on a cold, un-JIT-warmed instance.
+const DURABLE_TTL_MS = 3 * 24 * 60 * 60_000;
+
 // Without Vercel Fluid Compute (no warm-instance reuse across requests), the
 // module-scope cache above almost never hits — nearly every search pays the
 // full DB-query-plus-Fuse-build cold path (measured at ~850ms in production,
@@ -147,20 +160,20 @@ const CACHE_TTL_MS = 60 * 60_000;
 const PERSISTED_INDEX_DIR = "search-index";
 const PERSISTED_INDEX_FILENAME = "media.json";
 
-// Bumped any time SearchableEntry's own shape changes (last: adding `kind`
-// to distinguish media from person entries). Without this, a blob written
-// by an older deploy — still sitting in R2/Blob, still inside its own
-// CACHE_TTL_MS window — would get read back and trusted as-is: a schema
-// change like an added/renamed field wouldn't necessarily throw during
-// JSON.parse, it'd just silently produce wrong-shaped SearchableEntry
-// objects (e.g. `kind: undefined`, matching neither branch of the "media" |
-// "person" union) fed straight into Fuse and into searchAllMedia's own
-// kind-based mapping — a real instance of this shipped a build where every
-// result rendered as a person, movies included, because old blobs had no
-// `kind` field to match "media" against. A version mismatch is treated
-// exactly like the TTL/corrupt-JSON cases below: just another reason to
-// treat this as a miss and rebuild from the DB.
-const PERSISTED_INDEX_VERSION = 3;
+// Bumped any time SearchableEntry's own shape *or* the persisted payload's
+// shape changes (last: adding the serialized `fuseIndex` alongside `items`).
+// Without this, a blob written by an older deploy — still sitting in
+// R2/Blob, still inside its own DURABLE_TTL_MS window — would get read back
+// and trusted as-is: a schema change like an added/renamed field wouldn't
+// necessarily throw during JSON.parse, it'd just silently produce
+// wrong-shaped SearchableEntry objects (e.g. `kind: undefined`, matching
+// neither branch of the "media" | "person" union) fed straight into Fuse and
+// into searchAllMedia's own kind-based mapping — a real instance of this
+// shipped a build where every result rendered as a person, movies included,
+// because old blobs had no `kind` field to match "media" against. A version
+// mismatch is treated exactly like the TTL/corrupt-JSON cases below: just
+// another reason to treat this as a miss and rebuild from the DB.
+const PERSISTED_INDEX_VERSION = 4;
 
 // JSON has no Date type — a media entry's releaseDate round-trips as an ISO
 // string (or null) on either side of read/writePersistedIndex instead;
@@ -169,10 +182,22 @@ type PersistedSearchEntry =
 	| (Omit<SearchableMedia, "releaseDate"> & { releaseDate: string | null })
 	| SearchablePerson;
 
+// The Fuse index built from `items` (Fuse.createIndex(...).toJSON()),
+// persisted alongside the raw items so a cold instance can hand it straight
+// to `Fuse.parseIndex()` instead of re-tokenizing and re-scoring all ~24k
+// title/alternateTitle strings itself. This is the expensive part of
+// getSearchIndex's cold path (see its own comment) — cheap to skip since
+// it's pure derived data from `items`, so it round-trips through JSON same
+// as everything else here.
+type SerializedFuseIndex = ReturnType<
+	ReturnType<typeof Fuse.createIndex<SearchableEntry>>["toJSON"]
+>;
+
 type PersistedSearchIndex = {
 	version: number;
 	builtAt: number;
 	items: PersistedSearchEntry[];
+	fuseIndex: SerializedFuseIndex;
 };
 
 function toPersisted(entry: SearchableEntry): PersistedSearchEntry {
@@ -192,13 +217,14 @@ function fromPersisted(entry: PersistedSearchEntry): SearchableEntry {
 }
 
 // null on a cache miss (nothing written yet) *or* a stale hit (older than
-// CACHE_TTL_MS) — reusing the same TTL as the module-scope cache rather than
-// a second magic number, since it exists for the same reason here: bounding
-// staleness for the ingest script, which runs as a separate process and so
-// can't call invalidateSearchIndex() either, same as the module-scope cache
-// this backs up. Also swallows a corrupt/unparseable blob as a miss, same as
-// every ImageStorage backend's own read() already does for its bytes.
-async function readPersistedIndex(): Promise<SearchableEntry[] | null> {
+// DURABLE_TTL_MS — see that constant's own comment on why it's now far
+// longer than the module-scope cache's TTL). Also swallows a
+// corrupt/unparseable blob as a miss, same as every ImageStorage backend's
+// own read() already does for its bytes.
+async function readPersistedIndex(): Promise<{
+	items: SearchableEntry[];
+	fuseIndex: SerializedFuseIndex;
+} | null> {
 	try {
 		const bytes = await getImageStorage().read(
 			PERSISTED_INDEX_DIR,
@@ -208,19 +234,28 @@ async function readPersistedIndex(): Promise<SearchableEntry[] | null> {
 
 		const parsed: PersistedSearchIndex = JSON.parse(bytes.toString("utf-8"));
 		if (parsed.version !== PERSISTED_INDEX_VERSION) return null;
-		if (parsed.builtAt + CACHE_TTL_MS <= Date.now()) return null;
+		if (parsed.builtAt + DURABLE_TTL_MS <= Date.now()) return null;
 
-		return parsed.items.map(fromPersisted);
+		return {
+			items: parsed.items.map(fromPersisted),
+			fuseIndex: parsed.fuseIndex,
+		};
 	} catch {
 		return null;
 	}
 }
 
 async function writePersistedIndex(items: SearchableEntry[]): Promise<void> {
+	// Built once here (not read back from a live Fuse instance) so this
+	// function works the same way whether it's backfilling after a DB miss or
+	// running from the build-time script, which never constructs a live Fuse
+	// instance of its own.
+	const fuseIndex = Fuse.createIndex(FUSE_OPTIONS.keys, items).toJSON();
 	const payload: PersistedSearchIndex = {
 		version: PERSISTED_INDEX_VERSION,
 		builtAt: Date.now(),
 		items: items.map(toPersisted),
+		fuseIndex,
 	};
 	await getImageStorage().write(
 		PERSISTED_INDEX_DIR,
@@ -373,18 +408,26 @@ async function getSearchIndex(): Promise<Fuse<SearchableEntry>> {
 	const dbDoneAt = performance.now();
 
 	// A miss here means either the very first search anywhere since the last
-	// invalidation, or the durable copy aged past CACHE_TTL_MS — either way,
+	// invalidation, or the durable copy aged past DURABLE_TTL_MS — either way,
 	// this instance eats the DB queries once and re-persists a fresh copy
 	// (after() — see poster-resolver.ts's resolvePoster for the same
 	// "return fast, write the durable copy off the response's critical path"
 	// shape) so the *next* cold instance's readPersistedIndex() above hits
 	// instead of also going to the DB.
-	const searchable = persisted ?? (await fetchSearchEntriesFromDb());
+	const searchable = persisted?.items ?? (await fetchSearchEntriesFromDb());
 	if (!persisted) {
 		after(() => writePersistedIndex(searchable));
 	}
 
-	const fuse = new Fuse(searchable, FUSE_OPTIONS);
+	// On a durable hit, hand Fuse the already-tokenized index instead of
+	// letting the constructor derive one from `searchable` itself — that
+	// re-tokenize-and-score pass over every title/alternateTitle is the actual
+	// cold-instance cost this whole persistence scheme exists to avoid (see
+	// SerializedFuseIndex's own comment), and it's pure derived data, so
+	// there's nothing lost by skipping it.
+	const fuse = persisted
+		? new Fuse(searchable, FUSE_OPTIONS, Fuse.parseIndex(persisted.fuseIndex))
+		: new Fuse(searchable, FUSE_OPTIONS);
 	const indexDoneAt = performance.now();
 
 	const cpu = process.cpuUsage(cpuBefore);
