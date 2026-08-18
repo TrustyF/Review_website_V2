@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db/client";
+import { getMedia } from "./get-media";
 import { toMediaRecord, MediaRecord } from "@/components/media/types";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { StarIcon } from "@/components/media/icons/star-icon";
@@ -198,24 +199,7 @@ export default async function MediaDetailPage({
 	// so there's no reason to make this page wait on them one after another.
 	const session = await auth();
 	const [raw, allLists, watchlistItem] = await Promise.all([
-		db.media.findUnique({
-			where: { id: mediaId },
-			include: {
-				movie: true,
-				tvShow: true,
-				manga: true,
-				comic: true,
-				game: true,
-				book: true,
-				review: true,
-				originCountry: true,
-				credits: {
-					include: { person: true, company: true, role: true },
-					orderBy: { order: "asc" },
-				},
-				changeLog: { orderBy: { createdAt: "desc" } },
-			},
-		}),
+		getMedia(mediaId),
 		// For AddToListButton — every list, plus which ones (if any) already
 		// have this media, so the popover can render pre-checked checkboxes
 		// without a second round trip once it opens.

@@ -70,20 +70,34 @@ type MediaSelection = {
 // /api/poster's full-size lazy resolve — a small, pre-cached image is the
 // right weight for a dense feed row, and it's the one poster source that
 // keeps resolving correctly even for media that's since been deleted.
-async function toMediaEntry(media: MediaSelection): Promise<ActivityFeedEntry["media"]> {
+// posterSrcCache dedupes resolveChangelogPosterThumb calls by media id — the
+// same title routinely shows up under several entries in one feed (e.g. a
+// RATED row and a WATCHLIST_ADDED row for the same media), and without this
+// each one would independently pay resolveChangelogPosterThumb's own
+// storage.read() round trip for what's always the identical result.
+async function toMediaEntry(
+	media: MediaSelection,
+	posterSrcCache: Map<number, Promise<string>>,
+): Promise<ActivityFeedEntry["media"]> {
 	if (!media) return null;
+	let posterSrc: Promise<string> | undefined;
+	if (media.posterPath) {
+		posterSrc = posterSrcCache.get(media.id);
+		if (!posterSrc) {
+			posterSrc = resolveChangelogPosterThumb(
+				media.id,
+				media.type,
+				media.externalId,
+				media.posterPath,
+			);
+			posterSrcCache.set(media.id, posterSrc);
+		}
+	}
 	return {
 		id: media.id,
 		title: media.title,
 		type: media.type,
-		posterSrc: media.posterPath
-			? await resolveChangelogPosterThumb(
-					media.id,
-					media.type,
-					media.externalId,
-					media.posterPath,
-				)
-			: PLACEHOLDER_POSTER_SRC,
+		posterSrc: posterSrc ? await posterSrc : PLACEHOLDER_POSTER_SRC,
 	};
 }
 
@@ -324,7 +338,11 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 
 	entries.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
+	const posterSrcCache = new Map<number, Promise<string>>();
 	return Promise.all(
-		entries.map(async (entry) => ({ ...entry, media: await toMediaEntry(entry.media) })),
+		entries.map(async (entry) => ({
+			...entry,
+			media: await toMediaEntry(entry.media, posterSrcCache),
+		})),
 	);
 }

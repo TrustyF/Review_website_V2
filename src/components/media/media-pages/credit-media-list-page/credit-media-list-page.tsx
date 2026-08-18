@@ -50,14 +50,18 @@ const CREATIVE_ROLES = new Set([
 ]);
 
 // Queries every DONE, non-deleted media row this entity is credited on,
-// optionally narrowed to one role name, deduped to one card per media and
-// sorted per SORT_MODE. Shared by the primary (possibly role-scoped) grid
-// and each "also credited as" role's own grid below.
-async function loadRoleMedia(
+// across every role at once, and groups the result by role name — one query
+// instead of the old one-per-role fan-out (each of which paid its own round
+// trip to the DB; a prolific person/company could easily have 5-10 distinct
+// roles). Within each role's group, dedupe to one card per media (the same
+// person/company can be credited more than once on one title under the same
+// role, e.g. actor + character listed twice) — different roles are never
+// merged here, so the same title can (deliberately) still show up once per
+// role's own grid below.
+async function loadRoleMediaByRole(
 	kind: "person" | "company",
 	id: number,
-	role: string | undefined,
-): Promise<MediaRecord[]> {
+): Promise<Map<string, MediaRecord[]>> {
 	// Queried from Credit rather than Media, so dbPublic's auto-filter can't
 	// reach it (Prisma extensions don't run for nested include/where — see
 	// dbPublic's own comment in src/server/db/client.ts) — isDeleted: false
@@ -65,10 +69,10 @@ async function loadRoleMedia(
 	const credits = await db.credit.findMany({
 		where: {
 			...(kind === "person" ? { personId: id } : { companyId: id }),
-			...(role ? { role: { name: role } } : {}),
 			media: { enrichmentStatus: EnrichmentStatus.DONE, isDeleted: false },
 		},
 		include: {
+			role: { select: { name: true } },
 			media: {
 				include: {
 					movie: true,
@@ -90,19 +94,26 @@ async function loadRoleMedia(
 				: { media: { releaseDate: "desc" } },
 	});
 
-	// The same person/company can be credited more than once on one title
-	// under the *same* role (e.g. actor + character listed twice) — dedupe to
-	// one card per media. Different roles are never merged here, so the same
-	// title can (deliberately) still show up once per role's own grid below.
 	// orderBy above already sorted the underlying credits, and Map preserves
-	// insertion order, so this stays in that order too.
-	const byMediaId = new Map<number, RawMediaRecord>();
+	// insertion order, so both the per-role dedupe and the role grouping
+	// itself stay in that order too.
+	const byRole = new Map<string, Map<number, RawMediaRecord>>();
 	for (const credit of credits) {
+		let byMediaId = byRole.get(credit.role.name);
+		if (!byMediaId) {
+			byMediaId = new Map();
+			byRole.set(credit.role.name, byMediaId);
+		}
 		if (!byMediaId.has(credit.media.id))
 			byMediaId.set(credit.media.id, credit.media);
 	}
 
-	return [...byMediaId.values()].map(toMediaRecord);
+	return new Map(
+		[...byRole.entries()].map(([role, byMediaId]) => [
+			role,
+			[...byMediaId.values()].map(toMediaRecord),
+		]),
+	);
 }
 
 // Self-weighted mean (Σr³ / Σr²) rather than a plain mean, ignoring media
@@ -140,33 +151,22 @@ function joinNames(names: string[]): string {
 // under (Actor, Director, Writer, Studio, ...) — no query param needed, this
 // always shows every credit type the entity has.
 export async function CreditMediaListPage({ kind, id }: Props) {
-	const entity =
+	// entity and mediaByRole don't depend on each other — both only need
+	// kind/id, already known from the route param — so there's no reason to
+	// make this page wait on them one after another.
+	const [entity, mediaByRole] = await Promise.all([
 		kind === "person"
-			? await db.person.findUnique({ where: { id } })
-			: await db.company.findUnique({ where: { id } });
+			? db.person.findUnique({ where: { id } })
+			: db.company.findUnique({ where: { id } }),
+		loadRoleMediaByRole(kind, id),
+	]);
 	if (!entity) notFound();
 
 	// Every role this entity has a DONE, non-deleted credit under. Actor is
 	// sorted first (it gets the avg-rating row below) and the rest follow
 	// alphabetically. Computed before photoSrc below since it also decides
 	// that.
-	const roleNames = [
-		...new Set(
-			(
-				await db.credit.findMany({
-					where: {
-						...(kind === "person" ? { personId: id } : { companyId: id }),
-						media: {
-							enrichmentStatus: EnrichmentStatus.DONE,
-							isDeleted: false,
-						},
-					},
-					select: { role: { select: { name: true } } },
-					distinct: ["roleId"],
-				})
-			).map((credit) => credit.role.name),
-		),
-	].sort((a, b) => {
+	const roleNames = [...mediaByRole.keys()].sort((a, b) => {
 		if (a === "Actor") return -1;
 		if (b === "Actor") return 1;
 		return a.localeCompare(b);
@@ -184,12 +184,10 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 			? toPersonPhotoSrc(entity.id, entity.photoPath)
 			: null;
 
-	const roleGroups = await Promise.all(
-		roleNames.map(async (name) => ({
-			name,
-			media: await loadRoleMedia(kind, id, name),
-		})),
-	);
+	const roleGroups = roleNames.map((name) => ({
+		name,
+		media: mediaByRole.get(name)!,
+	}));
 
 	// Average of this person's own ratings and of the media's public rating.
 	// Scoped to just their creative-role credits when they have any, deduped
