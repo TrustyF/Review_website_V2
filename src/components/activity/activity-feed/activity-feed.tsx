@@ -120,20 +120,19 @@ function ListLink({ list }: { list: NonNullable<ActivityFeedEntry["list"]> }) {
 // Every ActivityType boils down to the same "verb + target(s) [+ value]"
 // shape — RATED/REVIEWED/RATING_CHANGED/WATCHLIST_ADDED target a media,
 // LIST_CREATED a list, LIST_ITEM_ADDED both at once. Returning that shape
-// as three separate pieces (rather than one pre-joined ReactNode, like
-// before) is what lets ActivityRow lay them out as fixed-width grid
-// columns — action/target/value/date all start at the same x position on
-// every row, instead of flowing as free-form wrapped text whose width
-// depends on that row's own content.
+// as three separate pieces (rather than one pre-joined ReactNode) is what
+// lets ActivityRow lay them out on two separate lines next to the poster
+// (title+date, then action+value below it — see .content/.title_row/.meta)
+// instead of one flowing sentence.
 function activityLabel(entry: ActivityFeedEntry): {
-	action: string;
+	action: string | null;
 	target: React.ReactNode;
 	value: React.ReactNode;
 } {
 	switch (entry.type) {
 		case "RATED":
 			return {
-				action: "Rated",
+				action: null,
 				target: entry.media && <MediaLink media={entry.media} />,
 				value: <RatingValue value={entry.newValue} />,
 			};
@@ -146,7 +145,7 @@ function activityLabel(entry: ActivityFeedEntry): {
 		case "RATING_CHANGED": {
 			const direction = ratingDirection(entry.oldValue, entry.newValue);
 			return {
-				action: "Adjusted rating",
+				action: null,
 				target: entry.media && <MediaLink media={entry.media} />,
 				value: (
 					<span className={styles.value_change}>
@@ -203,11 +202,17 @@ function ActivityRow({ entry }: { entry: ActivityFeedEntry }) {
 			) : (
 				<Icon size={16} className={styles.type_icon} />
 			)}
-			<span className={styles.target}>{target}</span>
-			<span className={styles.action}>{action}</span>
-			<span className={styles.value}>{value}</span>
-			<span className={styles.date}>
-				{DateFormatter.format(entry.createdAt)}
+			<span className={styles.content}>
+				<span className={styles.title_row}>
+					<span className={styles.target}>{target}</span>
+					<span className={styles.date}>
+						{DateFormatter.format(entry.createdAt)}
+					</span>
+				</span>
+				<span className={styles.meta}>
+					{action && <span className={styles.action}>{action}</span>}
+					<span className={styles.value}>{value}</span>
+				</span>
 			</span>
 		</li>
 	);
@@ -238,9 +243,6 @@ export function ActivityFeed({ entries }: { entries: ActivityFeedEntry[] }) {
 									{showGapDivider && (
 										<li className={styles.timeline_gap} aria-hidden="true">
 											<span className={styles.timeline_gap_line} />
-											<span className={styles.timeline_gap_label}>
-												{/*{formatGap(gapDays)}*/}
-											</span>
 										</li>
 									)}
 									<ActivityRow entry={entry} />

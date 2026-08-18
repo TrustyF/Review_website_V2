@@ -36,22 +36,22 @@
   flex-flow: column
   list-style: none
 
-// Fixed-width columns (not content-sized) so every row's action/target/
-// value/date all start at the same x position — since every .entry gets
-// the exact same track sizes, this aligns across rows without the rows
-// needing to coordinate with each other (no shared parent grid needed).
-// [icon/poster] [action] [target, flexible+truncated] [value] [date]
+// Two columns: a taller poster, and a content block beside it that's
+// itself two stacked lines (title+date, then action+value) — a small
+// "card" per row rather than one flat table row. Poster height (5.5rem)
+// drives the row height; .content centers its two lines within it via
+// justify-content rather than the row stretching them apart.
 .entry
   display: grid
-  grid-template-columns: 3rem 1fr 7rem 1fr auto
+  grid-template-columns: 4rem 1fr
   align-items: center
   column-gap: 0.75rem
-  padding: 0.4rem 0
-  height: 4rem
+  padding: 0.5rem 0
+  height: 6rem
 
 // Same sizing/fit as change-log-list.module.sass's own .poster_value — a
 // media row here should look like one lifted straight out of that list.
-// justify-self centers it within the fixed 3rem icon/poster column, since
+// justify-self centers it within the fixed 4rem icon/poster column, since
 // its own rendered width (icon: 16px fixed; poster: aspect-ratio-derived,
 // narrower than the column) varies between the two.
 .poster
@@ -59,8 +59,8 @@
   // replaced element like <img> resolves to its *intrinsic* size (93x140
   // here, from the width/height props — see the Image call site's own
   // comment) rather than the height:100%/width:auto below — without this
-  // override the fixed 3rem column can't actually shrink it and it spills
-  // out of the row.
+  // override the fixed column can't actually shrink it and it spills out
+  // of the row.
   min-width: 0
   min-height: 0
   justify-self: center
@@ -73,25 +73,52 @@
   justify-self: center
   color: var(--accent1)
 
-// The descriptive verb text ("Rated", "Watchlisted", ...) — an accent color
-// so it reads as connective tissue around the actual clickable target
-// (.title_link) rather than competing with it for emphasis. nowrap since
-// its column is a fixed width sized to fit the longest one of these.
+// The two-line text block next to the poster — vertically centered inside
+// the row (poster is what actually sets the row's height now, not this).
+.content
+  min-width: 0
+  height: 100%
+  display: flex
+  flex-flow: column
+  justify-content: center
+  gap: 0.3rem
+
+// Title line: the target, with the date pushed to the far right of the
+// same line rather than its own column.
+.title_row
+  display: flex
+  flex-flow: row
+  align-items: baseline
+  justify-content: space-between
+  gap: 0.75rem
+  min-width: 0
+
+// Subtitle line: the action verb ("Rated", "Watchlisted", ...) followed by
+// its value, reading like a caption under the title rather than a table
+// cell — left-aligned, no fixed width needed now that it isn't sharing a
+// row with the title.
+.meta
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.4rem
+
 .action
   color: var(--accent3)
-  font-size: 0.9rem
+  font-size: 0.85rem
   white-space: nowrap
-  text-align: right
 
-// The target column — a title_link (or, for LIST_ITEM_ADDED, two of them
-// joined by "to") — clipped to one line rather than left to wrap, since
-// wrapping would grow that row taller than every other row's fixed height.
+// The target — a title_link (or, for LIST_ITEM_ADDED, the media) — clipped
+// to one line rather than left to wrap, since wrapping would grow that
+// row taller than every other row's fixed height.
 .target
   min-width: 0
   overflow: hidden
   white-space: nowrap
   text-overflow: ellipsis
-  font-size: 0.9rem
+  font-size: 1rem
+  line-height: normal
+  font-weight: 500
 
 .title_link
   color: var(--foreground)
@@ -100,17 +127,16 @@
   &:hover
     text-decoration: underline
 
-// The value column (a RatingValue, a RATING_CHANGED old→new pair, or
-// WATCHLIST_ADDED's own icon) — empty for types with nothing to show
-// there, which still reserves the column's width so .date stays aligned
-// regardless.
+// The value (a RatingValue, a RATING_CHANGED old→new pair, WATCHLIST_ADDED's
+// own icon, or LIST_ITEM_ADDED's list link) — empty for types with nothing
+// to show there.
 .value
   display: flex
   flex-flow: row
   align-items: center
 
 // Same accent as the icon column's own .type_icon, so a bare icon sitting
-// in the value column reads consistently with one sitting in the icon
+// in the value spot reads consistently with one sitting in the poster
 // column.
 .value_icon
   color: var(--accent3)
@@ -162,7 +188,6 @@
   color: var(--danger)
 
 .date
-  flex-shrink: 0
   color: var(--accent1)
   font-family: $font-mono
   font-size: 0.8rem
@@ -176,7 +201,8 @@
   align-items: center
   gap: 1rem
   height: 2rem
-  margin: 0.5rem 0 0.2rem 1.5rem
+  // 2rem centers it under .entry's 4rem icon/poster column.
+  margin: 0.5rem 0 0.2rem 2rem
 
 .timeline_gap_line
   align-self: stretch

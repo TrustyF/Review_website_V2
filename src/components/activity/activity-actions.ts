@@ -94,7 +94,13 @@ async function toMediaEntry(media: MediaSelection): Promise<ActivityFeedEntry["m
 // all (only an admin can ever write them), but WATCHLIST_ADDED needs an
 // explicit `user.role: ADMIN` filter since watchlist is genuinely per-user
 // — this is meant to read as "my activity", not a public log of what every
-// visitor's account has been doing.
+// visitor's account has been doing. Every media-referencing query also
+// excludes adult/soft-deleted media directly on its own `where`, rather
+// than going through dbPublic — that extension (src/server/db/client.ts)
+// only patches top-level `db.media.*` calls, not a nested `media: {...}`
+// select off another model the way every query below does, so it wouldn't
+// actually filter anything here even if used. isAdult isn't wired into it
+// at all yet either (see that field's own comment in media.prisma).
 //
 // Each source query takes its own PAGE_SIZE, capped and sorted by that
 // source's own date column — deliberately NOT re-capped to PAGE_SIZE again
@@ -110,8 +116,11 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 	const [ratedReviews, reviewedReviews, ratingChanges, lists, listItems, watchlistItems] =
 		await Promise.all([
 			// RATED — every review has this, since a rating is required to save
-			// one at all (see saveReview).
+			// one at all (see saveReview). Excludes adult/soft-deleted media —
+			// this feed is public (see the comment below), unlike the review/
+			// media editor itself.
 			db.review.findMany({
+				where: { media: { isAdult: false, isDeleted: false } },
 				orderBy: { createDate: "desc" },
 				take: PAGE_SIZE,
 				select: {
@@ -130,7 +139,10 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 			// rated long ago but only just written up needs to rank by when it
 			// was reviewed, not when it was rated.
 			db.review.findMany({
-				where: { reviewDate: { not: null } },
+				where: {
+					reviewDate: { not: null },
+					media: { isAdult: false, isDeleted: false },
+				},
 				orderBy: { reviewDate: "desc" },
 				take: PAGE_SIZE,
 				select: {
@@ -143,7 +155,11 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 				},
 			}),
 			db.mediaChangeLog.findMany({
-				where: { field: "rating", deletedAt: null },
+				where: {
+					field: "rating",
+					deletedAt: null,
+					media: { isAdult: false, isDeleted: false },
+				},
 				orderBy: { createdAt: "desc" },
 				take: PAGE_SIZE,
 				select: {
@@ -161,6 +177,7 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 				select: { id: true, title: true, createDate: true },
 			}),
 			db.listItem.findMany({
+				where: { media: { isAdult: false, isDeleted: false } },
 				orderBy: { addedAt: "desc" },
 				take: PAGE_SIZE,
 				select: {
@@ -171,7 +188,10 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 				},
 			}),
 			db.watchlistItem.findMany({
-				where: { user: { role: "ADMIN" } },
+				where: {
+					user: { role: "ADMIN" },
+					media: { isAdult: false, isDeleted: false },
+				},
 				orderBy: { addedAt: "desc" },
 				take: PAGE_SIZE,
 				select: {

@@ -7,7 +7,6 @@ export default async function ActivityPage() {
 
 	return (
 		<div className={styles.wrapper}>
-			{/*<h1>Activity</h1>*/}
 			<ActivityFeed entries={entries} />
 		</div>
 	);
