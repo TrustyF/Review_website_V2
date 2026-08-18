@@ -255,6 +255,7 @@ export default function MediaEditorModal() {
 				id: prev.review?.id ?? 0,
 				mediaId: prev.id,
 				rating: prev.review?.rating ?? null,
+				initialRating: prev.review?.initialRating ?? null,
 				liked: prev.review?.liked ?? false,
 				difficulty: prev.review?.difficulty ?? null,
 				body: prev.review?.body ?? null,

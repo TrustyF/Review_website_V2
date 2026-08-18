@@ -4,12 +4,19 @@ model Review {
   mediaId Int   @unique
   media   Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 
-  rating     Float?
-  liked      Boolean @default(false)
+  rating        Float?
+  // Set once, at creation only (see saveReview's `create` branch) — the
+  // rating actually given at the time, immune to `rating` itself changing
+  // later. Deliberately its own stored column rather than derived from
+  // MediaChangeLog's earliest "rating" row: that log is deletable
+  // (deleteChangeLogEntry / purge-deleted-change-log.ts), so a derivation
+  // depending on it surviving could silently go stale if it didn't.
+  initialRating Float?
+  liked         Boolean @default(false)
   // null and 0 are equivalent — both mean "no difficulty notch" (see
   // MediaPoster's own difficulty === 1 || difficulty === 2 check); 1 is
   // medium, 2 is hard.
-  difficulty Int?
+  difficulty    Int?
 
   body String?
 

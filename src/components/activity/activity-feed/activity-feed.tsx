@@ -59,15 +59,38 @@ const TYPE_ICON = {
 // Same value + star pairing as change-log-list.tsx's own ChangeValue
 // "rating" branch — kept a local copy rather than importing that function
 // since it's the one field this feed renders a value for at all (every
-// other type is self-describing from its label alone).
-function RatingValue({ value }: { value: string | null }) {
+// other type is self-describing from its label alone). `old` mirrors that
+// same file's .old_value/.new_value split (accent + strikethrough vs. plain)
+// — only ever passed for RATING_CHANGED's oldValue side, RATED/REVIEWED's
+// single value is always "current" and never struck through.
+function RatingValue({
+	value,
+	old = false,
+}: {
+	value: string | null;
+	old?: boolean;
+}) {
 	if (value === null) return <>—</>;
 	return (
-		<span className={styles.rating_value}>
-			{value}
-			<StarIcon />
+		<span
+			className={`${styles.rating_value} ${old ? styles.rating_value_old : ""}`}>
+			<span className={old ? styles.value_old : undefined}>{value}</span>
+			{!old && <StarIcon size={10} />}
 		</span>
 	);
+}
+
+// Which way the arrow should read, for RATING_CHANGED's own arrow color —
+// null (equal, or either side unparseable) leaves it at its neutral default
+// rather than guessing a direction that isn't real.
+function ratingDirection(
+	oldValue: string | null,
+	newValue: string | null,
+): "up" | "down" | null {
+	const from = oldValue === null ? NaN : Number(oldValue);
+	const to = newValue === null ? NaN : Number(newValue);
+	if (Number.isNaN(from) || Number.isNaN(to) || from === to) return null;
+	return to > from ? "up" : "down";
 }
 
 // The one bit of each row that actually goes somewhere — styled apart from
@@ -103,7 +126,7 @@ function ActivityRow({ entry }: { entry: ActivityFeedEntry }) {
 			label = (
 				<>
 					<span className={styles.action}>Rated</span>{" "}
-					{entry.media && <MediaLink media={entry.media} />}
+					{entry.media && <MediaLink media={entry.media} />}{" "}
 					<RatingValue value={entry.newValue} />
 				</>
 			);
@@ -112,23 +135,29 @@ function ActivityRow({ entry }: { entry: ActivityFeedEntry }) {
 			label = (
 				<>
 					<span className={styles.action}>Reviewed</span>{" "}
-					{entry.media && <MediaLink media={entry.media} />}
+					{entry.media && <MediaLink media={entry.media} />}{" "}
+					<RatingValue value={entry.newValue} />
 				</>
 			);
 			break;
-		case "RATING_CHANGED":
+		case "RATING_CHANGED": {
+			const direction = ratingDirection(entry.oldValue, entry.newValue);
 			label = (
 				<>
-					<span className={styles.action}>Rating changed for</span>{" "}
-					{entry.media && <MediaLink media={entry.media} />}
+					<span className={styles.action}>Adjusted rating</span>{" "}
+					{entry.media && <MediaLink media={entry.media} />}{" "}
 					<span className={styles.value_change}>
-						<RatingValue value={entry.oldValue} />
-						<ArrowRight size={12} className={styles.arrow_icon} />
+						<RatingValue value={entry.oldValue} old />
+						<ArrowRight
+							size={12}
+							className={`${styles.arrow_icon} ${direction ? styles[`arrow_${direction}`] : ""}`}
+						/>
 						<RatingValue value={entry.newValue} />
 					</span>
 				</>
 			);
 			break;
+		}
 		case "WATCHLIST_ADDED":
 			label = (
 				<>
@@ -209,7 +238,7 @@ export function ActivityFeed({ entries }: { entries: ActivityFeedEntry[] }) {
 										<li className={styles.timeline_gap} aria-hidden="true">
 											<span className={styles.timeline_gap_line} />
 											<span className={styles.timeline_gap_label}>
-												{formatGap(gapDays)}
+												{/*{formatGap(gapDays)}*/}
 											</span>
 										</li>
 									)}

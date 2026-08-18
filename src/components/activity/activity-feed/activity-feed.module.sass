@@ -14,7 +14,8 @@
 
 .group_header
   cursor: pointer
-  padding: 1rem 0 2rem 0
+  padding: 1rem
+  margin: 0 0 1rem -1rem
   border-radius: 0.5rem
   display: flex
   flex-flow: row
@@ -64,7 +65,7 @@
   flex-flow: row
   align-items: center
   flex-wrap: wrap
-  gap: 0.4rem
+  gap: 0.8rem
   color: var(--body)
   font-size: 0.9rem
 
@@ -96,8 +97,42 @@
   align-items: center
   gap: 0.2rem
 
+// The "before" side of a RATING_CHANGED pair — same accent as
+// change-log-list.module.sass's own .old_value, so a glance at color alone
+// (not just position) says which side is which.
+.rating_value_old
+  color: var(--accent2)
+
+// Just the number, not the star next to it — a diagonal ::after bar rather
+// than plain text-decoration: line-through (which can only draw a
+// horizontal line), scoped to this inner span so the strike doesn't run
+// through the star icon too.
+.value_old
+  position: relative
+
+  //&::after
+  //  content: ""
+  //  position: absolute
+  //  top: 50%
+  //  left: -0.1rem
+  //  right: -0.1rem
+  //  height: 1.5px
+  //  background: var(--accent2)
+  //  transform: rotate(-18deg)
+
 .arrow_icon
   flex-shrink: 0
+  color: var(--accent1)
+  stroke-width: 0.2rem
+
+// Direction the rating moved — set on .arrow_icon alongside it (see
+// ratingDirection in activity-feed.tsx), overriding its own neutral
+// --accent1 default only when the two values actually differ.
+.arrow_up
+  color: var(--success)
+
+.arrow_down
+  color: var(--danger)
 
 .date
   flex-shrink: 0
@@ -114,7 +149,7 @@
   align-items: center
   gap: 1rem
   height: 2rem
-  margin: 0.2rem 0 0.2rem 1.5rem
+  margin: 0.5rem 0 0.2rem 2rem
 
 .timeline_gap_line
   align-self: stretch

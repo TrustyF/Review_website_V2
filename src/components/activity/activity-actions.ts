@@ -118,6 +118,7 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 					mediaId: true,
 					createDate: true,
 					rating: true,
+					initialRating: true,
 					media: { select: MEDIA_SELECT },
 				},
 			}),
@@ -136,6 +137,8 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 					mediaId: true,
 					reviewDate: true,
 					createDate: true,
+					rating: true,
+					initialRating: true,
 					media: { select: MEDIA_SELECT },
 				},
 			}),
@@ -194,24 +197,38 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 	const entries: (Omit<ActivityFeedEntry, "media"> & { media: MediaSelection })[] = [
 		...ratedReviews
 			.filter((review) => !sameDayReviewedMediaIds.has(review.mediaId))
-			.map((review) => ({
-				id: `rated-${review.mediaId}`,
-				type: "RATED" as const,
-				createdAt: review.createDate,
+			.map((review) => {
+				// initialRating is what was actually given at the time (see its
+				// own comment in rating.prisma) — falls back to the live `rating`
+				// only for the unreachable-post-backfill case of a row that
+				// somehow never got one.
+				const rating = review.initialRating ?? review.rating;
+				return {
+					id: `rated-${review.mediaId}`,
+					type: "RATED" as const,
+					createdAt: review.createDate,
+					oldValue: null,
+					newValue: rating == null ? null : String(rating),
+					media: review.media,
+					list: null,
+				};
+			}),
+		...reviewedReviews.map((review) => {
+			// Same originally-given-rating value RATED shows (see its own
+			// comment above) — REVIEWED winning the same-day tiebreak
+			// shouldn't mean the rating itself goes unshown, just that it's
+			// folded into this one entry instead of a separate RATED row.
+			const rating = review.initialRating ?? review.rating;
+			return {
+				id: `reviewed-${review.mediaId}`,
+				type: "REVIEWED" as const,
+				createdAt: review.reviewDate!,
 				oldValue: null,
-				newValue: review.rating == null ? null : String(review.rating),
+				newValue: rating == null ? null : String(rating),
 				media: review.media,
 				list: null,
-			})),
-		...reviewedReviews.map((review) => ({
-			id: `reviewed-${review.mediaId}`,
-			type: "REVIEWED" as const,
-			createdAt: review.reviewDate!,
-			oldValue: null,
-			newValue: null,
-			media: review.media,
-			list: null,
-		})),
+			};
+		}),
 		...ratingChanges.map((change) => ({
 			id: `rating-${change.id}`,
 			type: "RATING_CHANGED" as const,

@@ -108,7 +108,15 @@ export async function saveReview(
 	await db.review.upsert({
 		where: { mediaId },
 		update: { ...review, ...(reviewDate ? { reviewDate } : {}) },
-		create: { mediaId, ...review, ...(reviewDate ? { reviewDate } : {}) },
+		// initialRating only goes in the create branch — see its own comment
+		// in rating.prisma, the whole point is that it never moves again once
+		// set, unlike `rating` itself.
+		create: {
+			mediaId,
+			...review,
+			initialRating: review.rating,
+			...(reviewDate ? { reviewDate } : {}),
+		},
 	});
 
 	// Only log the usual field-by-field diff once a review already exists —
