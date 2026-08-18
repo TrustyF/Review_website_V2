@@ -1,0 +1,21 @@
+// Same spin/ring look add-media.module.sass's own .spinner uses, just sized
+// up and wrapped in a centering container — the generic "something's
+// loading" indicator, not an attempt to preview the final layout.
+.wrapper
+  display: flex
+  align-items: center
+  justify-content: center
+  min-height: 40vh
+  width: 100%
+
+@keyframes spin
+  to
+    transform: rotate(360deg)
+
+.spinner
+  width: 2.5rem
+  height: 2.5rem
+  border: 3px solid var(--accent1)
+  border-top-color: transparent
+  border-radius: 50%
+  animation: spin 0.7s linear infinite
