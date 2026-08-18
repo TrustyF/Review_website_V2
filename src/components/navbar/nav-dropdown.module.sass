@@ -114,6 +114,17 @@
   z-index: 20
   padding-top: 0.5rem
 
+// Modifier for a dropdown whose own trigger sits flush against the navbar's
+// right edge (see nav-bar.tsx's own Account NavDropdown) — anchoring the
+// panel from `left` there would grow it off the right edge of the viewport
+// instead of back over the trigger, same as any left-anchored dropdown
+// would if it were the rightmost thing on the page. Anchoring from `right`
+// instead grows the panel leftward, staying under the trigger regardless of
+// how close to the edge it sits.
+.panel_right
+  left: auto
+  right: 0
+
 .panel_content
   display: flex
   flex-flow: column

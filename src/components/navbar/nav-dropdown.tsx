@@ -41,6 +41,11 @@ type Props = {
 	// moved to aria-label/title so the trigger's name is still exposed to
 	// screen readers and as a hover tooltip.
 	iconOnly?: boolean;
+	// Which side of the trigger the panel grows from — "right" for a
+	// dropdown pinned against the navbar's own right edge (see
+	// nav-dropdown.module.sass's .panel_right), so the panel stays under the
+	// trigger instead of growing off the edge of the viewport.
+	align?: "left" | "right";
 };
 
 // Marks every NavDropdown's root <details> so the "close other dropdowns"
@@ -99,6 +104,7 @@ export function NavDropdown({
 	items,
 	collapseTier = 1,
 	iconOnly = false,
+	align = "left",
 }: Props) {
 	const pathname = usePathname();
 	// Trigger shows the active child's own label ("Movies") rather than the
@@ -288,7 +294,8 @@ export function NavDropdown({
 				</Link>
 				<ChevronDown size={14} className={style.chevron} />
 			</summary>
-			<div className={style.panel}>
+			<div
+				className={`${style.panel} ${align === "right" ? style.panel_right : ""}`}>
 				<div className={style.panel_content}>
 					{items.map((item) => {
 						const ItemIcon = item.icon;

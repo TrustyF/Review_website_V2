@@ -13,7 +13,6 @@ import {
 	LogOut,
 	LucideProvider,
 	type LucideIcon,
-	Zap,
 } from "lucide-react";
 import { ActivityIcon } from "@/components/icons/activity-icon";
 import { HomeIcon } from "@/components/icons/home-icon";
@@ -263,7 +262,7 @@ export default function Navbar() {
 						<div className={style.nav_group}>
 							<NavLink
 								href="/activity"
-								icon={Zap}
+								icon={ActivityIcon}
 								className={style.link}
 								pathname={pathname}
 								collapseTier={COLLAPSE_TIER.ACTIVITY}>
@@ -295,6 +294,7 @@ export default function Navbar() {
 										icon={AccountIcon}
 										collapseTier={COLLAPSE_TIER.ACCOUNT}
 										iconOnly
+										align="right"
 										items={[
 											{ href: "/account", label: "Account", icon: AccountIcon },
 											{
