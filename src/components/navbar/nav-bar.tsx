@@ -12,6 +12,7 @@ import {
 	LogIn,
 	LogOut,
 	LucideProvider,
+	Zap,
 	type LucideIcon,
 } from "lucide-react";
 import { HomeIcon } from "@/components/icons/home-icon";
@@ -238,6 +239,13 @@ export default function Navbar() {
 								className={style.link}
 								pathname={pathname}>
 								Lists
+							</NavLink>
+							<NavLink
+								href="/activity"
+								icon={Zap}
+								className={style.link}
+								pathname={pathname}>
+								Activity
 							</NavLink>
 						</div>
 

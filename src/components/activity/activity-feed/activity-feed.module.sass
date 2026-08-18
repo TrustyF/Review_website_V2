@@ -1,0 +1,127 @@
+@use "@/app/styles/variables" as *
+
+.empty
+  @include empty-text
+
+// Same sticky-header treatment as grouped-media-list.module.sass's own
+// .group_header/.groups (the Reviews page's month grouping) — reused here
+// so the two "grouped by month" list pages read as the same pattern rather
+// than each having invented their own.
+.groups
+  display: flex
+  flex-flow: column
+  gap: 2rem
+
+.group_header
+  cursor: pointer
+  padding: 1rem 0 2rem 0
+  border-radius: 0.5rem
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.25rem
+  font-size: 1.25rem
+  font-weight: 600
+  width: fit-content
+  position: sticky
+  top: calc(var(--navbar-offset) + 1rem)
+  z-index: 5
+  background: var(--background)
+  transform: translateX(-1rem)
+  transition: top 0.25s ease
+
+.list
+  display: flex
+  flex-flow: column
+  list-style: none
+
+.entry
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.75rem
+  padding: 0.4rem 1rem
+  height: 4rem
+
+// Same sizing/fit as change-log-list.module.sass's own .poster_value — a
+// media row here should look like one lifted straight out of that list.
+.poster
+  flex-shrink: 0
+  height: 100%
+  width: auto
+  object-fit: contain
+  border-radius: 0.2rem
+
+.type_icon
+  flex-shrink: 0
+  width: 1.9rem
+  color: var(--accent1)
+
+.label
+  flex: 1
+  min-width: 0
+  display: flex
+  flex-flow: row
+  align-items: center
+  flex-wrap: wrap
+  gap: 0.4rem
+  color: var(--body)
+  font-size: 0.9rem
+
+// The descriptive verb text ("Added a review for", "Watchlisted", ...) —
+// an accent color so it reads as connective tissue around the actual
+// clickable title (.title_link) rather than competing with it for emphasis.
+.action
+  color: var(--accent1)
+
+.title_link
+  color: var(--foreground)
+  text-decoration: none
+
+  &:hover
+    text-decoration: underline
+
+.value_change
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.3rem
+  font-size: 0.85rem
+
+// Same value + star pairing as change-log-list.module.sass's own
+// .rating_value.
+.rating_value
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.2rem
+
+.arrow_icon
+  flex-shrink: 0
+
+.date
+  flex-shrink: 0
+  color: var(--accent1)
+  font-family: $font-mono
+  font-size: 0.8rem
+
+// Same treatment as change-log-list.module.sass's own .timeline_gap — a
+// short vertical tick between two entries at least TIMELINE_GAP_DAYS apart,
+// reading as a break in the timeline's spine rather than a full-width rule.
+.timeline_gap
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 1rem
+  height: 2rem
+  margin: 0.2rem 0 0.2rem 1.5rem
+
+.timeline_gap_line
+  align-self: stretch
+  border-left: 1px var(--accent1) dashed
+
+.timeline_gap_label
+  flex-shrink: 0
+  color: var(--accent1)
+  font-size: 0.7rem
+  letter-spacing: 0.03em

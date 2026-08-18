@@ -19,6 +19,7 @@ export async function addToWatchlist(mediaId: number): Promise<void> {
 
 	revalidatePath("/watchlist");
 	revalidatePath(`/media/${mediaId}`);
+	revalidatePath("/activity");
 }
 
 export async function removeFromWatchlist(mediaId: number): Promise<void> {
@@ -30,4 +31,5 @@ export async function removeFromWatchlist(mediaId: number): Promise<void> {
 
 	revalidatePath("/watchlist");
 	revalidatePath(`/media/${mediaId}`);
+	revalidatePath("/activity");
 }

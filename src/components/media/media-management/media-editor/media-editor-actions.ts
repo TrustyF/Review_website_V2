@@ -129,6 +129,7 @@ export async function saveReview(
 	}
 
 	revalidatePath("/", "layout");
+	revalidatePath("/activity");
 }
 
 // A rewatch has no field of its own to diff — it's not "rating changed",

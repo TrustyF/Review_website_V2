@@ -48,6 +48,7 @@ export async function createList(input: ListInput): Promise<number> {
 	});
 
 	revalidatePath("/lists");
+	revalidatePath("/activity");
 	return list.id;
 }
 
@@ -108,6 +109,7 @@ export async function addMediaToList(
 	revalidatePath(`/lists/${listId}`);
 	revalidatePath("/lists");
 	revalidatePath(`/media/${mediaId}`);
+	revalidatePath("/activity");
 }
 
 export async function removeMediaFromList(
@@ -122,6 +124,7 @@ export async function removeMediaFromList(
 	revalidatePath(`/lists/${listId}`);
 	revalidatePath("/lists");
 	revalidatePath(`/media/${mediaId}`);
+	revalidatePath("/activity");
 }
 
 // Persists a drag-and-drop reorder (see ranked-list.tsx) — orderedMediaIds
