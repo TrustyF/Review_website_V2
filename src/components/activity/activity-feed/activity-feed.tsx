@@ -1,8 +1,9 @@
 import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Bookmark, ListPlus, PenLine } from "lucide-react";
+import { ArrowRight, ListPlus, PenLine } from "lucide-react";
 import { StarIcon } from "@/components/media/icons/star-icon";
+import { WatchlistIcon } from "@/components/icons/watchlist-icon";
 import type { ActivityFeedEntry } from "@/components/activity/activity-actions";
 import { groupByActivityMonth } from "./group-by-activity-month";
 import styles from "./activity-feed.module.sass";
@@ -19,7 +20,7 @@ const DateFormatter = new Intl.DateTimeFormat("en-GB", {
 // least this long between two consecutive entries (within the same month
 // group; the sticky month header already marks a break across groups) gets
 // a divider instead of the list just running the two together.
-const TIMELINE_GAP_DAYS = 1;
+const TIMELINE_GAP_DAYS = 3;
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 function daysBetween(a: Date, b: Date): number {
@@ -48,7 +49,7 @@ const TYPE_ICON = {
 	RATED: StarIcon,
 	RATING_CHANGED: StarIcon,
 	REVIEWED: PenLine,
-	WATCHLIST_ADDED: Bookmark,
+	WATCHLIST_ADDED: WatchlistIcon,
 	LIST_CREATED: ListPlus,
 	// Never actually rendered — LIST_ITEM_ADDED always carries a media row
 	// (see addMediaToList), so ActivityRow's poster branch wins instead —
@@ -116,36 +117,38 @@ function ListLink({ list }: { list: NonNullable<ActivityFeedEntry["list"]> }) {
 	);
 }
 
-function ActivityRow({ entry }: { entry: ActivityFeedEntry }) {
-	const Icon = TYPE_ICON[entry.type];
-
-	let label: React.ReactNode;
-
+// Every ActivityType boils down to the same "verb + target(s) [+ value]"
+// shape — RATED/REVIEWED/RATING_CHANGED/WATCHLIST_ADDED target a media,
+// LIST_CREATED a list, LIST_ITEM_ADDED both at once. Returning that shape
+// as three separate pieces (rather than one pre-joined ReactNode, like
+// before) is what lets ActivityRow lay them out as fixed-width grid
+// columns — action/target/value/date all start at the same x position on
+// every row, instead of flowing as free-form wrapped text whose width
+// depends on that row's own content.
+function activityLabel(entry: ActivityFeedEntry): {
+	action: string;
+	target: React.ReactNode;
+	value: React.ReactNode;
+} {
 	switch (entry.type) {
 		case "RATED":
-			label = (
-				<>
-					<span className={styles.action}>Rated</span>{" "}
-					{entry.media && <MediaLink media={entry.media} />}{" "}
-					<RatingValue value={entry.newValue} />
-				</>
-			);
-			break;
+			return {
+				action: "Rated",
+				target: entry.media && <MediaLink media={entry.media} />,
+				value: <RatingValue value={entry.newValue} />,
+			};
 		case "REVIEWED":
-			label = (
-				<>
-					<span className={styles.action}>Reviewed</span>{" "}
-					{entry.media && <MediaLink media={entry.media} />}{" "}
-					<RatingValue value={entry.newValue} />
-				</>
-			);
-			break;
+			return {
+				action: "Reviewed",
+				target: entry.media && <MediaLink media={entry.media} />,
+				value: <RatingValue value={entry.newValue} />,
+			};
 		case "RATING_CHANGED": {
 			const direction = ratingDirection(entry.oldValue, entry.newValue);
-			label = (
-				<>
-					<span className={styles.action}>Adjusted rating</span>{" "}
-					{entry.media && <MediaLink media={entry.media} />}{" "}
+			return {
+				action: "Adjusted rating",
+				target: entry.media && <MediaLink media={entry.media} />,
+				value: (
 					<span className={styles.value_change}>
 						<RatingValue value={entry.oldValue} old />
 						<ArrowRight
@@ -154,37 +157,33 @@ function ActivityRow({ entry }: { entry: ActivityFeedEntry }) {
 						/>
 						<RatingValue value={entry.newValue} />
 					</span>
-				</>
-			);
-			break;
+				),
+			};
 		}
 		case "WATCHLIST_ADDED":
-			label = (
-				<>
-					<span className={styles.action}>Watchlisted</span>{" "}
-					{entry.media && <MediaLink media={entry.media} />}
-				</>
-			);
-			break;
+			return {
+				action: "Watchlisted",
+				target: entry.media && <MediaLink media={entry.media} />,
+				value: <WatchlistIcon size={14} className={styles.value_icon} />,
+			};
 		case "LIST_CREATED":
-			label = (
-				<>
-					<span className={styles.action}>Created list</span>{" "}
-					{entry.list && <ListLink list={entry.list} />}
-				</>
-			);
-			break;
+			return {
+				action: "Created list",
+				target: entry.list && <ListLink list={entry.list} />,
+				value: null,
+			};
 		case "LIST_ITEM_ADDED":
-			label = (
-				<>
-					<span className={styles.action}>Added</span>{" "}
-					{entry.media && <MediaLink media={entry.media} />}{" "}
-					<span className={styles.action}>to</span>{" "}
-					{entry.list && <ListLink list={entry.list} />}
-				</>
-			);
-			break;
+			return {
+				action: "Added to",
+				target: entry.media && <MediaLink media={entry.media} />,
+				value: entry.list && <ListLink list={entry.list} />,
+			};
 	}
+}
+
+function ActivityRow({ entry }: { entry: ActivityFeedEntry }) {
+	const Icon = TYPE_ICON[entry.type];
+	const { action, target, value } = activityLabel(entry);
 
 	return (
 		<li className={styles.entry}>
@@ -204,7 +203,9 @@ function ActivityRow({ entry }: { entry: ActivityFeedEntry }) {
 			) : (
 				<Icon size={16} className={styles.type_icon} />
 			)}
-			<span className={styles.label}>{label}</span>
+			<span className={styles.target}>{target}</span>
+			<span className={styles.action}>{action}</span>
+			<span className={styles.value}>{value}</span>
 			<span className={styles.date}>
 				{DateFormatter.format(entry.createdAt)}
 			</span>

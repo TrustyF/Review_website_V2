@@ -36,44 +36,62 @@
   flex-flow: column
   list-style: none
 
+// Fixed-width columns (not content-sized) so every row's action/target/
+// value/date all start at the same x position — since every .entry gets
+// the exact same track sizes, this aligns across rows without the rows
+// needing to coordinate with each other (no shared parent grid needed).
+// [icon/poster] [action] [target, flexible+truncated] [value] [date]
 .entry
-  display: flex
-  flex-flow: row
+  display: grid
+  grid-template-columns: 3rem 1fr 7rem 1fr auto
   align-items: center
-  gap: 0.75rem
-  padding: 0.4rem 1rem
+  column-gap: 0.75rem
+  padding: 0.4rem 0
   height: 4rem
 
 // Same sizing/fit as change-log-list.module.sass's own .poster_value — a
 // media row here should look like one lifted straight out of that list.
+// justify-self centers it within the fixed 3rem icon/poster column, since
+// its own rendered width (icon: 16px fixed; poster: aspect-ratio-derived,
+// narrower than the column) varies between the two.
 .poster
-  flex-shrink: 0
+  // A grid item's default min-width/min-height is auto, which for a
+  // replaced element like <img> resolves to its *intrinsic* size (93x140
+  // here, from the width/height props — see the Image call site's own
+  // comment) rather than the height:100%/width:auto below — without this
+  // override the fixed 3rem column can't actually shrink it and it spills
+  // out of the row.
+  min-width: 0
+  min-height: 0
+  justify-self: center
   height: 100%
   width: auto
   object-fit: contain
   border-radius: 0.2rem
 
 .type_icon
-  flex-shrink: 0
-  width: 1.9rem
+  justify-self: center
   color: var(--accent1)
 
-.label
-  flex: 1
-  min-width: 0
-  display: flex
-  flex-flow: row
-  align-items: center
-  flex-wrap: wrap
-  gap: 0.8rem
-  color: var(--body)
-  font-size: 0.9rem
-
-// The descriptive verb text ("Added a review for", "Watchlisted", ...) —
-// an accent color so it reads as connective tissue around the actual
-// clickable title (.title_link) rather than competing with it for emphasis.
+// The descriptive verb text ("Rated", "Watchlisted", ...) — an accent color
+// so it reads as connective tissue around the actual clickable target
+// (.title_link) rather than competing with it for emphasis. nowrap since
+// its column is a fixed width sized to fit the longest one of these.
 .action
-  color: var(--accent1)
+  color: var(--accent3)
+  font-size: 0.9rem
+  white-space: nowrap
+  text-align: right
+
+// The target column — a title_link (or, for LIST_ITEM_ADDED, two of them
+// joined by "to") — clipped to one line rather than left to wrap, since
+// wrapping would grow that row taller than every other row's fixed height.
+.target
+  min-width: 0
+  overflow: hidden
+  white-space: nowrap
+  text-overflow: ellipsis
+  font-size: 0.9rem
 
 .title_link
   color: var(--foreground)
@@ -82,20 +100,29 @@
   &:hover
     text-decoration: underline
 
-.value_change
+// The value column (a RatingValue, a RATING_CHANGED old→new pair, or
+// WATCHLIST_ADDED's own icon) — empty for types with nothing to show
+// there, which still reserves the column's width so .date stays aligned
+// regardless.
+.value
+  display: flex
+  flex-flow: row
+  align-items: center
+
+// Same accent as the icon column's own .type_icon, so a bare icon sitting
+// in the value column reads consistently with one sitting in the icon
+// column.
+.value_icon
+  color: var(--accent3)
+
+.value_change,
+.rating_value
   display: flex
   flex-flow: row
   align-items: center
   gap: 0.3rem
   font-size: 0.85rem
 
-// Same value + star pairing as change-log-list.module.sass's own
-// .rating_value.
-.rating_value
-  display: flex
-  flex-flow: row
-  align-items: center
-  gap: 0.2rem
 
 // The "before" side of a RATING_CHANGED pair — same accent as
 // change-log-list.module.sass's own .old_value, so a glance at color alone
@@ -149,7 +176,7 @@
   align-items: center
   gap: 1rem
   height: 2rem
-  margin: 0.5rem 0 0.2rem 2rem
+  margin: 0.5rem 0 0.2rem 1.5rem
 
 .timeline_gap_line
   align-self: stretch
