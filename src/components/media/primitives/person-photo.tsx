@@ -1,3 +1,5 @@
+"use client";
+import { useEffect, useState } from "react";
 import { UserRound } from "lucide-react";
 import styles from "./person-photo.module.sass";
 
@@ -31,7 +33,43 @@ export function PersonPhoto({
 	placeholderClassName?: string | undefined;
 	iconSize?: number;
 }) {
-	return src ? (
+	// Preloaded off-DOM rather than just tracking the visible <img>'s own
+	// onLoad — swapping straight to an <img> the instant src is known would
+	// otherwise show the browser's default "not loaded yet" state (the alt
+	// text, rendered as plain text in place of the image) for however long
+	// the fetch takes, instead of this component's own placeholder tile. By
+	// the time isLoaded flips, the browser has already cached this exact URL,
+	// so the real <img> below mounts already-decoded rather than re-fetching.
+	const [isLoaded, setIsLoaded] = useState(false);
+	// Resets on an actual src change via the render-phase pattern (rather
+	// than an unconditional setState at the top of the effect below) — same
+	// convention use-lazy-reveal.ts's own itemsKey reset uses.
+	const [prevSrc, setPrevSrc] = useState(src);
+	if (src !== prevSrc) {
+		setPrevSrc(src);
+		setIsLoaded(false);
+	}
+
+	useEffect(() => {
+		if (!src) return;
+		let cancelled = false;
+		const handleLoad = () => {
+			if (!cancelled) setIsLoaded(true);
+		};
+		const image = new window.Image();
+		image.onload = handleLoad;
+		image.src = src;
+		// Already-cached case — onload won't fire since it's attached after a
+		// synchronously-resolved src, so this drives the same setState through
+		// a callback (queueMicrotask) instead of calling it directly from the
+		// effect body itself.
+		if (image.complete) queueMicrotask(handleLoad);
+		return () => {
+			cancelled = true;
+		};
+	}, [src]);
+
+	return src && isLoaded ? (
 		// Proxied third-party photo, not a local/optimizable asset (same as
 		// ImagePicker's own thumbnails).
 		// eslint-disable-next-line @next/next/no-img-element

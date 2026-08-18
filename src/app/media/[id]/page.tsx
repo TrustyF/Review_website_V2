@@ -1,8 +1,6 @@
-import { ReactNode } from "react";
-import Link from "next/link";
+import { ReactNode, Suspense } from "react";
 import { notFound } from "next/navigation";
-import { db } from "@/server/db/client";
-import { getMedia } from "./get-media";
+import { getMediaCore } from "./get-media";
 import { toMediaRecord, MediaRecord } from "@/components/media/types";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { StarIcon } from "@/components/media/icons/star-icon";
@@ -10,19 +8,16 @@ import { MediaTitle } from "@/components/media/primitives/title";
 import { MediaReleaseDate } from "@/components/media/primitives/release-date";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { EnrichedAgo } from "@/components/media/primitives/enriched-ago";
-import { ChangeLogList } from "@/components/media/media-management/change-log/change-log-list";
 import { formatRuntime } from "@/components/media/primitives/runtime";
 import { PosterEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/poster-edit-trigger";
 import { BannerEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/banner-edit-trigger";
 import { ReviewBodyEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/review-body-edit-trigger";
-import { AddToListButton } from "@/components/lists/add-to-list-button/add-to-list-button";
-import { AddToWatchlistButton } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-button";
+import { AddToListButtonSection } from "@/components/lists/add-to-list-button/add-to-list-button-section";
+import { AddToWatchlistButtonSection } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-button-section";
 import { auth } from "@/auth";
-import {
-	BANNER_GRAIN_OPACITY,
-	toPersonPhotoSrc,
-} from "@/server/resolvers/poster-resolver";
-import { PersonPhoto } from "@/components/media/primitives/person-photo";
+import { BANNER_GRAIN_OPACITY } from "@/server/resolvers/poster-resolver";
+import { MediaDirectorCredit, MediaCreditsDetails } from "./credits-section";
+import { MediaChangeLogSection } from "./change-log-section";
 import styles from "./media-detail.module.sass";
 import { CircularGauge } from "@/components/ui/circular-gauge";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -39,89 +34,12 @@ const CurrencyFormatter = new Intl.NumberFormat("en-US", {
 	maximumFractionDigits: 1,
 });
 
-// Director/Actor/Studio are promoted out of the collapsed credits list (see
-// below) — everything left in there is a long tail that varies a lot by
-// source (TMDB crew jobs are free text, MangaDex/ComicVine/IGDB each have
-// their own handful of role names). Known roles worth surfacing first get a
-// rank here; anything unlisted falls back to alphabetical after them.
-const ROLE_PRIORITY: Record<string, number> = {
-	Writer: 0,
-	Screenplay: 0,
-	Creator: 0,
-	Author: 0,
-	Developer: 0,
-	Story: 1,
-	Artist: 1,
-	Publisher: 1,
-	"Executive Producer": 2,
-	Producer: 3,
-};
-
-const TOP_ACTOR_COUNT = 10;
-
 function Fact({ label, value }: { label: string; value: ReactNode }) {
 	return (
 		<div className={styles.fact}>
 			<dt className={styles.fact_label}>{label}</dt>
 			<dd className={styles.fact_value}>{value}</dd>
 		</div>
-	);
-}
-
-type CreditLink = {
-	key: string;
-	href: string;
-	name: string;
-	order: number | null;
-	// Only ever set on Actor entries (see the credit-building loop below) —
-	// Person.photoPath itself is cast-only, and this is gated by role on top
-	// of that so a person who's also credited as e.g. Director elsewhere
-	// still never shows a photo there.
-	photoSrc: string | null;
-	// Only ever set on Actor entries, same gating as photoSrc.
-	character: string | null;
-};
-
-// Comma-separated linked names — shared by the promoted Director/Cast/Studio
-// facts and each row of the collapsed "everything else" list.
-function CreditNames({ entries }: { entries: CreditLink[] }) {
-	return (
-		<span className={styles.credit_names}>
-			{entries.map((entry, i) => (
-				<span key={entry.key}>
-					{i > 0 && ", "}
-					<Link href={entry.href} className={styles.credit_link}>
-						{entry.name}
-					</Link>
-				</span>
-			))}
-		</span>
-	);
-}
-
-// Cast's own row, shown as a strip of small headshots (name underneath
-// each) instead of comma-separated text — an actor with no photo (never
-// backfilled yet, or TMDB just doesn't have one) gets PersonPhoto's own
-// placeholder tile instead of falling back to text, so the row stays a
-// consistent strip of same-shaped tiles either way.
-function CastPhotos({ entries }: { entries: CreditLink[] }) {
-	return (
-		<span className={styles.cast_photos}>
-			{entries.map((entry) => (
-				<Link
-					key={entry.key}
-					href={entry.href}
-					className={styles.cast_photo_link}>
-					<PersonPhoto src={entry.photoSrc} alt={entry.name} />
-					<span className={styles.cast_photo_name}>{entry.name}</span>
-					{entry.character && (
-						<span className={styles.cast_photo_character}>
-							{entry.character}
-						</span>
-					)}
-				</Link>
-			))}
-		</span>
 	);
 }
 
@@ -194,31 +112,16 @@ export default async function MediaDetailPage({
 	const mediaId = Number(id);
 	if (!Number.isFinite(mediaId)) notFound();
 
-	// allLists/watchlistItem only depend on mediaId (already known from the
-	// route param), not on raw — none of these queries depend on each other,
-	// so there's no reason to make this page wait on them one after another.
+	// auth() is JWT-only (see src/auth.ts) — never hits the DB, so there's no
+	// cost to awaiting it up front alongside the one query the rest of this
+	// page's content actually depends on. AddToListButtonSection/
+	// AddToWatchlistButtonSection/MediaDirectorCredit/MediaCreditsDetails/
+	// MediaChangeLogSection all run their own queries independently, each
+	// wrapped in its own <Suspense> below, so a slow credits or change-log
+	// query no longer blocks the banner/title/facts (which only ever needed
+	// getMediaCore's own result) from rendering.
 	const session = await auth();
-	const [raw, allLists, watchlistItem] = await Promise.all([
-		getMedia(mediaId),
-		// For AddToListButton — every list, plus which ones (if any) already
-		// have this media, so the popover can render pre-checked checkboxes
-		// without a second round trip once it opens.
-		db.list.findMany({
-			select: {
-				id: true,
-				title: true,
-				items: { where: { mediaId }, select: { mediaId: true } },
-			},
-			orderBy: { createDate: "desc" },
-		}),
-		// For AddToWatchlistButton — only signed-in visitors have a watchlist
-		// to belong to.
-		session?.user
-			? db.watchlistItem.findUnique({
-					where: { userId_mediaId: { userId: session.user.id, mediaId } },
-				})
-			: null,
-	]);
+	const raw = await getMediaCore(mediaId);
 	if (!raw) notFound();
 	// Soft-deleted media stays visible to admins only, so the editor's own
 	// restore flow (the isDeleted banner further down) still works — everyone
@@ -263,67 +166,6 @@ export default async function MediaDetailPage({
 	// MediaPoster's own corner notch uses (see poster.tsx).
 	const difficulty = raw.review?.difficulty;
 
-	const memberListIds = allLists
-		.filter((list) => list.items.length > 0)
-		.map((list) => list.id);
-
-	// Same person/company can be attached to a role more than once (e.g.
-	// duplicate TMDB credit rows) — dedupe per role by id, not just name, so
-	// two different people who happen to share a name don't collapse. Only
-	// the first occurrence is kept: raw.credits is already ordered by
-	// billing order ascending, so for Actor that's the earliest (most
-	// prominent) row for that person.
-	const creditsByRole = new Map<string, Map<string, CreditLink>>();
-	for (const credit of raw.credits) {
-		const entry = credit.person
-			? {
-					key: `person-${credit.person.id}`,
-					href: `/credits/person/${credit.person.id}`,
-					name: credit.person.name,
-					order: credit.order,
-					photoSrc:
-						credit.role.name === "Actor"
-							? toPersonPhotoSrc(credit.person.id, credit.person.photoPath)
-							: null,
-					character: credit.role.name === "Actor" ? credit.character : null,
-				}
-			: credit.company
-				? {
-						key: `company-${credit.company.id}`,
-						href: `/credits/company/${credit.company.id}`,
-						name: credit.company.name,
-						order: credit.order,
-						photoSrc: null,
-						character: null,
-					}
-				: null;
-		if (!entry) continue;
-		const byRole = creditsByRole.get(credit.role.name);
-		if (byRole) {
-			if (!byRole.has(entry.key)) byRole.set(entry.key, entry);
-		} else {
-			creditsByRole.set(credit.role.name, new Map([[entry.key, entry]]));
-		}
-	}
-
-	// Director/Cast/Studio surface directly on the page — everything else
-	// (writers, producers, publishers, ...) stays in the collapsed list,
-	// ranked by ROLE_PRIORITY rather than left in arbitrary credit order.
-	const directorEntries = [...(creditsByRole.get("Director")?.values() ?? [])];
-	const studioEntries = [...(creditsByRole.get("Studio")?.values() ?? [])];
-	const actorEntries = [...(creditsByRole.get("Actor")?.values() ?? [])]
-		.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
-		.slice(0, TOP_ACTOR_COUNT);
-
-	const otherRoles = [...creditsByRole.entries()]
-		.filter(
-			([role]) => role !== "Director" && role !== "Studio" && role !== "Actor",
-		)
-		.sort(([a], [b]) => {
-			const priorityDiff = (ROLE_PRIORITY[a] ?? 99) - (ROLE_PRIORITY[b] ?? 99);
-			return priorityDiff !== 0 ? priorityDiff : a.localeCompare(b);
-		});
-
 	return (
 		<div className={styles.wrapper}>
 			{raw.isDeleted && (
@@ -356,22 +198,24 @@ export default async function MediaDetailPage({
 								media={media}
 								ratio={posterRatioFor(media.type)}
 							/>
-							<AddToListButton
-								mediaId={media.id}
-								allLists={allLists}
-								memberListIds={memberListIds}
-								className={styles.list_button_float}
-							/>
+							<Suspense fallback={null}>
+								<AddToListButtonSection
+									mediaId={media.id}
+									className={styles.list_button_float}
+								/>
+							</Suspense>
 						</div>
 						{runtimeLabel && (
 							<div className={styles.poster_info}>{runtimeLabel}</div>
 						)}
 						{session?.user && (
 							<div className={styles.controls_bar}>
-								<AddToWatchlistButton
-									mediaId={media.id}
-									initialIsInWatchlist={!!watchlistItem}
-								/>
+								<Suspense fallback={null}>
+									<AddToWatchlistButtonSection
+										mediaId={media.id}
+										userId={session.user.id}
+									/>
+								</Suspense>
 							</div>
 						)}
 					</div>
@@ -379,11 +223,9 @@ export default async function MediaDetailPage({
 						<div className={styles.title_row}>
 							<div className={styles.title_group}>
 								<MediaTitle title={media.title} className={styles.title} />
-								{directorEntries.length > 0 && (
-									<span className={styles.title_director}>
-										by <CreditNames entries={directorEntries} />
-									</span>
-								)}
+								<Suspense fallback={null}>
+									<MediaDirectorCredit mediaId={media.id} />
+								</Suspense>
 							</div>
 							<div className={styles.title_actions}>
 								<MediaEditButton media={media} className={styles.edit_button} />
@@ -475,50 +317,21 @@ export default async function MediaDetailPage({
 
 					<MediaTypeFacts media={media} />
 
-					{actorEntries.length > 0 && (
-						<div className={styles.cast_group}>
-							<span className={styles.fact_label}>Cast</span>
-							<CastPhotos entries={actorEntries} />
-						</div>
-					)}
-
-					{studioEntries.length > 0 && (
-						<dl className={styles.facts}>
-							<Fact
-								label="Studio"
-								value={<CreditNames entries={studioEntries} />}
-							/>
-						</dl>
-					)}
-
-					{otherRoles.length > 0 && (
-						<details className={styles.credits}>
-							<summary className={styles.credits_summary}>
-								Credits
-								<span className={styles.credits_count}>
-									{otherRoles.length}
-								</span>
-							</summary>
-							<div className={styles.credits_list}>
-								{otherRoles.map(([role, entries]) => (
-									<div className={styles.credit_row} key={role}>
-										<span className={styles.credit_role}>{role}</span>
-										<CreditNames entries={[...entries.values()]} />
-									</div>
-								))}
-							</div>
-						</details>
-					)}
+					<Suspense fallback={null}>
+						<MediaCreditsDetails mediaId={media.id} />
+					</Suspense>
 				</section>
 
 				<section className={styles.section}>
 					<h2 className={styles.section_title}>Change log</h2>
-					<ChangeLogList
-						entries={raw.changeLog}
-						type={raw.type}
-						externalId={raw.externalId}
-						review={raw.review}
-					/>
+					<Suspense fallback={null}>
+						<MediaChangeLogSection
+							mediaId={media.id}
+							type={raw.type}
+							externalId={raw.externalId}
+							review={raw.review}
+						/>
+					</Suspense>
 				</section>
 			</div>
 		</div>
