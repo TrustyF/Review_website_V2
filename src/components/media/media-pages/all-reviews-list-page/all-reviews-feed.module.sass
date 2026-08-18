@@ -1,0 +1,18 @@
+.sentinel
+  display: flex
+  align-items: center
+  justify-content: center
+  height: 3rem
+
+@keyframes spin
+  to
+    transform: rotate(360deg)
+
+// Same spin/ring look add-media.module.sass's own .spinner uses.
+.spinner
+  width: 1.5rem
+  height: 1.5rem
+  border: 2px solid var(--accent1)
+  border-top-color: transparent
+  border-radius: 50%
+  animation: spin 0.7s linear infinite

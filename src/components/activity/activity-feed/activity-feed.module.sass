@@ -3,6 +3,11 @@
 .empty
   @include empty-text
 
+// Invisible marker the IntersectionObserver watches — same convention as
+// lazy-media-list.module.sass's own .sentinel.
+.sentinel
+  height: 1px
+
 // Same sticky-header treatment as grouped-media-list.module.sass's own
 // .group_header/.groups (the Reviews page's month grouping) — reused here
 // so the two "grouped by month" list pages read as the same pattern rather

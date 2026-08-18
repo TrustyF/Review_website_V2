@@ -1,28 +1,37 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { MediaRecord } from "@/components/media/types";
 import { isHydrated, useMarkHydrated } from "@/lib/has-hydrated";
 
-// Sized generously (well past a typical viewport's worth of ~110px cards)
-// so the sentinel starts below the fold on ordinary screens — the initial
-// batch filling the viewport on its own is what keeps the very first
-// IntersectionObserver check from immediately firing a reveal (see below).
-// Still far fewer than mounting an entire result set's worth of cards (and
-// their client-side poster components) up front, which is what actually
-// made hydrating a big page like /movies slow.
-const BATCH_SIZE = 24;
+// Default, sized generously (well past a typical viewport's worth of
+// ~110px cards) so the sentinel starts below the fold on ordinary screens —
+// the initial batch filling the viewport on its own is what keeps the very
+// first IntersectionObserver check from immediately firing a reveal (see
+// below). Still far fewer than mounting an entire result set's worth of
+// cards (and their client-side poster components) up front, which is what
+// actually made hydrating a big page like /movies slow. Callers with a
+// differently-sized item (e.g. ActivityFeed's taller row) can override via
+// the batchSize param instead of living with this one-size-fits-all default.
+const DEFAULT_BATCH_SIZE = 24;
 
 // Reveal-more-on-scroll bookkeeping shared by LazyMediaGrid (mini cards, a
-// grid) and LazyMediaList (full cards, a vertical list) — both hand this a
-// list that can run into the hundreds and just need to know how many of
-// them to actually mount right now, plus a sentinel to grow that count.
-export function useLazyReveal(items: MediaRecord[], restoreKey?: string) {
+// grid), LazyMediaList (full cards, a vertical list), and ActivityFeed (a
+// grouped-by-month list) — all three hand this a list that can run into the
+// hundreds and just need to know how many of them to actually mount right
+// now, plus a sentinel to grow that count. Generic over any item with an id
+// (string or number — MediaRecord's is a number, ActivityFeedEntry's is a
+// string) rather than MediaRecord specifically, since only the id is ever
+// used (for itemsKey below).
+export function useLazyReveal<T extends { id: string | number }>(
+	items: T[],
+	restoreKey?: string,
+	batchSize: number = DEFAULT_BATCH_SIZE,
+) {
 	useMarkHydrated();
 	const pathname = usePathname();
 	const storageKey = restoreKey ? `lazy-grid:${pathname}:${restoreKey}` : null;
 
-	const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+	const [visibleCount, setVisibleCount] = useState(batchSize);
 	const sentinelRef = useRef<HTMLDivElement>(null);
 
 	// Compared by id set rather than array identity — a revalidated server
@@ -35,7 +44,7 @@ export function useLazyReveal(items: MediaRecord[], restoreKey?: string) {
 	const [prevItemsKey, setPrevItemsKey] = useState(itemsKey);
 	if (itemsKey !== prevItemsKey) {
 		setPrevItemsKey(itemsKey);
-		setVisibleCount(BATCH_SIZE);
+		setVisibleCount(batchSize);
 	}
 
 	// Restores how far this list was scrolled into before, so the page comes
@@ -53,7 +62,7 @@ export function useLazyReveal(items: MediaRecord[], restoreKey?: string) {
 	if (!hasRestored && storageKey && isHydrated()) {
 		setHasRestored(true);
 		const saved = Number(sessionStorage.getItem(storageKey));
-		if (saved > BATCH_SIZE) {
+		if (saved > batchSize) {
 			setVisibleCount(Math.min(saved, items.length));
 		}
 	}
@@ -71,13 +80,13 @@ export function useLazyReveal(items: MediaRecord[], restoreKey?: string) {
 		const observer = new IntersectionObserver(
 			(entries) => {
 				if (!entries.some((entry) => entry.isIntersecting)) return;
-				setVisibleCount((count) => Math.min(count + BATCH_SIZE, items.length));
+				setVisibleCount((count) => Math.min(count + batchSize, items.length));
 			},
 			{ rootMargin: "100px" },
 		);
 		observer.observe(sentinel);
 		return () => observer.disconnect();
-	}, [items.length]);
+	}, [items.length, batchSize]);
 
 	return { visibleCount, sentinelRef };
 }

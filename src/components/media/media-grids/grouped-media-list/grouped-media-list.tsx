@@ -1,23 +1,30 @@
+import { MediaCardResolver } from "@/components/media/media-cards/media-card/media-card-resolver";
 import { MediaGroup } from "@/components/media/media-grids/grouped-media-grid/grouped-media-grid";
-import { LazyMediaList } from "@/components/media/media-grids/lazy-media-list/lazy-media-list";
+import listStyles from "@/components/media/media-grids/lazy-media-list/lazy-media-list.module.sass";
 import styles from "./grouped-media-list.module.sass";
 
 type Props = {
 	groups: MediaGroup[];
 };
 
-// GroupedMediaGrid's sibling for LazyMediaList — same collapsible-stack-of-
-// groups shape (see that component's own note on why grouping itself is
-// entirely the caller's concern), just handing each group's items to the
-// full-card list instead of the mini-card grid. Reuses GroupedMediaGrid's
-// MediaGroup type rather than redefining an identical shape.
+// Renders every group's every item directly, no reveal-on-scroll of its
+// own — AllReviewsFeed (this component's only caller) already only ever
+// hands it however many reviews have actually been fetched from the server
+// so far (see all-reviews-actions.ts's loadMoreReviews), so there's nothing
+// left here to hide.
 export function GroupedMediaList({ groups }: Props) {
 	return (
 		<div className={styles.groups}>
 			{groups.map((group) => (
 				<details key={group.key} open>
 					<summary className={styles.group_header}>{group.label}</summary>
-					<LazyMediaList items={group.items} restoreKey={group.key} />
+					<div className={listStyles.list}>
+						{group.items.map((item) => (
+							<div className={listStyles.item} key={item.id}>
+								<MediaCardResolver media={item} />
+							</div>
+						))}
+					</div>
 				</details>
 			))}
 		</div>

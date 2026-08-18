@@ -1,3 +1,4 @@
+"use client";
 import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,6 +12,7 @@ import {
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { WatchlistIcon } from "@/components/icons/watchlist-icon";
 import type { ActivityFeedEntry } from "@/components/activity/activity-actions";
+import { useLazyReveal } from "@/components/media/media-grids/lazy-media-grid/use-lazy-reveal";
 import { groupByActivityMonth } from "./group-by-activity-month";
 import styles from "./activity-feed.module.sass";
 
@@ -236,40 +238,65 @@ function ActivityRow({ entry }: { entry: ActivityFeedEntry }) {
 	);
 }
 
+// How many entries ActivityFeed starts (and grows) by — dialed separately
+// from useLazyReveal's own 24-item default since a row here (poster + two
+// lines of text) is a different shape/weight than a grid card or a full
+// review card.
+const ACTIVITY_BATCH_SIZE = 10;
+
 export function ActivityFeed({ entries }: { entries: ActivityFeedEntry[] }) {
+	// Same reveal-more-on-scroll bookkeeping LazyMediaGrid/LazyMediaList use —
+	// getActivityFeed can hand this up to ~700 entries (100 per source, 7
+	// sources), and mounting every row (each with its own poster Image) up
+	// front is exactly the kind of hydration cost that pattern exists to
+	// avoid. Sliced before grouping so a month never renders partially — the
+	// sentinel only ever grows visibleCount in whole ACTIVITY_BATCH_SIZE
+	// steps, but slicing pre-group keeps the boundary honest either way.
+	const { visibleCount, sentinelRef } = useLazyReveal(
+		entries,
+		"activity",
+		ACTIVITY_BATCH_SIZE,
+	);
+	const visibleEntries = entries.slice(0, visibleCount);
+
 	if (entries.length === 0) {
 		return <div className={styles.empty}>No activity recorded yet.</div>;
 	}
 
-	const groups = groupByActivityMonth(entries);
+	const groups = groupByActivityMonth(visibleEntries);
 
 	return (
-		<div className={styles.groups}>
-			{groups.map((group) => (
-				<details key={group.key} open>
-					<summary className={styles.group_header}>{group.label}</summary>
-					<ul className={styles.list}>
-						{group.entries.map((entry, index) => {
-							const prevEntry = group.entries[index - 1];
-							const gapDays = prevEntry
-								? daysBetween(prevEntry.createdAt, entry.createdAt)
-								: 0;
-							const showGapDivider = gapDays >= TIMELINE_GAP_DAYS;
+		<>
+			<div className={styles.groups}>
+				{groups.map((group) => (
+					<details key={group.key} open>
+						<summary className={styles.group_header}>{group.label}</summary>
+						<ul className={styles.list}>
+							{group.entries.map((entry, index) => {
+								const prevEntry = group.entries[index - 1];
+								const gapDays = prevEntry
+									? daysBetween(prevEntry.createdAt, entry.createdAt)
+									: 0;
+								const showGapDivider = gapDays >= TIMELINE_GAP_DAYS;
 
-							return (
-								<Fragment key={entry.id}>
-									{showGapDivider && (
-										<li className={styles.timeline_gap} aria-hidden="true">
-											<span className={styles.timeline_gap_line} />
-										</li>
-									)}
-									<ActivityRow entry={entry} />
-								</Fragment>
-							);
-						})}
-					</ul>
-				</details>
-			))}
-		</div>
+								return (
+									<Fragment key={entry.id}>
+										{showGapDivider && (
+											<li className={styles.timeline_gap} aria-hidden="true">
+												<span className={styles.timeline_gap_line} />
+											</li>
+										)}
+										<ActivityRow entry={entry} />
+									</Fragment>
+								);
+							})}
+						</ul>
+					</details>
+				))}
+			</div>
+			{visibleCount < entries.length && (
+				<div className={styles.sentinel} ref={sentinelRef} />
+			)}
+		</>
 	);
 }
