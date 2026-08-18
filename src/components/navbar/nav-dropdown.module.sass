@@ -65,10 +65,14 @@
   // Scoped to just this stack rather than raised globally.
   line-height: 1.3
 
-  // Same collapse-to-icon behavior as nav-bar.module.sass's .link_label —
-  // the trigger's icon + chevron stay, just the sliding label text goes.
-  @media (max-width: $navbar-collapse-width)
-    display: none
+// Same collapse-to-icon behavior as nav-bar.module.sass's .link_label_tier*
+// (see that file and nav-label-collapse in variables.sass) — the trigger's
+// icon + chevron stay, just the sliding label text goes, at whichever tier
+// this dropdown's own nav_group was assigned (see nav-bar.tsx's
+// COLLAPSE_TIER).
+@for $tier from 1 through 4
+  .label_stack_tier#{$tier}
+    @include nav-label-collapse($tier)
 
 // Default (unset) state sits a full line below, waiting — so a variant
 // that becomes active always slides up into place from the bottom. The

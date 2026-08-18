@@ -1,7 +1,13 @@
 import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ListPlus, PenLine } from "lucide-react";
+import {
+	ArrowRight,
+	IterationCw,
+	ListPlus,
+	PenLine,
+	RotateCcw,
+} from "lucide-react";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { WatchlistIcon } from "@/components/icons/watchlist-icon";
 import type { ActivityFeedEntry } from "@/components/activity/activity-actions";
@@ -49,6 +55,7 @@ const TYPE_ICON = {
 	RATED: StarIcon,
 	RATING_CHANGED: StarIcon,
 	REVIEWED: PenLine,
+	REWATCHED: RotateCcw,
 	WATCHLIST_ADDED: WatchlistIcon,
 	LIST_CREATED: ListPlus,
 	// Never actually rendered — LIST_ITEM_ADDED always carries a media row
@@ -141,6 +148,17 @@ function activityLabel(entry: ActivityFeedEntry): {
 				action: "Reviewed",
 				target: entry.media && <MediaLink media={entry.media} />,
 				value: <RatingValue value={entry.newValue} />,
+			};
+		case "REWATCHED":
+			return {
+				action: "Rewatched",
+				target: entry.media && <MediaLink media={entry.media} />,
+				// REWATCHED always carries a media (see logRewatch), so
+				// ActivityRow's poster branch always wins over TYPE_ICON's
+				// RotateCcw — same reason LIST_ITEM_ADDED's own icon is unreachable
+				// (see that entry's comment). Shown in the value spot instead,
+				// same pattern as WATCHLIST_ADDED's own icon.
+				value: <IterationCw size={14} className={styles.value_icon} />,
 			};
 		case "RATING_CHANGED": {
 			const direction = ratingDirection(entry.oldValue, entry.newValue);

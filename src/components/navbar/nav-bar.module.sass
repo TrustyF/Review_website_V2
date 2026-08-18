@@ -1,18 +1,20 @@
 @use "@/app/styles/variables" as *
 
-// Height here (1rem padding + ~1rem of line-height content + 1rem padding
-// = ~3rem, plus the 1px border below that box-sizing: border-box doesn't
-// absorb since this box's height is auto rather than an explicit value) is
-// what globals.sass's --navbar-height is standing in for, to reserve the
-// right amount of space at the top of every page — the two aren't
-// otherwise linked, so a padding/font change here that moves this box's
-// real height needs that variable nudged to match. The 1px border is small
-// enough to not bother chasing.
+// min-height pinned explicitly rather than left to derive from in-flow
+// content — .title (the one in-flow child that used to set it) is gone for
+// now (see nav-bar.tsx), and both .nav_content and .add_media_link are
+// position: absolute, so without this the wrapper would collapse to just
+// its own 2rem of padding. 1.5rem is .title's own font-size — with body's
+// line-height: 1 (globals.sass) that's exactly the content line-box height
+// .title used to contribute — so this reproduces the old title-driven
+// height rather than the (already-approximate, ~3rem) var(--navbar-height)
+// value other pages reserve space against.
 .wrapper
   display: flex
   align-items: center
   gap: 3rem
   width: 100%
+  min-height: 3.5rem
   padding: 1rem 3rem
   position: fixed
   top: 0
@@ -49,58 +51,135 @@
 // Both .search and .groups sit inside this one container (rather than each
 // being positioned independently) so the nav links flow immediately after
 // the search box, wherever it ends up — not separately pinned to the far
-// right of the page regardless of where the search box lands. Out of the
-// flex flow entirely (unlike before, when .search itself was a flex item
-// pushed away from .title with a fixed margin-left) so this box's left edge
-// can be pinned to a viewport-relative position instead of one that depends
-// on .title's own rendered width — .wrapper's own position: fixed (with no
-// border, full width) makes its padding box's left edge sit exactly at
-// x = 0, so `left` here is effectively measured straight from the viewport
-// edge, same trick .add_media_link below already relies on.
+// right of the page regardless of where the search box lands. Absolutely
+// positioned (rather than a normal flex item, as it becomes below
+// $navbar-dock-breakpoint — see the media query below) so its left edge can
+// be pinned to a viewport-relative position — .wrapper's own position:
+// fixed (with no border, full width) makes its padding box's left edge sit
+// exactly at x = 0, so `left` here is effectively measured straight from
+// the viewport edge, same trick .add_media_link below already relies on.
 //
 // (100vw - 950px) / 2 is where every page's own centered content column
 // starts (950px is that column's width — see e.g. add-media.module.sass's
 // own .wrapper) — lining the search bar up with it visually connects the
-// navbar to the content sitting below it instead of the search bar
-// floating wherever .title's width happened to leave room. 20rem is a
-// hand-picked floor, not a derived one: plain CSS has no way to read
-// .title's actual rendered width to compute an exact non-overlap minimum,
-// so this is a safe distance past it for when the viewport is too narrow
-// for the content-column math above to clear .title on its own.
+// navbar to the content sitting below it. That alignment only holds while
+// the viewport's wide enough for it to clear the left edge with room to
+// spare, though — $navbar-dock-breakpoint below is exactly the width where
+// this formula would cross 20rem, and rather than clamping there and
+// staying artificially docked at a fixed 20rem offset that no longer
+// actually lines up with anything once the viewport keeps shrinking past
+// it, the media query below unlocks .nav_content from this alignment
+// entirely and lets it fall into normal flex flow alongside everything
+// else in .wrapper instead.
 //
-// Because this no longer pins .groups to the page's right edge, a wide
-// enough viewport can in principle push .groups past the right edge of the
-// screen instead of stopping there — traded deliberately for "the links sit
-// right after the search box" over "the links always hug the right edge."
+// `right` bounds this box's width without pulling its content to hug that
+// edge — children still lay out from `left` per flex's default
+// justify-content: flex-start, so on a wide viewport (content narrower than
+// the left..right span) this is indistinguishable from the old unbounded
+// version, just with unused space past the content instead of no boundary
+// at all. What it actually buys is a real width for .search's flex-shrink
+// below to shrink against — without a bound here, .nav_content has nothing
+// to run out of and just grows past the edge instead of ever handing space
+// back.
 .nav_content
   position: absolute
   top: 50%
-  left: max(20rem, calc((100vw - 950px) / 2))
+  left: calc((100vw - 950px) / 2)
+  right: 2rem
   transform: translateY(-50%)
   display: flex
   align-items: center
   gap: 3rem
 
+  // 950px content column + 2 * 20rem (the old docked floor, in its 16px-
+  // root px equivalent — this breakpoint would need revisiting if the root
+  // font-size ever stops being the browser default) is exactly the
+  // viewport width where `left` above would cross 20rem — below it,
+  // .nav_content drops out of the absolute/viewport-aligned layout above
+  // and becomes a plain flex item of .wrapper instead, flowing right after
+  // whatever precedes it (nothing, currently — see .title's own comment)
+  // the same way every other item in that row does.
+  @media (max-width: 1590px)
+    position: static
+    top: auto
+    left: auto
+    right: auto
+    transform: none
+    flex: 1 1 auto
+    min-width: 0
+
+// The one shrinkable flex item in .nav_content — .groups (below) is pinned
+// to its own content size, so once the row gets too narrow for both, all
+// the give comes from here instead: the search input gets pushed down
+// toward its own floor before any nav link would ever wrap or clip. flex's
+// own basis carries the same clamp() nav-search.module.sass's .input used
+// to size itself with directly; min-width matches that clamp's own 8rem
+// floor (see its comment there) so shrinking here still can't crush the
+// input past "a few words before eliding." .input itself now just fills
+// whatever width this box resolves to (see that file) rather than sizing
+// itself independently of the flex context it sits in.
+.search
+  flex: 0 1 clamp(8rem, 18vw, 20rem)
+  min-width: 8rem
+
 // Every .nav_group cluster's shared container — one flex item of
 // .nav_content. gap on .nav_group below still layers its own extra 0.75rem
-// spacing on top of this container's own gap, same as before.
+// spacing on top of this container's own gap, same as before. flex-grow: 1
+// stretches this box out to fill whatever's left of .nav_content past
+// .search's own width, rather than sizing to just its own groups' combined
+// width — otherwise .nav_group_end's own margin-left: auto below would have
+// no leftover space inside .groups to actually push into.
+//
+// flex-shrink: 1 (not 0) is the fallback for once .search (nav-bar.tsx's
+// COLLAPSE_TIER) has already hit its own 8rem floor and every group is
+// already icon-only — at that point .search has nothing left to give, and
+// without this, .groups (and everything pinned to its far end via
+// .nav_group_end) would just hold its full natural width and overflow
+// straight past .nav_content's own right bound instead. min-width: 0 on
+// .nav_group below is the other half of this — a flex item's default
+// content-based min-width would otherwise refuse to shrink at all past that
+// same point regardless of flex-shrink here.
+//
+// gap itself is exactly what flex-shrink above can't touch, though — it's a
+// fixed length, not a flex item's own basis/width, so no amount of shrink
+// room on the groups themselves (already at their icon-only floor, with
+// nothing left to give) reclaims the 3 × 3rem this adds up between the 4
+// clusters. clamp() shrinks the gap itself in step with the viewport
+// instead — down to 1rem, past which it'd start reading as one run-on group
+// rather than four distinct ones.
 .groups
   display: flex
+  flex-shrink: 1
+  flex-grow: 1
   align-items: center
-  gap: 3rem
+  gap: clamp(1rem, 3vw, 3rem)
 
 // Three clusters — browse (Home/Media/Reading/Games), collection (Lists/
 // Add), account (Watchlist/Account/sign in-out) — each a flex item of
 // .groups in its own right, so .groups's own gap already separates them;
 // the extra margin-left here is just a bit more breathing room on top of
 // that, marking them as distinct groups rather than one long run of links.
+// min-width: 0 — see .groups's own comment above.
 .nav_group
   display: flex
   align-items: center
   gap: 1.5rem
+  min-width: 0
 
   &:not(:first-child)
     margin-left: 0.75rem
+
+// Modifier on top of .nav_group (see nav-bar.tsx's own account/sign-out
+// group) — margin-left: auto eats every bit of .groups's own leftover
+// growth space (see flex-grow above), pushing this one group flush against
+// .nav_content's right edge regardless of how much room the groups before
+// it actually use, rather than just trailing immediately after them.
+// Chained onto .nav_group (rather than standalone) to match — and, coming
+// later in source order, beat — .nav_group:not(:first-child)'s own
+// margin-left above: :not() counts its argument's specificity, so a bare
+// .nav_group_end here would lose that cascade regardless of source order.
+.nav_group.nav_group_end
+  margin-left: auto
 
 .link,
 .sign_out_button
@@ -110,13 +189,15 @@
   white-space: nowrap
   @include nav-item-look
 
-// Wraps every NavLink's (and the sign-out button's) text — hidden below
-// $navbar-collapse-width so the item shrinks down to just its icon instead
-// of contributing to horizontal overflow. See nav-bar.tsx's own comment on
-// why every call site is given an icon.
-.link_label
-  @media (max-width: $navbar-collapse-width)
-    display: none
+// Wraps every NavLink's (and the sign-out button's) text — hidden below its
+// own tier's breakpoint (see nav-label-collapse in variables.sass and
+// nav-bar.tsx's COLLAPSE_TIER) so the item shrinks down to just its icon
+// instead of contributing to horizontal overflow, one nav_group at a time
+// rather than every label vanishing together. See nav-bar.tsx's own comment
+// on why every call site is given an icon.
+@for $tier from 1 through 4
+  .link_label_tier#{$tier}
+    @include nav-label-collapse($tier)
 
 // Pinned to its own corner instead of sitting in .nav_group's flex flow
 // (see nav-bar.tsx) — .wrapper's own position: fixed makes it the

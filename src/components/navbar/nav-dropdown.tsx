@@ -19,12 +19,28 @@ type Item = {
 	href: string;
 	label: string;
 	icon?: LucideIcon | DropdownIcon;
+	// For an item that performs an action instead of navigating (e.g. sign
+	// out) — href can be a placeholder ("#") in that case, since it's never
+	// actually followed: the panel link's own click is prevented and this
+	// runs in its place instead.
+	onClick?: () => void;
 };
 
 type Props = {
 	label: string;
 	icon?: LucideIcon | DropdownIcon;
 	items: Item[];
+	// Which staggered collapse breakpoint this dropdown's label text hides
+	// at — see nav-bar.tsx's own COLLAPSE_TIER map for how tiers are
+	// assigned per nav_group (1 = widest/collapses first, rightmost group).
+	// Ignored when iconOnly is set (there's no label to collapse).
+	collapseTier?: number;
+	// Same code-level opt-in as NavLink's own iconOnly (nav-bar.tsx) — the
+	// trigger's sliding label_stack stays out of the DOM at every width
+	// instead of just collapsing at collapseTier's breakpoint, with `label`
+	// moved to aria-label/title so the trigger's name is still exposed to
+	// screen readers and as a hover tooltip.
+	iconOnly?: boolean;
 };
 
 // Marks every NavDropdown's root <details> so the "close other dropdowns"
@@ -77,7 +93,13 @@ const LABEL_TRANSITION_MS = 200;
 // Native <details>/<summary> rather than useState + useOutsideClick — same
 // pattern DevMenu already uses for its own floating panel, and it comes
 // with open/close and keyboard support for free.
-export function NavDropdown({ label, icon: Icon, items }: Props) {
+export function NavDropdown({
+	label,
+	icon: Icon,
+	items,
+	collapseTier = 1,
+	iconOnly = false,
+}: Props) {
 	const pathname = usePathname();
 	// Trigger shows the active child's own label ("Movies") rather than the
 	// group label ("Media") once you're on one of its pages — tells you
@@ -164,6 +186,30 @@ export function NavDropdown({ label, icon: Icon, items }: Props) {
 		}, CLOSE_DELAY_MS);
 	}
 
+	// On a device that can't hover (see the (hover: none) check below), the
+	// panel would otherwise only be reachable by tapping the bare chevron —
+	// handleMouseEnter never fires, and the trigger_link's own click (see its
+	// own comment below) navigates straight past it every time. Toggling the
+	// details element manually mirrors what <summary>'s native click handling
+	// would have done on its own; it's suppressed here because preventDefault
+	// (needed to stop the Link underneath from navigating) also cancels
+	// <summary>'s default action for the same click, not just the Link's.
+	function handleTriggerLinkClick(e: React.MouseEvent<HTMLAnchorElement>) {
+		if (!window.matchMedia("(hover: none)").matches) return;
+		e.preventDefault();
+		// nav-bar.tsx's own delegated click handler closes every dropdown on
+		// any "a, button" click, on the assumption that a click through a
+		// link is a real navigation the panel should close behind — not true
+		// here, since this click isn't going anywhere. Left alone, that
+		// handler would still see this click bubble past it and immediately
+		// close the very panel just opened below.
+		e.stopPropagation();
+		const el = detailsRef.current;
+		if (!el) return;
+		el.open = !el.open;
+		if (el.open) closeOtherDropdowns(el);
+	}
+
 	// Every label variant (the group label plus each item's) stays mounted,
 	// stacked into the same CSS grid cell in nav-dropdown.module.sass — the
 	// cell sizes itself to the widest one up front, so the trigger's width
@@ -192,38 +238,53 @@ export function NavDropdown({ label, icon: Icon, items }: Props) {
 				just opening the panel, while the panel is still reachable by
 				hover, by keyboard (Enter on the focused <summary> targets
 				<summary> itself, not this Link, so toggling still applies),
-				or by clicking the chevron directly. */}
-				<Link href={items[0]?.href ?? "#"} className={style.trigger_link}>
+				or by clicking the chevron directly. On a device that can't
+				hover, though, none of those other paths are actually
+				available — handleTriggerLinkClick above steps in and opens
+				the panel instead of navigating, for exactly that case. */}
+				<Link
+					href={items[0]?.href ?? "#"}
+					className={style.trigger_link}
+					onClick={handleTriggerLinkClick}
+					aria-label={iconOnly ? label : undefined}
+					title={iconOnly ? label : undefined}>
 					{/* Lucide has no separate filled icon set, so "filled" is just
 					this icon's own fill switched on rather than a different asset. */}
 					{Icon && (
 						<Icon
 							size={14}
 							className={style.nav_icon}
-							fill={activeItem ? "currentColor" : "none"}
+							// fill={activeItem ? "currentColor" : "none"}
 						/>
 					)}
-					<span className={style.label_stack}>
-						{labelVariants.map((variant) => {
-							const isActive = variant.key === activeLabelKey;
-							// Only the variant that just lost active status gets
-							// "exiting" — everything else rests in the default
-							// (below, invisible) position, ready to slide up into
-							// place if it becomes active later.
-							const isExiting =
-								!isActive &&
-								variant.key === previousActiveKey &&
-								previousActiveKey !== activeLabelKey;
-							return (
-								<span
-									key={variant.key}
-									className={`${style.label} ${isActive ? style.active : isExiting ? style.exiting : ""}`}
-									aria-hidden={!isActive}>
-									{variant.text}
-								</span>
-							);
-						})}
-					</span>
+					{/* Skipped entirely for iconOnly triggers instead of just hidden,
+					so their aria-label above is the trigger's only accessible name
+					rather than a redundant one — same reasoning as NavLink's own
+					iconOnly (nav-bar.tsx). */}
+					{!iconOnly && (
+						<span
+							className={`${style.label_stack} ${style[`label_stack_tier${collapseTier}`]}`}>
+							{labelVariants.map((variant) => {
+								const isActive = variant.key === activeLabelKey;
+								// Only the variant that just lost active status gets
+								// "exiting" — everything else rests in the default
+								// (below, invisible) position, ready to slide up into
+								// place if it becomes active later.
+								const isExiting =
+									!isActive &&
+									variant.key === previousActiveKey &&
+									previousActiveKey !== activeLabelKey;
+								return (
+									<span
+										key={variant.key}
+										className={`${style.label} ${isActive ? style.active : isExiting ? style.exiting : ""}`}
+										aria-hidden={!isActive}>
+										{variant.text}
+									</span>
+								);
+							})}
+						</span>
+					)}
 				</Link>
 				<ChevronDown size={14} className={style.chevron} />
 			</summary>
@@ -232,12 +293,19 @@ export function NavDropdown({ label, icon: Icon, items }: Props) {
 					{items.map((item) => {
 						const ItemIcon = item.icon;
 						const isItemActive = isNavActive(pathname, item.href);
+						const onClick = item.onClick;
 						return (
 							<Link
 								key={item.href}
 								href={item.href}
 								className={style.link}
-								aria-current={isItemActive ? "page" : undefined}>
+								aria-current={isItemActive ? "page" : undefined}
+								{...(onClick && {
+									onClick: (e: React.MouseEvent) => {
+										e.preventDefault();
+										onClick();
+									},
+								})}>
 								{ItemIcon && (
 									<ItemIcon
 										size={14}

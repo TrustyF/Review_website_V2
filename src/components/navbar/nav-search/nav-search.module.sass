@@ -3,17 +3,20 @@
 .wrapper
   position: relative
 
-// Shrinks with the viewport instead of a fixed 20rem — 8rem is a hand-picked
-// floor (still fits a few words of a title before eliding), 20rem is the
-// old fixed size kept as the ceiling so this only ever shrinks, never grows
-// past what it always was on a wide screen. .dropdown below tracks this via
-// .wrapper's own width (rather than keeping its own independent value) but
-// floors at the old fixed 20rem regardless — a shrunk input is fine to type
-// into, but the results panel underneath it (poster thumbnail + title +
-// meta per row) gets cramped below that width, so it's allowed to render
+// Fills whatever width nav-bar.module.sass's own .search flex item resolves
+// to, rather than sizing itself independently — that flex item is the one
+// place the clamp(8rem, 18vw, 20rem) sizing (8rem hand-picked floor, still
+// fits a few words of a title before eliding; 20rem the old fixed size kept
+// as a ceiling) now actually lives, so this and that stay in sync instead of
+// each having their own copy of the same clamp. .dropdown below tracks this
+// via .wrapper's own width (rather than keeping its own independent value)
+// but floors at the old fixed 20rem regardless — a shrunk input is fine to
+// type into, but the results panel underneath it (poster thumbnail + title
+// + meta per row) gets cramped below that width, so it's allowed to render
 // wider than the input that opened it.
 .input
-  width: clamp(8rem, 18vw, 20rem)
+  width: 100%
+  min-width: 0
   padding: 0.5rem
   border-radius: 0.5rem
   border: none

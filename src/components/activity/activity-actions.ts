@@ -16,7 +16,8 @@ export type ActivityType =
 	| "REVIEWED"
 	| "WATCHLIST_ADDED"
 	| "LIST_CREATED"
-	| "LIST_ITEM_ADDED";
+	| "LIST_ITEM_ADDED"
+	| "REWATCHED";
 
 export type ActivityFeedEntry = {
 	id: string;
@@ -113,8 +114,15 @@ async function toMediaEntry(media: MediaSelection): Promise<ActivityFeedEntry["m
 // keeping its own independently-capped window avoids that regardless of how
 // unevenly the types fire.
 export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
-	const [ratedReviews, reviewedReviews, ratingChanges, lists, listItems, watchlistItems] =
-		await Promise.all([
+	const [
+		ratedReviews,
+		reviewedReviews,
+		ratingChanges,
+		rewatches,
+		lists,
+		listItems,
+		watchlistItems,
+	] = await Promise.all([
 			// RATED — every review has this, since a rating is required to save
 			// one at all (see saveReview). Excludes adult/soft-deleted media —
 			// this feed is public (see the comment below), unlike the review/
@@ -167,6 +175,24 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 					mediaId: true,
 					oldValue: true,
 					newValue: true,
+					createdAt: true,
+					media: { select: MEDIA_SELECT },
+				},
+			}),
+			// REWATCHED — a real MediaChangeLog row, unlike RATED/REVIEWED's
+			// synthetic ones (see logRewatch), so it's filtered/capped the same
+			// way RATING_CHANGED's own query above is.
+			db.mediaChangeLog.findMany({
+				where: {
+					field: "rewatched",
+					deletedAt: null,
+					media: { isAdult: false, isDeleted: false },
+				},
+				orderBy: { createdAt: "desc" },
+				take: PAGE_SIZE,
+				select: {
+					id: true,
+					mediaId: true,
 					createdAt: true,
 					media: { select: MEDIA_SELECT },
 				},
@@ -256,6 +282,15 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 			oldValue: change.oldValue,
 			newValue: change.newValue,
 			media: change.media,
+			list: null,
+		})),
+		...rewatches.map((rewatch) => ({
+			id: `rewatch-${rewatch.id}`,
+			type: "REWATCHED" as const,
+			createdAt: rewatch.createdAt,
+			oldValue: null,
+			newValue: null,
+			media: rewatch.media,
 			list: null,
 		})),
 		...lists.map((list) => ({

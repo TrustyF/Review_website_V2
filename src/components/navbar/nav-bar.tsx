@@ -12,9 +12,10 @@ import {
 	LogIn,
 	LogOut,
 	LucideProvider,
-	Zap,
 	type LucideIcon,
+	Zap,
 } from "lucide-react";
+import { ActivityIcon } from "@/components/icons/activity-icon";
 import { HomeIcon } from "@/components/icons/home-icon";
 import { WatchlistIcon } from "@/components/icons/watchlist-icon";
 import { AccountIcon } from "@/components/icons/account-icon";
@@ -54,7 +55,30 @@ type NavLinkProps = {
 	className: string | undefined;
 	pathname: string;
 	children: React.ReactNode;
+	// Code-level opt-in (as opposed to the viewport-driven collapse every
+	// other label already goes through — see collapseTier below) — the
+	// label stays out of the DOM at every width rather than just visually
+	// hidden, with `children` moved to aria-label/title so the link's name
+	// is still exposed to screen readers and as a hover tooltip.
+	iconOnly?: boolean;
+	// Which staggered collapse breakpoint this link's label hides at — see
+	// COLLAPSE_TIER below for how tiers are assigned per nav_group. Ignored
+	// when iconOnly is set (there's no label to collapse).
+	collapseTier?: number;
 };
+
+// Tier assignment per nav_group, right to left — tier 1 is the widest
+// breakpoint (collapses first, as the viewport starts narrowing), tier 4 the
+// narrowest (collapses last). Keeps labels disappearing one group at a time
+// instead of every link's text vanishing together at one shared breakpoint.
+// Watchlist/Account are iconOnly already (no label to collapse at all), so
+// only the sign-out/sign-in label actually uses ACCOUNT here.
+const COLLAPSE_TIER = {
+	ACCOUNT: 1,
+	ACTIVITY: 2,
+	BROWSE: 3,
+	HOME: 4,
+} as const;
 
 // Every plain top-level item (as opposed to a NavDropdown) goes through
 // here so an icon stays optional without repeating the same "icon &&
@@ -65,13 +89,18 @@ function NavLink({
 	className,
 	pathname,
 	children,
+	iconOnly = false,
+	collapseTier = 4,
 }: NavLinkProps) {
 	const isActive = isNavActive(pathname, href);
+	const label = typeof children === "string" ? children : undefined;
 	return (
 		<Link
 			href={href}
 			className={className}
-			aria-current={isActive ? "page" : undefined}>
+			aria-current={isActive ? "page" : undefined}
+			aria-label={iconOnly ? label : undefined}
+			title={iconOnly ? label : undefined}>
 			{/* Lucide ships outline-only icons — no separate filled set — so
 			"filled" here is just handing the same icon a fill color instead
 			of "none" on top of its existing stroke. */}
@@ -79,14 +108,20 @@ function NavLink({
 				<Icon
 					size={14}
 					className={style.nav_icon}
-					fill={isActive ? "currentColor" : "none"}
+					// fill={isActive ? "currentColor" : "none"}
 				/>
 			)}
 			{/* Collapses away below $navbar-collapse-width (see nav-bar.module
 			.sass's .link_label), leaving just the icon above — every NavLink
 			call site is given an icon for exactly this reason, so nothing
-			disappears entirely at narrow widths. */}
-			<span className={style.link_label}>{children}</span>
+			disappears entirely at narrow widths. Skipped entirely for
+			iconOnly links instead of just hidden, so their aria-label above
+			is the link's only accessible name rather than a redundant one. */}
+			{!iconOnly && (
+				<span className={style[`link_label_tier${collapseTier}`]}>
+					{children}
+				</span>
+			)}
 		</Link>
 	);
 }
@@ -172,10 +207,6 @@ export default function Navbar() {
 			<nav
 				className={`${style.wrapper} ${hidden ? style.hidden : ""}`}
 				onClick={handleNavClick}>
-				<Link href="/" className={style.title}>
-					Arthur&#39;s Corner
-				</Link>
-
 				{/* Both the search box and every nav link cluster live inside this
 				one absolutely-positioned container (see .nav_content's own
 				comment in nav-bar.module.sass) so the links flow immediately
@@ -192,7 +223,8 @@ export default function Navbar() {
 								href="/"
 								icon={HomeIcon}
 								className={style.link}
-								pathname={pathname}>
+								pathname={pathname}
+								collapseTier={COLLAPSE_TIER.HOME}>
 								Home
 							</NavLink>
 						</div>
@@ -201,6 +233,7 @@ export default function Navbar() {
 							<NavDropdown
 								label="Media"
 								icon={MovieIcon}
+								collapseTier={COLLAPSE_TIER.BROWSE}
 								items={[
 									{ href: "/movies", label: "Movies" },
 									{ href: "/shorts", label: "Shorts" },
@@ -210,6 +243,7 @@ export default function Navbar() {
 							<NavDropdown
 								label="Reading"
 								icon={BookOpen}
+								collapseTier={COLLAPSE_TIER.BROWSE}
 								items={[
 									{ href: "/manga", label: "Manga" },
 									{ href: "/comics", label: "Comics" },
@@ -220,59 +254,67 @@ export default function Navbar() {
 								href="/games"
 								icon={GamepadDirectional}
 								className={style.link}
-								pathname={pathname}>
+								pathname={pathname}
+								collapseTier={COLLAPSE_TIER.BROWSE}>
 								Games
 							</NavLink>
 						</div>
 
 						<div className={style.nav_group}>
 							<NavLink
+								href="/activity"
+								icon={Zap}
+								className={style.link}
+								pathname={pathname}
+								collapseTier={COLLAPSE_TIER.ACTIVITY}>
+								Activity
+							</NavLink>
+							<NavLink
 								href="/reviews"
 								icon={LayoutList}
 								className={style.link}
-								pathname={pathname}>
+								pathname={pathname}
+								collapseTier={COLLAPSE_TIER.ACTIVITY}>
 								Reviews
 							</NavLink>
 							<NavLink
 								href="/lists"
 								icon={List}
 								className={style.link}
-								pathname={pathname}>
+								pathname={pathname}
+								collapseTier={COLLAPSE_TIER.ACTIVITY}>
 								Lists
-							</NavLink>
-							<NavLink
-								href="/activity"
-								icon={Zap}
-								className={style.link}
-								pathname={pathname}>
-								Activity
 							</NavLink>
 						</div>
 
-						<div className={style.nav_group}>
+						<div className={`${style.nav_group} ${style.nav_group_end}`}>
 							{session?.user ? (
 								<>
-									<NavLink
-										href="/watchlist"
-										icon={WatchlistIcon}
-										className={style.link}
-										pathname={pathname}>
-										Watchlist
-									</NavLink>
-
-									<NavLink
-										href="/account"
+									<NavDropdown
+										label="Account"
 										icon={AccountIcon}
-										className={style.link}
-										pathname={pathname}>
-										Account
-									</NavLink>
+										collapseTier={COLLAPSE_TIER.ACCOUNT}
+										iconOnly
+										items={[
+											{ href: "/account", label: "Account", icon: AccountIcon },
+											{
+												href: "/watchlist",
+												label: "Watchlist",
+												icon: WatchlistIcon,
+											},
+										]}
+									/>
 									<button
 										type="button"
 										className={style.sign_out_button}
 										onClick={() => signOut({ callbackUrl: "/" })}>
 										<LogOut size={14} className={style.nav_icon} />
-										<span className={style.link_label}>Sign out</span>
+										<span
+											className={
+												style[`link_label_tier${COLLAPSE_TIER.ACCOUNT}`]
+											}>
+											Sign out
+										</span>
 									</button>
 								</>
 							) : (
@@ -280,7 +322,8 @@ export default function Navbar() {
 									href="/login"
 									icon={LogIn}
 									className={style.sign_out_button}
-									pathname={pathname}>
+									pathname={pathname}
+									collapseTier={COLLAPSE_TIER.ACCOUNT}>
 									Sign in
 								</NavLink>
 							)}

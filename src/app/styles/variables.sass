@@ -10,12 +10,24 @@ $font-body: var(--font-ibm-plex-sans), Arial, Helvetica, sans-serif
 $mini-card-min-width: 110px
 
 // Below this, the navbar's nav items collapse from icon+label to icon-only
-// (see nav-bar.module.sass's .link_label and nav-dropdown.module.sass's
-// .label_stack) — the fixed desktop layout (nav_group gaps, search's own
-// 10rem left margin, every label's full text, ...) doesn't reflow on its
+// (see nav-bar.module.sass's .link_label_tier* and nav-dropdown.module.sass's
+// .label_stack_tier*) — the fixed desktop layout (nav_group gaps, search's
+// own 10rem left margin, every label's full text, ...) doesn't reflow on its
 // own, so without this it just overflows the viewport below this width
 // instead of shrinking to fit.
+//
+// Rather than every label vanishing at once, each nav_group collapses at its
+// own width, staggered right to left (see nav-bar.tsx's own COLLAPSE_TIER)
+// so the rightmost group sheds its labels first as the viewport narrows,
+// then the next one in, and so on — this is tier 1's width (the widest,
+// first-to-collapse tier); tier N's is $navbar-collapse-step narrower per
+// step. nav-label-collapse below computes each tier's actual breakpoint.
 $navbar-collapse-width: 1300px
+$navbar-collapse-step: 130px
+
+@mixin nav-label-collapse($tier: 1)
+  @media (max-width: $navbar-collapse-width - $navbar-collapse-step * ($tier - 1))
+    display: none
 
 // Shared "nothing here yet" text treatment — was independently redefined in
 // four different module.sass files (change log, search results, credit
