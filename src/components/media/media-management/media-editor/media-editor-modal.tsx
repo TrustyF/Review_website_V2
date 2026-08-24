@@ -13,10 +13,12 @@ import {
 	updateMediaBanner,
 	updateMediaPoster,
 } from "@/components/media/media-management/media-editor/media-editor-actions";
-import { MediaCardResolver } from "@/components/media/media-cards/media-card/media-card-resolver";
 import { ReviewBodyModal } from "@/components/media/media-management/media-editor/components/review-body-modal";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { Review } from "@prisma/client";
+import { MediaPoster } from "@/components/media/primitives/poster";
+import { posterRatioFor } from "@/components/media/poster-ratio";
+import { EnrichedAgo } from "@/components/media/primitives/enriched-ago";
 
 export default function MediaEditorModal() {
 	const media = useReviewEditorStore((s) => s.media);
@@ -284,269 +286,292 @@ export default function MediaEditorModal() {
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.wrapper_body}>
-				<div className={styles.media_preview}>
-					{draft && <MediaCardResolver media={draft} />}
+				<div className={styles.poster_column}>
+					{draft && (
+						<>
+							<MediaPoster
+								src={draft.posterSrc}
+								title={draft.title}
+								ratio={posterRatioFor(draft.type)}
+							/>
+							<EnrichedAgo
+								lastEnrichedAt={draft.lastEnrichedAt}
+								className={styles.enriched_ago}
+							/>
+						</>
+					)}
 				</div>
-				<span className={styles.divider} />
 
-				{/* Base Media fields — normally owned entirely by a source's
+				<div className={styles.content_column}>
+					{/* Base Media fields — normally owned entirely by a source's
 				ingest, editable here for the rare case a provider has no match
 				(or the wrong match) for this title at all. */}
-				<div className={styles.details_group}>
-					<label className={styles.field}>
-						Title
-						<input
-							type="text"
-							className={styles.field_input_wide}
-							value={draft?.title ?? ""}
-							onChange={(e) => patchDetails({ title: e.target.value })}
-						/>
-					</label>
-					<label className={styles.field}>
-						Overview
-						<textarea
-							className={styles.field_textarea}
-							value={draft?.overview ?? ""}
-							onChange={(e) =>
-								patchDetails({ overview: e.target.value || null })
-							}
-						/>
-					</label>
-					<div className={styles.details_row}>
+					<div className={styles.details_group}>
 						<label className={styles.field}>
-							Release date
+							Title
 							<input
-								type="date"
-								className={styles.field_input}
-								value={
-									draft?.releaseDate
-										? new Date(draft.releaseDate).toISOString().slice(0, 10)
-										: ""
-								}
+								type="text"
+								className={styles.field_input_wide}
+								value={draft?.title ?? ""}
+								onChange={(e) => patchDetails({ title: e.target.value })}
+							/>
+						</label>
+						<label className={styles.field}>
+							Overview
+							<textarea
+								className={styles.field_textarea}
+								value={draft?.overview ?? ""}
 								onChange={(e) =>
-									patchDetails({
-										releaseDate: e.target.value
-											? new Date(e.target.value)
-											: null,
-									})
+									patchDetails({ overview: e.target.value || null })
 								}
 							/>
 						</label>
-						<label className={styles.field}>
-							+18
-							<input
-								type="checkbox"
-								className={styles.field_checkbox}
-								checked={draft?.isAdult ?? false}
-								onChange={(e) => patchDetails({ isAdult: e.target.checked })}
-							/>
-						</label>
-						<label className={styles.field}>
-							Poster URL
-							<div className={styles.url_input_row}>
+						<div className={styles.details_row}>
+							<label className={styles.field}>
+								Release date
 								<input
-									type="text"
-									className={styles.field_input_wide}
-									placeholder="https://…"
-									value={posterUrlInput}
-									onChange={(e) => setPosterUrlInput(e.target.value)}
-								/>
-								<button type="button" onClick={applyPosterUrl}>
-									Use
-								</button>
-							</div>
-							{posterUrlInput.trim() && (
-								// Plain <img>, deliberately not next/image: a pasted URL
-								// can be any host, and only gets proxied/cached once it's
-								// actually saved (see resolvePoster) — this is just a
-								// best-effort look at what you're about to set.
-								// eslint-disable-next-line @next/next/no-img-element
-								<img
-									src={posterUrlInput.trim()}
-									alt=""
-									className={styles.url_preview}
-								/>
-							)}
-							{pendingPosterPath === posterUrlInput.trim() &&
-								posterUrlInput.trim() && (
-									<span className={styles.url_applied}>Will apply on save</span>
-								)}
-						</label>
-						<label className={styles.field}>
-							Banner URL
-							<div className={styles.url_input_row}>
-								<input
-									type="text"
-									className={styles.field_input_wide}
-									placeholder="https://…"
-									value={bannerUrlInput}
-									onChange={(e) => setBannerUrlInput(e.target.value)}
-								/>
-								<button type="button" onClick={applyBannerUrl}>
-									Use
-								</button>
-							</div>
-							{bannerUrlInput.trim() && (
-								// Same reasoning as the poster URL preview above.
-								// eslint-disable-next-line @next/next/no-img-element
-								<img
-									src={bannerUrlInput.trim()}
-									alt=""
-									className={styles.url_preview}
-								/>
-							)}
-							{pendingBannerPath === bannerUrlInput.trim() &&
-								bannerUrlInput.trim() && (
-									<span className={styles.url_applied}>Will apply on save</span>
-								)}
-						</label>
-					</div>
-				</div>
-				<span className={styles.divider} />
-
-				<div className={styles.review_fields}>
-					{/* Quick stats: short, single-value fields grouped in a row */}
-					<div className={styles.quick_review}>
-						<label className={styles.field}>
-							Rating
-							<div className={styles.rating_group}>
-								<input
-									type="number"
-									min={0}
-									max={10}
-									step={0.5}
-									className={styles.field_input}
-									value={draft?.review?.rating ?? ""}
+									type="date"
+									className={styles.field_input_date}
+									value={
+										draft?.releaseDate
+											? new Date(draft.releaseDate).toISOString().slice(0, 10)
+											: ""
+									}
 									onChange={(e) =>
-										patchReview({
-											rating:
-												e.target.value === "" ? null : Number(e.target.value),
+										patchDetails({
+											releaseDate: e.target.value
+												? new Date(e.target.value)
+												: null,
 										})
 									}
 								/>
-								<StarIcon />
+							</label>
+
+							<div className={styles.details_row_secondary}>
+								<label className={styles.field}>
+									+18
+									<input
+										type="checkbox"
+										className={styles.field_checkbox}
+										checked={draft?.isAdult ?? false}
+										onChange={(e) =>
+											patchDetails({ isAdult: e.target.checked })
+										}
+									/>
+								</label>
+								<label className={styles.field}>
+									Poster URL
+									<div className={styles.url_input_row}>
+										<input
+											type="text"
+											className={styles.field_input_wide}
+											placeholder="https://…"
+											value={posterUrlInput}
+											onChange={(e) => setPosterUrlInput(e.target.value)}
+										/>
+										<button type="button" onClick={applyPosterUrl}>
+											Use
+										</button>
+									</div>
+									{posterUrlInput.trim() && (
+										// Plain <img>, deliberately not next/image: a pasted URL
+										// can be any host, and only gets proxied/cached once it's
+										// actually saved (see resolvePoster) — this is just a
+										// best-effort look at what you're about to set.
+										// eslint-disable-next-line @next/next/no-img-element
+										<img
+											src={posterUrlInput.trim()}
+											alt=""
+											className={styles.url_preview}
+										/>
+									)}
+									{pendingPosterPath === posterUrlInput.trim() &&
+										posterUrlInput.trim() && (
+											<span className={styles.url_applied}>
+												Will apply on save
+											</span>
+										)}
+								</label>
+								<label className={styles.field}>
+									Banner URL
+									<div className={styles.url_input_row}>
+										<input
+											type="text"
+											className={styles.field_input_wide}
+											placeholder="https://…"
+											value={bannerUrlInput}
+											onChange={(e) => setBannerUrlInput(e.target.value)}
+										/>
+										<button type="button" onClick={applyBannerUrl}>
+											Use
+										</button>
+									</div>
+									{bannerUrlInput.trim() && (
+										// Same reasoning as the poster URL preview above.
+										// eslint-disable-next-line @next/next/no-img-element
+										<img
+											src={bannerUrlInput.trim()}
+											alt=""
+											className={styles.url_preview}
+										/>
+									)}
+									{pendingBannerPath === bannerUrlInput.trim() &&
+										bannerUrlInput.trim() && (
+											<span className={styles.url_applied}>
+												Will apply on save
+											</span>
+										)}
+								</label>
 							</div>
-						</label>
-						<label className={styles.field}>
-							Liked
-							<input
-								type="checkbox"
-								className={styles.field_checkbox}
-								checked={draft?.review?.liked ?? false}
-								onChange={(e) => patchReview({ liked: e.target.checked })}
-							/>
-						</label>
-						<label className={styles.field}>
-							Difficulty
-							<input
-								type="number"
-								min={0}
-								max={2}
-								step={1}
-								className={styles.field_input}
-								value={draft?.review?.difficulty ?? 0}
-								onChange={(e) => {
-									// min/max on the input only affect the spinner arrows, not
-									// a typed/pasted value — clamp by hand so a stray "-3" or
-									// "99" can't reach patchReview. Server-side, saveReview
-									// rejects anything outside 0-2 too, for callers that skip
-									// this input entirely.
-									const parsed = Number(e.target.value);
-									const clamped = Number.isFinite(parsed)
-										? Math.min(2, Math.max(0, Math.round(parsed)))
-										: 0;
-									patchReview({ difficulty: clamped });
-								}}
-							/>
-						</label>
-						<div className={styles.field}>
-							Rewatch
-							<button
-								type="button"
-								className={styles.rewatch_button}
-								disabled={isLoggingRewatch || rewatchLogged}
-								onClick={handleLogRewatch}>
-								{rewatchLogged
-									? "Logged"
-									: isLoggingRewatch
-										? "Logging…"
-										: "Log today"}
-							</button>
 						</div>
 					</div>
+					<span className={styles.divider} />
 
-					{/* Review body: preview + edit button, kept on its own row.
+					<div className={styles.review_fields}>
+						{/* Quick stats: short, single-value fields grouped in a row */}
+						<div className={styles.quick_review}>
+							<label className={styles.field}>
+								Rating
+								<div className={styles.rating_group}>
+									<input
+										type="number"
+										min={0}
+										max={10}
+										step={0.5}
+										className={styles.field_input}
+										value={draft?.review?.rating ?? ""}
+										onChange={(e) =>
+											patchReview({
+												rating:
+													e.target.value === "" ? null : Number(e.target.value),
+											})
+										}
+									/>
+									<StarIcon />
+								</div>
+							</label>
+							<label className={styles.field}>
+								Liked
+								<input
+									type="checkbox"
+									className={styles.field_checkbox}
+									checked={draft?.review?.liked ?? false}
+									onChange={(e) => patchReview({ liked: e.target.checked })}
+								/>
+							</label>
+							<label className={styles.field}>
+								Difficulty
+								<input
+									type="number"
+									min={0}
+									max={2}
+									step={1}
+									className={styles.field_input}
+									value={draft?.review?.difficulty ?? 0}
+									onChange={(e) => {
+										// min/max on the input only affect the spinner arrows, not
+										// a typed/pasted value — clamp by hand so a stray "-3" or
+										// "99" can't reach patchReview. Server-side, saveReview
+										// rejects anything outside 0-2 too, for callers that skip
+										// this input entirely.
+										const parsed = Number(e.target.value);
+										const clamped = Number.isFinite(parsed)
+											? Math.min(2, Math.max(0, Math.round(parsed)))
+											: 0;
+										patchReview({ difficulty: clamped });
+									}}
+								/>
+							</label>
+							<div className={styles.field}>
+								Rewatch
+								<button
+									type="button"
+									className={styles.rewatch_button}
+									disabled={isLoggingRewatch || rewatchLogged}
+									onClick={handleLogRewatch}>
+									{rewatchLogged
+										? "Logged"
+										: isLoggingRewatch
+											? "Logging…"
+											: "Log today"}
+								</button>
+							</div>
+						</div>
+
+						{/* Review body: preview + edit button, kept on its own row.
 					Actual editing (and the AI suggestion diff) happens in
 					ReviewBodyModal, which has room to lay them outside by side. */}
-					<div className={styles.body_group}>
-						<label className={styles.field}>Body</label>
+						<div className={styles.body_group}>
+							<label className={styles.field}>Body</label>
 
-						<button
-							type="button"
-							style={{ width: "5rem" }}
-							onClick={() => setIsBodyModalOpen(true)}>
-							Edit body
-						</button>
-					</div>
-				</div>
-
-				<span className={styles.divider} />
-
-				<div className={styles.danger_zone}>
-					<div className={styles.danger_zone_label}>Danger zone</div>
-					{draft?.isDeleted && (
-						<div className={styles.deleted_notice}>
-							Soft-deleted — hidden from every list.
-						</div>
-					)}
-					<div className={styles.danger_actions}>
-						<button
-							type="button"
-							onClick={handleToggleDeleted}
-							disabled={isDeleting}>
-							{draft?.isDeleted ? "Restore" : "Soft delete"}
-						</button>
-
-						{!confirmHardDelete ? (
 							<button
 								type="button"
-								className={styles.danger_button}
-								onClick={() => setConfirmHardDelete(true)}
-								disabled={isDeleting}>
-								Delete permanently…
+								style={{ width: "5rem" }}
+								onClick={() => setIsBodyModalOpen(true)}>
+								Edit body
 							</button>
-						) : (
-							<span className={styles.confirm_delete}>
-								Permanently delete &quot;{draft?.title}&quot;? This removes its
-								review, credits, and change log too, and cannot be undone.
+						</div>
+					</div>
+
+					<span className={styles.divider} />
+
+					<div className={styles.danger_zone}>
+						<div className={styles.danger_zone_label}>Danger zone</div>
+						{draft?.isDeleted && (
+							<div className={styles.deleted_notice}>
+								Soft-deleted — hidden from every list.
+							</div>
+						)}
+						<div className={styles.danger_actions}>
+							<button
+								type="button"
+								onClick={handleToggleDeleted}
+								disabled={isDeleting}>
+								{draft?.isDeleted ? "Restore" : "Soft delete"}
+							</button>
+
+							{!confirmHardDelete ? (
 								<button
 									type="button"
 									className={styles.danger_button}
-									onClick={handleHardDelete}
+									onClick={() => setConfirmHardDelete(true)}
 									disabled={isDeleting}>
-									{isDeleting ? "Deleting…" : "Yes, delete forever"}
+									Delete permanently…
 								</button>
-								<button
-									type="button"
-									onClick={() => setConfirmHardDelete(false)}
-									disabled={isDeleting}>
-									Cancel
-								</button>
-							</span>
+							) : (
+								<span className={styles.confirm_delete}>
+									Permanently delete &quot;{draft?.title}&quot;? This removes
+									its review, credits, and change log too, and cannot be undone.
+									<button
+										type="button"
+										className={styles.danger_button}
+										onClick={handleHardDelete}
+										disabled={isDeleting}>
+										{isDeleting ? "Deleting…" : "Yes, delete forever"}
+									</button>
+									<button
+										type="button"
+										onClick={() => setConfirmHardDelete(false)}
+										disabled={isDeleting}>
+										Cancel
+									</button>
+								</span>
+							)}
+						</div>
+						{deleteError && (
+							<div className={styles.save_error}>{deleteError}</div>
 						)}
 					</div>
-					{deleteError && (
-						<div className={styles.save_error}>{deleteError}</div>
-					)}
-				</div>
 
-				{saveError && <div className={styles.save_error}>{saveError}</div>}
-				<div className={styles.actions}>
-					<button onClick={handleSave} disabled={isSaving}>
-						{isSaving ? "Saving…" : "Save"}
-					</button>
-					<button onClick={handleClose}>Close</button>
+					{saveError && <div className={styles.save_error}>{saveError}</div>}
 				</div>
+			</div>
+
+			<div className={styles.actions}>
+				<button onClick={handleSave} disabled={isSaving}>
+					{isSaving ? "Saving…" : "Save"}
+				</button>
+				<button onClick={handleClose}>Close</button>
 			</div>
 
 			{isBodyModalOpen && draft && (

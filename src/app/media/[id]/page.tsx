@@ -1,5 +1,6 @@
 import { ReactNode, Suspense } from "react";
 import { notFound } from "next/navigation";
+import { ExternalLink } from "lucide-react";
 import { getMediaCore } from "./get-media";
 import { toMediaRecord, MediaRecord } from "@/components/media/types";
 import { posterRatioFor } from "@/components/media/poster-ratio";
@@ -7,7 +8,6 @@ import { StarIcon } from "@/components/media/icons/star-icon";
 import { MediaTitle } from "@/components/media/primitives/title";
 import { MediaReleaseDate } from "@/components/media/primitives/release-date";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
-import { EnrichedAgo } from "@/components/media/primitives/enriched-ago";
 import { formatRuntime } from "@/components/media/primitives/runtime";
 import { PosterEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/poster-edit-trigger";
 import { BannerEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/banner-edit-trigger";
@@ -208,14 +208,27 @@ export default async function MediaDetailPage({
 						{runtimeLabel && (
 							<div className={styles.poster_info}>{runtimeLabel}</div>
 						)}
-						{session?.user && (
+						{(session?.user || media.sourceUrl) && (
 							<div className={styles.controls_bar}>
-								<Suspense fallback={null}>
-									<AddToWatchlistButtonSection
-										mediaId={media.id}
-										userId={session.user.id}
-									/>
-								</Suspense>
+								{session?.user && (
+									<Suspense fallback={null}>
+										<AddToWatchlistButtonSection
+											mediaId={media.id}
+											userId={session.user.id}
+										/>
+									</Suspense>
+								)}
+								{media.sourceUrl && (
+									<a
+										href={media.sourceUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+										className={styles.source_link_button}
+										title="Open original source"
+										aria-label="Open original source">
+										<ExternalLink size={15} />
+									</a>
+								)}
 							</div>
 						)}
 					</div>
@@ -224,7 +237,7 @@ export default async function MediaDetailPage({
 							<div className={styles.title_group}>
 								<MediaTitle title={media.title} className={styles.title} />
 								<Suspense fallback={null}>
-									<MediaDirectorCredit mediaId={media.id} />
+									<MediaDirectorCredit mediaId={media.id} type={media.type} />
 								</Suspense>
 							</div>
 							<div className={styles.title_actions}>
@@ -237,8 +250,6 @@ export default async function MediaDetailPage({
 
 						<div className={styles.meta_row}>
 							<MediaReleaseDate date={media.releaseDate} />
-							{tagline && <span className={styles.tagline}>{tagline}</span>}
-							<EnrichedAgo lastEnrichedAt={media.lastEnrichedAt} />
 						</div>
 
 						<div className={styles.review_row}>
@@ -311,6 +322,7 @@ export default async function MediaDetailPage({
 
 				<section className={styles.section}>
 					<h2 className={styles.section_title}>Details</h2>
+					{tagline && <p className={styles.tagline}>{tagline}</p>}
 					{media.overview && (
 						<p className={styles.overview}>{media.overview}</p>
 					)}
@@ -318,7 +330,7 @@ export default async function MediaDetailPage({
 					<MediaTypeFacts media={media} />
 
 					<Suspense fallback={null}>
-						<MediaCreditsDetails mediaId={media.id} />
+						<MediaCreditsDetails mediaId={media.id} type={media.type} />
 					</Suspense>
 				</section>
 

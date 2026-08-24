@@ -20,14 +20,16 @@ function formatDaysAgo(date: Date): string {
 // rendered media detail page rather than behind its own route.
 export function EnrichedAgo({
 	lastEnrichedAt,
+	className,
 }: {
 	lastEnrichedAt: Date | null;
+	className?: string | undefined;
 }) {
 	const isAdmin = useIsAdmin();
 	if (!isAdmin) return null;
 
 	return (
-		<span>
+		<span className={className}>
 			{lastEnrichedAt
 				? `Enriched ${formatDaysAgo(lastEnrichedAt)}`
 				: "Never enriched"}

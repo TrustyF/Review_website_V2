@@ -104,8 +104,10 @@ export async function fetchTmdbByName(
 
 export async function fetchTvShowById(id: string): Promise<TmdbTvResponse> {
 	const json = await cachedJson("tmdb", `tv-${id}`, async () => {
+		// aggregate_credits, not credits — see TmdbTvResponseSchema's own
+		// comment on why a TV show's cast has to come from there.
 		const res = await tmdbFetch(
-			`${TMDB_BASE}/tv/${id}?&language=en-US&append_to_response=content_ratings,credits,external_ids`,
+			`${TMDB_BASE}/tv/${id}?&language=en-US&append_to_response=content_ratings,aggregate_credits,external_ids`,
 		);
 
 		if (!res.ok) {

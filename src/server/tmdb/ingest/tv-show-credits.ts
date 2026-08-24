@@ -35,8 +35,54 @@ export async function syncTvShowCreditsAndGenres(
 		origin: MediaType.TVSHOW,
 	}));
 
-	const cast = capCast(data.credits?.cast ?? []);
-	const crew = filterNotableCrew(data.credits?.crew ?? []);
+	// aggregate_credits' cast entries carry one row per *person*, with their
+	// role(s) nested inside (a person can rack up more than one across a
+	// show's run — recast into a different part — where a movie credit never
+	// does). Flattened back to the same {id, name, character, order, ...}
+	// shape credits.cast used to have, but order is reassigned by rank here
+	// rather than trusted from TMDB — see TmdbTvResponseSchema's own comment
+	// on why aggregate_credits' own order field doesn't reflect billing
+	// prominence at all. total_episode_count does: sorted descending, so
+	// capCast below actually keeps the show's real regulars, not whoever
+	// happened to get a low order for unrelated reasons.
+	const rawCast = [...data.aggregate_credits.cast]
+		.sort((a, b) => b.total_episode_count - a.total_episode_count)
+		.map((c, i) => ({
+			id: c.id,
+			name: c.name,
+			character: c.roles.map((r) => r.character).join(" / "),
+			order: i,
+			profile_path: c.profile_path,
+		}));
+	// created_by is a separate top-level field, not a crew job — TMDB tracks
+	// a show's actual creator(s) independently of any per-episode crew credit
+	// (there's no equivalent "who created this" job title in aggregate_
+	// credits.crew at all). Folded in here as a synthetic "Creator" crew
+	// entry anyway, since NOTABLE_CREW_JOBS already expects that role name —
+	// this is the only path that ever actually populates it now. department
+	// is never read back out of a credit row downstream, so its value here
+	// doesn't matter beyond satisfying the shared shape.
+	const rawCreators = (data.created_by ?? []).map((c) => ({
+		id: c.id,
+		name: c.name,
+		job: "Creator",
+		department: "Creative",
+		profile_path: c.profile_path,
+	}));
+	const rawCrew = [
+		...data.aggregate_credits.crew.flatMap((c) =>
+			c.jobs.map((j) => ({
+				id: c.id,
+				name: c.name,
+				job: j.job,
+				department: c.department,
+				profile_path: c.profile_path,
+			})),
+		),
+		...rawCreators,
+	];
+	const cast = capCast(rawCast);
+	const crew = filterNotableCrew(rawCrew);
 	const companies = data.production_companies ?? [];
 
 	// See movie-credits.ts's own comment on where the photo-eligibility

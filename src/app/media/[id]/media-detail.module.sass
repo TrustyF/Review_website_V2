@@ -194,6 +194,21 @@ $var_banner_width: 110%
   border: 1px solid var(--surface-border)
   border-radius: 1rem
 
+// Same icon-button shape as AddToWatchlistButton's own .trigger (that
+// module's class isn't reachable from here — CSS modules scope per file),
+// just without the toggle/pending states this one doesn't have.
+.source_link_button
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 1.6rem
+  height: 1.6rem
+  border-radius: 50%
+  color: var(--accent1)
+
+  &:hover
+    color: var(--foreground)
+
 .edit_button
   flex-shrink: 0
 
@@ -212,6 +227,7 @@ $var_banner_width: 110%
   font-size: 0.95rem
 
 .tagline
+  font-size: 0.9rem
   font-style: italic
   color: var(--body)
 
@@ -308,7 +324,7 @@ $var_banner_width: 110%
 .fact
   display: flex
   flex-flow: column
-  gap: 0.1rem
+  gap: 0.5rem
 
 .fact_label
   font-size: 0.75rem
@@ -360,6 +376,12 @@ $var_banner_width: 110%
   display: flex
   flex-flow: row wrap
 
+// A little extra breathing room after the comma, beyond the single space
+// character it replaced — margin instead of just baking more spaces into
+// the text, since plain whitespace collapses in HTML.
+.credit_separator
+  margin-right: 0.35rem
+
 .credit_link
   color: inherit
   text-decoration: none
@@ -367,17 +389,64 @@ $var_banner_width: 110%
   &:hover
     text-decoration: underline
 
+.cast_wrapper
+  display: flex
+  flex-flow: column
+  align-items: flex-start
+  gap: 0.4rem
+
 .cast_photos
   display: flex
-  flex-flow: row wrap
   align-items: flex-start
   gap: 0.5rem
+
+// Default state — cast-photos.tsx's own VISIBLE_WITHOUT_SCROLL already slices
+// the entries down to exactly one row's worth, so this is just a plain
+// nowrap row: there's never a partial tile left to clip or fade.
+.cast_photos_clipped
+  flex-flow: row
+
+// Toggled on by .cast_expand_toggle below, once every entry (not just the
+// first row) is being rendered — wraps into a full multi-row grid.
+.cast_photos_expanded
+  flex-flow: row wrap
+
+// Sits below the strip as a full-width labeled divider (a line, its own
+// centered text breaking it) rather than a plain left-aligned link — see
+// cast-photos.tsx's own VISIBLE_WITHOUT_SCROLL for why this only renders
+// once there's actually more to reveal.
+.cast_expand_toggle
+  margin-top: 0.75rem
+  display: flex
+  align-items: center
+  gap: 0.75rem
+  width: 100%
+  cursor: pointer
+  color: var(--accent1)
+
+  &:hover
+    color: var(--foreground)
+
+    .cast_expand_line
+      background: var(--foreground)
+
+.cast_expand_line
+  flex: 1
+  height: 1px
+  background: var(--surface-border)
+
+.cast_expand_label
+  flex-shrink: 0
+  font-size: 0.8rem
+  font-weight: 600
+  text-transform: uppercase
 
 .cast_photo_link
   display: flex
   flex-flow: column
   align-items: center
   gap: 0.5rem
+  flex-shrink: 0
   width: 6rem
   color: inherit
   text-decoration: none

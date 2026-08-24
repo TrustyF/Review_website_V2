@@ -22,6 +22,10 @@ const ANTICIPATED_RELEASES_COUNT = 14;
 // "Recent movies" is scoped to genuinely recent releases, not just
 // whatever's newest on the site — see getRecentMovies.
 const RECENT_MOVIES_MONTHS = 5;
+// How far out an UPCOMING release can be and still count as "soon" for
+// getAnticipatedReleases — keeps that section limited to imminent releases
+// rather than anything announced with a distant or unconfirmed date.
+const ANTICIPATED_SOON_MONTHS = 2;
 // Floor so the section never looks sparse right after a quiet stretch —
 // if fewer than this many releases fall inside the window, the date
 // filter is dropped entirely (see getRecentMovies).
@@ -86,8 +90,10 @@ async function getRecentMovies() {
 }
 
 // What's on *the site owner's* watchlist that's actually worth anticipating —
-// narrowed to media that's either still upcoming (ANNOUNCED/UPCOMING) or was
-// released within the same RECENT_MOVIES_MONTHS window getRecentMovies uses,
+// narrowed to media that's either UPCOMING with a confirmed release date
+// within ANTICIPATED_SOON_MONTHS (ANNOUNCED titles with no firm date are
+// excluded — they aren't "soon") or was released within the same
+// RECENT_MOVIES_MONTHS window getRecentMovies uses (i.e. still "in theaters"),
 // and that hasn't already been rated (once rated, it belongs in "Recent
 // releases" or "Recently watched" instead, not here). Deliberately excludes
 // the rest of the watchlist — an old title still waiting to be gotten to
@@ -106,6 +112,8 @@ async function getRecentMovies() {
 async function getAnticipatedReleases() {
 	const cutoff = new Date();
 	cutoff.setMonth(cutoff.getMonth() - RECENT_MOVIES_MONTHS);
+	const soonCutoff = new Date();
+	soonCutoff.setMonth(soonCutoff.getMonth() + ANTICIPATED_SOON_MONTHS);
 
 	const items = await db.watchlistItem.findMany({
 		where: {
@@ -116,7 +124,7 @@ async function getAnticipatedReleases() {
 				isAdult: false,
 				isDeleted: false,
 				OR: [
-					{ status: { in: [MediaStatus.ANNOUNCED, MediaStatus.UPCOMING] } },
+					{ status: MediaStatus.UPCOMING, releaseDate: { gte: new Date(), lte: soonCutoff } },
 					{ releaseDate: { gte: cutoff } },
 				],
 				NOT: { review: { rating: { not: null } } },

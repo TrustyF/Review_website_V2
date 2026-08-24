@@ -12,7 +12,7 @@ import { EnrichmentStatus, Prisma } from "@prisma/client";
 // kept in a separate file since a "use server" file may only export async
 // functions, not the plain PAGE_SIZE/loadReviewsPage this one also needs to
 // share with the (non-"use server") Server Component.
-export const PAGE_SIZE = 2;
+export const PAGE_SIZE = 6;
 
 // Every type-specific relation toMediaRecord might need — this list spans
 // every media type, unlike RecentMediaListPage's single-type `include` prop.

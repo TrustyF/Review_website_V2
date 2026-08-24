@@ -16,7 +16,8 @@
   padding: 2rem 0
 
   display: flex
-  flex-flow: column
+  flex-flow: row
+  align-items: flex-start
   gap: 2rem
 
 .divider
@@ -24,11 +25,32 @@
   width: 100%
   height: 1px
 
-.media_preview
-  max-height: 20rem
-  overflow-y: scroll
-  width: fit-content
-  margin: auto
+// Stays put while .content_column scrolls past it (the modal's own scroll —
+// see wrapper's overflow-y) so the poster's always in view alongside
+// whichever field is currently being edited.
+.poster_column
+  position: sticky
+  top: 2rem
+  flex: none
+  width: 16rem
+
+  display: flex
+  flex-flow: column
+  align-items: center
+  gap: 0.5rem
+
+.enriched_ago
+  color: var(--accent1)
+  font-family: $font-mono
+  font-size: 0.85rem
+
+.content_column
+  flex: 1
+  min-width: 0
+
+  display: flex
+  flex-flow: column
+  gap: 2rem
 
 .details_group
   display: flex
@@ -36,10 +58,27 @@
   gap: 0.75rem
   padding: 0 20px
 
+// Grid, not flex: Release date only needs its own content width (auto), and
+// .details_row_secondary needs to actually claim the rest of the row (1fr)
+// rather than just its own shrink-to-fit content width, which a flex row's
+// default sizing would give it — that alone was enough to force it onto a
+// second line even when the row had plenty of room left.
 .details_row
+  display: grid
+  grid-template-columns: auto 1fr
+  align-items: start
+  gap: 2rem
+
+// +18 / Poster URL / Banner URL, grouped to the right of Release date (see
+// .details_row's grid above). min-width: 0 lets its own fields actually
+// shrink instead of forcing this whole group to wrap below Release date the
+// moment their combined natural width doesn't fit.
+.details_row_secondary
   display: flex
   flex-flow: row wrap
+  justify-content: flex-end
   gap: 2rem
+  min-width: 0
 
 .review_fields
   display: flex
@@ -51,12 +90,14 @@
   display: flex
   flex-flow: column
   gap: 0.25rem
+  min-width: 0
   color: var(--accent1)
   font-size: 0.8rem
 
 .field_input_wide
   width: 100%
   max-width: 30rem
+  min-width: 0
   padding: 0.1rem 0.3rem
   border: none
   border-bottom: 1px solid var(--accent1)
@@ -86,6 +127,7 @@
   display: flex
   flex-flow: row
   gap: 0.5rem
+  min-width: 0
 
   button
     padding: 0 8px
@@ -111,6 +153,19 @@
 // .rating/.rating_number in media-card/review.module.sass.
 .field_input
   width: 4rem
+  padding: 0.1rem 0.3rem
+  border: none
+  border-bottom: 1px solid var(--accent1)
+  background: transparent
+  color: var(--foreground)
+  font-family: $font-body
+  font-size: 1.1rem
+
+// Same look as .field_input, just wide enough for a full mm/dd/yyyy date
+// input to render without clipping — .field_input's 4rem is sized for the
+// short numeric fields (Rating, Difficulty), not this.
+.field_input_date
+  width: 9.5rem
   padding: 0.1rem 0.3rem
   border: none
   border-bottom: 1px solid var(--accent1)
