@@ -41,9 +41,6 @@
   &:hover
     color: var(--foreground)
 
-// Watchlist gets the bigger share (its grid needs the room), Lists is still
-// a placeholder (see page.tsx's own comment on why) so a narrower column is
-// enough for now — revisit once it holds real content.
 .grid
   display: grid
   grid-template-columns: 1fr 1fr
@@ -80,6 +77,17 @@
 
 .section_icon
   color: var(--accent1)
+
+// Fixed 2x2 layout with a set height rather than growing with however many
+// recommendation lists exist — keeps the Lists panel from stretching taller
+// than Watchlist's own fixed-size stack next to it. overflow-y: auto covers
+// the 5th+ list rather than clipping it silently.
+.lists_stack
+  display: grid
+  grid-template-columns: 1fr 1fr
+  gap: 1rem
+  height: 20rem
+  overflow-y: auto
 
 .empty
   @include empty-text

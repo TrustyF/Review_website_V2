@@ -7,6 +7,9 @@ import { isValidAvatarSrc } from "@/server/avatars/avatar-catalog";
 export type AccountSettingsInput = {
 	preferredLanguage: string;
 	newsletterOptIn: boolean;
+	// null clears the override, falling back to `name` — see
+	// src/lib/display-name.ts.
+	username: string | null;
 };
 
 export async function updateAccountSettings(
@@ -20,6 +23,7 @@ export async function updateAccountSettings(
 		data: {
 			preferredLanguage: input.preferredLanguage,
 			newsletterOptIn: input.newsletterOptIn,
+			username: input.username,
 		},
 	});
 

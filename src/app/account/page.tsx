@@ -8,6 +8,8 @@ import { AvatarPicker } from "@/components/account/avatar-picker/avatar-picker";
 import { getAvatarGroups } from "@/server/avatars/avatar-catalog";
 import { WatchlistStack } from "@/components/watchlist/watchlist-stack/watchlist-stack";
 import { WatchlistIcon } from "@/components/icons/watchlist-icon";
+import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
+import { displayName } from "@/lib/display-name";
 import styles from "./account.module.sass";
 
 export default async function AccountPage() {
@@ -15,17 +17,24 @@ export default async function AccountPage() {
 	if (!session?.user?.id) redirect("/login");
 
 	// role comes straight off the session (JWT) — see auth.ts's own comment,
-	// it deliberately only refreshes on sign-in. image read from the DB
-	// instead of the session, though: updateAvatar writes it straight to the
-	// DB without touching the JWT, so reading it from the session here would
-	// show this page disagreeing with whatever the user just picked.
+	// it deliberately only refreshes on sign-in. image/username read from
+	// the DB instead of the session, though: updateAvatar/
+	// updateAccountSettings write those straight to the DB without touching
+	// the JWT, so reading them from the session here would show this page
+	// disagreeing with whatever the user just picked/saved.
 	// preferredLanguage/newsletterOptIn moved to /account/settings — not
 	// needed on this page anymore.
 	const user = await db.user.findUnique({
 		where: { id: session.user.id },
-		select: { image: true },
+		select: { image: true, username: true },
 	});
 	if (!user) redirect("/login");
+
+	const heading = displayName({
+		username: user.username,
+		name: session.user.name,
+		email: session.user.email,
+	});
 
 	const watchlistItems = await db.watchlistItem.findMany({
 		where: { userId: session.user.id },
@@ -49,13 +58,22 @@ export default async function AccountPage() {
 		.filter((item) => !item.media.isDeleted)
 		.map((item) => toMediaRecord(item.media));
 
+	// Admin-curated recommendation lists deposited into this account — see
+	// List.targetUserId's own comment in list.prisma. Same shape ListsOverviewPage
+	// queries with, just scoped to this one recipient instead of the public set.
+	const recommendationLists = await db.list.findMany({
+		where: { targetUserId: session.user.id },
+		include: { _count: { select: { items: true } } },
+		orderBy: { createDate: "desc" },
+	});
+
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				<AvatarPicker initialSrc={user.image} groups={getAvatarGroups()} />
 				<div className={styles.identity}>
-					<h1 className={styles.name}>{session.user.name ?? session.user.email}</h1>
-					{session.user.name && (
+					<h1 className={styles.name}>{heading}</h1>
+					{heading !== session.user.email && (
 						<p className={styles.email}>{session.user.email}</p>
 					)}
 					<p className={styles.role}>
@@ -84,16 +102,30 @@ export default async function AccountPage() {
 						<WatchlistStack media={watchlistMedia} />
 					)}
 				</Link>
-				{/* No per-user ownership on List yet (see prisma/schema/list.prisma
-				— lists are still admin-curated/site-wide) — this is a placeholder
-				for the planned "admin deposits a recommendation list into a
-				user's account" feature, not wired to real data yet. */}
 				<section className={styles.lists}>
 					<h2 className={styles.section_title}>
 						<List size={18} className={styles.section_icon} />
 						Lists
 					</h2>
-					<p className={styles.empty}>Coming soon.</p>
+					{recommendationLists.length === 0 ? (
+						<p className={styles.empty}>
+							Nothing recommended yet — lists an admin curates for you
+							specifically will show up here.
+						</p>
+					) : (
+						<div className={styles.lists_stack}>
+							{recommendationLists.map((list) => (
+								<ListPreviewCard
+									key={list.id}
+									id={list.id}
+									title={list.title}
+									description={list.description}
+									thumbnail={list.thumbnail}
+									itemCount={list._count.items}
+								/>
+							))}
+						</div>
+					)}
 				</section>
 			</div>
 		</div>

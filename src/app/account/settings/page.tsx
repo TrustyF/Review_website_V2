@@ -14,7 +14,7 @@ export default async function AccountSettingsPage() {
 	// read its initial values from there too, not the session.
 	const user = await db.user.findUnique({
 		where: { id: session.user.id },
-		select: { preferredLanguage: true, newsletterOptIn: true },
+		select: { preferredLanguage: true, newsletterOptIn: true, username: true },
 	});
 	if (!user) redirect("/login");
 
@@ -28,6 +28,7 @@ export default async function AccountSettingsPage() {
 				initial={{
 					preferredLanguage: user.preferredLanguage,
 					newsletterOptIn: user.newsletterOptIn,
+					username: user.username,
 				}}
 			/>
 		</div>

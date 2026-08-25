@@ -25,6 +25,7 @@ export default async function EditListPage({
 					description: list.description ?? "",
 					thumbnailUrl: list.thumbnail ?? "",
 					sortMode: list.sortMode,
+					targetUserId: list.targetUserId,
 				}}
 			/>
 		</div>

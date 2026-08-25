@@ -1,0 +1,48 @@
+.grid
+  display: flex
+  flex-flow: row wrap
+  gap: 0.75rem
+
+.option
+  display: flex
+  flex-flow: column
+  align-items: center
+  gap: 0.3rem
+  width: 4.5rem
+  padding: 0.4rem
+  border-radius: 0.4rem
+  cursor: pointer
+  border: 2px solid transparent
+  text-align: center
+
+  &:hover
+    background: var(--surface)
+
+.option_selected
+  border-color: var(--brand)
+
+.avatar,
+.avatar_placeholder
+  width: 2.6rem
+  height: 2.6rem
+  border-radius: 50%
+
+.avatar
+  object-fit: cover
+  display: block
+
+.avatar_placeholder
+  display: flex
+  align-items: center
+  justify-content: center
+  background: var(--surface)
+  border: 1px solid var(--surface-border)
+  color: var(--accent1)
+
+.name
+  font-size: 0.7rem
+  color: var(--foreground)
+  white-space: nowrap
+  overflow: hidden
+  text-overflow: ellipsis
+  max-width: 100%

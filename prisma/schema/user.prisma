@@ -5,7 +5,14 @@ enum UserRole {
 
 model User {
   id            String    @id @default(cuid())
+  // Set once at signup (see auth-actions.ts), never editable afterward.
   name          String?
+  // Editable display-name override — /account/settings writes this, never
+  // `name`. Wherever a person's name is shown, prefer this over `name` when
+  // set (see src/lib/display-name.ts). Not unique: nothing in this app
+  // looks a user up by it or uses it as a handle (login is by email), it's
+  // purely cosmetic.
+  username      String?
   email         String?   @unique
   emailVerified DateTime?
   image         String?
@@ -20,9 +27,12 @@ model User {
 
   createDate DateTime @default(now())
 
-  accounts       Account[]
-  sessions       Session[]
-  watchlistItems WatchlistItem[]
+  accounts            Account[]
+  sessions            Session[]
+  watchlistItems      WatchlistItem[]
+  // Recommendation lists an admin has deposited into this account — see
+  // List.targetUserId's own comment.
+  recommendationLists List[]
 }
 
 // Standard Auth.js Prisma adapter shape (Account/Session/VerificationToken)

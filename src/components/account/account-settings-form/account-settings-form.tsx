@@ -8,6 +8,7 @@ type Props = {
 	initial: {
 		preferredLanguage: string;
 		newsletterOptIn: boolean;
+		username: string | null;
 	};
 };
 
@@ -18,6 +19,7 @@ export function AccountSettingsForm({ initial }: Props) {
 	const [newsletterOptIn, setNewsletterOptIn] = useState(
 		initial.newsletterOptIn,
 	);
+	const [username, setUsername] = useState(initial.username ?? "");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [saved, setSaved] = useState(false);
 
@@ -25,7 +27,11 @@ export function AccountSettingsForm({ initial }: Props) {
 		e.preventDefault();
 		setIsSubmitting(true);
 		try {
-			await updateAccountSettings({ preferredLanguage, newsletterOptIn });
+			await updateAccountSettings({
+				preferredLanguage,
+				newsletterOptIn,
+				username: username.trim() || null,
+			});
 			setSaved(true);
 		} finally {
 			setIsSubmitting(false);
@@ -34,6 +40,19 @@ export function AccountSettingsForm({ initial }: Props) {
 
 	return (
 		<form className={styles.form} onSubmit={handleSubmit}>
+			<label className={styles.field}>
+				Username
+				<input
+					className={styles.input}
+					type="text"
+					value={username}
+					placeholder="Shown instead of your name if set"
+					onChange={(e) => {
+						setUsername(e.target.value);
+						setSaved(false);
+					}}
+				/>
+			</label>
 			<label className={styles.field}>
 				Preferred language
 				<select

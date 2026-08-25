@@ -13,6 +13,10 @@ type ListInput = {
 	description: string | null;
 	thumbnailUrl: string | null;
 	sortMode: ListSortMode;
+	// null = a normal, publicly-listed list. A user id makes this a
+	// recommendation list deposited into that one account — see
+	// List.targetUserId's own comment in list.prisma.
+	targetUserId: string | null;
 };
 
 // The Thumbnail URL field accepts a path copied out of /dev/image-crop
@@ -44,11 +48,16 @@ export async function createList(input: ListInput): Promise<number> {
 			description: input.description?.trim() || null,
 			thumbnail: await resolveThumbnailUrl(input.thumbnailUrl),
 			sortMode: input.sortMode,
+			targetUserId: input.targetUserId,
 		},
 	});
 
 	revalidatePath("/lists");
 	revalidatePath("/activity");
+	// /account is already rendered dynamically (it reads the session via
+	// auth()), so this is belt-and-suspenders rather than load-bearing, but
+	// costs nothing to keep in step with every other list mutation here.
+	revalidatePath("/account");
 	return list.id;
 }
 
@@ -63,11 +72,41 @@ export async function updateList(id: number, input: ListInput): Promise<void> {
 			description: input.description?.trim() || null,
 			thumbnail: await resolveThumbnailUrl(input.thumbnailUrl),
 			sortMode: input.sortMode,
+			targetUserId: input.targetUserId,
 		},
 	});
 
 	revalidatePath("/lists");
 	revalidatePath(`/lists/${id}`);
+	revalidatePath("/account");
+}
+
+export type RecommendationTargetOption = {
+	id: string;
+	username: string | null;
+	name: string | null;
+	email: string | null;
+	// Whatever's currently saved on User.image — a preset avatar path (see
+	// src/lib/avatars.ts) or an OAuth provider's picture URL. UserPicker
+	// falls back to a placeholder icon when this is null (or fails to load).
+	image: string | null;
+};
+
+// Populates ListForm's "recommend to" picker (see UserPicker) — every
+// non-admin registered user, since this is a small trusted-circle site (see
+// AGENTS.md) with no expectation of paging through a large user table.
+// Admins excluded — a recommendation list is for a regular member's account,
+// not a fellow curator's.
+export async function listRecommendationTargets(): Promise<
+	RecommendationTargetOption[]
+> {
+	await requireAdmin();
+
+	return db.user.findMany({
+		where: { role: { not: "ADMIN" } },
+		orderBy: { createDate: "asc" },
+		select: { id: true, username: true, name: true, email: true, image: true },
+	});
 }
 
 // Alternative to pasting a URL (see ListForm) — a locally-picked file,

@@ -64,7 +64,6 @@ next-env.d.ts
 # otherwise need its own line added here to stay untracked).
 /public/*
 !/public/ui
-/public/ui/CT_35mm_Grain.png
 /.idea/
 /CLAUDE.md
 /AGENTS.md

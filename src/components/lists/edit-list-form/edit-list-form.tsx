@@ -35,12 +35,19 @@ export function EditListForm({ listId, initial }: Props) {
 		<ListForm
 			initial={initial}
 			submitLabel="Save"
-			onSubmit={async ({ title, description, thumbnailUrl, sortMode }) => {
+			onSubmit={async ({
+				title,
+				description,
+				thumbnailUrl,
+				sortMode,
+				targetUserId,
+			}) => {
 				await updateList(listId, {
 					title,
 					description: description.trim() || null,
 					thumbnailUrl: thumbnailUrl.trim() || null,
 					sortMode,
+					targetUserId,
 				});
 				router.push(`/lists/${listId}`);
 			}}

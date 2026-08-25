@@ -19,7 +19,21 @@ model List {
   createDate  DateTime     @default(now())
   updateDate  DateTime     @updatedAt
 
+  // Null for a normal, publicly-listed list (the common case, and the only
+  // kind that existed before this field) — set only for an admin-curated
+  // "recommendation list" deposited into one specific user's account (see
+  // /account's own Lists section). A non-null value here is what makes a
+  // list a recommendation: hidden from ListsOverviewPage's /lists query and
+  // from list-detail-page.tsx's own view (notFound() unless the viewer is
+  // this user or an admin), everything else about a List works identically
+  // either way. onDelete: Cascade rather than SetNull — a recommendation
+  // list has no meaning once its one intended recipient is gone.
+  targetUserId String?
+  targetUser   User?  @relation(fields: [targetUserId], references: [id], onDelete: Cascade)
+
   items ListItem[]
+
+  @@index([targetUserId])
 }
 
 model ListItem {

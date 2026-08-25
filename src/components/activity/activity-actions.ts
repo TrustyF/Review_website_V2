@@ -211,13 +211,21 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 					media: { select: MEDIA_SELECT },
 				},
 			}),
+			// targetUserId: null on both — a recommendation list (see
+			// list.prisma's own comment) is private to whoever it's for, and
+			// this feed is public, so neither its creation nor anything added to
+			// it should surface here regardless of who's viewing.
 			db.list.findMany({
+				where: { targetUserId: null },
 				orderBy: { createDate: "desc" },
 				take: PAGE_SIZE,
 				select: { id: true, title: true, createDate: true },
 			}),
 			db.listItem.findMany({
-				where: { media: { isAdult: false, isDeleted: false } },
+				where: {
+					media: { isAdult: false, isDeleted: false },
+					list: { targetUserId: null },
+				},
 				orderBy: { addedAt: "desc" },
 				take: PAGE_SIZE,
 				select: {

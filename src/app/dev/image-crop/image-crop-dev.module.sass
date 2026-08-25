@@ -128,6 +128,47 @@
   border: 1px solid var(--border-highlight)
   border-radius: 4px
 
+.banner_search
+  display: flex
+  flex-flow: column
+  gap: 6px
+
+.banner_results
+  display: flex
+  flex-flow: column
+  gap: 2px
+  max-height: 220px
+  overflow-y: auto
+  border: 1px solid var(--border-highlight)
+  border-radius: 4px
+  padding: 4px
+
+.banner_result
+  display: flex
+  align-items: center
+  gap: 8px
+  padding: 4px 6px
+  text-align: left
+  font-size: 0.85rem
+  color: var(--foreground)
+  background: transparent
+  border-radius: 4px
+  cursor: pointer
+
+  &:hover
+    background: var(--surface)
+
+  &:disabled
+    cursor: default
+    opacity: 0.6
+
+.banner_result_poster
+  width: 28px
+  aspect-ratio: 2 / 3
+  object-fit: cover
+  border-radius: 2px
+  flex-shrink: 0
+
 .result_row
   display: flex
   flex-flow: row

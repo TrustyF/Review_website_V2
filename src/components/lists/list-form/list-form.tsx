@@ -1,14 +1,22 @@
 "use client";
-import { ChangeEvent, FormEvent, ReactNode, useState } from "react";
+import { ChangeEvent, FormEvent, ReactNode, useEffect, useState } from "react";
 import { ListSortMode } from "@prisma/client";
 import styles from "./list-form.module.sass";
-import { uploadListThumbnail } from "@/components/lists/list-actions";
+import {
+	listRecommendationTargets,
+	RecommendationTargetOption,
+	uploadListThumbnail,
+} from "@/components/lists/list-actions";
+import { UserPicker } from "@/components/lists/list-form/user-picker";
 
 export type ListFormValues = {
 	title: string;
 	description: string;
 	thumbnailUrl: string;
 	sortMode: ListSortMode;
+	// null = a normal, publicly-listed list. See ListInput's own comment in
+	// list-actions.ts.
+	targetUserId: string | null;
 };
 
 const SORT_MODE_OPTIONS: { value: ListSortMode; label: string }[] = [
@@ -39,9 +47,19 @@ export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 	const [description, setDescription] = useState(initial.description);
 	const [thumbnailUrl, setThumbnailUrl] = useState(initial.thumbnailUrl);
 	const [sortMode, setSortMode] = useState(initial.sortMode);
+	const [targetUserId, setTargetUserId] = useState(initial.targetUserId);
+	const [targets, setTargets] = useState<RecommendationTargetOption[]>([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+
+	// Fetched once on mount rather than passed in as a prop — both call sites
+	// (NewListPage, EditListForm) are already thin wrappers that would
+	// otherwise need their own requireAdmin-gated query just to hand this
+	// list down, for a picker that's cheap and rarely opened.
+	useEffect(() => {
+		listRecommendationTargets().then(setTargets);
+	}, []);
 
 	async function handleSubmit(e: FormEvent) {
 		e.preventDefault();
@@ -49,7 +67,7 @@ export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 		setIsSubmitting(true);
 		setError(null);
 		try {
-			await onSubmit({ title, description, thumbnailUrl, sortMode });
+			await onSubmit({ title, description, thumbnailUrl, sortMode, targetUserId });
 		} catch {
 			setError("Failed to save. Try again.");
 			setIsSubmitting(false);
@@ -126,6 +144,15 @@ export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 					className={styles.thumbnail_preview}
 				/>
 			)}
+			<div className={styles.field}>
+				Recommend to
+				<UserPicker options={targets} value={targetUserId} onChange={setTargetUserId} />
+				{targetUserId && (
+					<span className={styles.recommend_hint}>
+						Only this account (and admins) will be able to see this list.
+					</span>
+				)}
+			</div>
 			<div className={styles.field}>
 				Sort mode
 				<div className={styles.sort_mode_row}>
