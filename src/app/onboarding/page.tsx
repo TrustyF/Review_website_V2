@@ -14,6 +14,7 @@ export default async function OnboardingPage() {
 	const user = await db.user.findUnique({
 		where: { id: session.user.id },
 		select: {
+			name: true,
 			username: true,
 			image: true,
 			preferredLanguage: true,
@@ -25,6 +26,7 @@ export default async function OnboardingPage() {
 	return (
 		<OnboardingWizard
 			initial={{
+				name: user.name,
 				username: user.username,
 				image: user.image,
 				preferredLanguage: user.preferredLanguage,

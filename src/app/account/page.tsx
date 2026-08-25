@@ -76,9 +76,9 @@ export default async function AccountPage() {
 					{heading !== session.user.email && (
 						<p className={styles.email}>{session.user.email}</p>
 					)}
-					<p className={styles.role}>
-						{session.user.role === "ADMIN" ? "Admin" : "Member"}
-					</p>
+					{/*<p className={styles.role}>*/}
+					{/*	{session.user.role === "ADMIN" ? "Admin" : "Member"}*/}
+					{/*</p>*/}
 				</div>
 				<Link
 					href="/account/settings"
