@@ -52,12 +52,17 @@
   @media (max-width: 640px)
     grid-template-columns: 1fr
 
+// Both panels capped to the same total height regardless of content —
+// watchlist-stack.module.sass's .stack and .lists_stack below both flex: 1
+// + min-height: 0 to fill whatever's left after the header, instead of
+// dictating the panel's height themselves.
 .watchlist,
 .lists
   display: flex
   flex-flow: column
   gap: 1rem
   min-width: 0
+  height: 20rem
   padding: 1.2rem
   border: 1px solid var(--surface-border)
   border-radius: 0.5rem
@@ -81,15 +86,19 @@
 .section_icon
   color: var(--accent1)
 
-// Fixed 2x2 layout with a set height rather than growing with however many
-// recommendation lists exist — keeps the Lists panel from stretching taller
-// than Watchlist's own fixed-size stack next to it. overflow-y: auto covers
-// the 5th+ list rather than clipping it silently.
+// Fixed 2x2 layout, sized by flex: 1 (fills whatever .lists's own fixed
+// height leaves after the header) rather than a height of its own — keeps
+// this from growing past .watchlist's matching cap however many
+// recommendation lists exist. min-height: 0 is needed alongside flex: 1 —
+// a flex item's default min-height is auto (its content size), which would
+// otherwise refuse to shrink below the natural height of a 5th+ row.
+// overflow-y: auto covers that row rather than clipping it silently.
 .lists_stack
   display: grid
   grid-template-columns: 1fr 1fr
   gap: 1rem
-  height: 20rem
+  flex: 1
+  min-height: 0
   overflow-y: auto
 
 .empty

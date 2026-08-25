@@ -1,17 +1,35 @@
-// One combined rectangle — overflow: hidden clips the 3 posters to this
-// box's own rounded corners, and the outline wraps the whole strip rather
-// than each poster individually (compare the previous overlapping-deck
-// version, which outlined each card on its own).
+// container-type: size establishes this as the reference box for .card's
+// cqw/cqh below (its own height/width, not the viewport's) — needed so the
+// overlap math in watchlist-stack.tsx can express both a card's
+// height-derived width (in cqh) and the container's own width (in cqw) in
+// the same calc().
 .stack
+  height: 100%
+  width: 100%
   display: flex
-  gap: 2px
-  border-radius: 0.4rem
-  outline: 1px solid var(--surface-border)
-  overflow: hidden
   cursor: pointer
+  container-type: size
 
-// Equal thirds — flex: 1 (not a fixed width) so all 3 always fill the
-// strip's own width evenly regardless of how wide the panel around it is.
+// height: 100% + aspect-ratio (matching MediaPoster's own default ratio
+// prop — see poster.tsx, not overridden here) makes every card exactly as
+// tall as .stack and auto-computes its width from that height, instead of
+// the other way around (a flex-grown width with height following from it,
+// which is what let a card's height drift from the container's). Since
+// MediaPoster's own .poster_frame (primitives.module.sass) is width: 100%
+// + aspect-ratio itself, and its width here is this card's own
+// aspect-ratio-derived width, the frame's resulting height works out to
+// exactly this card's height too — no cropping/fill trick needed, the
+// poster just naturally fills the box at its native shape.
+// flex: 0 0 auto — sized to that aspect-ratio content, not grown/shrunk by
+// flex. z-index and margin-left are both set inline (watchlist-stack.tsx):
+// z-index depends on which card is frontmost, and margin-left is a calc()
+// solved from the container's own size (via cqw/cqh) so the deck spans its
+// full width exactly regardless of how many cards there are.
 .card
-  flex: 1 1 0
-  min-width: 0
+  height: 100%
+  aspect-ratio: 2 / 3
+  flex: 0 0 auto
+  position: relative
+  border-radius: 0.4rem
+  overflow: hidden
+  box-shadow: 0 2px 6px var(--overlay-backdrop)
