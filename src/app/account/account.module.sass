@@ -56,6 +56,10 @@
 // watchlist-stack.module.sass's .stack and .lists_stack below both flex: 1
 // + min-height: 0 to fill whatever's left after the header, instead of
 // dictating the panel's height themselves.
+//
+// Both are Links (see page.tsx) so the whole card is the click area, not
+// just the poster strip / list grid inside it — same treatment, same
+// selector group.
 .watchlist,
 .lists
   display: flex
@@ -67,12 +71,6 @@
   border: 1px solid var(--surface-border)
   border-radius: 0.5rem
   transition: border-color 0.15s ease
-
-// .watchlist is a Link (see page.tsx) so its whole card is the click area,
-// not just the poster strip inside it — .lists isn't yet (still a plain
-// section, see page.tsx's own comment on why), so this is scoped to .watchlist
-// alone rather than both.
-.watchlist
   cursor: pointer
 
   &:hover
@@ -90,18 +88,19 @@
 
 // Fixed 2x2 layout, sized by flex: 1 (fills whatever .lists's own fixed
 // height leaves after the header) rather than a height of its own — keeps
-// this from growing past .watchlist's matching cap however many
-// recommendation lists exist. min-height: 0 is needed alongside flex: 1 —
-// a flex item's default min-height is auto (its content size), which would
-// otherwise refuse to shrink below the natural height of a 5th+ row.
-// overflow-y: auto covers that row rather than clipping it silently.
+// this from growing past .watchlist's matching cap. Both dimensions are
+// capped (2 columns, 2 rows) since page.tsx already slices to at most 4
+// lists, so every card gets an equal share of the panel's height instead of
+// sizing itself off its own content (list-preview-card.module.sass's
+// .wrapper/.thumbnail_frame stretch to fill whatever row height that
+// leaves).
 .lists_stack
   display: grid
   grid-template-columns: 1fr 1fr
+  grid-template-rows: 1fr 1fr
   gap: 1rem
   flex: 1
   min-height: 0
-  overflow-y: auto
 
 .empty
   @include empty-text

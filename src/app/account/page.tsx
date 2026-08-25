@@ -61,11 +61,16 @@ export default async function AccountPage() {
 	// Admin-curated recommendation lists deposited into this account — see
 	// List.targetUserId's own comment in list.prisma. Same shape ListsOverviewPage
 	// queries with, just scoped to this one recipient instead of the public set.
-	const recommendationLists = await db.list.findMany({
+	// Fixed at 4 (2x2) rather than however many happen to fit — matches
+	// WatchlistStack's own MAX_VISIBLE reasoning, this is a preview not an
+	// exhaustive list.
+	const MAX_VISIBLE_LISTS = 4;
+	const recommendationListsAll = await db.list.findMany({
 		where: { targetUserId: session.user.id },
 		include: { _count: { select: { items: true } } },
 		orderBy: { createDate: "desc" },
 	});
+	const recommendationLists = recommendationListsAll.slice(0, MAX_VISIBLE_LISTS);
 
 	return (
 		<div className={styles.wrapper}>
@@ -102,7 +107,7 @@ export default async function AccountPage() {
 						<WatchlistStack media={watchlistMedia} />
 					)}
 				</Link>
-				<section className={styles.lists}>
+				<Link href="/account/lists" className={styles.lists}>
 					<h2 className={styles.section_title}>
 						<List size={18} className={styles.section_icon} />
 						Recommendations
@@ -122,11 +127,12 @@ export default async function AccountPage() {
 									description={list.description}
 									thumbnail={list.thumbnail}
 									itemCount={list._count.items}
+									linked={false}
 								/>
 							))}
 						</div>
 					)}
-				</section>
+				</Link>
 			</div>
 		</div>
 	);
