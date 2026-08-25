@@ -7,6 +7,7 @@ import { fuzzySearch } from "@/lib/fuzzy-search";
 import { saveListThumbnail } from "@/server/resolvers/list-thumbnail-resolver";
 import { readCroppedFile } from "@/server/resolvers/image-crop-resolver";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { createNotification } from "@/components/notifications/notification-actions";
 
 type ListInput = {
 	title: string;
@@ -51,6 +52,14 @@ export async function createList(input: ListInput): Promise<number> {
 			targetUserId: input.targetUserId,
 		},
 	});
+
+	if (input.targetUserId) {
+		await createNotification({
+			type: "LIST_CREATED",
+			userId: input.targetUserId,
+			listId: list.id,
+		});
+	}
 
 	revalidatePath("/lists");
 	revalidatePath("/activity");
@@ -144,6 +153,22 @@ export async function addMediaToList(
 		data: [{ listId, mediaId, rank: (_max.rank ?? -1) + 1 }],
 		skipDuplicates: true,
 	});
+
+	// Only a recommendation list has anyone to notify — a normal, publicly-
+	// listed list's items showing up in /activity already covers it (see
+	// activity-actions.ts).
+	const list = await db.list.findUnique({
+		where: { id: listId },
+		select: { targetUserId: true },
+	});
+	if (list?.targetUserId) {
+		await createNotification({
+			type: "LIST_ITEM_ADDED",
+			userId: list.targetUserId,
+			listId,
+			mediaId,
+		});
+	}
 
 	revalidatePath(`/lists/${listId}`);
 	revalidatePath("/lists");

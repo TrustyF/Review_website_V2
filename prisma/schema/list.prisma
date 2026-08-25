@@ -31,7 +31,8 @@ model List {
   targetUserId String?
   targetUser   User?  @relation(fields: [targetUserId], references: [id], onDelete: Cascade)
 
-  items ListItem[]
+  items         ListItem[]
+  notifications Notification[]
 
   @@index([targetUserId])
 }
