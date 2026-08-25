@@ -77,13 +77,14 @@
 // Every tier is already collapsed well before $mobile-breakpoint (see
 // nav-label-collapse's own comment) — the mobile drawer (nav-bar.module.sass)
 // has the vertical room labels don't have in the collapsed desktop row, so
-// bring the label back once it's open. :global(.mobile-nav-open) is the same
-// class nav-bar.tsx mirrors onto <html> for its own drawer styles — plain
-// module classes aren't reachable across files, so this is the bridge.
-:global(.mobile-nav-open) .label_stack_tier1,
-:global(.mobile-nav-open) .label_stack_tier2,
-:global(.mobile-nav-open) .label_stack_tier3,
-:global(.mobile-nav-open) .label_stack_tier4
+// bring the label back once it's open. [data-mobile-open="true"] is the
+// attribute nav-bar.tsx sets on <nav> for its own drawer styles — plain
+// module classes aren't reachable across files, so this (an attribute
+// selector, unaffected by CSS Modules' class-name scoping) is the bridge.
+[data-mobile-open="true"] .label_stack_tier1,
+[data-mobile-open="true"] .label_stack_tier2,
+[data-mobile-open="true"] .label_stack_tier3,
+[data-mobile-open="true"] .label_stack_tier4
   display: grid
 
 // Default (unset) state sits a full line below, waiting — so a variant
@@ -126,13 +127,27 @@
   z-index: 20
   padding-top: 0.5rem
 
+  // Inside the mobile drawer (nav-bar.module.sass), the hover-gap reasoning
+  // above doesn't apply — there's no pointer to lose, just a tap — and
+  // floating this over whatever comes after it in the drawer (the next
+  // nav_group's own links) hides them behind it instead of making room, the
+  // one thing a drawer's own scrollable column is supposed to do. Static
+  // instead lets it fall into normal flow inside its <details>, pushing
+  // everything below it down the same way opening it pushes the rest of an
+  // accordion down.
+  [data-mobile-open="true"] &
+    position: static
+    padding-top: 0
+    margin-top: 0.5rem
+
 // Modifier for a dropdown whose own trigger sits flush against the navbar's
 // right edge (see nav-bar.tsx's own Account NavDropdown) — anchoring the
 // panel from `left` there would grow it off the right edge of the viewport
 // instead of back over the trigger, same as any left-anchored dropdown
 // would if it were the rightmost thing on the page. Anchoring from `right`
 // instead grows the panel leftward, staying under the trigger regardless of
-// how close to the edge it sits.
+// how close to the edge it sits. Moot once .panel itself goes static in the
+// mobile drawer (see above) — there's nothing left to anchor.
 .panel_right
   left: auto
   right: 0

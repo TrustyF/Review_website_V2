@@ -323,10 +323,11 @@ $mobile-bar-height: 2rem + $mobile-icon-size
 
   // Collapses out of the fixed/viewport-aligned centering (see .nav_content's
   // own comment above) into a hidden-by-default drawer instead — toggled via
-  // the global .mobile-nav-open class nav-bar.tsx mirrors onto <html> (same
-  // pattern as .nav-hidden in globals.sass), rather than a module-scoped
-  // class, since nav-dropdown.module.sass needs to react to the same state
-  // and CSS Modules classes aren't reachable across files.
+  // the [data-mobile-open] attribute nav-bar.tsx sets on <nav> itself.
+  // Attribute selectors aren't scoped by CSS Modules the way class names are,
+  // so this (and nav-dropdown.module.sass's own copy) reaches across files
+  // the same way :global() used to, without needing a class mirrored onto
+  // <html> — nothing outside <nav>'s own subtree needs this state.
   .nav_content
     display: none
     position: fixed
@@ -343,7 +344,7 @@ $mobile-bar-height: 2rem + $mobile-icon-size
     border-top: 1px solid var(--surface-border)
     border-bottom: 1px solid var(--surface-border)
 
-    :global(.mobile-nav-open) &
+    [data-mobile-open="true"] &
       display: flex
 
   // Fills the drawer's width instead of clamping to the old docked-search
@@ -377,8 +378,8 @@ $mobile-bar-height: 2rem + $mobile-icon-size
   // hides below 910px) — the drawer has the vertical room labels don't have
   // in the collapsed desktop row, so every tier's label comes back once the
   // drawer is actually open.
-  :global(.mobile-nav-open) .link_label_tier1,
-  :global(.mobile-nav-open) .link_label_tier2,
-  :global(.mobile-nav-open) .link_label_tier3,
-  :global(.mobile-nav-open) .link_label_tier4
+  [data-mobile-open="true"] .link_label_tier1,
+  [data-mobile-open="true"] .link_label_tier2,
+  [data-mobile-open="true"] .link_label_tier3,
+  [data-mobile-open="true"] .link_label_tier4
     display: inline

@@ -2,23 +2,15 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, type LucideIcon } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { isNavActive } from "@/lib/nav-active";
+import type { LucideIcon, NavIcon } from "@/components/navbar/nav-types";
 import style from "./nav-dropdown.module.sass";
-
-// Widened past lucide's own LucideIcon type so local icon components (e.g.
-// MovieIcon) — which only accept the size/className/fill subset this file
-// actually passes — satisfy it too.
-type DropdownIcon = React.ComponentType<{
-	size?: number | undefined;
-	className?: string | undefined;
-	fill?: string | undefined;
-}>;
 
 type Item = {
 	href: string;
 	label: string;
-	icon?: LucideIcon | DropdownIcon;
+	icon?: LucideIcon | NavIcon;
 	// For an item that performs an action instead of navigating (e.g. sign
 	// out) — href can be a placeholder ("#") in that case, since it's never
 	// actually followed: the panel link's own click is prevented and this
@@ -28,7 +20,7 @@ type Item = {
 
 type Props = {
 	label: string;
-	icon?: LucideIcon | DropdownIcon;
+	icon?: LucideIcon | NavIcon;
 	items: Item[];
 	// Which staggered collapse breakpoint this dropdown's label text hides
 	// at — see nav-bar.tsx's own COLLAPSE_TIER map for how tiers are
