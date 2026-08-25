@@ -109,6 +109,39 @@ export async function listRecommendationTargets(): Promise<
 	});
 }
 
+export type UserListSummary = {
+	id: number;
+	title: string;
+	description: string | null;
+	thumbnail: string | null;
+	itemCount: number;
+};
+
+// Powers the admin "User lists" browser (see /admin/user-lists) — every
+// recommendation list deposited into one specific account, i.e. the same
+// query AccountPage runs for the signed-in user's own recommendations
+// (see account/page.tsx), just parametrized to an admin-selected user
+// instead of session.user.id.
+export async function getListsForUser(
+	targetUserId: string,
+): Promise<UserListSummary[]> {
+	await requireAdmin();
+
+	const lists = await db.list.findMany({
+		where: { targetUserId },
+		include: { _count: { select: { items: true } } },
+		orderBy: { createDate: "desc" },
+	});
+
+	return lists.map((list) => ({
+		id: list.id,
+		title: list.title,
+		description: list.description,
+		thumbnail: list.thumbnail,
+		itemCount: list._count.items,
+	}));
+}
+
 // Alternative to pasting a URL (see ListForm) — a locally-picked file,
 // resized/re-encoded and written under public/list-thumbnails via
 // saveListThumbnail, returning a URL that slots into the same thumbnailUrl

@@ -1,0 +1,34 @@
+@use "@/app/styles/variables" as *
+
+.wrapper
+  width: 950px
+  margin: 2rem auto
+  display: flex
+  flex-flow: column
+  gap: 1.5rem
+
+.hint
+  color: var(--accent1)
+  margin-top: -1rem
+
+.empty
+  @include empty-text
+  margin-top: 1rem
+
+@keyframes spin
+  to
+    transform: rotate(360deg)
+
+.spinner
+  width: 1.5rem
+  height: 1.5rem
+  margin: 0.5rem auto
+  border: 2px solid var(--accent1)
+  border-top-color: transparent
+  border-radius: 50%
+  animation: spin 0.7s linear infinite
+
+.grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))
+  gap: 1.5rem

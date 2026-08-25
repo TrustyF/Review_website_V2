@@ -12,6 +12,7 @@ import {
 	LogIn,
 	LogOut,
 	LucideProvider,
+	Users,
 	type LucideIcon,
 } from "lucide-react";
 import { ActivityIcon } from "@/components/icons/activity-icon";
@@ -358,13 +359,22 @@ export default function Navbar() {
 				    element), so it still hides/reveals in step with the rest of
 				    the navbar on scroll. */}
 				{isAdmin && (
-					<NavLink
-						href="/add"
-						icon={CirclePlus}
-						className={`${style.link} ${style.add_media_link}`}
-						pathname={pathname}>
-						Add media
-					</NavLink>
+					<div className={style.add_media_link}>
+						<NavLink
+							href="/add"
+							icon={CirclePlus}
+							className={style.link}
+							pathname={pathname}>
+							Add media
+						</NavLink>
+						<NavLink
+							href="/admin/user-lists"
+							icon={Users}
+							className={style.link}
+							pathname={pathname}>
+							User lists
+						</NavLink>
+					</div>
 				)}
 			</nav>
 		</LucideProvider>
