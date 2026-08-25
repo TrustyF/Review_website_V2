@@ -8,6 +8,8 @@ import styles from "./media-mini-card-shell.module.sass";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { ReviewIcon } from "@/components/media/icons/review-icon";
 import { useMediaCardDisplay } from "@/components/media/media-card-display-context";
+import { AddToWatchlistHoverButton } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-hover-button";
+import { MarkAsSeenHoverButton } from "@/components/media/media-cards/media-mini-card/mark-as-seen-hover-button";
 
 type Props = {
 	media: MediaRecord;
@@ -43,6 +45,10 @@ export function MediaMiniCardShell({ media, children }: Props) {
 					<ReviewIcon size={9} title="Has review" />
 				)}
 				{children}
+			</div>
+			<div className={styles.status_buttons}>
+				<AddToWatchlistHoverButton mediaId={media.id} />
+				{/*<MarkAsSeenHoverButton mediaId={media.id} />*/}
 			</div>
 			<MediaEditButton media={media} className={styles.edit_button} />
 		</div>

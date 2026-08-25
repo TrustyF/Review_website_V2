@@ -55,15 +55,44 @@
   font-size: 0.8rem
   color: var(--accent1)
 
+.edit_button,
+.status_buttons
+  opacity: 0
+  visibility: hidden
+  // visibility's own transition is delayed to the end of the opacity fade
+  // when going hidden, so it stays "visible" (just transparent) throughout —
+  // switching it immediately would make the fade pointless, it'd un-hoverable
+  // itself mid-fade. Delay drops to 0 on the hover rule below, so it becomes
+  // visible instantly on the way in.
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s
+
 .edit_button
   position: absolute
   top: 0.25rem
-  right: 0.25rem
-  opacity: 0
-  visibility: hidden
+  left: 0.25rem
+
+// Groups the watchlist/seen toggles into one pill, positioned as a unit —
+// the individual badges (see media-hover-badge.module.sass) carry no
+// background of their own, just flex children stacked in this one shared
+// surface. border-radius bigger than half the (fixed) width rounds the top
+// and bottom all the way into a stadium/pill shape regardless of how tall
+// the column grows as more toggles are added later.
+.status_buttons
+  position: absolute
+  top: 0.15rem
+  right: 0.15rem
+  display: flex
+  flex-flow: column
+  align-items: center
+  gap: 0.2rem
+  padding: 0.1rem
+  border-radius: 999px
+  background: var(--surface)
 
 .wrapper:hover
-  .edit_button
+  .edit_button,
+  .status_buttons
     visibility: visible
     opacity: 1
+    transition-delay: 0s
 

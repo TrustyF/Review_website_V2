@@ -23,11 +23,7 @@ export function MediaEditButton({ media, className }: Props) {
 	if (editingMediaId === media.id) return null;
 
 	return (
-		<Hitbox
-			className={className}
-			onClick={() => open(media)}
-			padding={15}
-		>
+		<Hitbox className={className} onClick={() => open(media)} padding={15}>
 			<Image
 				src={"/ui/edit_pen_1.svg"}
 				width={20}

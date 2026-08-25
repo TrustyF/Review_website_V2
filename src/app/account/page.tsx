@@ -105,7 +105,7 @@ export default async function AccountPage() {
 				<section className={styles.lists}>
 					<h2 className={styles.section_title}>
 						<List size={18} className={styles.section_icon} />
-						Lists
+						Recommendations
 					</h2>
 					{recommendationLists.length === 0 ? (
 						<p className={styles.empty}>

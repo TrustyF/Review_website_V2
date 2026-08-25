@@ -7,6 +7,7 @@ import MediaEditorModal from "@/components/media/media-management/media-editor/m
 import { FeaturedManagerModal } from "@/components/home/featured-review/featured-manager/featured-manager-modal";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
 import { AvatarProvider } from "@/components/account/avatar-context";
+import { WatchlistProvider } from "@/components/watchlist/watchlist-context";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -32,11 +33,13 @@ export default function RootLayout({
 			<body>
 				<AuthSessionProvider>
 					<AvatarProvider>
-						<Navbar />
-						<DevMenu />
-						<MediaEditorModal />
-						<FeaturedManagerModal />
-						<main>{children}</main>
+						<WatchlistProvider>
+							<Navbar />
+							<DevMenu />
+							<MediaEditorModal />
+							<FeaturedManagerModal />
+							<main>{children}</main>
+						</WatchlistProvider>
 					</AvatarProvider>
 				</AuthSessionProvider>
 			</body>
