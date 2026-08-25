@@ -39,6 +39,7 @@ model Media {
   mediaGenres    MediaGenre[]
   listItems      ListItem[]
   watchlistItems WatchlistItem[]
+  notifications  Notification[]
 
   tvShow TvShow?
   movie  Movie?

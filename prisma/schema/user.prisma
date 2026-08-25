@@ -33,6 +33,7 @@ model User {
   // Recommendation lists an admin has deposited into this account — see
   // List.targetUserId's own comment.
   recommendationLists List[]
+  notifications       Notification[]
 }
 
 // Standard Auth.js Prisma adapter shape (Account/Session/VerificationToken)
