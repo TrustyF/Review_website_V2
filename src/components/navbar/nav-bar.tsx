@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { ActivityIcon } from "@/components/icons/activity-icon";
 import { HomeIcon } from "@/components/icons/home-icon";
-import { WatchlistIcon } from "@/components/icons/watchlist-icon";
 import { AccountIcon } from "@/components/icons/account-icon";
 import { MovieIcon } from "@/components/icons/movie-icon";
 import { NavSearch } from "@/components/navbar/nav-search/nav-search";
@@ -289,21 +288,14 @@ export default function Navbar() {
 						<div className={`${style.nav_group} ${style.nav_group_end}`}>
 							{session?.user ? (
 								<>
-									<NavDropdown
-										label="Account"
+									<NavLink
+										href="/account"
 										icon={AccountIcon}
-										collapseTier={COLLAPSE_TIER.ACCOUNT}
-										iconOnly
-										align="right"
-										items={[
-											{ href: "/account", label: "Account", icon: AccountIcon },
-											{
-												href: "/watchlist",
-												label: "Watchlist",
-												icon: WatchlistIcon,
-											},
-										]}
-									/>
+										className={style.link}
+										pathname={pathname}
+										iconOnly>
+										Account
+									</NavLink>
 									<button
 										type="button"
 										className={style.sign_out_button}

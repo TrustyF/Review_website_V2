@@ -57,14 +57,15 @@ next-env.d.ts
 /src/app/styles/globals.css.map
 **/*.module.css
 **/*.module.css.map
-/public/posters/
-/public/banners/
-/public/list-thumbnails/
-/public/cropped/
+# Everything under public/ is generated/cached (posters, banners, cropped
+# temp files, avatars, ...) except the hand-authored assets in public/ui —
+# ignore the whole tree and carve that one directory back out, rather than
+# listing each generated subfolder individually (a new cache dir would
+# otherwise need its own line added here to stay untracked).
+/public/*
+!/public/ui
+/public/ui/CT_35mm_Grain.png
 /.idea/
 /CLAUDE.md
 /AGENTS.md
-/public/ui/CT_35mm_Grain.png
 /backups/
-/public/people/
-/public/search-index/

@@ -1,0 +1,17 @@
+// One combined rectangle — overflow: hidden clips the 3 posters to this
+// box's own rounded corners, and the outline wraps the whole strip rather
+// than each poster individually (compare the previous overlapping-deck
+// version, which outlined each card on its own).
+.stack
+  display: flex
+  gap: 2px
+  border-radius: 0.4rem
+  outline: 1px solid var(--surface-border)
+  overflow: hidden
+  cursor: pointer
+
+// Equal thirds — flex: 1 (not a fixed width) so all 3 always fill the
+// strip's own width evenly regardless of how wide the panel around it is.
+.card
+  flex: 1 1 0
+  min-width: 0

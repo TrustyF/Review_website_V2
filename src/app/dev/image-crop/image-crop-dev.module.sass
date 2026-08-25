@@ -1,5 +1,5 @@
 .wrapper
-  width: 640px
+  width: 820px
   max-width: 100%
   margin: 20px auto
   color: var(--foreground)
@@ -24,16 +24,79 @@
   gap: 4px
   cursor: pointer
 
+// Cropper frame + result-preview panel side by side — align-items:
+// flex-start rather than stretch since the two boxes have unrelated heights
+// (cropper_frame is a fixed 420px, preview_frame follows the shape's own
+// ratio at a much smaller PREVIEW_SIZE).
+.cropper_row
+  display: flex
+  flex-flow: row
+  align-items: flex-start
+  gap: 16px
+
 // react-easy-crop fills this box (position: absolute internally) — needs an
 // explicit height and a positioned ancestor, per the library's own usage
-// note.
+// note. flex: 1 (rather than width: 100%) so it's the one side of
+// .cropper_row that gives up space to preview_column's fixed size.
 .cropper_frame
   position: relative
-  width: 100%
+  flex: 1 1 auto
+  min-width: 0
   height: 420px
   background: var(--surface)
   border-radius: 4px
   overflow: hidden
+
+// Shared by both vignette treatments below — the cropper's own overlay
+// (absolutely centered atop the crop rect) and the preview panel's (already
+// exactly the crop rect's own size, so it only needs to fill its parent).
+.vignette_gradient
+  pointer-events: none
+  background: radial-gradient(ellipse at center, transparent 55%, black 100%)
+
+// Positioned to match react-easy-crop's own crop rect exactly (see
+// image-crop-tool.tsx's cropSize state) — width/height/opacity are set
+// inline per-instance, this just owns the parts that don't vary.
+.vignette_overlay
+  @extend .vignette_gradient
+  position: absolute
+  top: 50%
+  left: 50%
+  transform: translate(-50%, -50%)
+
+.vignette_overlay_round
+  border-radius: 50%
+
+// Doesn't need vignette_overlay's own centering math — preview_frame below
+// is already sized to exactly the crop rect, so this just fills it.
+.preview_vignette
+  @extend .vignette_gradient
+  position: absolute
+  inset: 0
+
+.preview_column
+  flex: 0 0 auto
+  display: flex
+  flex-flow: column
+  gap: 4px
+
+.preview_label
+  font-size: 0.75rem
+  opacity: 0.6
+
+// background-image/-size/-position are set inline per-instance (see
+// image-crop-tool.tsx) — reproduces image-crop-resolver.ts's own extract()
+// rect at a small fixed display size, so what's saved is what's shown here
+// rather than something the crop window's own live view only implies.
+.preview_frame
+  position: relative
+  background-repeat: no-repeat
+  border-radius: 4px
+  overflow: hidden
+  outline: 1px solid var(--border-highlight)
+
+.preview_frame_round
+  border-radius: 50%
 
 .control_row
   display: flex

@@ -1,12 +1,17 @@
 "use client";
-import { ChangeEvent, useEffect, useState } from "react";
-import Cropper, { Area, Point } from "react-easy-crop";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
+import Cropper, { Area, MediaSize, Point } from "react-easy-crop";
 import { CROP_SHAPES, CropShapeId } from "./crop-shapes";
 import { fetchImportedImage, saveCroppedImageAction } from "./crop-actions";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import styles from "./image-crop-dev.module.sass";
 
 const DEFAULT_SHAPE: CropShapeId = "poster-2-3";
+
+// Width of the result-preview panel — height follows from the shape's own
+// ratio (see the preview style calc below), same as the Cropper's own crop
+// rect does.
+const PREVIEW_SIZE = 160;
 
 // Ad hoc local-file crop-and-save tool: pick a file, pick a shape, drag/zoom
 // to position the crop, save — the result is a path meant to be copied out
@@ -17,12 +22,30 @@ const DEFAULT_SHAPE: CropShapeId = "poster-2-3";
 // has no server-side check either.
 export function ImageCropTool() {
 	const isAdmin = useIsAdmin();
+	const cropperRef = useRef<InstanceType<typeof Cropper>>(null);
 	const [file, setFile] = useState<File | null>(null);
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const [shapeId, setShapeId] = useState<CropShapeId>(DEFAULT_SHAPE);
 	const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
 	const [zoom, setZoom] = useState(1);
+	// Mirrors whatever size the library itself computes for the crop rect
+	// (aspect × container, recalculated on resize/shape change) — needed so
+	// the vignette overlay below can be sized/positioned to exactly match it
+	// rather than guessing at a fixed size of its own.
+	const [cropSize, setCropSize] = useState<{ width: number; height: number } | null>(
+		null,
+	);
+	// 0–1, not reset on file/shape change — unlike zoom/crop this isn't tied
+	// to a particular image or aspect ratio, it's a standing style choice for
+	// this save.
+	const [vignette, setVignette] = useState(0);
 	const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+	// Natural (unscaled) pixel dimensions of the loaded image — croppedAreaPixels
+	// (below) is already in this same space, so together they're what the
+	// result-preview panel needs to reproduce, via CSS background-position/
+	// -size, exactly the same extract() rect image-crop-resolver.ts's
+	// cropAndSave applies server-side.
+	const [mediaSize, setMediaSize] = useState<MediaSize | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [resultPath, setResultPath] = useState<string | null>(null);
@@ -50,6 +73,7 @@ export function ImageCropTool() {
 		setCrop({ x: 0, y: 0 });
 		setZoom(1);
 		setCroppedAreaPixels(null);
+		setMediaSize(null);
 		setResultPath(null);
 		setError(null);
 	}
@@ -82,6 +106,32 @@ export function ImageCropTool() {
 		}
 	}
 
+	// Plain `setZoom` alone reproduces react-easy-crop's own default: the
+	// image scales around its own center (CSS transform-origin), which drifts
+	// away from the crop shape the moment you've panned at all — the shape
+	// stays put while the image balloons out from wherever its center
+	// happens to be. Internally the library avoids exactly this for
+	// wheel/pinch zoom by re-deriving `crop` (the pan offset) alongside
+	// `zoom` so a chosen point stays fixed on screen — see this package's own
+	// onWheel/onPinchMove, both of which call setNewZoom with the pointer/
+	// pinch-center point. That same method is reused here with the
+	// container's own center as the point (getPointOnContainer resolves a
+	// page-space point equal to the container's center to {x:0, y:0}, i.e.
+	// "no offset from center" — exactly what the crop shape sits on, since
+	// it's always centered in the container), so dragging the slider zooms
+	// toward the shape instead.
+	function handleZoomChange(nextZoom: number) {
+		const cropper = cropperRef.current;
+		const container = cropper?.containerRef;
+		if (!cropper || !container) {
+			setZoom(nextZoom);
+			return;
+		}
+		const rect = container.getBoundingClientRect();
+		const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+		cropper.setNewZoom(nextZoom, center, { shouldUpdatePosition: true });
+	}
+
 	function handleShapeChange(next: CropShapeId) {
 		setShapeId(next);
 		// A different aspect ratio needs its own crop rect — resetting avoids
@@ -101,6 +151,7 @@ export function ImageCropTool() {
 			formData.append("file", file);
 			formData.append("shapeId", shapeId);
 			formData.append("crop", JSON.stringify(croppedAreaPixels));
+			formData.append("vignette", String(vignette));
 			setResultPath(await saveCroppedImageAction(formData));
 		} catch {
 			setError("Failed to save. Try again.");
@@ -158,16 +209,71 @@ export function ImageCropTool() {
 
 			{previewUrl && (
 				<>
-					<div className={styles.cropper_frame}>
-						<Cropper
-							image={previewUrl}
-							crop={crop}
-							zoom={zoom}
-							aspect={CROP_SHAPES[shapeId].ratio}
-							onCropChange={setCrop}
-							onZoomChange={setZoom}
-							onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
-						/>
+					<div className={styles.cropper_row}>
+						<div className={styles.cropper_frame}>
+							<Cropper
+								ref={cropperRef}
+								image={previewUrl}
+								crop={crop}
+								zoom={zoom}
+								aspect={CROP_SHAPES[shapeId].ratio}
+								cropShape={CROP_SHAPES[shapeId].cropShape ?? "rect"}
+								onCropChange={setCrop}
+								onZoomChange={setZoom}
+								onCropSizeChange={setCropSize}
+								onMediaLoaded={setMediaSize}
+								onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
+							/>
+							{/* Sits on top of Cropper's own crop rect, sized/positioned to
+							match it exactly (see cropSize's own comment above) — shows
+							what the vignette will look like without actually touching the
+							source image; the real one only gets baked in server-side on
+							save (see image-crop-resolver.ts's cropAndSave). pointer-events:
+							none so drag/zoom on the image underneath still works through it. */}
+							{cropSize && (
+								<div
+									className={`${styles.vignette_overlay} ${CROP_SHAPES[shapeId].cropShape === "round" ? styles.vignette_overlay_round : ""}`}
+									style={{
+										width: cropSize.width,
+										height: cropSize.height,
+										opacity: vignette,
+									}}
+								/>
+							)}
+						</div>
+
+						{mediaSize &&
+							croppedAreaPixels &&
+							(() => {
+								// Reproduces image-crop-resolver.ts's own extract() rect via
+								// CSS background-position/-size instead of round-tripping to
+								// the server on every drag/zoom — croppedAreaPixels and
+								// mediaSize are both in the same natural-pixel space
+								// extract() itself works in, so this is exactly "source
+								// pixels per preview pixel," the one number a background-
+								// image needs to reproduce an arbitrary crop rect at a
+								// different display size.
+								const scale = PREVIEW_SIZE / croppedAreaPixels.width;
+								return (
+									<div className={styles.preview_column}>
+										<span className={styles.preview_label}>Result</span>
+										<div
+											className={`${styles.preview_frame} ${CROP_SHAPES[shapeId].cropShape === "round" ? styles.preview_frame_round : ""}`}
+											style={{
+												width: PREVIEW_SIZE,
+												height: PREVIEW_SIZE / CROP_SHAPES[shapeId].ratio,
+												backgroundImage: `url(${previewUrl})`,
+												backgroundSize: `${mediaSize.naturalWidth * scale}px ${mediaSize.naturalHeight * scale}px`,
+												backgroundPosition: `${-croppedAreaPixels.x * scale}px ${-croppedAreaPixels.y * scale}px`,
+											}}>
+											<div
+												className={styles.preview_vignette}
+												style={{ opacity: vignette }}
+											/>
+										</div>
+									</div>
+								);
+							})()}
 					</div>
 
 					<label className={styles.control_row}>
@@ -178,7 +284,19 @@ export function ImageCropTool() {
 							max={3}
 							step={0.01}
 							value={zoom}
-							onChange={(e) => setZoom(Number(e.target.value))}
+							onChange={(e) => handleZoomChange(Number(e.target.value))}
+						/>
+					</label>
+
+					<label className={styles.control_row}>
+						Vignette
+						<input
+							type="range"
+							min={0}
+							max={1}
+							step={0.01}
+							value={vignette}
+							onChange={(e) => setVignette(Number(e.target.value))}
 						/>
 					</label>
 

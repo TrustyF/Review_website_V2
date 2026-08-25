@@ -24,8 +24,17 @@ export async function saveCroppedImageAction(formData: FormData): Promise<string
 		throw new Error("Invalid crop rect");
 	}
 
+	// Absent on any caller predating this field — defaults to 0 (no vignette)
+	// rather than rejecting, same as an absent checkbox field would.
+	const rawVignette = formData.get("vignette");
+	const vignette =
+		typeof rawVignette === "string" && rawVignette !== "" ? Number(rawVignette) : 0;
+	if (!Number.isFinite(vignette) || vignette < 0 || vignette > 1) {
+		throw new Error("Invalid vignette");
+	}
+
 	const bytes = Buffer.from(await file.arrayBuffer());
-	return saveCroppedImage(bytes, shapeId as CropShapeId, crop);
+	return saveCroppedImage(bytes, shapeId as CropShapeId, crop, vignette);
 }
 
 // Loads a source image from an arbitrary URL instead of a local file pick —

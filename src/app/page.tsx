@@ -101,7 +101,7 @@ async function getRecentMovies() {
 //
 // This site is fundamentally one person's library shared publicly — regular
 // visitors can sign up (see /signup) to keep their own personal watchlist
-// (see WatchlistPage), but that's a separate, unrelated feature from this
+// (see /account), but that's a separate, unrelated feature from this
 // section: this reads only the ADMIN account's own watchlist, the one used to
 // curate the site itself, not an aggregate of every visitor's bookmarks.
 //
@@ -180,6 +180,39 @@ const REVIEWED_ORDER_BY: Prisma.MediaOrderByWithRelationInput[] = [
 	{ review: { createDate: "desc" } },
 ];
 
+// Deterministic PRNG (mulberry32) seeded from a string — same seed always
+// produces the same sequence, which is what lets the shuffle below be
+// "random" yet stable for every request within the same day.
+function mulberry32(seed: number) {
+	return function random() {
+		seed |= 0;
+		seed = (seed + 0x6d2b79f5) | 0;
+		let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
+}
+
+function hashString(str: string): number {
+	let hash = 0;
+	for (let i = 0; i < str.length; i++) {
+		hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
+	}
+	return hash;
+}
+
+// Fisher-Yates, seeded so the result only changes once the seed itself does
+// (see the date-string seed below) rather than on every render.
+function seededShuffle<T>(items: T[], seed: string): T[] {
+	const random = mulberry32(hashString(seed));
+	const shuffled = [...items];
+	for (let i = shuffled.length - 1; i > 0; i--) {
+		const j = Math.floor(random() * (i + 1));
+		[shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
+	}
+	return shuffled;
+}
+
 // Featured reviews (admin-curated, see featured-manager-modal.tsx) take
 // priority over plain recency in the hero. Two independent queries rather
 // than one clever `orderBy` — Prisma can't sort by "is this row featured"
@@ -189,7 +222,10 @@ const REVIEWED_ORDER_BY: Prisma.MediaOrderByWithRelationInput[] = [
 // non-featured items to fill out the rest. Overfetching query B (2x) rather
 // than sizing it exactly is what keeps this a single round trip each,
 // instead of needing query A's ids before deciding how many of B to ask
-// for.
+// for. The merged pool is then shuffled with a seed derived from today's
+// date (UTC) — same order for every visitor/request today, a new order
+// tomorrow — so the hero (items[0]) and picker strip rotate daily instead
+// of staying frozen on the same item or reshuffling on every reload.
 async function getFeaturedReviewItems() {
 	const take = 1 + RECENT_REVIEWS_COUNT;
 	const [featured, recent] = await Promise.all([
@@ -211,10 +247,13 @@ async function getFeaturedReviewItems() {
 	]);
 
 	const featuredIds = new Set(featured.map((m) => m.id));
-	return [...featured, ...recent.filter((m) => !featuredIds.has(m.id))].slice(
-		0,
-		take,
-	);
+	const merged = [
+		...featured,
+		...recent.filter((m) => !featuredIds.has(m.id)),
+	].slice(0, take);
+
+	const todaySeed = new Date().toISOString().slice(0, 10);
+	return seededShuffle(merged, todaySeed);
 }
 
 export default async function HomePage() {

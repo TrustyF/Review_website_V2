@@ -56,9 +56,10 @@ function eyebrowFor(
 }
 
 type Props = {
-	// Ordered most-recently-reviewed first (see app/page.tsx's query) — the
-	// hero starts on items[0]; the picker strip below lets you reveal any of
-	// the rest in the hero itself instead of a separate mini-card grid.
+	// Order is a daily-seeded shuffle of the featured/recent pool (see
+	// app/page.tsx's getFeaturedReviewItems) — the hero starts on items[0];
+	// the picker strip below lets you reveal any of the rest in the hero
+	// itself instead of a separate mini-card grid.
 	items: MediaRecord[];
 };
 
