@@ -1,0 +1,43 @@
+// One nullable FK per linkable entity type (listId, mediaId, and any future
+// ones added the same way) rather than a generic entityType/entityId pair —
+// keeps this consistent with every other relation in the schema (List,
+// ListItem, MediaChangeLog), gives Prisma Client real typed relations to
+// `include`, and lets a linked row's deletion decide for itself whether the
+// notification should disappear too (onDelete: Cascade below) instead of
+// leaving a dangling reference for the UI to guard against. All
+// type-specific rendering/link logic lives in one place —
+// notification-content.ts — so adding a type here only ever means: a new
+// enum value, one new case there, and the one write site that creates it.
+enum NotificationType {
+  LIST_CREATED
+  LIST_ITEM_ADDED
+}
+
+model Notification {
+  id   Int              @id @default(autoincrement())
+  type NotificationType
+
+  // Recipient — always a normal user (admin actions are never
+  // self-targeted), but not constrained to that at the schema level, same
+  // as List.targetUserId.
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Exactly one of these is set, matching `type` — LIST_CREATED sets only
+  // listId, LIST_ITEM_ADDED sets both. Cascade rather than SetNull: a
+  // notification pointing at a list/media that no longer exists has nothing
+  // left to link to and no meaning on its own (contrast List.targetUserId's
+  // own comment, which is about the *recipient* disappearing, not the
+  // target).
+  listId Int?
+  list   List? @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  mediaId Int?
+  media   Media? @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+}

@@ -1,0 +1,107 @@
+@use "@/app/styles/variables" as *
+
+.empty
+  @include empty-text
+
+.mark_all
+  align-self: flex-end
+  color: var(--accent1)
+  font-size: 0.85rem
+  cursor: pointer
+
+  &:hover
+    color: var(--foreground)
+
+// Same sticky month-header grouping as activity-feed.module.sass's own
+// .groups/.group_header — reused so this reads as the same pattern.
+.groups
+  display: flex
+  flex-flow: column
+  gap: 2rem
+
+.group_header
+  cursor: pointer
+  padding: 1rem
+  margin: 0 0 1rem -1rem
+  border-radius: 0.5rem
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.25rem
+  font-size: 1.25rem
+  font-weight: 600
+  width: fit-content
+  position: sticky
+  top: calc(var(--navbar-offset) + 1rem)
+  z-index: 5
+  background: var(--background)
+  transform: translateX(-1rem)
+
+.list
+  display: flex
+  flex-flow: column
+  list-style: none
+
+.entry
+  border-radius: 0.5rem
+  transition: background 0.15s ease
+
+.entry.unread
+  background: color-mix(in srgb, var(--brand) 8%, transparent)
+
+.entry_link
+  display: grid
+  grid-template-columns: 1.2rem 1fr auto
+  align-items: start
+  column-gap: 0.75rem
+  padding: 0.75rem 1rem
+  color: inherit
+  text-decoration: none
+
+  &:hover
+    background: color-mix(in srgb, var(--foreground) 6%, transparent)
+
+.type_icon
+  margin-top: 0.15rem
+  color: var(--accent1)
+
+.content
+  min-width: 0
+  display: flex
+  flex-flow: column
+  gap: 0.2rem
+
+.title_row
+  display: flex
+  flex-flow: row
+  align-items: baseline
+  justify-content: space-between
+  gap: 0.75rem
+  min-width: 0
+
+.title
+  min-width: 0
+  overflow: hidden
+  white-space: nowrap
+  text-overflow: ellipsis
+  font-weight: 500
+
+.body
+  color: var(--accent3)
+  font-size: 0.85rem
+  overflow: hidden
+  white-space: nowrap
+  text-overflow: ellipsis
+
+.date
+  flex-shrink: 0
+  color: var(--accent1)
+  font-family: $font-mono
+  font-size: 0.8rem
+
+.unread_dot
+  margin-top: 0.4rem
+  width: 0.5rem
+  height: 0.5rem
+  border-radius: 50%
+  background: var(--brand)

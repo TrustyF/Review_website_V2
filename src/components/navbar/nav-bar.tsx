@@ -19,6 +19,7 @@ import { HomeIcon } from "@/components/icons/home-icon";
 import { AccountIcon } from "@/components/icons/account-icon";
 import { MovieIcon } from "@/components/icons/movie-icon";
 import { NavSearch } from "@/components/navbar/nav-search/nav-search";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import {
 	NavDropdown,
 	closeAllNavDropdowns,
@@ -306,6 +307,7 @@ export default function Navbar() {
 						<div className={`${style.nav_group} ${style.nav_group_end}`}>
 							{session?.user ? (
 								<>
+									<NotificationBell />
 									<Link
 										href="/account"
 										className={style.link}
