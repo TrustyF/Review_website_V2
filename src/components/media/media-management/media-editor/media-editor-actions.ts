@@ -396,19 +396,12 @@ export async function updateMediaPoster(mediaId: number, posterPath: string) {
 		});
 	}
 
-	// Eagerly downloads/caches the new poster right now (its returned bytes
-	// aren't needed here — see resolvePoster's own comment) so it's already
-	// on disk the moment this save resolves, rather than lazily on whatever
-	// request happens to hit /api/poster next. awaitEncode: true — resolvePoster
-	// now defers the encode to after() by default (same as resolveBanner), which
-	// would leave the cache cold here if not overridden.
-	await resolvePoster(
-		mediaId,
-		existing!.type,
-		existing!.externalId,
-		posterPath,
-		{ awaitEncode: true },
-	);
+	// resolvePoster returns as soon as the source is downloaded and defers
+	// the resize/encode/storage-write to after() — without Fluid Compute,
+	// this Server Action would otherwise tie up the whole instance for as
+	// long as it ran, blocking any other Server Action (e.g. the picker's
+	// own alternates fetch) landing on the same instance behind it.
+	await resolvePoster(mediaId, existing!.type, existing!.externalId, posterPath);
 	revalidatePath("/", "layout");
 	return `/api/poster/${mediaId}/${mediaAssetFilename(mediaId, posterPath)}`;
 }
@@ -479,12 +472,10 @@ export async function updateMediaBanner(mediaId: number, bannerPath: string) {
 		});
 	}
 
-	// Same eager cache-on-save reasoning as updateMediaPoster above —
-	// awaitEncode so the cache is actually warm by the time this returns,
-	// not deferred like the /api/banner route's fast-first-byte path.
-	await resolveBanner(mediaId, existing!.type, bannerPath, {
-		awaitEncode: true,
-	});
+	// See updateMediaPoster's own comment above — resolveBanner returns as
+	// soon as the source is downloaded and defers the encode to after(), so
+	// this Server Action doesn't tie up the instance and starve others.
+	await resolveBanner(mediaId, existing!.type, bannerPath);
 	revalidatePath("/", "layout");
 	return `/api/banner/${mediaId}/${mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT)}`;
 }

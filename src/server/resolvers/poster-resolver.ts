@@ -148,20 +148,18 @@ const PLACEHOLDER_POSTER_PATH = path.join(
 );
 
 // Returns the actual bytes (not a URL) — the /api/poster route hands these
-// straight back as the response body. Same fresh-miss/awaitEncode shape as
-// resolveBanner (see that function's own comment): on a cache miss, the raw
-// downloaded source is returned immediately and the resize/encode/storage
-// write happens in `after()`, off the response's critical path, so the
-// browser isn't blocked on sharp for a first-time poster the way it used to
-// be. updateMediaPoster (media-editor-actions.ts) still wants the opposite
-// trade — the cache warm *before* it returns — so it passes
-// `{ awaitEncode: true }` instead.
+// straight back as the response body. Same fresh-miss shape as resolveBanner
+// (see that function's own comment): on a cache miss, the raw downloaded
+// source is returned immediately and the resize/encode/storage write happens
+// in `after()`, off the response's critical path, so the browser (or a
+// Server Action caller, e.g. updateMediaPoster in media-editor-actions.ts —
+// see its own comment on why blocking on the encode there is a problem
+// without Fluid Compute) isn't blocked on sharp.
 export async function resolvePoster(
 	mediaId: number,
 	type: MediaType,
 	externalId: string | null,
 	posterPath: string | null,
-	{ awaitEncode = false }: { awaitEncode?: boolean } = {},
 ): Promise<ResolvedAsset & { fresh: boolean }> {
 	if (!posterPath) {
 		return {
@@ -194,13 +192,9 @@ export async function resolvePoster(
 			return encoded;
 		});
 
-	if (awaitEncode) {
+	after(async () => {
 		await encode();
-	} else {
-		after(async () => {
-			await encode();
-		});
-	}
+	});
 
 	return { bytes: source, contentType: sourceContentType, fresh: true };
 }
@@ -335,11 +329,6 @@ export async function resolveBanner(
 	mediaId: number,
 	type: MediaType,
 	bannerPath: string | null,
-	// media-editor-actions.ts's save handler wants the opposite trade-off:
-	// it's not racing a browser for a fast first byte, and its whole point in
-	// calling this at all is to have the cache warm *before* it returns, so
-	// it awaits the encode inline instead of deferring it.
-	{ awaitEncode = false }: { awaitEncode?: boolean } = {},
 ): Promise<(ResolvedAsset & { fresh: boolean }) | null> {
 	if (!bannerPath) return null;
 
@@ -365,8 +354,8 @@ export async function resolveBanner(
 
 	// Deduped for the same reason as cacheOrDownload/resolveLinkEmbedImage:
 	// several concurrent misses on this banner (e.g. `after()`-deferred
-	// encodes from more than one first-time viewer, or one racing an
-	// awaitEncode caller) would otherwise each redo the resize/encode/write.
+	// encodes from more than one first-time viewer) would otherwise each
+	// redo the resize/encode/write.
 	const encode = () =>
 		dedupeEncode(`${BANNER_DIR}/${filename}`, async () => {
 			const encoded = await sharp(source)
@@ -377,13 +366,9 @@ export async function resolveBanner(
 			return encoded;
 		});
 
-	if (awaitEncode) {
+	after(async () => {
 		await encode();
-	} else {
-		after(async () => {
-			await encode();
-		});
-	}
+	});
 
 	return { bytes: source, contentType: sourceContentType, fresh: true };
 }
@@ -392,8 +377,7 @@ export async function resolveBanner(
 // resolvePoster's own comment — just a smaller resize target (see
 // PERSON_PHOTO_MAX_WIDTH) and no placeholder fallback, since callers only
 // ever reach this once toPersonPhotoSrc has already confirmed there's a
-// photoPath to resolve. No awaitEncode option — unlike poster/banner, no
-// caller needs the cache warmed before it returns.
+// photoPath to resolve.
 export async function resolvePersonPhoto(
 	personId: number,
 	photoPath: string,
