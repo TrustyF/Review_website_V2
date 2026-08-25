@@ -1,7 +1,7 @@
 @use "@/app/styles/variables" as *
 
 .wrapper
-  width: 950px
+  @include content-wrapper
   margin: 2rem auto
 
 .header
@@ -10,8 +10,14 @@
   gap: 1.5rem
   margin-bottom: 1.5rem
 
+  @media (max-width: 640px)
+    flex-flow: column
+    align-items: center
+    text-align: center
+
 .thumbnail
   width: 220px
+  max-width: 100%
   aspect-ratio: 16 / 9
   object-fit: cover
   border-radius: 8px

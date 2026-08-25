@@ -74,6 +74,18 @@
   .label_stack_tier#{$tier}
     @include nav-label-collapse($tier)
 
+// Every tier is already collapsed well before $mobile-breakpoint (see
+// nav-label-collapse's own comment) — the mobile drawer (nav-bar.module.sass)
+// has the vertical room labels don't have in the collapsed desktop row, so
+// bring the label back once it's open. :global(.mobile-nav-open) is the same
+// class nav-bar.tsx mirrors onto <html> for its own drawer styles — plain
+// module classes aren't reachable across files, so this is the bridge.
+:global(.mobile-nav-open) .label_stack_tier1,
+:global(.mobile-nav-open) .label_stack_tier2,
+:global(.mobile-nav-open) .label_stack_tier3,
+:global(.mobile-nav-open) .label_stack_tier4
+  display: grid
+
 // Default (unset) state sits a full line below, waiting — so a variant
 // that becomes active always slides up into place from the bottom. The
 // variant that just lost active status gets .exiting instead, which sits

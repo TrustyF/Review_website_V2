@@ -12,7 +12,9 @@ import {
 	LogIn,
 	LogOut,
 	LucideProvider,
+	Menu,
 	Users,
+	X,
 	type LucideIcon,
 } from "lucide-react";
 import { ActivityIcon } from "@/components/icons/activity-icon";
@@ -137,6 +139,18 @@ export default function Navbar() {
 	const isAdmin = useIsAdmin();
 	const pathname = usePathname();
 	const [hidden, setHidden] = useState(false);
+	const [mobileOpen, setMobileOpen] = useState(false);
+	// A route change is always the drawer's cue to close, whether or not it
+	// went through handleNavClick below (e.g. browser back/forward) — adjusted
+	// during render (the React-sanctioned alternative to a setState-in-effect,
+	// same pattern avatarFailed below uses for avatarSrc) rather than an
+	// effect, which would otherwise leave the drawer open through one extra
+	// render of the new page before catching up.
+	const [lastPathname, setLastPathname] = useState(pathname);
+	if (pathname !== lastPathname) {
+		setLastPathname(pathname);
+		setMobileOpen(false);
+	}
 	// A saved avatar src that 404s (stale — see avatar-picker.tsx's own
 	// version of this) would otherwise render as a blank broken <img> instead
 	// of falling back to AccountIcon. Reset whenever avatarSrc itself changes
@@ -197,6 +211,17 @@ export default function Navbar() {
 		return () => document.documentElement.classList.remove("nav-hidden");
 	}, [hidden]);
 
+	// Mirrors `mobileOpen` onto <html> the same way, as the bridge
+	// nav-bar.module.sass and nav-dropdown.module.sass (a separate CSS
+	// module, so it can't see this component's own module-scoped classes)
+	// both key their mobile-drawer styles off — see their own
+	// :global(.mobile-nav-open) rules.
+	useEffect(() => {
+		document.documentElement.classList.toggle("mobile-nav-open", mobileOpen);
+		return () => document.documentElement.classList.remove("mobile-nav-open");
+	}, [mobileOpen]);
+
+
 	// Delegated rather than one handler per Link — this catches both a
 	// dropdown item picking its own page (the panel should close behind it)
 	// and a plain top-level link being clicked while an unrelated dropdown
@@ -204,8 +229,15 @@ export default function Navbar() {
 	// dropdown's own <summary> trigger (neither tag), which already has its
 	// own open/close handling.
 	function handleNavClick(e: React.MouseEvent<HTMLElement>) {
-		if ((e.target as HTMLElement).closest("a, button")) {
-			closeAllNavDropdowns();
+		const clicked = (e.target as HTMLElement).closest("a, button");
+		if (!clicked) return;
+		closeAllNavDropdowns();
+		// The hamburger button itself already toggles `mobileOpen` in its own
+		// onClick, which fires before this delegated handler sees the same
+		// (bubbled) click — closing it here unconditionally would immediately
+		// undo that toggle.
+		if (!clicked.hasAttribute("data-mobile-toggle")) {
+			setMobileOpen(false);
 		}
 	}
 
@@ -229,7 +261,10 @@ export default function Navbar() {
 				one absolutely-positioned container (see .nav_content's own
 				comment in nav-bar.module.sass) so the links flow immediately
 				after the search box wherever it ends up sitting, rather than
-				the two being positioned independently of each other. */}
+				the two being positioned independently of each other. Below
+				$mobile-breakpoint this same container becomes the drawer the
+				hamburger button (below) toggles, via the global .mobile-nav-open
+				class mirrored onto <html> above. */}
 				<div className={style.nav_content}>
 					<div className={style.search}>
 						<NavSearch />
@@ -308,27 +343,34 @@ export default function Navbar() {
 						<div className={`${style.nav_group} ${style.nav_group_end}`}>
 							{session?.user ? (
 								<>
-									<NotificationBell />
-									<Link
-										href="/account"
-										className={style.link}
-										aria-current={
-											isNavActive(pathname, "/account") ? "page" : undefined
-										}
-										aria-label="Account"
-										title="Account">
-										{avatarSrc && !avatarFailed ? (
-											// eslint-disable-next-line @next/next/no-img-element
-											<img
-												src={avatarSrc}
-												alt=""
-												className={style.nav_avatar}
-												onError={() => setAvatarFailed(true)}
-											/>
-										) : (
-											<AccountIcon size={14} className={style.nav_icon} />
-										)}
-									</Link>
+									{/* Both already live outside the drawer at mobile widths
+									(see .mobile_controls in nav-bar.tsx/.module.sass) — this
+									group is hidden there (see its own rule) so they don't
+									show up twice, but stays for desktop, where the drawer
+									doesn't exist and this row is the only place they live. */}
+									<div className={style.account_identity}>
+										<NotificationBell />
+										<Link
+											href="/account"
+											className={style.link}
+											aria-current={
+												isNavActive(pathname, "/account") ? "page" : undefined
+											}
+											aria-label="Account"
+											title="Account">
+											{avatarSrc && !avatarFailed ? (
+												// eslint-disable-next-line @next/next/no-img-element
+												<img
+													src={avatarSrc}
+													alt=""
+													className={style.nav_avatar}
+													onError={() => setAvatarFailed(true)}
+												/>
+											) : (
+												<AccountIcon size={14} className={style.nav_icon} />
+											)}
+										</Link>
+									</div>
 									<button
 										type="button"
 										className={style.sign_out_button}
@@ -356,10 +398,70 @@ export default function Navbar() {
 					</div>
 				</div>
 
+				{/* Hidden above $mobile-breakpoint (see .mobile_controls in
+				    nav-bar.module.sass) — groups the avatar and hamburger so a
+				    single margin-left: auto (on .mobile_controls itself) pushes
+				    them to the bar's right edge together, rather than each
+				    icon's own auto margin fighting the other for the same
+				    leftover space (see that rule's own comment). */}
+				<div className={style.mobile_controls}>
+					{/* The full account row (bell + avatar + sign out) lives inside
+					    the drawer too (see .account_identity in nav-bar.tsx above),
+					    but both stay visible in the bar even with the drawer
+					    closed, same as the hamburger beside them, rather than
+					    being hidden away a tap deeper than everything else — and
+					    .account_identity itself is hidden at this width so they
+					    don't show up twice. Skipped entirely while signed out —
+					    there's nothing to show yet, and "Sign in" is one tap away
+					    in the drawer regardless. */}
+					{session?.user && (
+						<>
+							<NotificationBell />
+							<Link
+								href="/account"
+								className={style.mobile_account_link}
+								aria-current={
+									isNavActive(pathname, "/account") ? "page" : undefined
+								}
+								aria-label="Account"
+								title="Account">
+								{avatarSrc && !avatarFailed ? (
+									// eslint-disable-next-line @next/next/no-img-element
+									<img
+										src={avatarSrc}
+										alt=""
+										className={style.nav_avatar}
+										onError={() => setAvatarFailed(true)}
+									/>
+								) : (
+									<AccountIcon size={18} className={style.nav_icon} />
+								)}
+							</Link>
+						</>
+					)}
+
+					{/* Toggles the .nav_content drawer via the global
+					    .mobile-nav-open class mirrored onto <html>.
+					    data-mobile-toggle marks it for handleNavClick above,
+					    which otherwise closes the drawer on every "a, button"
+					    click inside <nav>. */}
+					<button
+						type="button"
+						data-mobile-toggle
+						className={style.mobile_toggle}
+						aria-expanded={mobileOpen}
+						aria-label={mobileOpen ? "Close menu" : "Open menu"}
+						onClick={() => setMobileOpen((open) => !open)}>
+						{mobileOpen ? <X size={20} /> : <Menu size={20} />}
+					</button>
+				</div>
+
 				{/* Detached from the .nav_group flex flow and pinned to its own
 				    corner instead — still a child of <nav> (not a separate fixed
 				    element), so it still hides/reveals in step with the rest of
-				    the navbar on scroll. */}
+				    the navbar on scroll. Hidden below $mobile-breakpoint — the
+				    admin tools aren't offered on mobile at all (see
+				    .add_media_link's own override in nav-bar.module.sass). */}
 				{isAdmin && (
 					<div className={style.add_media_link}>
 						<NavLink

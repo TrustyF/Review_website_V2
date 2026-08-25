@@ -53,9 +53,17 @@ $picker-progress-size: 0.55rem
 // into the same grid cell instead of one appearing after the other in
 // document flow, so they crossfade in place. Auto-sized to the taller of
 // the two, so the picker/rest of the page below doesn't jump as they swap.
+// overflow: hidden clips .card_link's own translateX slide (up to 2rem
+// either side, see its --enter-offset) to this box instead of letting it
+// bleed sideways past the content column — scoped here rather than on
+// body/html (globals.sass deliberately keeps overflow-x off html, since
+// setting it on both breaks position: sticky for other descendants; see its
+// own comment), since this slide is the only thing on the page that ever
+// needs it.
 .card_stack
   position: relative
   display: grid
+  overflow: hidden
 
 // Starts offset (--enter-offset, set inline per-card by FeaturedReviewCard
 // so the direction can differ per mount) and transparent, then
@@ -139,6 +147,14 @@ $picker-progress-size: 0.55rem
 // already-bottom-anchored content without actually moving it. Padding
 // reserves space inside the content box itself, which flex-end positions
 // against — that's what actually pushes the visible content down.
+//
+// TODO: fix body overflowing past poster height, check other media types —
+// a 2-line title and/or an excerpt that hits .excerpt's own max-height can
+// together make .info's natural content taller than the poster next to it
+// (which varies by type — 2/3 for most, 3/4 for comics/games, see
+// poster-ratio.ts), growing .card_stack and shoving the picker strip below
+// it down. Worth checking across types (a shorter 3/4 poster has less
+// headroom before this trips) before landing a fix.
 .info
   display: flex
   flex-flow: column

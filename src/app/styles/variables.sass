@@ -9,6 +9,32 @@ $font-body: var(--font-ibm-plex-sans), Arial, Helvetica, sans-serif
 // the cards can't leave that estimate stale.
 $mini-card-min-width: 110px
 
+// The page content column's width on every page that has one (home, media
+// detail, catalog/list pages, lists, activity, add-media, watchlist, ...) —
+// was independently hardcoded as `width: 950px` in each of those files.
+$content-width: 950px
+
+// Below this, the navbar switches from its desktop row layout (search +
+// grouped links, collapsing to icon-only via nav-label-collapse below) to a
+// hamburger-triggered drawer — see nav-bar.module.sass/.tsx. Chosen below
+// $navbar-collapse-width's own narrowest tier, since even a fully icon-only
+// desktop row still doesn't leave room for the search box once the viewport
+// gets this narrow.
+$mobile-breakpoint: 700px
+
+// Replaces a page wrapper's own `width: $content-width` literal — caps at
+// $max-width same as before, but once the viewport can no longer fit that
+// (i.e. the wrapper is effectively full-width) it also picks up side
+// padding, so content doesn't butt directly against the screen edge. The
+// padding is scoped to only that range (rather than applied unconditionally)
+// so desktop layout stays pixel-identical to before this existed.
+@mixin content-wrapper($max-width: $content-width)
+  width: 100%
+  max-width: $max-width
+
+  @media (max-width: $max-width)
+    padding-inline: 1.25rem
+
 // Below this, the navbar's nav items collapse from icon+label to icon-only
 // (see nav-bar.module.sass's .link_label_tier* and nav-dropdown.module.sass's
 // .label_stack_tier*) — the fixed desktop layout (nav_group gaps, search's

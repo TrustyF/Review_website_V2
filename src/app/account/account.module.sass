@@ -1,8 +1,7 @@
 @use "@/app/styles/variables" as *
 
 .wrapper
-  width: 950px
-  max-width: 100%
+  @include content-wrapper
   margin: 3rem auto
   display: flex
   flex-flow: column
@@ -12,6 +11,10 @@
   display: flex
   align-items: center
   gap: 1.2rem
+
+  @media (max-width: 480px)
+    flex-flow: column
+    align-items: flex-start
 
 .identity
   display: flex

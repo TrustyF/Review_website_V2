@@ -4,7 +4,7 @@ $var_banner_width: 110%
 
 .wrapper
   position: relative
-  width: 950px
+  @include content-wrapper
   margin: 0 auto 15rem auto
   display: flex
   flex-flow: column
@@ -95,6 +95,10 @@ $var_banner_width: 110%
   display: flex
   gap: 2rem
 
+  @media (max-width: 640px)
+    flex-flow: column
+    align-items: center
+
 .poster_column
   display: flex
   flex-flow: column
@@ -102,6 +106,7 @@ $var_banner_width: 110%
   gap: 0.6rem
   flex-shrink: 0
   width: 220px
+  max-width: 100%
 
 .poster
   position: relative
@@ -122,7 +127,7 @@ $var_banner_width: 110%
 
 .title_row
   display: flex
-  flex-flow: row
+  flex-flow: row wrap
   align-items: baseline
   justify-content: space-between
   gap: 1rem
@@ -242,6 +247,9 @@ $var_banner_width: 110%
   align-items: flex-start
   gap: 1.5rem
   margin-top: 0.5rem
+
+  @media (max-width: 640px)
+    flex-flow: column
 
 .review_col
   flex: 1
