@@ -231,13 +231,6 @@ $var_banner_width: 110%
     display: inline
     color: inherit
 
-.title_actions
-  display: flex
-  flex-flow: row
-  align-items: center
-  gap: 0.5rem
-  flex-shrink: 0
-
 // Same bordered-pill treatment as .controls_bar below, for a plain-text
 // fact (currently just runtime) instead of an icon control. Sits between
 // the poster and .controls_bar in .poster_column.
@@ -280,8 +273,16 @@ $var_banner_width: 110%
   &:hover
     color: var(--foreground)
 
+// Pulled out of .title_row's flow (it used to sit in a .title_actions pill
+// beside the title) and anchored to .header itself instead — that keeps it
+// pinned to the same top-right corner regardless of how tall .header_info
+// grows (a wrapping title, alt_title, financials, ...), rather than shifting
+// down the page as more of that content stacks above where it used to live.
 .edit_button
-  flex-shrink: 0
+  position: absolute
+  top: 0
+  right: 0
+  z-index: 5
 
 .alt_title
   margin-top: -0.5rem

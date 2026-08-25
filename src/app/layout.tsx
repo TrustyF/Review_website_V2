@@ -3,6 +3,7 @@ import "./styles/globals.sass";
 import React from "react";
 import Navbar from "@/components/navbar/nav-bar";
 import { DevMenu } from "@/components/dev-menu/dev-menu";
+import { MobileViewportListener } from "@/lib/mobile-viewport-listener";
 import MediaEditorModal from "@/components/media/media-management/media-editor/media-editor-modal";
 import { FeaturedManagerModal } from "@/components/home/featured-review/featured-manager/featured-manager-modal";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
@@ -36,6 +37,7 @@ export default function RootLayout({
 						<WatchlistProvider>
 							<Navbar />
 							<DevMenu />
+							<MobileViewportListener />
 							<MediaEditorModal />
 							<FeaturedManagerModal />
 							<main>{children}</main>

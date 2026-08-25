@@ -1,5 +1,4 @@
 "use server";
-import { revalidatePath } from "next/cache";
 import { MediaType } from "@prisma/client";
 import {
 	fetchTmdbById,
@@ -36,6 +35,7 @@ import {
 } from "@/components/media/media-management/media-add/addable-types";
 import { invalidateSearchIndex } from "@/components/search/search-actions";
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { revalidateMediaPaths } from "@/server/cache/revalidate-media";
 
 function yearOf(dateString: string | null): number | null {
 	if (!dateString) return null;
@@ -207,13 +207,6 @@ export async function addMediaToLibrary(
 	}
 
 	await invalidateSearchIndex();
-	// "layout" (not just "/") — a plain revalidatePath("/") only invalidated
-	// the homepage itself, leaving every per-type list page (/movies, /tv,
-	// ...) and the new item's own /media/[id] serving a stale cached render
-	// until something unrelated happened to touch that specific path later.
-	// Root path + "layout" invalidates every route nested under the root
-	// layout — i.e. the whole site — and also purges the client Router
-	// Cache, per next/cache's own "Revalidating all data" pattern.
-	revalidatePath("/", "layout");
+	revalidateMediaPaths(mediaId, type);
 	return mediaId;
 }

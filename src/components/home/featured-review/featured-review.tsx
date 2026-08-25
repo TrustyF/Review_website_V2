@@ -15,6 +15,7 @@ import {
 	ReviewSpoilerProvider,
 } from "@/components/media/media-cards/media-card/review-body";
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useFeaturedManagerStore } from "@/components/home/featured-review/featured-manager/featured-manager-store";
 import styles from "./featured-review.module.sass";
 
@@ -70,7 +71,11 @@ type Props = {
 // and only a teaser of the review body (first few paragraphs), both of
 // which the grid-oriented cards don't do.
 export function FeaturedReview({ items }: Props) {
-	const isAdmin = useIsAdmin();
+	const sessionIsAdmin = useIsAdmin();
+	const isMobileViewport = useIsMobileViewport();
+	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
+	// for the same rule applied to the navbar's own admin links).
+	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const openFeaturedManager = useFeaturedManagerStore((s) => s.open);
 	const [index, setIndex] = useState(0);
 	// Which way the picker selection last moved — determines which side the

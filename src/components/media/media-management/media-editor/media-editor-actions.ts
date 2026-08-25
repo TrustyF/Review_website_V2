@@ -24,6 +24,7 @@ import {
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
 import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/review-body-syntax";
 import { invalidateSearchIndex } from "@/components/search/search-actions";
+import { revalidateMediaPaths } from "@/server/cache/revalidate-media";
 
 // Compares old/new values field by field and returns a MediaChangeLog row
 // for each one that actually changed — untouched fields produce no row. A
@@ -94,7 +95,10 @@ export async function saveReview(
 		throw new Error("Difficulty must be 0, 1, or 2.");
 	}
 
-	const existing = await db.review.findUnique({ where: { mediaId } });
+	const [existing, media] = await Promise.all([
+		db.review.findUnique({ where: { mediaId } }),
+		db.media.findUniqueOrThrow({ where: { id: mediaId }, select: { type: true } }),
+	]);
 
 	// Set once, the first time body actually goes from unset to set — see
 	// this field's own comment in rating.prisma. Keyed off reviewDate's own
@@ -136,7 +140,7 @@ export async function saveReview(
 		}
 	}
 
-	revalidatePath("/", "layout");
+	revalidateMediaPaths(mediaId, media.type);
 	revalidatePath("/activity");
 }
 
@@ -147,10 +151,14 @@ export async function saveReview(
 // "Rewatched on" row, one per actual rewatch.
 export async function logRewatch(mediaId: number) {
 	await requireAdmin();
-	await db.mediaChangeLog.create({
-		data: { mediaId, field: "rewatched", oldValue: null, newValue: "true" },
-	});
-	revalidatePath("/", "layout");
+	const [, media] = await Promise.all([
+		db.mediaChangeLog.create({
+			data: { mediaId, field: "rewatched", oldValue: null, newValue: "true" },
+		}),
+		db.media.findUniqueOrThrow({ where: { id: mediaId }, select: { type: true } }),
+	]);
+	revalidateMediaPaths(mediaId, media.type);
+	revalidatePath("/activity");
 }
 
 // Base Media fields (title/overview/releaseDate) are otherwise only ever
@@ -170,7 +178,13 @@ export async function saveMediaDetails(
 
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
-		select: { title: true, overview: true, releaseDate: true, isAdult: true },
+		select: {
+			title: true,
+			overview: true,
+			releaseDate: true,
+			isAdult: true,
+			type: true,
+		},
 	});
 
 	const releaseDate = details.releaseDate
@@ -207,7 +221,7 @@ export async function saveMediaDetails(
 	}
 
 	await invalidateSearchIndex();
-	revalidatePath("/", "layout");
+	revalidateMediaPaths(mediaId, existing!.type);
 }
 
 // Soft delete just flips Media.isDeleted — every public list query filters
@@ -222,7 +236,7 @@ export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
 
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
-		select: { isDeleted: true },
+		select: { isDeleted: true, type: true },
 	});
 	if (existing?.isDeleted === isDeleted) return;
 
@@ -237,9 +251,7 @@ export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
 	});
 
 	await invalidateSearchIndex();
-	// "layout" already covers /media/${mediaId} too — see
-	// media-add-actions.ts's comment on this same pattern.
-	revalidatePath("/", "layout");
+	revalidateMediaPaths(mediaId, existing!.type);
 }
 
 // Irreversible: the row itself is gone, and with it every relation that
@@ -250,9 +262,9 @@ export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
 // swept up as orphans by the next cleanup-posters run.
 export async function hardDeleteMedia(mediaId: number) {
 	await requireAdmin();
-	await db.media.delete({ where: { id: mediaId } });
+	const deleted = await db.media.delete({ where: { id: mediaId } });
 	await invalidateSearchIndex();
-	revalidatePath("/", "layout");
+	revalidateMediaPaths(mediaId, deleted.type);
 }
 
 const MARKUP_PLACEHOLDER_REGEX = /⟦MARKUP(\d+)⟧/g;
@@ -375,7 +387,16 @@ export async function getAlternativePosters(
 		}));
 }
 
-export async function updateMediaPoster(mediaId: number, posterPath: string) {
+// revalidate defaults to true for the full editor modal's one-click Save
+// (see media-editor-modal.tsx's handleSave), which has no separate publish
+// step of its own. The detail page's standalone PosterEditTrigger popover
+// passes false and relies on MediaPublishButton's publishMediaEdits instead
+// — see that component's own comment for why.
+export async function updateMediaPoster(
+	mediaId: number,
+	posterPath: string,
+	{ revalidate = true }: { revalidate?: boolean } = {},
+) {
 	await requireAdmin();
 
 	const existing = await db.media.findUnique({
@@ -402,7 +423,7 @@ export async function updateMediaPoster(mediaId: number, posterPath: string) {
 	// long as it ran, blocking any other Server Action (e.g. the picker's
 	// own alternates fetch) landing on the same instance behind it.
 	await resolvePoster(mediaId, existing!.type, existing!.externalId, posterPath);
-	revalidatePath("/", "layout");
+	if (revalidate) revalidateMediaPaths(mediaId, existing!.type);
 	return `/api/poster/${mediaId}/${mediaAssetFilename(mediaId, posterPath)}`;
 }
 
@@ -451,7 +472,12 @@ export async function getAlternativeBanners(
 		}));
 }
 
-export async function updateMediaBanner(mediaId: number, bannerPath: string) {
+// See updateMediaPoster's own comment on the revalidate param.
+export async function updateMediaBanner(
+	mediaId: number,
+	bannerPath: string,
+	{ revalidate = true }: { revalidate?: boolean } = {},
+) {
 	await requireAdmin();
 
 	const existing = await db.media.findUnique({
@@ -476,7 +502,7 @@ export async function updateMediaBanner(mediaId: number, bannerPath: string) {
 	// soon as the source is downloaded and defers the encode to after(), so
 	// this Server Action doesn't tie up the instance and starve others.
 	await resolveBanner(mediaId, existing!.type, bannerPath);
-	revalidatePath("/", "layout");
+	if (revalidate) revalidateMediaPaths(mediaId, existing!.type);
 	return `/api/banner/${mediaId}/${mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT)}`;
 }
 
@@ -485,12 +511,32 @@ export async function updateMediaBanner(mediaId: number, bannerPath: string) {
 // generic diff: a slider fires many updates per drag, and "nudged the
 // framing" isn't a change worth a permanent record the way swapping the
 // banner image itself is.
-export async function updateMediaBannerFocus(mediaId: number, focusY: number) {
+export async function updateMediaBannerFocus(
+	mediaId: number,
+	focusY: number,
+	{ revalidate = true }: { revalidate?: boolean } = {},
+) {
 	await requireAdmin();
 	const clamped = Math.max(0, Math.min(100, Math.round(focusY)));
 	await db.media.update({
 		where: { id: mediaId },
 		data: { bannerFocusY: clamped },
 	});
-	revalidatePath("/", "layout");
+	// Only /media/[id] ever renders the banner (see api/banner and
+	// media-detail-inline-editor) — no catalog/home site-wide wipe needed for
+	// a framing nudge.
+	if (revalidate) revalidatePath(`/media/${mediaId}`);
+}
+
+// Fired by MediaPublishButton once an admin is done trying poster/banner/
+// focus tweaks on the detail page (see PosterEditTrigger/BannerEditTrigger,
+// which save with revalidate: false) — one revalidation for the whole
+// editing session instead of one per pick/drag.
+export async function publishMediaEdits(mediaId: number): Promise<void> {
+	await requireAdmin();
+	const media = await db.media.findUniqueOrThrow({
+		where: { id: mediaId },
+		select: { type: true },
+	});
+	revalidateMediaPaths(mediaId, media.type);
 }

@@ -16,6 +16,7 @@ import { MediaRecord } from "@/components/media/types";
 import { reorderListItems } from "@/components/lists/list-actions";
 import { useListItemRemoval } from "@/components/lists/use-list-item-removal";
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useMediaFilter } from "@/components/media/media-grids/media-filter/use-media-filter";
 import { MediaFilterPopover } from "@/components/media/media-grids/media-filter/media-filter-popover";
 import { isFilterActive } from "@/components/media/media-grids/media-filter/media-filter";
@@ -35,7 +36,11 @@ type Props = {
 // not by unmounting the DnD context — whenever a filter is narrowing what's
 // currently visible, or the viewer isn't an admin.
 export function RankedList({ listId, media }: Props) {
-	const isAdmin = useIsAdmin();
+	const sessionIsAdmin = useIsAdmin();
+	const isMobileViewport = useIsMobileViewport();
+	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
+	// for the same rule applied to the navbar's own admin links).
+	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const { removingId, handleRemove } = useListItemRemoval(listId);
 	const [reorderError, setReorderError] = useState<string | null>(null);
 	const { filter, setFilter, filteredMedia } = useMediaFilter(media);

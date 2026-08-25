@@ -11,6 +11,7 @@ import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { formatRuntime } from "@/components/media/primitives/runtime";
 import { PosterEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/poster-edit-trigger";
 import { BannerEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/banner-edit-trigger";
+import { MediaPublishButton } from "@/components/media/media-management/media-detail-inline-editor/media-publish-button";
 import { ReviewBodyEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/review-body-edit-trigger";
 import { AddToListButtonSection } from "@/components/lists/add-to-list-button/add-to-list-button-section";
 import { AddToWatchlistButtonSection } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-button-section";
@@ -241,9 +242,6 @@ export default async function MediaDetailPage({
 										<MediaDirectorCredit mediaId={media.id} type={media.type} />
 									</Suspense>
 								</div>
-								<div className={styles.title_actions}>
-									<MediaEditButton media={media} className={styles.edit_button} />
-								</div>
 							</div>
 							{media.alternateTitle && (
 								<div className={styles.alt_title}>{media.alternateTitle}</div>
@@ -319,6 +317,8 @@ export default async function MediaDetailPage({
 								)}
 							</div>
 						</div>
+
+						<MediaEditButton media={media} className={styles.edit_button} />
 					</div>
 	
 					<section className={styles.section}>
@@ -348,6 +348,8 @@ export default async function MediaDetailPage({
 					</section>
 				</div>
 			</div>
+
+			<MediaPublishButton mediaId={media.id} />
 		</div>
 	);
 }

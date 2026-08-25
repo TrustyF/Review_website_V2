@@ -1,9 +1,9 @@
 "use server";
-import { revalidatePath } from "next/cache";
 import { db } from "@/server/db/client";
 import { EnrichmentStatus, MediaType, Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { invalidateSearchIndex } from "@/components/search/search-actions";
+import { revalidateMediaPaths } from "@/server/cache/revalidate-media";
 
 type SubTableFields = Pick<
 	Prisma.MediaCreateInput,
@@ -61,9 +61,6 @@ export async function createManualMedia(input: {
 	});
 
 	await invalidateSearchIndex();
-	// "layout" (not just "/") — see media-add-actions.ts's own comment on
-	// this same call: a plain "/" only revalidated the homepage, leaving
-	// every per-type list page and this item's own /media/[id] stale.
-	revalidatePath("/", "layout");
+	revalidateMediaPaths(media.id, input.type);
 	return media.id;
 }

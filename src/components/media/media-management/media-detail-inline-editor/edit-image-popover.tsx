@@ -27,11 +27,12 @@ type Props = {
 	// Whatever pick()/onSubmitUrl last staged, or null if nothing's staged —
 	// onSave is a no-op (just closes) when this is null, and it doubles as
 	// the check for whether the currently typed urlInput is the thing that's
-	// actually staged (see the "will apply on save" note below).
+	// actually staged (see the "will apply on publish" note below).
 	pendingPath: string | null;
+	// Hands off to the page-level draft and closes — synchronous, nothing
+	// here touches the network (see use-image-edit-popover.ts's onStage), so
+	// unlike a real save this never fails and never needs an isSaving state.
 	onSave: () => void;
-	isSaving: boolean;
-	error: string | null;
 	// Closes without saving — discards whatever pick()/onSubmitUrl staged.
 	onClose: () => void;
 };
@@ -54,8 +55,6 @@ export function EditImagePopover({
 	onSubmitUrl,
 	pendingPath,
 	onSave,
-	isSaving,
-	error,
 	onClose,
 }: Props) {
 	const trimmedUrl = urlInput.trim();
@@ -91,7 +90,7 @@ export function EditImagePopover({
 					value={urlInput}
 					onChange={(e) => onUrlInputChange(e.target.value)}
 				/>
-				<button type="button" onClick={onSubmitUrl} disabled={isSaving}>
+				<button type="button" onClick={onSubmitUrl}>
 					Use
 				</button>
 			</div>
@@ -99,27 +98,22 @@ export function EditImagePopover({
 			{trimmedUrl && (
 				// Plain <img>, deliberately not next/image — same reasoning as the
 				// full editor modal's own url_preview: a pasted URL can be any
-				// host, and only gets proxied/cached once it's actually saved.
+				// host, and only gets proxied/cached once it's actually published.
 				// eslint-disable-next-line @next/next/no-img-element
 				<img src={trimmedUrl} alt="" className={styles.url_preview} />
 			)}
 			{pendingPath === trimmedUrl && trimmedUrl && (
-				<span className={styles.url_applied}>Will apply on save</span>
+				<span className={styles.url_applied}>Will apply on publish</span>
 			)}
 
 			<div className={styles.actions}>
-				<button type="button" onClick={onClose} disabled={isSaving}>
+				<button type="button" onClick={onClose}>
 					Discard
 				</button>
-				<button
-					type="button"
-					onClick={onSave}
-					disabled={isSaving || pendingPath === null}>
-					{isSaving ? "Saving…" : "Save"}
+				<button type="button" onClick={onSave} disabled={pendingPath === null}>
+					Stage
 				</button>
 			</div>
-
-			{error && <div className={styles.status_error}>{error}</div>}
 		</div>
 	);
 }

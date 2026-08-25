@@ -2,13 +2,12 @@
 import { MediaRecord } from "@/components/media/types";
 import { MediaPoster } from "@/components/media/primitives/poster";
 import { Hitbox } from "@/components/ui/hitbox";
-import {
-	getAlternativePosters,
-	updateMediaPoster,
-} from "@/components/media/media-management/media-editor/media-editor-actions";
+import { getAlternativePosters } from "@/components/media/media-management/media-editor/media-editor-actions";
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useImageEditPopover } from "@/components/media/media-management/media-detail-inline-editor/use-image-edit-popover";
 import { EditImagePopover } from "@/components/media/media-management/media-detail-inline-editor/edit-image-popover";
+import { useMediaPublishStore } from "@/components/media/media-management/media-detail-inline-editor/media-publish-store";
 import styles from "./poster-edit-trigger.module.sass";
 
 type Props = {
@@ -23,7 +22,15 @@ type Props = {
 // getAlternativePosters), so unlike BannerEditTrigger this never needs to
 // gate on media type.
 export function PosterEditTrigger({ media, ratio }: Props) {
-	const isAdmin = useIsAdmin();
+	const sessionIsAdmin = useIsAdmin();
+	const isMobileViewport = useIsMobileViewport();
+	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
+	// for the same rule applied to the navbar's own admin links).
+	const isAdmin = sessionIsAdmin && !isMobileViewport;
+	const draft = useMediaPublishStore((s) => s.draft);
+	const stagePoster = useMediaPublishStore((s) => s.stagePoster);
+	const draftPreviewSrc =
+		draft?.mediaId === media.id ? draft.posterPreviewSrc : null;
 	// Destructured rather than kept as one `popover` object: the react-hooks
 	// lint rule treats any object holding a ref (containerRef here) as
 	// tainted as a whole, flagging every property read off it — even
@@ -34,8 +41,6 @@ export function PosterEditTrigger({ media, ratio }: Props) {
 		containerRef,
 		isOpen,
 		setIsOpen,
-		isSaving,
-		error,
 		urlInput,
 		setUrlInput,
 		pick,
@@ -45,7 +50,11 @@ export function PosterEditTrigger({ media, ratio }: Props) {
 		pendingPath,
 	} = useImageEditPopover({
 		initialSrc: media.posterSrc,
-		save: (path) => updateMediaPoster(media.id, path),
+		stagedSrc: draftPreviewSrc,
+		// No DB write here — stages into the page-level draft, which only
+		// actually saves once MediaPublishButton's Publish is clicked (see
+		// that component's own comment).
+		onStage: (path, previewSrc) => stagePoster(media.id, path, previewSrc),
 	});
 
 	if (!isAdmin) {
@@ -74,8 +83,6 @@ export function PosterEditTrigger({ media, ratio }: Props) {
 					onSubmitUrl={submitUrl}
 					pendingPath={pendingPath}
 					onSave={saveDraft}
-					isSaving={isSaving}
-					error={error}
 					onClose={discardDraft}
 				/>
 			)}

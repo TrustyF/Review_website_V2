@@ -2,6 +2,7 @@
 import { useTransition } from "react";
 import Link from "next/link";
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { forceRevalidateAll } from "./dev-menu-actions";
 import styles from "./dev-menu.module.sass";
 
@@ -21,7 +22,11 @@ const isDev = process.env.NODE_ENV === "development";
 // is admin-only regardless of environment — running in development isn't
 // on its own a reason to expose it to a signed-out or non-admin visitor.
 export function DevMenu() {
-	const isAdmin = useIsAdmin();
+	const sessionIsAdmin = useIsAdmin();
+	const isMobileViewport = useIsMobileViewport();
+	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
+	// for the same rule applied to the navbar's own admin links).
+	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const [isPending, startTransition] = useTransition();
 
 	if (!isAdmin) return null;

@@ -1,0 +1,43 @@
+@use "@/app/styles/variables" as *
+
+// Fixed rather than sticky/inline — it needs to stay reachable regardless
+// of how far down the page an admin has scrolled while comparing posters/
+// banners against the rest of the detail page's content.
+.wrapper
+  position: fixed
+  right: 1.5rem
+  bottom: 1.5rem
+  z-index: 50
+
+  display: flex
+  flex-flow: column
+  align-items: flex-end
+  gap: 0.4rem
+
+.button
+  padding: 0.6rem 1.1rem
+  border-radius: 2rem
+  background: var(--brand)
+  color: var(--on-brand)
+  font-family: $font-body
+  font-size: 0.95rem
+  font-weight: 600
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4)
+  cursor: pointer
+
+  &:hover
+    background: var(--brand-hover)
+
+  &[aria-disabled="true"]
+    background: var(--brand-muted)
+    color: var(--accent1)
+    cursor: default
+
+.error
+  padding: 0.3rem 0.6rem
+  border-radius: 0.5rem
+  background: var(--danger-tint)
+  color: var(--danger)
+  font-family: $font-body
+  font-size: 0.8rem
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4)

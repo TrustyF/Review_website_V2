@@ -6,6 +6,7 @@ import { Hitbox } from "@/components/ui/hitbox";
 import { ReviewBodyModal } from "@/components/media/media-management/media-editor/components/review-body-modal";
 import { saveReview } from "@/components/media/media-management/media-editor/media-editor-actions";
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import styles from "./review-body-edit-trigger.module.sass";
 
 type Props = {
@@ -27,7 +28,11 @@ type Props = {
 // nothing either way (MediaReview itself returns null), same as before —
 // creating a first review still goes through the full editor.
 export function ReviewBodyEditTrigger({ media }: Props) {
-	const isAdmin = useIsAdmin();
+	const sessionIsAdmin = useIsAdmin();
+	const isMobileViewport = useIsMobileViewport();
+	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
+	// for the same rule applied to the navbar's own admin links).
+	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const review = media.review;
 
 	const [body, setBody] = useState(review?.body ?? "");

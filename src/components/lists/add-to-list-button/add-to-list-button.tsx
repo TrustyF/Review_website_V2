@@ -7,6 +7,7 @@ import {
 } from "@/components/lists/list-actions";
 import { Plus } from "lucide-react";
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useOutsideClick } from "@/lib/use-outside-click";
 import { Clickable } from "@/components/ui/clickable";
 import styles from "./add-to-list-button.module.sass";
@@ -35,7 +36,11 @@ export function AddToListButton({
 	memberListIds,
 	className,
 }: Props) {
-	const isAdmin = useIsAdmin();
+	const sessionIsAdmin = useIsAdmin();
+	const isMobileViewport = useIsMobileViewport();
+	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
+	// for the same rule applied to the navbar's own admin links).
+	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const [isOpen, setIsOpen] = useState(false);
 	const [memberIds, setMemberIds] = useState(new Set(memberListIds));
 	const [pendingId, setPendingId] = useState<number | null>(null);

@@ -97,5 +97,7 @@ export async function setReviewFeatured(
 ): Promise<void> {
 	await requireAdmin();
 	await db.review.update({ where: { mediaId }, data: { featured } });
-	revalidatePath("/", "layout");
+	// Only the homepage hero reads Review.featured — no catalog/type page
+	// shows it, so no need for a site-wide revalidation here.
+	revalidatePath("/");
 }

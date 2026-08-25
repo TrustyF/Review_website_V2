@@ -1,6 +1,7 @@
 "use client";
 import { ReactNode, useState, useTransition } from "react";
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { deleteChangeLogEntry } from "./change-log-actions";
 import styles from "./change-log-list.module.sass";
 
@@ -23,7 +24,11 @@ type Props = {
 export function ChangeLogEntryRow({ id, initialDeletedAt, children, alt }: Props) {
 	const [deletedAt, setDeletedAt] = useState(initialDeletedAt);
 	const [isPending, startTransition] = useTransition();
-	const isAdmin = useIsAdmin();
+	const sessionIsAdmin = useIsAdmin();
+	const isMobileViewport = useIsMobileViewport();
+	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
+	// for the same rule applied to the navbar's own admin links).
+	const isAdmin = sessionIsAdmin && !isMobileViewport;
 
 	function handleDelete() {
 		startTransition(async () => {

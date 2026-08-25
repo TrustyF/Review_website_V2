@@ -2,14 +2,12 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import { MediaRecord } from "@/components/media/types";
-import {
-	getAlternativeBanners,
-	updateMediaBanner,
-	updateMediaBannerFocus,
-} from "@/components/media/media-management/media-editor/media-editor-actions";
+import { getAlternativeBanners } from "@/components/media/media-management/media-editor/media-editor-actions";
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useImageEditPopover } from "@/components/media/media-management/media-detail-inline-editor/use-image-edit-popover";
 import { EditImagePopover } from "@/components/media/media-management/media-detail-inline-editor/edit-image-popover";
+import { useMediaPublishStore } from "@/components/media/media-management/media-detail-inline-editor/media-publish-store";
 import styles from "./banner-edit-trigger.module.sass";
 
 type Props = {
@@ -54,7 +52,16 @@ export function BannerEditTrigger({
 	backdropClassName,
 	grainOpacity,
 }: Props) {
-	const isAdmin = useIsAdmin();
+	const sessionIsAdmin = useIsAdmin();
+	const isMobileViewport = useIsMobileViewport();
+	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
+	// for the same rule applied to the navbar's own admin links).
+	const isAdmin = sessionIsAdmin && !isMobileViewport;
+	const draft = useMediaPublishStore((s) => s.draft);
+	const stageBanner = useMediaPublishStore((s) => s.stageBanner);
+	const stageBannerFocus = useMediaPublishStore((s) => s.stageBannerFocus);
+	const hasDraft = draft?.mediaId === media.id;
+	const draftPreviewSrc = hasDraft ? draft.bannerPreviewSrc : null;
 	// Destructured rather than kept as one `popover` object — see the same
 	// note in poster-edit-trigger.tsx: an object holding a ref taints every
 	// property read off it as far as the react-hooks lint rule is concerned.
@@ -63,8 +70,6 @@ export function BannerEditTrigger({
 		containerRef,
 		isOpen,
 		setIsOpen,
-		isSaving,
-		error,
 		urlInput,
 		setUrlInput,
 		pick,
@@ -74,12 +79,11 @@ export function BannerEditTrigger({
 		pendingPath,
 	} = useImageEditPopover({
 		initialSrc: bannerSrc,
-		// resolveBanner's return type is nullable in general (a banner is
-		// optional on Media), but this is only ever called with a real path
-		// we just picked/pasted, so the null case can't actually happen here
-		// — falling back to that same path keeps the type honest without an
-		// unsafe assertion.
-		save: async (path) => (await updateMediaBanner(media.id, path)) ?? path,
+		stagedSrc: draftPreviewSrc,
+		// No DB write here — stages into the page-level draft, which only
+		// actually saves once MediaPublishButton's Publish is clicked (see
+		// that component's own comment).
+		onStage: (path, previewSrc) => stageBanner(media.id, path, previewSrc),
 	});
 
 	// Same fade-in-on-load treatment as MediaPoster (see primitives.module.
@@ -99,17 +103,26 @@ export function BannerEditTrigger({
 	// The display box is almost always shorter than the source banner, so a
 	// fixed center crop (object-fit: cover's default object-position) doesn't
 	// always land on the interesting part of the image — see Media.
-	// bannerFocusY. Local state for a live preview while dragging; the actual
-	// save is debounced (see handleFocusYChange) rather than firing on every
-	// tick a drag produces.
-	const [focusY, setFocusY] = useState(media.bannerFocusY);
+	// bannerFocusY. Seeded from any already-staged draft value (e.g. this
+	// component remounted without a publish happening in between) rather than
+	// always from media.bannerFocusY, so a pending framing tweak isn't lost.
+	// Local state drives the live preview while dragging; the actual stage
+	// is debounced (see handleFocusYChange) rather than firing on every tick
+	// a drag produces.
+	const [focusY, setFocusY] = useState(
+		hasDraft && draft.bannerFocusY != null
+			? draft.bannerFocusY
+			: media.bannerFocusY,
+	);
 	const focusYSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	function handleFocusYChange(value: number) {
 		setFocusY(value);
 		if (focusYSaveTimer.current) clearTimeout(focusYSaveTimer.current);
 		focusYSaveTimer.current = setTimeout(() => {
-			updateMediaBannerFocus(media.id, value);
+			// No DB write here either — same staged-until-publish treatment as
+			// the poster/banner picker above.
+			stageBannerFocus(media.id, value);
 		}, 400);
 	}
 
@@ -209,8 +222,6 @@ export function BannerEditTrigger({
 					onSubmitUrl={submitUrl}
 					pendingPath={pendingPath}
 					onSave={saveDraft}
-					isSaving={isSaving}
-					error={error}
 					onClose={discardDraft}
 				/>
 			)}

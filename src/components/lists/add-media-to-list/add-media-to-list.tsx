@@ -7,6 +7,7 @@ import {
 	searchMediaForList,
 } from "@/components/lists/list-actions";
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import styles from "./add-media-to-list.module.sass";
 
 type Props = {
@@ -19,7 +20,11 @@ type Props = {
 const DEBOUNCE_MS = 400;
 
 export function AddMediaToList({ listId }: Props) {
-	const isAdmin = useIsAdmin();
+	const sessionIsAdmin = useIsAdmin();
+	const isMobileViewport = useIsMobileViewport();
+	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
+	// for the same rule applied to the navbar's own admin links).
+	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const [query, setQuery] = useState("");
 	const [results, setResults] = useState<ListMediaSearchResult[]>([]);
 	const [isSearching, setIsSearching] = useState(false);

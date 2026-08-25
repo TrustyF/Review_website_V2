@@ -1,6 +1,7 @@
 "use client";
 
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -25,7 +26,11 @@ export function EnrichedAgo({
 	lastEnrichedAt: Date | null;
 	className?: string | undefined;
 }) {
-	const isAdmin = useIsAdmin();
+	const sessionIsAdmin = useIsAdmin();
+	const isMobileViewport = useIsMobileViewport();
+	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
+	// for the same rule applied to the navbar's own admin links).
+	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	if (!isAdmin) return null;
 
 	return (
