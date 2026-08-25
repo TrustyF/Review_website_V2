@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { db } from "@/server/db/client";
 import {
 	bannerUrlFor,
@@ -27,8 +26,6 @@ const SAMPLE_SIZE = 30;
 const POSTER_PLAYGROUND_WIDTH = 500;
 
 export default async function BannerCompressionDevPage() {
-	if (process.env.NODE_ENV !== "development") notFound();
-
 	const [bannerCandidates, posterCandidates, personCandidates] =
 		await Promise.all([
 			db.media.findMany({

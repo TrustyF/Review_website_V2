@@ -40,14 +40,14 @@ export function DevMenu() {
 				{isDev && (
 					<div className={styles.section}>
 						<div className={styles.section_title}>Dev routes</div>
-						<Link href="/dev/media-cards" className={styles.link}>
-							Media cards
-						</Link>
 						<Link href="/dev/gauges" className={styles.link}>
 							Gauges
 						</Link>
 						<Link href="/dev/banner-compression" className={styles.link}>
 							Banner compression
+						</Link>
+						<Link href="/dev/logo" className={styles.link}>
+							Logo
 						</Link>
 					</div>
 				)}
