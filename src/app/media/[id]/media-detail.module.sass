@@ -2,12 +2,60 @@
 
 $var_banner_width: 110%
 
+// .banner_image/.banner_backdrop below deliberately bleed to
+// $var_banner_width (110%) past .wrapper's own content column — normally
+// harmless (globals.sass's body { overflow-x: hidden } is supposed to catch
+// any stray horizontal overflow) — except that rule only actually clips the
+// *viewport* via a browser quirk that propagates a non-positioned body's
+// overflow up to it, and globals.sass's own `* { position: relative }` reset
+// applies to body too, silently disqualifying it. The page was genuinely
+// horizontally scrollable as a result — nothing stopped a swipe (or
+// scrollTo) from sliding the banner's own bleed into view and dragging the
+// rest of the page's content out from under the navbar, which stays fixed
+// to the viewport regardless.
+//
+// Clipping on .wrapper itself would "fix" that, but .wrapper *is* the
+// content column the bleed is measured against (@include content-wrapper's
+// own max-width) — clipping there cuts the bleed off at exactly the width
+// it's supposed to bleed past, hard-clipping .banner_backdrop's gradient
+// before it finishes fading out instead of letting it actually reach
+// transparent. .page below is the fix instead: a plain full-viewport-width
+// box around .wrapper, clipping only once content would spill past the true
+// viewport edge — which the 110% bleed only ever does on viewports just
+// barely wider than .wrapper's own max-width, the exact scrollable-page case
+// this exists for — while leaving it alone everywhere else, same as before.
+//
+// overflow-x: clip (not hidden) — plain 'hidden' on one axis quietly
+// converts the other axis's 'visible' to 'auto' (a spec quirk to stop
+// "scrollable in one direction only" from being weird), which would clip
+// .banner_wrapper's own negative top offset (it deliberately renders above
+// this box, canceling out main's padding-top) instead of letting it bleed
+// upward same as before. 'clip' is excluded from that conversion — it's the
+// standard way to clip one axis while leaving the other's overflow untouched.
+.page
+  width: 100%
+  overflow-x: clip
+
 .wrapper
   position: relative
   @include content-wrapper
   margin: 0 auto 15rem auto
   display: flex
   flex-flow: column
+
+  // .banner_wrapper below already cancels main's own padding-top just for
+  // itself (position: absolute, so nothing else in normal flow moves with
+  // it) — everything *after* the banner (.banner_spacer, .details_wrapper,
+  // ...) still started 1 navbar-height lower than it needed to, even though
+  // the banner it's supposed to sit right below already ignores that space.
+  // Canceling it here too — mobile only, where a much shorter (aspect-ratio-
+  // driven) banner makes that redundant gap actually noticeable, rather than
+  // desktop's much taller banner where it barely registers — pulls the
+  // wrapper's own flow start up to match, so .banner_wrapper's own cancel
+  // becomes redundant and is dropped back to a plain top: 0 below instead of
+  // being stacked on top of this one.
+  @media (max-width: $mobile-breakpoint)
+    margin-top: calc(-1 * var(--navbar-height))
 
 .details_wrapper
   display: flex
@@ -31,6 +79,13 @@ $var_banner_width: 110%
   // viewport (behind the now-opaque, position: fixed navbar), same as
   // before that safe margin existed.
   top: calc(-1 * var(--navbar-height))
+
+  // .wrapper itself already cancels that same padding below $mobile-
+  // breakpoint (see its own comment) — doing it again here on top of that
+  // would pull this a second navbar-height too far up, off the top of the
+  // viewport entirely.
+  @media (max-width: $mobile-breakpoint)
+    top: 0
 
 .banner
   position: relative
@@ -65,7 +120,6 @@ $var_banner_width: 110%
   width: $var_banner_width
   height: 370px
   object-fit: cover
-  //object-position: top
   left: 50%
   transform: translateX(-50%)
 
@@ -97,8 +151,17 @@ $var_banner_width: 110%
 
   @media (max-width: 640px)
     flex-flow: column
-    align-items: center
 
+// align-items: center lived on .header itself until it became clear it also
+// strips .header_info's own flex-stretch (align-items' default) — a column
+// flex container's align-items doesn't just center a fixed-width item like
+// this one, it makes *every* item (including .header_info, which has no
+// width of its own to fall back on) shrink-to-fit its content instead of
+// filling the row, and for a text-heavy box that's the width the text would
+// need laid out on one unbroken line — hundreds of px wider than the
+// viewport, half of it clipped off-screen by the centering. align-self here
+// instead centers just this one (explicitly widthed) item, leaving
+// .header_info's own stretch (and so its actual usable width) alone.
 .poster_column
   display: flex
   flex-flow: column
@@ -107,6 +170,9 @@ $var_banner_width: 110%
   flex-shrink: 0
   width: 220px
   max-width: 100%
+
+  @media (max-width: 640px)
+    align-self: center
 
 .poster
   position: relative
@@ -375,10 +441,27 @@ $var_banner_width: 110%
   gap: 0.5rem
   font-size: 0.9rem
 
+  // .credit_role's 8rem label column eats over a third of the row's own
+  // width once .header_info is down around a phone's actual content width
+  // (as opposed to the roughly-950px it has on desktop) — cramped enough to
+  // wrap mid-label ("Director of Photography") while the names beside it
+  // wrap too, both narrow at once. Stacking the label above the names
+  // instead gives each its own full line. Same 640px breakpoint as .header/
+  // .review_row above (not a narrower one of its own) — anywhere the rest of
+  // the page has already switched to its narrow/stacked mobile treatment,
+  // this should have too, rather than staying cramped through a band where
+  // everything around it has already gone mobile.
+  @media (max-width: 640px)
+    flex-flow: column
+    gap: 0.15rem
+
 .credit_role
   flex-shrink: 0
   width: 8rem
   color: var(--accent1)
+
+  @media (max-width: 640px)
+    width: auto
 
 .credit_names
   display: flex
@@ -403,16 +486,32 @@ $var_banner_width: 110%
   align-items: flex-start
   gap: 0.4rem
 
+// max-width: 100% — .cast_wrapper's own align-items: flex-start (left-
+// aligning the "Show all" toggle below, which wants its own full-width
+// underline rather than shrinking to the cast row's width) means this, as
+// a flex item with no width of its own, would otherwise shrink-to-fit its
+// content's max-content size instead of capping at .cast_wrapper's actual
+// available width — exactly the width .cast_photos_clipped's own
+// overflow-x needs to actually have something to scroll *within*, rather
+// than just rendering at full content width with nothing to clip.
 .cast_photos
   display: flex
   align-items: flex-start
   gap: 0.5rem
+  max-width: 100%
 
-// Default state — cast-photos.tsx's own VISIBLE_WITHOUT_SCROLL already slices
-// the entries down to exactly one row's worth, so this is just a plain
-// nowrap row: there's never a partial tile left to clip or fade.
+// Default state — cast-photos.tsx's own VISIBLE_WITHOUT_SCROLL slices the
+// entries down to exactly one row's worth *at .wrapper's roughly-950px
+// desktop width* (see that constant's own comment) — .header_info is nowhere
+// near that wide on a phone, so without overflow-x here the row's own nowrap
+// silently ran the last several tiles off the edge of the viewport instead
+// of off the edge of this row, with no scrollbar or fade to hint there was
+// more to it. Scrollable here instead — the same collapsed set is still all
+// on-screen, just swipeable rather than clipped, and "Show all N" below
+// still exists for jumping straight to the full wrapped grid.
 .cast_photos_clipped
   flex-flow: row
+  overflow-x: auto
 
 // Toggled on by .cast_expand_toggle below, once every entry (not just the
 // first row) is being rendered — wraps into a full multi-row grid.

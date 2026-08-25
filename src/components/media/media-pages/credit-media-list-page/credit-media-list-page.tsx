@@ -6,7 +6,6 @@ import {
 	toMediaRecord,
 } from "@/components/media/types";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
-import { MediaGridColumnsProvider } from "@/components/media/media-grids/lazy-media-grid/media-grid-columns-context";
 import { PersonPhoto } from "@/components/media/primitives/person-photo";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { EnrichmentStatus } from "@prisma/client";
@@ -303,11 +302,9 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 								? "Starring in"
 								: joinNames(group.names)}
 						</h2>
-						<MediaGridColumnsProvider value={7}>
-							<MediaCardDisplayProvider showTitle={false}>
-								<LazyMediaGrid items={group.media} />
-							</MediaCardDisplayProvider>
-						</MediaGridColumnsProvider>
+						<MediaCardDisplayProvider showTitle={false}>
+							<LazyMediaGrid items={group.media} />
+						</MediaCardDisplayProvider>
 					</div>
 				))
 			)}

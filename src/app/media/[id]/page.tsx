@@ -167,184 +167,186 @@ export default async function MediaDetailPage({
 	const difficulty = raw.review?.difficulty;
 
 	return (
-		<div className={styles.wrapper}>
-			{raw.isDeleted && (
-				<div className={styles.deleted_banner}>
-					This item is soft-deleted — hidden from every list. Open the editor to
-					restore it or delete it permanently.
-				</div>
-			)}
-			{media.bannerSrc && (
-				<div className={styles.banner_wrapper}>
-					<BannerEditTrigger
-						media={media}
-						bannerSrc={media.bannerSrc}
-						bannerClassName={styles.banner}
-						visualClassName={styles.banner_visual}
-						imageClassName={styles.banner_image}
-						backdropClassName={styles.banner_backdrop}
-						grainOpacity={BANNER_GRAIN_OPACITY}
-					/>
-				</div>
-			)}
-			{media.bannerSrc && <div className={styles.banner_spacer} />}
-			{!media.bannerSrc && <div className={styles.no_banner_spacer} />}
-
-			<div className={styles.details_wrapper}>
-				<div className={styles.header}>
-					<div className={styles.poster_column}>
-						<div className={styles.poster}>
-							<PosterEditTrigger
-								media={media}
-								ratio={posterRatioFor(media.type)}
-							/>
-							<Suspense fallback={null}>
-								<AddToListButtonSection
-									mediaId={media.id}
-									className={styles.list_button_float}
-								/>
-							</Suspense>
-						</div>
-						{runtimeLabel && (
-							<div className={styles.poster_info}>{runtimeLabel}</div>
-						)}
-						{(session?.user || media.sourceUrl) && (
-							<div className={styles.controls_bar}>
-								{session?.user && (
-									<Suspense fallback={null}>
-										<AddToWatchlistButtonSection
-											mediaId={media.id}
-											userId={session.user.id}
-										/>
-									</Suspense>
-								)}
-								{media.sourceUrl && (
-									<a
-										href={media.sourceUrl}
-										target="_blank"
-										rel="noopener noreferrer"
-										className={styles.source_link_button}
-										title="Open original source"
-										aria-label="Open original source">
-										<ExternalLink size={15} />
-									</a>
-								)}
-							</div>
-						)}
+		<div className={styles.page}>
+			<div className={styles.wrapper}>
+				{raw.isDeleted && (
+					<div className={styles.deleted_banner}>
+						This item is soft-deleted — hidden from every list. Open the editor to
+						restore it or delete it permanently.
 					</div>
-					<div className={styles.header_info}>
-						<div className={styles.title_row}>
-							<div className={styles.title_group}>
-								<MediaTitle title={media.title} className={styles.title} />
+				)}
+				{media.bannerSrc && (
+					<div className={styles.banner_wrapper}>
+						<BannerEditTrigger
+							media={media}
+							bannerSrc={media.bannerSrc}
+							bannerClassName={styles.banner}
+							visualClassName={styles.banner_visual}
+							imageClassName={styles.banner_image}
+							backdropClassName={styles.banner_backdrop}
+							grainOpacity={BANNER_GRAIN_OPACITY}
+						/>
+					</div>
+				)}
+				{media.bannerSrc && <div className={styles.banner_spacer} />}
+				{!media.bannerSrc && <div className={styles.no_banner_spacer} />}
+	
+				<div className={styles.details_wrapper}>
+					<div className={styles.header}>
+						<div className={styles.poster_column}>
+							<div className={styles.poster}>
+								<PosterEditTrigger
+									media={media}
+									ratio={posterRatioFor(media.type)}
+								/>
 								<Suspense fallback={null}>
-									<MediaDirectorCredit mediaId={media.id} type={media.type} />
+									<AddToListButtonSection
+										mediaId={media.id}
+										className={styles.list_button_float}
+									/>
 								</Suspense>
 							</div>
-							<div className={styles.title_actions}>
-								<MediaEditButton media={media} className={styles.edit_button} />
-							</div>
-						</div>
-						{media.alternateTitle && (
-							<div className={styles.alt_title}>{media.alternateTitle}</div>
-						)}
-
-						<div className={styles.meta_row}>
-							<MediaReleaseDate date={media.releaseDate} />
-						</div>
-
-						<div className={styles.review_row}>
-							<div className={styles.review_col}>
-								<ReviewBodyEditTrigger media={media} />
-							</div>
-							{(publicRating != null ||
-								difficulty === 1 ||
-								difficulty === 2 ||
-								budget != null ||
-								revenue != null ||
-								roi != null) && (
-								<div className={styles.secondary_facts}>
-									{publicRating != null && (
-										<div className={styles.public_rating}>
-											{publicRating.toFixed(1)}
-											<StarIcon style={{ color: "var(--link)" }} />
-										</div>
+							{runtimeLabel && (
+								<div className={styles.poster_info}>{runtimeLabel}</div>
+							)}
+							{(session?.user || media.sourceUrl) && (
+								<div className={styles.controls_bar}>
+									{session?.user && (
+										<Suspense fallback={null}>
+											<AddToWatchlistButtonSection
+												mediaId={media.id}
+												userId={session.user.id}
+											/>
+										</Suspense>
 									)}
-									{(difficulty === 1 || difficulty === 2) && (
-										<Tooltip
-											content={
-												difficulty === 1
-													? "Medium difficulty"
-													: "Hard difficulty"
-											}>
-											<div className={styles.difficulty}>
-												<span
-													className={`${styles.difficulty_dot} ${difficulty === 1 ? styles.difficulty_dot_medium : styles.difficulty_dot_hard}`}
-												/>
-												{difficulty === 1 ? "Medium" : "Hard"}
-											</div>
-										</Tooltip>
-									)}
-									{(budget != null || revenue != null || roi != null) && (
-										<div className={styles.finance_group}>
-											<dl className={styles.financials_facts}>
-												{budget != null && (
-													<Fact
-														label="Budget"
-														value={CurrencyFormatter.format(budget)}
-													/>
-												)}
-												{revenue != null && (
-													<Fact
-														label="Revenue"
-														value={CurrencyFormatter.format(revenue)}
-													/>
-												)}
-											</dl>
-											{roi != null && (
-												<Tooltip content="Return on investment">
-													<CircularGauge
-														value={roi}
-														size={40}
-														strokeWidth={3}
-														max={1}
-														unit={"x"}
-														textScaling={0.35}
-													/>
-												</Tooltip>
-											)}
-										</div>
+									{media.sourceUrl && (
+										<a
+											href={media.sourceUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+											className={styles.source_link_button}
+											title="Open original source"
+											aria-label="Open original source">
+											<ExternalLink size={15} />
+										</a>
 									)}
 								</div>
 							)}
 						</div>
+						<div className={styles.header_info}>
+							<div className={styles.title_row}>
+								<div className={styles.title_group}>
+									<MediaTitle title={media.title} className={styles.title} />
+									<Suspense fallback={null}>
+										<MediaDirectorCredit mediaId={media.id} type={media.type} />
+									</Suspense>
+								</div>
+								<div className={styles.title_actions}>
+									<MediaEditButton media={media} className={styles.edit_button} />
+								</div>
+							</div>
+							{media.alternateTitle && (
+								<div className={styles.alt_title}>{media.alternateTitle}</div>
+							)}
+	
+							<div className={styles.meta_row}>
+								<MediaReleaseDate date={media.releaseDate} />
+							</div>
+	
+							<div className={styles.review_row}>
+								<div className={styles.review_col}>
+									<ReviewBodyEditTrigger media={media} />
+								</div>
+								{(publicRating != null ||
+									difficulty === 1 ||
+									difficulty === 2 ||
+									budget != null ||
+									revenue != null ||
+									roi != null) && (
+									<div className={styles.secondary_facts}>
+										{publicRating != null && (
+											<div className={styles.public_rating}>
+												{publicRating.toFixed(1)}
+												<StarIcon style={{ color: "var(--link)" }} />
+											</div>
+										)}
+										{(difficulty === 1 || difficulty === 2) && (
+											<Tooltip
+												content={
+													difficulty === 1
+														? "Medium difficulty"
+														: "Hard difficulty"
+												}>
+												<div className={styles.difficulty}>
+													<span
+														className={`${styles.difficulty_dot} ${difficulty === 1 ? styles.difficulty_dot_medium : styles.difficulty_dot_hard}`}
+													/>
+													{difficulty === 1 ? "Medium" : "Hard"}
+												</div>
+											</Tooltip>
+										)}
+										{(budget != null || revenue != null || roi != null) && (
+											<div className={styles.finance_group}>
+												<dl className={styles.financials_facts}>
+													{budget != null && (
+														<Fact
+															label="Budget"
+															value={CurrencyFormatter.format(budget)}
+														/>
+													)}
+													{revenue != null && (
+														<Fact
+															label="Revenue"
+															value={CurrencyFormatter.format(revenue)}
+														/>
+													)}
+												</dl>
+												{roi != null && (
+													<Tooltip content="Return on investment">
+														<CircularGauge
+															value={roi}
+															size={40}
+															strokeWidth={3}
+															max={1}
+															unit={"x"}
+															textScaling={0.35}
+														/>
+													</Tooltip>
+												)}
+											</div>
+										)}
+									</div>
+								)}
+							</div>
+						</div>
 					</div>
+	
+					<section className={styles.section}>
+						<h2 className={styles.section_title}>Details</h2>
+						{tagline && <p className={styles.tagline}>{tagline}</p>}
+						{media.overview && (
+							<p className={styles.overview}>{media.overview}</p>
+						)}
+	
+						<MediaTypeFacts media={media} />
+	
+						<Suspense fallback={null}>
+							<MediaCreditsDetails mediaId={media.id} type={media.type} />
+						</Suspense>
+					</section>
+	
+					<section className={styles.section}>
+						<h2 className={styles.section_title}>Change log</h2>
+						<Suspense fallback={null}>
+							<MediaChangeLogSection
+								mediaId={media.id}
+								type={raw.type}
+								externalId={raw.externalId}
+								review={raw.review}
+							/>
+						</Suspense>
+					</section>
 				</div>
-
-				<section className={styles.section}>
-					<h2 className={styles.section_title}>Details</h2>
-					{tagline && <p className={styles.tagline}>{tagline}</p>}
-					{media.overview && (
-						<p className={styles.overview}>{media.overview}</p>
-					)}
-
-					<MediaTypeFacts media={media} />
-
-					<Suspense fallback={null}>
-						<MediaCreditsDetails mediaId={media.id} type={media.type} />
-					</Suspense>
-				</section>
-
-				<section className={styles.section}>
-					<h2 className={styles.section_title}>Change log</h2>
-					<Suspense fallback={null}>
-						<MediaChangeLogSection
-							mediaId={media.id}
-							type={raw.type}
-							externalId={raw.externalId}
-							review={raw.review}
-						/>
-					</Suspense>
-				</section>
 			</div>
 		</div>
 	);

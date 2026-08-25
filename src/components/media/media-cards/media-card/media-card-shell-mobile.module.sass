@@ -1,0 +1,66 @@
+@use "@/app/styles/variables" as *
+
+// Grid, not flex (unlike MediaCardShell's own row) — .review needs its own
+// full-width row below .poster/.top instead of sitting beside them, which a
+// grid's named areas give for free: "review" spans both columns in its own
+// row below, while .poster/.top share the row above it same as a flex row
+// would.
+// 90px, not MediaCardShell's own 130px — leaves more of a phone's much
+// narrower width for .top/.review's actual text instead of giving the
+// poster the same fixed size regardless of screen size.
+.wrapper
+  position: relative
+  padding: 20px
+  display: grid
+  grid-template-columns: 90px 1fr
+  grid-template-areas: "poster top" "review review"
+  column-gap: 1.25rem
+  row-gap: 0.75rem
+
+  // Above this, MediaCardShell's own .wrapper is the one that's visible
+  // instead — see its own comment. +1px avoids both being hidden (or both
+  // shown) for the one pixel width exactly at $mobile-breakpoint.
+  @media (min-width: $mobile-breakpoint + 1px)
+    display: none
+
+.poster
+  grid-area: poster
+
+// align-self: center — title/date/rating are almost always shorter than the
+// poster's own height, so this centers that shorter block vertically within
+// the row instead of it sitting flush against the top like the poster does.
+.top
+  grid-area: top
+  align-self: center
+  display: flex
+  flex-flow: column
+  gap: 0.5rem
+  min-width: 0
+
+// Stacked, not MediaCardShell's own baseline row — .top is already a narrow
+// column squeezed beside a poster, so a long title sharing a row with the
+// date wraps awkwardly (or crowds the date against it); full width of that
+// column to itself reads better here.
+.header_info
+  display: flex
+  flex-flow: column
+  gap: 0.15rem
+
+.secondary_info
+  display: flex
+  flex-flow: row
+
+.review
+  grid-area: review
+
+.edit_button
+  position: absolute
+  top: 1rem
+  right: 1rem
+  opacity: 0
+  visibility: hidden
+
+.wrapper:hover
+  .edit_button
+    visibility: visible
+    opacity: 1

@@ -1,3 +1,5 @@
+@use "@/app/styles/variables" as *
+
 .wrapper
   //outline: 1px solid red
   //width: 150px
@@ -6,6 +8,11 @@
   padding: 20px
   display: flex
   gap: 2rem
+
+  // Below this, MediaCardShellMobile's own .wrapper takes over instead (see
+  // that file and MediaCardShell's own comment on why there are two).
+  @media (max-width: $mobile-breakpoint)
+    display: none
 
 .poster
   flex-shrink: 0

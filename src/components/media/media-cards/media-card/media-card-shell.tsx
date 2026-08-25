@@ -6,6 +6,7 @@ import { MediaReview } from "@/components/media/media-cards/media-card/review";
 import { MediaTitle } from "@/components/media/primitives/title";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { MediaRecord } from "@/components/media/types";
+import { MediaCardShellMobile } from "@/components/media/media-cards/media-card/media-card-shell-mobile";
 import styles from "./media-card-shell.module.sass";
 
 type Props = {
@@ -18,29 +19,36 @@ type Props = {
 // edit button. Per-type cards (MovieCard, TvShowCard, ...) supply only the
 // bit of secondary info that actually differs between media types.
 // MediaEditButton decides for itself whether it's allowed to render.
+//
+// Renders both this layout and MediaCardShellMobile's, swapping which one's
+// visible via CSS ($mobile-breakpoint, mirrored in each module's own
+// .wrapper) rather than a client-side matchMedia check — this stays a
+// server component that way, and there's no first-paint flash/mismatch to
+// worry about. Both mount the same poster src, so the only real cost is a
+// second (browser-cache-deduped) image request, not a second download.
 export function MediaCardShell({ media, children }: Props) {
 	return (
-		<div className={styles.wrapper}>
-			<div className={styles.poster}>
-				<MediaPoster
-					src={media.posterSrc}
-					title={media.title}
-					mediaId={media.id}
-					ratio={posterRatioFor(media.type)}
-				/>
-			</div>
-			<div className={styles.body}>
-				<div className={styles.header_info}>
-					<MediaTitle title={media.title} />
-					<MediaReleaseDate date={media.releaseDate} />
+		<>
+			<div className={styles.wrapper}>
+				<div className={styles.poster}>
+					<MediaPoster
+						src={media.posterSrc}
+						title={media.title}
+						mediaId={media.id}
+						ratio={posterRatioFor(media.type)}
+					/>
 				</div>
-				<MediaReview review={media.review} watchedDate={media.watchedDate} />
+				<div className={styles.body}>
+					<div className={styles.header_info}>
+						<MediaTitle title={media.title} />
+						<MediaReleaseDate date={media.releaseDate} />
+					</div>
+					<MediaReview review={media.review} watchedDate={media.watchedDate} />
+				</div>
+				{children && <div className={styles.secondary_info}>{children}</div>}
+				<MediaEditButton media={media} className={styles.edit_button} />
 			</div>
-			{children && <div className={styles.secondary_info}>{children}</div>}
-			<MediaEditButton
-				media={media}
-				className={styles.edit_button}
-			/>
-		</div>
+			<MediaCardShellMobile media={media}>{children}</MediaCardShellMobile>
+		</>
 	);
 }
