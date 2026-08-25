@@ -189,6 +189,19 @@
   white-space: nowrap
   @include nav-item-look
 
+// Deliberately bigger than the other 14px monochrome nav icons (AccountIcon
+// included, when there's no avatar to show yet) — at 14px a photo just
+// reads as an indistinct dark blob against the navbar, indistinguishable
+// from the plain icon it's replacing. The border gives it the same reason
+// to read as "a picture" that AvatarPicker's own .current_image gets from
+// sitting in a bigger circle against the account page's background.
+.nav_avatar
+  width: 45px
+  aspect-ratio: 1
+  border-radius: 50%
+  object-fit: cover
+  flex-shrink: 0
+
 // Wraps every NavLink's (and the sign-out button's) text — hidden below its
 // own tier's breakpoint (see nav-label-collapse in variables.sass and
 // nav-bar.tsx's COLLAPSE_TIER) so the item shrinks down to just its icon

@@ -1,0 +1,97 @@
+@use "@/app/styles/variables" as *
+
+.wrapper
+  width: 26rem
+  max-width: 100%
+  margin: 4rem auto
+  display: flex
+  flex-flow: column
+  gap: 2rem
+
+.progress
+  display: flex
+  justify-content: center
+  gap: 0.5rem
+
+.dot
+  width: 0.5rem
+  height: 0.5rem
+  border-radius: 50%
+  background: var(--surface-border)
+
+.dot_active
+  background: var(--accent2)
+
+.dot_done
+  background: var(--accent1)
+
+.step
+  display: flex
+  flex-flow: column
+  gap: 1rem
+
+.title
+  font-size: 1.5rem
+  line-height: 1.2
+
+.subtitle
+  color: var(--accent1)
+  font-size: 0.9rem
+
+.field
+  display: flex
+  flex-flow: column
+  gap: 0.3rem
+  color: var(--accent1)
+  font-size: 0.85rem
+
+.input
+  padding: 0.5rem 0.7rem
+  border: 1px solid var(--accent1)
+  border-radius: 0.4rem
+  background: transparent
+  color: var(--foreground)
+  font-family: $font-body
+  font-size: 1rem
+
+.checkbox_field
+  display: flex
+  align-items: center
+  gap: 0.5rem
+  color: var(--foreground)
+  font-size: 0.9rem
+  cursor: pointer
+
+.avatar_picker
+  display: flex
+  justify-content: center
+  padding: 1rem 0
+
+.actions
+  display: flex
+  justify-content: space-between
+  align-items: center
+
+.skip_button
+  color: var(--accent1)
+  cursor: pointer
+  font-size: 0.9rem
+
+  &:hover
+    color: var(--foreground)
+
+.next_button
+  padding: 0.5rem 1.2rem
+  border-radius: 0.4rem
+  background: var(--brand)
+  color: var(--on-brand)
+  font-size: 0.9rem
+  cursor: pointer
+
+  &:hover
+    background: var(--brand-hover)
+
+  &[aria-disabled="true"]
+    background: var(--surface-border)
+    color: var(--accent1)
+    cursor: default

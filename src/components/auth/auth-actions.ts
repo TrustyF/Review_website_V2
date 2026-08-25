@@ -6,8 +6,6 @@ export type SignUpInput = {
 	name: string;
 	email: string;
 	password: string;
-	preferredLanguage: string;
-	newsletterOptIn: boolean;
 };
 
 // Only creates the row — deliberately doesn't also sign the browser in.
@@ -26,13 +24,14 @@ export async function signUp(input: SignUpInput): Promise<void> {
 	const existing = await db.user.findUnique({ where: { email } });
 	if (existing) throw new Error("An account with this email already exists");
 
+	// preferredLanguage/newsletterOptIn/username/image are picked in the
+	// /onboarding wizard right after this, not collected here — this only
+	// needs enough to create the row and let the caller sign in.
 	await db.user.create({
 		data: {
 			email,
 			name: input.name.trim() || null,
 			passwordHash: await hashPassword(input.password),
-			preferredLanguage: input.preferredLanguage,
-			newsletterOptIn: input.newsletterOptIn,
 		},
 	});
 }

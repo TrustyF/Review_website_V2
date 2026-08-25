@@ -5,6 +5,7 @@ import { Clickable } from "@/components/ui/clickable";
 import { useOutsideClick } from "@/lib/use-outside-click";
 import { AvatarGroup } from "@/lib/avatars";
 import { updateAvatar } from "@/components/account/account-actions";
+import { useAvatar } from "@/components/account/avatar-context";
 import styles from "./avatar-picker.module.sass";
 
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export function AvatarPicker({ initialSrc, groups }: Props) {
+	const { setAvatarSrc } = useAvatar();
 	const [currentSrc, setCurrentSrc] = useState(initialSrc);
 	// A saved image src that 404s (stale — e.g. pointing at a file since
 	// deleted/renamed out from under it) would otherwise render as a plain
@@ -38,6 +40,9 @@ export function AvatarPicker({ initialSrc, groups }: Props) {
 			setCurrentSrc(src);
 			setImageFailed(false);
 			setIsOpen(false);
+			// Pushes straight into the navbar's shared copy (avatar-context.tsx)
+			// instead of it having to refetch — this already knows the new value.
+			setAvatarSrc(src);
 		} finally {
 			setSavingSrc(null);
 		}
@@ -81,9 +86,9 @@ export function AvatarPicker({ initialSrc, groups }: Props) {
 						</div>
 						<div className={styles.groups}>
 							{groups.map((group) => (
-								<div key={group.prefix} className={styles.group}>
+								<div key={group.name} className={styles.group}>
 									<span className={styles.group_label}>
-										{group.prefix.toUpperCase()}
+										{group.name.replace(/-/g, " ").toUpperCase()}
 									</span>
 									<div className={styles.options}>
 										{group.options.map((option) => (

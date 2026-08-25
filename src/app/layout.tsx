@@ -6,6 +6,7 @@ import { DevMenu } from "@/components/dev-menu/dev-menu";
 import MediaEditorModal from "@/components/media/media-management/media-editor/media-editor-modal";
 import { FeaturedManagerModal } from "@/components/home/featured-review/featured-manager/featured-manager-modal";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
+import { AvatarProvider } from "@/components/account/avatar-context";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -30,11 +31,13 @@ export default function RootLayout({
 		<html lang="en" className={fontVariables}>
 			<body>
 				<AuthSessionProvider>
-					<Navbar />
-					<DevMenu />
-					<MediaEditorModal />
-					<FeaturedManagerModal />
-					<main>{children}</main>
+					<AvatarProvider>
+						<Navbar />
+						<DevMenu />
+						<MediaEditorModal />
+						<FeaturedManagerModal />
+						<main>{children}</main>
+					</AvatarProvider>
 				</AuthSessionProvider>
 			</body>
 			<SpeedInsights />

@@ -67,6 +67,18 @@
 .vignette_overlay_round
   border-radius: 50%
 
+// Same centering trick as .vignette_overlay above, just a plain outline
+// instead of a gradient fill — width/height (the shrunk-down diameter) are
+// set inline per-instance (see AVATAR_SAFE_MARGIN_RATIO).
+.safe_margin_circle
+  position: absolute
+  top: 50%
+  left: 50%
+  transform: translate(-50%, -50%)
+  pointer-events: none
+  border-radius: 50%
+  border: 1px dashed rgba(255, 255, 255, 0.6)
+
 // Doesn't need vignette_overlay's own centering math — preview_frame below
 // is already sized to exactly the crop rect, so this just fills it.
 .preview_vignette

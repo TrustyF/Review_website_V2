@@ -25,6 +25,7 @@ import {
 } from "@/components/navbar/nav-dropdown";
 import { isNavActive } from "@/lib/nav-active";
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { useAvatar } from "@/components/account/avatar-context";
 import style from "./nav-bar.module.sass";
 
 // Hides the instant you scroll down (past a small top-of-page exemption —
@@ -126,9 +127,26 @@ function NavLink({
 
 export default function Navbar() {
 	const { data: session } = useSession();
+	// Fetched client-side (see avatar-context.tsx) rather than off the
+	// session, which only refreshes at sign-in — `session?.user` below is
+	// still what decides whether the Account link (vs "Sign in") shows at
+	// all, that part's fine coming from the JWT.
+	const { avatarSrc } = useAvatar();
 	const isAdmin = useIsAdmin();
 	const pathname = usePathname();
 	const [hidden, setHidden] = useState(false);
+	// A saved avatar src that 404s (stale — see avatar-picker.tsx's own
+	// version of this) would otherwise render as a blank broken <img> instead
+	// of falling back to AccountIcon. Reset whenever avatarSrc itself changes
+	// — the React-recommended "adjust state during render" pattern rather
+	// than a useEffect, since this is deriving state from a prop change, not
+	// synchronizing with an external system.
+	const [avatarFailed, setAvatarFailed] = useState(false);
+	const [lastAvatarSrc, setLastAvatarSrc] = useState(avatarSrc);
+	if (avatarSrc !== lastAvatarSrc) {
+		setLastAvatarSrc(avatarSrc);
+		setAvatarFailed(false);
+	}
 	// Refs, not state — every scroll frame writes these, and re-rendering on
 	// each one (rather than only when `hidden` actually flips) would be pure
 	// waste.
@@ -288,14 +306,26 @@ export default function Navbar() {
 						<div className={`${style.nav_group} ${style.nav_group_end}`}>
 							{session?.user ? (
 								<>
-									<NavLink
+									<Link
 										href="/account"
-										icon={AccountIcon}
 										className={style.link}
-										pathname={pathname}
-										iconOnly>
-										Account
-									</NavLink>
+										aria-current={
+											isNavActive(pathname, "/account") ? "page" : undefined
+										}
+										aria-label="Account"
+										title="Account">
+										{avatarSrc && !avatarFailed ? (
+											// eslint-disable-next-line @next/next/no-img-element
+											<img
+												src={avatarSrc}
+												alt=""
+												className={style.nav_avatar}
+												onError={() => setAvatarFailed(true)}
+											/>
+										) : (
+											<AccountIcon size={14} className={style.nav_icon} />
+										)}
+									</Link>
 									<button
 										type="button"
 										className={style.sign_out_button}

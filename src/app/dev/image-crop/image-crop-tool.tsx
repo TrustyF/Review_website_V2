@@ -23,6 +23,12 @@ const BANNER_SEARCH_DEBOUNCE_MS = 200;
 // rect does.
 const PREVIEW_SIZE = 160;
 
+// How much smaller the avatar's "safe zone" guide circle is than the actual
+// (outer) crop circle — 0.86 leaves a 7%-of-diameter margin on every side.
+// Purely a guide for where the crop tool operator drags/zooms to; nothing
+// past this ratio is treated differently on save.
+const AVATAR_SAFE_MARGIN_RATIO = 0.86;
+
 // Ad hoc local-file crop-and-save tool: pick a file, pick a shape, drag/zoom
 // to position the crop, save — the result is a path meant to be copied out
 // and pasted wherever it's needed (a list thumbnail URL field, etc.).
@@ -301,6 +307,18 @@ export function ImageCropTool() {
 					<div className={styles.cropper_row}>
 						<div className={styles.cropper_frame}>
 							<Cropper
+								// react-easy-crop has a bug where switching `aspect` on an
+								// already-loaded image that's letterboxed (its display doesn't
+								// fill the container height — e.g. a wide image inside this
+								// fixed-height frame) recomputes the crop rect against the
+								// container's own height instead of the image's actual
+								// rendered height, so the round/rect guide (and everything
+								// derived from it, including the Result preview and the saved
+								// crop) ends up wrong — confirmed by comparing DOM rects
+								// before/after a shape switch; a fresh mount always computes
+								// correctly. Remounting on shapeId sidesteps the library's
+								// internal update path entirely rather than fighting it.
+								key={shapeId}
 								ref={cropperRef}
 								image={previewUrl}
 								crop={crop}
@@ -326,6 +344,20 @@ export function ImageCropTool() {
 										width: cropSize.width,
 										height: cropSize.height,
 										opacity: vignette,
+									}}
+								/>
+							)}
+							{/* Guide only — a smaller circle inset from the actual (outer)
+							crop circle, marking the zone that survives however small an
+							avatar ends up displayed elsewhere (nav_avatar is 35px — corner-
+							ish detail near the outer edge can blur/vanish at that size).
+							Purely visual: nothing here changes what's cropped/saved. */}
+							{cropSize && CROP_SHAPES[shapeId].cropShape === "round" && (
+								<div
+									className={styles.safe_margin_circle}
+									style={{
+										width: cropSize.width * AVATAR_SAFE_MARGIN_RATIO,
+										height: cropSize.height * AVATAR_SAFE_MARGIN_RATIO,
 									}}
 								/>
 							)}
