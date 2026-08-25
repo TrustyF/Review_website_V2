@@ -6,11 +6,26 @@
 // role="button" (via Clickable) rather than a plain display box — this is
 // now the modal's own open trigger, not just a static preview.
 .current
+  position: relative
   width: 6rem
   height: 6rem
   cursor: pointer
   border-radius: 50%
   flex-shrink: 0
+
+.edit_badge
+  position: absolute
+  bottom: 0
+  right: 0
+  width: 1.6rem
+  height: 1.6rem
+  border-radius: 50%
+  background: var(--brand)
+  color: var(--background)
+  display: flex
+  align-items: center
+  justify-content: center
+  border: 2px solid var(--background)
 
 .current_image
   width: 100%

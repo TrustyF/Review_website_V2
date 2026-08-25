@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import { UserRound, X } from "lucide-react";
+import { Pencil, UserRound, X } from "lucide-react";
 import { Clickable } from "@/components/ui/clickable";
 import { useOutsideClick } from "@/lib/use-outside-click";
 import { AvatarGroup } from "@/lib/avatars";
@@ -70,6 +70,9 @@ export function AvatarPicker({ initialSrc, groups }: Props) {
 						<UserRound size={36} />
 					</div>
 				)}
+				<div className={styles.edit_badge}>
+					<Pencil size={12} />
+				</div>
 			</Clickable>
 
 			{isOpen && (
