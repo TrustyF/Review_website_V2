@@ -56,7 +56,7 @@ const nextConfig: NextConfig = {
 				pathname: "/api/banner/**",
 			},
 		],
-		// Only reachable when IMAGE_STORAGE_DRIVER is r2 or vercel-blob —
+		// Only reachable when getImageStorage() selects the R2 driver —
 		// resolveChangelogPosterThumb/resolveChangelogBannerThumb and
 		// saveListThumbnail/cropAndSave (see src/server/storage/image-storage.ts)
 		// hand out a direct object-store URL instead of a local path in that
@@ -73,8 +73,10 @@ const nextConfig: NextConfig = {
 			...(process.env.R2_PUBLIC_URL
 				? [
 						{
-							protocol: new URL(process.env.R2_PUBLIC_URL)
-								.protocol.replace(":", "") as "http" | "https",
+							protocol: new URL(process.env.R2_PUBLIC_URL).protocol.replace(
+								":",
+								"",
+							) as "http" | "https",
 							hostname: new URL(process.env.R2_PUBLIC_URL).hostname,
 						},
 					]

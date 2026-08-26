@@ -6,10 +6,7 @@ import { EnrichmentStatus, MediaType } from "@prisma/client";
 // Imported from asset-paths.ts directly (not poster-resolver.ts) so this
 // server action's cold-start bundle doesn't pull in sharp's native binary —
 // see asset-paths.ts's own comment for why that matters here specifically.
-import {
-	toPersonPhotoSrc,
-	toPosterSrc,
-} from "@/server/resolvers/asset-paths";
+import { toPersonPhotoSrc, toPosterSrc } from "@/server/resolvers/asset-paths";
 import { getImageStorage } from "@/server/storage/image-storage";
 import { hasPhotoEligibleRole } from "@/server/resolvers/person-photo-eligibility";
 
@@ -152,21 +149,21 @@ const DURABLE_TTL_MS = 3 * 24 * 60 * 60_000;
 // media-plus-credits-join query). Persisting the query's *result* (not the
 // Fuse instance itself — that's not serializable, and rebuilding it from
 // data is the cheap part anyway) through the same ImageStorage backend
-// already used for posters/banners means a cold instance reads this from
-// R2/Blob (a network round trip, but far cheaper than two fresh Postgres
-// queries) instead of hitting the database at all. Repurposing ImageStorage
+// already used for posters/banners means a cold instance reads this from R2
+// (a network round trip, but far cheaper than two fresh Postgres queries)
+// instead of hitting the database at all. Repurposing ImageStorage
 // for a JSON blob instead of image bytes is a bit of a name mismatch, but
 // it's already the one abstraction in this app for "durable key-value
 // storage that survives past this instance," and stood up exactly once per
-// environment (IMAGE_STORAGE_DRIVER) — not worth a second storage backend
+// environment (see getImageStorage) — not worth a second storage backend
 // just for this.
 const PERSISTED_INDEX_DIR = "search-index";
 const PERSISTED_INDEX_FILENAME = "media.json";
 
 // Bumped any time SearchableEntry's own shape *or* the persisted payload's
 // shape changes (last: adding the serialized `fuseIndex` alongside `items`).
-// Without this, a blob written by an older deploy — still sitting in
-// R2/Blob, still inside its own DURABLE_TTL_MS window — would get read back
+// Without this, a blob written by an older deploy — still sitting in R2,
+// still inside its own DURABLE_TTL_MS window — would get read back
 // and trusted as-is: a schema change like an added/renamed field wouldn't
 // necessarily throw during JSON.parse, it'd just silently produce
 // wrong-shaped SearchableEntry objects (e.g. `kind: undefined`, matching

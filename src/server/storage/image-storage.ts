@@ -8,16 +8,14 @@ import {
 	PutObjectCommand,
 	S3Client,
 } from "@aws-sdk/client-s3";
-import { del, head, list as listBlobs, put } from "@vercel/blob";
 
 // Every caller addresses a file by a logical {dir, filename} pair instead of
 // a real filesystem path — dir is a slash-joined key like "posters/cache" or
 // "cropped/poster-2-3", never request-derived (always one of the constants
 // exported by poster-resolver.ts / image-crop-resolver.ts / etc). That's
 // what lets the same call sites work unchanged against either backend below:
-// local disk today, and (once implemented) Vercel Blob or another object
-// store in production, chosen via IMAGE_STORAGE_DRIVER without touching a
-// single resolver.
+// local disk in dev, and Cloudflare R2 in production (see getImageStorage),
+// without touching a single resolver.
 export interface ImageStorage {
 	read(dir: string, filename: string): Promise<Buffer | null>;
 	write(dir: string, filename: string, bytes: Buffer): Promise<void>;
@@ -103,125 +101,14 @@ class LocalImageStorage implements ImageStorage {
 	}
 }
 
-// Token shape Vercel issues is "vercel_blob_rw_<storeId>_<secret>" — every
-// public blob URL is deterministically `https://<storeId>.public.blob
-// .vercel-storage.com/<pathname>`, which is what lets urlFor stay a plain
-// sync string build (matching ImageStorage's contract) instead of needing a
-// round trip. @vercel/blob parses this same way internally, but doesn't
-// export the helper, so it's reproduced here rather than reached into via a
-// private import path.
-function parseBlobStoreId(token: string): string {
-	const storeId = token.split("_")[3];
-	if (!storeId) {
-		throw new Error(
-			'Malformed BLOB_READ_WRITE_TOKEN — expected the "vercel_blob_rw_<storeId>_<secret>" shape Vercel issues.',
-		);
-	}
-	return storeId;
-}
-
-// Superseded by R2ImageStorage as the driver auto-selected on Vercel — kept
-// around behind IMAGE_STORAGE_DRIVER=vercel-blob for rollback. Every cached
-// asset here is
-// public (posters/banners/crops/thumbnails all get served straight to
-// browsers or link-preview crawlers), so every call uses access: "public"
-// and addRandomSuffix: false — filenames are already content-addressed by
-// the callers in poster-resolver.ts/image-crop-resolver.ts/etc, so a random
-// suffix would only break the "same input -> same URL" property those rely
-// on. allowOverwrite: true covers two racing requests both missing the same
-// cache key and writing the same bytes back — not an error case, just a
-// wasted duplicate upload either way.
-class VercelBlobImageStorage implements ImageStorage {
-	private requireToken(): string {
-		const token = process.env.BLOB_READ_WRITE_TOKEN;
-		if (!token) {
-			throw new Error(
-				"BLOB_READ_WRITE_TOKEN is not set — required when " +
-					"IMAGE_STORAGE_DRIVER=vercel-blob. Connect a Blob store to this " +
-					"Vercel project (or set the var locally) to use it.",
-			);
-		}
-		return token;
-	}
-
-	private pathnameFor(dir: string, filename: string): string {
-		return `${dir}/${filename}`;
-	}
-
-	async read(dir: string, filename: string): Promise<Buffer | null> {
-		const token = this.requireToken();
-		let blob: { url: string };
-		try {
-			blob = await head(this.pathnameFor(dir, filename), { token });
-		} catch {
-			return null;
-		}
-		const res = await fetch(blob.url);
-		if (!res.ok) return null;
-		return Buffer.from(await res.arrayBuffer());
-	}
-
-	async write(dir: string, filename: string, bytes: Buffer): Promise<void> {
-		await put(this.pathnameFor(dir, filename), bytes, {
-			access: "public",
-			addRandomSuffix: false,
-			allowOverwrite: true,
-			token: this.requireToken(),
-		});
-	}
-
-	async list(dir: string): Promise<string[]> {
-		const token = this.requireToken();
-		const prefix = `${dir}/`;
-		const filenames: string[] = [];
-		let cursor: string | undefined;
-		do {
-			const page = await listBlobs(
-				cursor ? { prefix, cursor, token } : { prefix, token },
-			);
-			for (const blob of page.blobs) {
-				filenames.push(blob.pathname.slice(prefix.length));
-			}
-			cursor = page.hasMore ? page.cursor : undefined;
-		} while (cursor);
-		return filenames;
-	}
-
-	async remove(dir: string, filename: string): Promise<boolean> {
-		const token = this.requireToken();
-		const pathname = this.pathnameFor(dir, filename);
-		try {
-			await head(pathname, { token });
-		} catch {
-			return false;
-		}
-		await del(pathname, { token });
-		return true;
-	}
-
-	async statMtimeMs(dir: string, filename: string): Promise<number | null> {
-		try {
-			const blob = await head(this.pathnameFor(dir, filename), {
-				token: this.requireToken(),
-			});
-			return blob.uploadedAt.getTime();
-		} catch {
-			return null;
-		}
-	}
-
-	urlFor(dir: string, filename: string): string {
-		const storeId = parseBlobStoreId(this.requireToken());
-		return `https://${storeId}.public.blob.vercel-storage.com/${this.pathnameFor(dir, filename)}`;
-	}
-}
-
-// Selected via IMAGE_STORAGE_DRIVER=r2 — Cloudflare R2 speaks the S3 API, so
+// Selected in production by getImageStorage() below — Cloudflare R2 speaks the S3 API, so
 // this reuses @aws-sdk/client-s3 rather than a Cloudflare-specific package.
-// Same public/content-addressed assumptions as VercelBlobImageStorage above
-// (every object is public, filenames are already content-addressed by the
-// callers), so writes always pass a public-cacheable key and overwriting an
-// existing key with identical bytes is expected, not an error.
+// Every object here is public (posters/banners/crops/thumbnails all get
+// served straight to browsers or link-preview crawlers) and filenames are
+// already content-addressed by the callers in poster-resolver.ts/
+// image-crop-resolver.ts/etc, so writes always pass a public-cacheable key
+// and overwriting an existing key with identical bytes is expected, not an
+// error.
 class R2ImageStorage implements ImageStorage {
 	private client: S3Client | null = null;
 
@@ -229,7 +116,7 @@ class R2ImageStorage implements ImageStorage {
 		const value = process.env[name];
 		if (!value) {
 			throw new Error(
-				`${name} is not set — required when IMAGE_STORAGE_DRIVER=r2. See ` +
+				`${name} is not set — required when running on Vercel. See ` +
 					".env.example.",
 			);
 		}
@@ -341,48 +228,23 @@ class R2ImageStorage implements ImageStorage {
 }
 
 // Cached rather than constructed per call — neither backend holds per-call
-// state, so there's nothing to gain from a fresh instance each time, and a
-// singleton means an unknown driver name fails once at first use instead of
-// silently on every request thereafter.
+// state, so there's nothing to gain from a fresh instance each time.
 let cached: ImageStorage | null = null;
 
 export function getImageStorage(): ImageStorage {
 	if (cached) return cached;
 
-	// IMAGE_STORAGE_DRIVER, if set, always wins. Otherwise default by
-	// environment: VERCEL is set to "1" automatically in every one of
-	// Vercel's own environments (Production, Preview, and `vercel dev`) —
-	// checking it here means there's nothing to remember to flip before a
-	// deploy, only an explicit var to set if a project ever wants to
-	// override the default (e.g. testing the r2 driver from a local dev
-	// machine, or running local storage in some future self-hosted
-	// production deployment). R2 rather than Vercel Blob because that's this
-	// project's object store even though the app itself still deploys on
-	// Vercel — see .env.example.
-	//
-	// `||`, not `??` — .env files (and Vercel's own env var UI) commonly
-	// leave an unused var present but blank (`IMAGE_STORAGE_DRIVER=`) rather
-	// than omitting the line entirely, which sets it to "" rather than
-	// leaving it undefined. `??` only falls back on null/undefined, so a
-	// blank value would reach the switch below as "" and fail as an unknown
-	// driver instead of falling through to the auto-detect default.
-	const driver =
-		process.env.IMAGE_STORAGE_DRIVER ||
-		(process.env.VERCEL === "1" ? "r2" : "local");
-	switch (driver) {
-		case "local":
-			cached = new LocalImageStorage();
-			break;
-		case "vercel-blob":
-			cached = new VercelBlobImageStorage();
-			break;
-		case "r2":
-			cached = new R2ImageStorage();
-			break;
-		default:
-			throw new Error(
-				`Unknown IMAGE_STORAGE_DRIVER "${driver}" — expected "local", "vercel-blob", or "r2".`,
-			);
-	}
+	// Pinned to R2 in production, no env var to override it — VERCEL is set
+	// to "1" automatically in every one of Vercel's own environments
+	// (Production, Preview, and `vercel dev`), so this needs nothing to
+	// remember to flip before a deploy. This used to be overridable via an
+	// IMAGE_STORAGE_DRIVER env var (for a since-removed Vercel Blob backend,
+	// and for testing R2 from a local machine); a stale value left over in
+	// the Vercel project's env settings silently kept production writing to
+	// Blob long after the code moved to R2, running up Blob's "Advanced
+	// Operations" billing. Set R2_* env vars locally (see .env.example) to
+	// exercise this path outside Vercel.
+	cached =
+		process.env.VERCEL === "1" ? new R2ImageStorage() : new LocalImageStorage();
 	return cached;
 }
