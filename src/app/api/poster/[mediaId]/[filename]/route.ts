@@ -1,7 +1,29 @@
+import { cache } from "react";
 import { NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { resolvePoster } from "@/server/resolvers/poster-resolver";
+import { mediaCacheTag } from "@/server/cache/media-cache-tag";
+
+// Same unstable_cache + mediaCacheTag pattern as get-media.ts's getMediaCore
+// — this route's own DB lookup was previously a live round trip on every
+// request, even ones the CDN/browser Cache-Control below couldn't serve from
+// cache (first-time visitor, different region, purged edge cache). Tagged so
+// revalidateMediaPaths's updateTag(mediaCacheTag(mediaId)) call (already
+// fired by every admin edit) invalidates it immediately; the 1-hour
+// revalidate is the same enrich-db.ts safety net as get-media.ts.
+const getPosterMedia = cache((id: number) =>
+	unstable_cache(
+		() =>
+			db.media.findUnique({
+				where: { id },
+				select: { type: true, externalId: true, posterPath: true, isDeleted: true },
+			}),
+		["poster-route-media", String(id)],
+		{ tags: [mediaCacheTag(id)], revalidate: 3600 },
+	)(),
+);
 
 // The lazy counterpart to resolvePoster: toMediaRecord builds this URL for
 // every card without touching disk or network, so a whole list page renders
@@ -27,10 +49,7 @@ export async function GET(
 		return NextResponse.json({ error: "Invalid media id" }, { status: 400 });
 	}
 
-	const media = await db.media.findUnique({
-		where: { id },
-		select: { type: true, externalId: true, posterPath: true, isDeleted: true },
-	});
+	const media = await getPosterMedia(id);
 	if (!media) {
 		return NextResponse.json({ error: "Media not found" }, { status: 404 });
 	}

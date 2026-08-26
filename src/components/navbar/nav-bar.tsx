@@ -26,6 +26,7 @@ import { useAvatarImage } from "@/components/navbar/use-avatar-image";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useAvatar } from "@/components/account/avatar-context";
 import style from "./nav-bar.module.sass";
+import { LogoImage } from "@/components/logo/logo-image";
 
 export default function Navbar() {
 	const { data: session } = useSession();
@@ -68,7 +69,7 @@ export default function Navbar() {
 					href="/"
 					className={style.title}
 					aria-label="arthur's corner home">
-					<LogoTag />
+					<LogoImage />
 				</Link>
 
 				{/* Both the search box and every nav link cluster live inside this
