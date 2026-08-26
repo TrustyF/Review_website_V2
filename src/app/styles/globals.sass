@@ -9,6 +9,11 @@
   --nav-scrim: color-mix(in srgb, var(--background) 75%, transparent)
 
   --ticket-accent: #ec3013
+  // LogoTag's own mark color — a distinct shade tuned for that compact
+  // navbar mark specifically, not a reuse of --ticket-accent (the printed-
+  // ticket card's red) or --brand (the site's general orange); giving it
+  // its own token keeps lint:colors happy without conflating the two.
+  --logo-tag-accent: #f25100
   // The logo's own ticket-stub card is a fixed light "paper" surface —
   // unlike --surface, it doesn't invert with the site's dark theme, since
   // the whole point is reading as a printed ticket regardless of where it's

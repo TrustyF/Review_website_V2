@@ -8,16 +8,20 @@ import style from "./logo-tag.module.sass";
 // card against the navbar's own dark background is what this sidesteps —
 // border and text use var(--foreground) rather than the fixed
 // --ticket-paper/--ticket-ink pair, so it belongs to the dark theme instead
-// of sitting on top of it.
+// of sitting on top of it. The mark uses the site's own var(--brand) rather
+// than --ticket-accent, so this reads as this site's mark, not a color
+// borrowed from the separate printed-ticket motif.
 export function LogoTag() {
 	return (
 		<div className={style.tag}>
 			<div className={style.name}>
-				arthur&apos;s
+				Arthur&apos;s
 				<br />
 				corner
+				{/*<div className={style.dotted}></div>*/}
 			</div>
-			<div className={style.mark}>a</div>
+			<div className={style.mark}></div>
+			<div className={style.border}></div>
 		</div>
 	);
 }
