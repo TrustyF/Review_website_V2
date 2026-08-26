@@ -1,5 +1,6 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { MediaType } from "@prisma/client";
+import { mediaCacheTag } from "./media-cache-tag";
 
 const CATALOG_PATH: Record<MediaType, string> = {
 	MOVIE: "/movies",
@@ -26,4 +27,13 @@ export function revalidateMediaPaths(mediaId: number, type: MediaType) {
 	if (type === MediaType.MOVIE) revalidatePath("/movies/recent");
 	revalidatePath("/");
 	revalidatePath("/reviews");
+	// /media/[id] itself is dynamic (auth() forces it), but the three
+	// getMediaCore/getMediaCredits/getMediaChangeLog queries it reads (see
+	// get-media.ts) are unstable_cache-wrapped and share this one tag, so a
+	// single call here also refreshes those instead of just the route's own
+	// (largely inert) full-page cache entry. updateTag (not revalidateTag)
+	// since every caller of this function is itself a Server Action — the
+	// admin who just made the edit should see it immediately, not
+	// stale-while-revalidate.
+	updateTag(mediaCacheTag(mediaId));
 }

@@ -1,6 +1,7 @@
 "use server";
 import { db } from "@/server/db/client";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
+import { mediaCacheTag } from "@/server/cache/media-cache-tag";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { MediaType } from "@prisma/client";
 import Anthropic from "@anthropic-ai/sdk";
@@ -524,8 +525,14 @@ export async function updateMediaBannerFocus(
 	});
 	// Only /media/[id] ever renders the banner (see api/banner and
 	// media-detail-inline-editor) — no catalog/home site-wide wipe needed for
-	// a framing nudge.
-	if (revalidate) revalidatePath(`/media/${mediaId}`);
+	// a framing nudge. Still needs the cache tag, not just the path: the
+	// route itself is dynamic (revalidatePath alone does nothing for it),
+	// but getMediaCore's cached row (get-media.ts) carries bannerFocusY and
+	// won't pick up this change on its own.
+	if (revalidate) {
+		revalidatePath(`/media/${mediaId}`);
+		updateTag(mediaCacheTag(mediaId));
+	}
 }
 
 // Fired by MediaPublishButton once an admin is done trying poster/banner/
