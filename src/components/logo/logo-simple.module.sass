@@ -1,0 +1,60 @@
+@use "@/app/styles/variables" as *
+
+// A slight counter-clockwise tilt plus the same solid offset shadow Logo
+// uses (see logo.module.sass) — reads as a ticket tossed down rather than
+// pinned flat, which is what the reference leans on since this version has
+// none of Logo's other texture (perforation, meta row) to give it life.
+.ticket
+  position: relative
+  display: flex
+  align-items: stretch
+  width: 20rem
+  transform: rotate(-3deg)
+  border-radius: 1rem
+  border: 2px solid var(--ticket-ink)
+  background: var(--ticket-paper)
+  color: var(--ticket-ink)
+  box-shadow: 0.45rem 0.45rem 0 var(--ticket-ink)
+  overflow: hidden
+  font-family: $font-sans
+
+.body
+  flex: 1 1 auto
+  min-width: 0
+  display: flex
+  flex-direction: column
+  justify-content: center
+  gap: 0.4rem
+  padding: 1.1rem 1.25rem
+
+.header
+  color: var(--ticket-accent)
+  font-size: 0.7rem
+  font-weight: 700
+  letter-spacing: 0.08em
+  text-transform: uppercase
+
+.title
+  font-size: 2rem
+  font-weight: 800
+  line-height: 1.05
+  letter-spacing: -0.01em
+
+// Dashed tear line sits on the boundary itself (border-left), rather than
+// as a separate strip the way Logo's .perforation is — this version has no
+// margin column to hold it in.
+.stub
+  flex: 0 0 3.25rem
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  gap: 0.1rem
+  border-left: 2px dashed var(--ticket-ink)
+  background: var(--ticket-accent)
+  color: var(--ticket-paper)
+
+.number
+  font-size: 1.1rem
+  font-weight: 800
+  line-height: 1.1

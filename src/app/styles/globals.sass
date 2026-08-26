@@ -9,6 +9,13 @@
   --nav-scrim: color-mix(in srgb, var(--background) 75%, transparent)
 
   --ticket-accent: #ec3013
+  // The logo's own ticket-stub card is a fixed light "paper" surface —
+  // unlike --surface, it doesn't invert with the site's dark theme, since
+  // the whole point is reading as a printed ticket regardless of where it's
+  // placed. --ticket-ink is that paper's text/border color, not --foreground
+  // (which is tuned for the dark --background elsewhere).
+  --ticket-paper: #faf8f4
+  --ticket-ink: #1a1a1a
 
   // Single brand color, plus the interaction-state and on-color variants
   // derived from it — the shape most sites with one primary color use

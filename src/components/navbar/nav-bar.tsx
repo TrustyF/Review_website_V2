@@ -1,10 +1,18 @@
 "use client";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { BookOpen, GamepadDirectional, LayoutList, List, LucideProvider } from "lucide-react";
+import {
+	BookOpen,
+	GamepadDirectional,
+	LayoutList,
+	List,
+	LucideProvider,
+} from "lucide-react";
 import { ActivityIcon } from "@/components/icons/activity-icon";
 import { HomeIcon } from "@/components/icons/home-icon";
 import { MovieIcon } from "@/components/icons/movie-icon";
+import { LogoTag } from "@/components/logo/logo-tag";
 import { NavSearch } from "@/components/navbar/nav-search/nav-search";
 import { NavDropdown } from "@/components/navbar/nav-dropdown";
 import { NavLink } from "@/components/navbar/nav-link";
@@ -56,6 +64,13 @@ export default function Navbar() {
 				// does need and so stays a real global.
 				data-mobile-open={mobileOpen}
 				onClick={handleNavClick}>
+				<Link
+					href="/"
+					className={style.title}
+					aria-label="arthur's corner home">
+					<LogoTag />
+				</Link>
+
 				{/* Both the search box and every nav link cluster live inside this
 				one absolutely-positioned container (see .nav_content's own
 				comment in nav-bar.module.sass) so the links flow immediately

@@ -1,0 +1,143 @@
+@use "@/app/styles/variables" as *
+
+// Every sized property below is expressed through this instead of a literal
+// value, so --logo-scale (set to 1 on .ticket, overridden smaller by
+// .compact — see nav-bar.tsx) shrinks the whole mark as one proportional
+// unit — border, shadow offset, perforation holes, both type sizes — rather
+// than needing a second hand-tuned copy of every rule for the navbar's
+// cramped-height version. Hairline strokes (borders, the stub's underline)
+// go through px-scale instead of scale so they get a max(1px, ...) floor —
+// scaled linearly like everything else they'd fall under a device pixel at
+// .compact's size and disappear instead of just reading as a thinner line.
+@function scale($value)
+  @return calc(var(--logo-scale, 1) * #{$value})
+
+@function px-scale($value)
+  @return max(1px, scale($value))
+
+// Solid offset shadow (not blurred) reads as a second sheet of card stock
+// sitting behind the ticket, rather than a soft ambient drop shadow — matches
+// the flat, printed look the rest of the mark goes for.
+.ticket
+  --logo-scale: 1
+  position: relative
+  display: flex
+  width: scale(22rem)
+  border-radius: scale(0.6rem)
+  border: px-scale(2px) solid var(--ticket-ink)
+  background: var(--ticket-paper)
+  color: var(--ticket-ink)
+  box-shadow: scale(0.4rem) scale(0.4rem) 0 var(--ticket-ink)
+  overflow: hidden
+  font-family: $font-sans
+
+// Sized to sit in the navbar's title slot (see nav-bar.module.sass/.tsx) —
+// 0.25 was picked so the scaled-down ticket's height lands close to the
+// navbar's own ~3.5rem row instead of forcing it noticeably taller; every
+// other compact dimension above just falls out of that one ratio via
+// scale()/px-scale() rather than being tuned by hand to match.
+.compact
+  --logo-scale: 0.25
+
+// Margin strip along the left edge — a column of punched sprocket holes
+// plus the dashed tear line separating it from .body, same as a real ticket
+// stub's perforated edge.
+.perforation
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: space-between
+  width: scale(1.5rem)
+  padding-block: scale(0.9rem)
+  border-right: px-scale(2px) dashed var(--ticket-ink)
+
+.hole
+  width: scale(0.3rem)
+  height: scale(0.3rem)
+  border-radius: 50%
+  background: var(--ticket-ink)
+
+.body
+  flex: 1 1 auto
+  min-width: 0
+  padding: scale(0.9rem) scale(1rem)
+  display: flex
+  flex-direction: column
+  gap: scale(0.6rem)
+
+.header
+  display: flex
+  align-items: baseline
+  justify-content: space-between
+  padding-bottom: scale(0.5rem)
+  border-bottom: px-scale(1px) solid var(--ticket-ink)
+  color: var(--ticket-accent)
+  font-size: scale(0.65rem)
+  font-weight: 700
+  letter-spacing: 0.08em
+  text-transform: uppercase
+
+.title
+  font-size: scale(1.9rem)
+  font-weight: 800
+  line-height: 1.05
+  letter-spacing: -0.01em
+
+.meta
+  display: flex
+  gap: scale(0.75rem)
+  padding-top: scale(0.5rem)
+  border-top: px-scale(1px) solid var(--ticket-ink)
+
+.meta_item
+  display: flex
+  flex-direction: column
+  gap: scale(0.15rem)
+  min-width: 0
+
+.meta_label
+  font-size: scale(0.55rem)
+  font-weight: 600
+  letter-spacing: 0.06em
+  text-transform: uppercase
+  color: var(--accent2)
+
+.meta_value
+  font-size: scale(0.75rem)
+  font-weight: 700
+  white-space: nowrap
+  overflow: hidden
+  text-overflow: ellipsis
+
+.stub
+  flex: 0 0 scale(5rem)
+  display: flex
+  flex-direction: column
+  align-items: center
+  justify-content: center
+  gap: scale(0.3rem)
+  background: var(--ticket-accent)
+  color: var(--ticket-paper)
+
+.stub_mark
+  font-size: scale(2.5rem)
+  font-weight: 800
+  line-height: 1
+  position: relative
+  padding-bottom: scale(0.4rem)
+
+  &::after
+    content: ""
+    position: absolute
+    left: 50%
+    bottom: 0
+    transform: translateX(-50%)
+    width: scale(1.6rem)
+    height: px-scale(2px)
+    background: var(--ticket-paper)
+
+.stub_label
+  font-size: scale(0.6rem)
+  font-weight: 700
+  letter-spacing: 0.1em
+  text-transform: uppercase

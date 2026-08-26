@@ -1,0 +1,34 @@
+@use "@/app/styles/variables" as *
+
+.tag
+  display: inline-flex
+  align-items: stretch
+  width: fit-content
+  border: 2px solid var(--foreground)
+  border-radius: 0.35rem
+  overflow: hidden
+  font-family: $font-sans
+
+.name
+  display: flex
+  flex-direction: column
+  justify-content: center
+  padding: 0.35rem 0.75rem
+  border-right: 2px dashed var(--foreground)
+  color: var(--foreground)
+  font-size: 0.95rem
+  font-weight: 800
+  line-height: 1.15
+  letter-spacing: -0.01em
+  white-space: nowrap
+
+.mark
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 0 0.65rem
+  background: var(--ticket-accent)
+  color: var(--foreground)
+  font-size: 1.4rem
+  font-weight: 800
+  line-height: 1

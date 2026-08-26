@@ -56,11 +56,13 @@ $mobile-bar-height: 2rem + $mobile-icon-size
 .hidden
   transform: translateY(-100%)
 
+// Wraps the compact Logo mark (see nav-bar.tsx) — flex-shrink: 0 keeps it
+// from getting squeezed by .nav_content, which is the one item in this row
+// actually meant to give ground (see its own comment on min-width: 0).
 .title
-  font-size: 1.5rem
-  font-weight: 700
-  color: var(--brand)
-  text-wrap: nowrap
+  display: flex
+  align-items: center
+  flex-shrink: 0
 
 // Both .search and .groups sit inside this one container (rather than each
 // being positioned independently) so the nav links flow immediately after
