@@ -87,6 +87,7 @@ export async function saveReview(
 		difficulty: number | null;
 		body: string | null;
 	},
+	{ revalidate = true }: { revalidate?: boolean } = {},
 ) {
 	await requireAdmin();
 
@@ -157,8 +158,10 @@ export async function saveReview(
 		}
 	}
 
-	revalidateMediaPaths(mediaId, media.type);
-	revalidatePath("/activity");
+	if (revalidate) {
+		revalidateMediaPaths(mediaId, media.type);
+		revalidatePath("/activity");
+	}
 }
 
 // A rewatch has no field of its own to diff — it's not "rating changed",
@@ -190,6 +193,7 @@ export async function saveMediaDetails(
 		releaseDate: string | null;
 		isAdult: boolean;
 	},
+	{ revalidate = true }: { revalidate?: boolean } = {},
 ) {
 	await requireAdmin();
 
@@ -238,7 +242,7 @@ export async function saveMediaDetails(
 	}
 
 	await invalidateSearchIndex();
-	revalidateMediaPaths(mediaId, existing!.type);
+	if (revalidate) revalidateMediaPaths(mediaId, existing!.type);
 }
 
 // Soft delete just flips Media.isDeleted — every public list query filters
@@ -596,4 +600,21 @@ export async function publishMediaEdits(mediaId: number): Promise<void> {
 		select: { type: true },
 	});
 	revalidateMediaPaths(mediaId, media.type);
+}
+
+// Same one-revalidation-per-session idea as publishMediaEdits, for the full
+// editor modal's Save button: saveReview/saveMediaDetails/updateMediaPoster/
+// updateMediaBanner all run in parallel there and each save with
+// revalidate: false, so this is the one call that actually refreshes
+// anything once they're done. includeActivity mirrors saveReview's own
+// revalidatePath("/activity") — only worth it when a review was actually
+// part of this save.
+export async function finalizeMediaEditorSave(
+	mediaId: number,
+	type: MediaType,
+	{ includeActivity = false }: { includeActivity?: boolean } = {},
+): Promise<void> {
+	await requireAdmin();
+	revalidateMediaPaths(mediaId, type);
+	if (includeActivity) revalidatePath("/activity");
 }

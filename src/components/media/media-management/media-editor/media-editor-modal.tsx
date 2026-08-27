@@ -5,6 +5,7 @@ import { MediaRecord } from "@/components/media/types";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+	finalizeMediaEditorSave,
 	hardDeleteMedia,
 	logRewatch,
 	saveMediaDetails,
@@ -209,29 +210,46 @@ export default function MediaEditorModal() {
 				// review's rating can't be cleared back out this way either —
 				// exactly the same guard, just skipped here when there's nothing
 				// to even attempt saving.
+				//
+				// Every one of these four saves with revalidate: false — they'd
+				// otherwise each independently re-run revalidateMediaPaths's full
+				// path list, turning one Save click into up to 4x the ISR writes
+				// it needs. finalizeMediaEditorSave below does the one write that
+				// actually needs to happen, once all four have landed.
 				draft.review
-					? saveReview(draft.id, {
-							rating: draft.review.rating,
-							liked: draft.review.liked,
-							difficulty: draft.review.difficulty,
-							body: draft.review.body,
-						})
+					? saveReview(
+							draft.id,
+							{
+								rating: draft.review.rating,
+								liked: draft.review.liked,
+								difficulty: draft.review.difficulty,
+								body: draft.review.body,
+							},
+							{ revalidate: false },
+						)
 					: Promise.resolve(),
-				saveMediaDetails(draft.id, {
-					title: draft.title,
-					overview: draft.overview,
-					releaseDate: draft.releaseDate
-						? draft.releaseDate.toISOString().slice(0, 10)
-						: null,
-					isAdult: draft.isAdult,
-				}),
+				saveMediaDetails(
+					draft.id,
+					{
+						title: draft.title,
+						overview: draft.overview,
+						releaseDate: draft.releaseDate
+							? draft.releaseDate.toISOString().slice(0, 10)
+							: null,
+						isAdult: draft.isAdult,
+					},
+					{ revalidate: false },
+				),
 				pendingPosterPath
-					? updateMediaPoster(draft.id, pendingPosterPath)
+					? updateMediaPoster(draft.id, pendingPosterPath, { revalidate: false })
 					: Promise.resolve(),
 				pendingBannerPath
-					? updateMediaBanner(draft.id, pendingBannerPath)
+					? updateMediaBanner(draft.id, pendingBannerPath, { revalidate: false })
 					: Promise.resolve(),
 			]);
+			await finalizeMediaEditorSave(draft.id, draft.type, {
+				includeActivity: Boolean(draft.review),
+			});
 			setPendingPosterPath(null);
 			setPendingBannerPath(null);
 			close();
