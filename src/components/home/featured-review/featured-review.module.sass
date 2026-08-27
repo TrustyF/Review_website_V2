@@ -1,4 +1,5 @@
 @use "@/app/styles/variables" as *
+@use "./featured-review-breakpoint" as *
 
 // $card-transition-duration governs the slide (both cards' transform) and
 // the outgoing card's fade-out — featured-review.tsx keeps its own
@@ -65,16 +66,24 @@ $picker-progress-size: 0.55rem
   display: grid
   overflow: hidden
 
-// Starts offset (--enter-offset, set inline per-card by FeaturedReviewCard
-// so the direction can differ per mount) and transparent, then
-// FeaturedReviewCard adds .settled a frame after mount to transition both
-// back to resting. The outgoing card runs this in reverse — starts
-// .settled and drops it a frame after mount — which is what plays its
-// fade-and-slide-out instead of it just disappearing outright; see that
-// component for why it's a frame later rather than immediate either way.
-// transform (not the custom property lookup itself) is what
-// prefers-reduced-motion below turns off, so the property stays defined
-// either way and only the actual motion is skipped.
+  // Below this, FeaturedReviewCardMobile's own .banner deliberately bleeds
+  // past this box's edges to reach the screen edges (see that file's own
+  // comment) — hidden here would clip it right back off. The mobile card's
+  // own translateX slide is clipped locally instead, on its own .content
+  // (see that rule's own comment) rather than relying on this box, since
+  // globals.sass's body { overflow-x: hidden } safety net isn't actually
+  // reliable for this (see media-detail.module.sass's own .page comment on
+  // why it needs its own local clip too).
+  @media (max-width: $featured-review-mobile-breakpoint)
+    overflow: visible
+
+// Starts transparent, then FeaturedReviewCard adds .settled a frame after
+// mount to fade back to resting. The outgoing card runs this in reverse —
+// starts .settled and drops it a frame after mount — which is what plays
+// its fade-out instead of it just disappearing outright; see that component
+// for why it's a frame later rather than immediate either way. The slide
+// itself (--enter-offset) lives on .content below, not here — see that
+// rule's own comment for why.
 .card_link
   grid-area: 1 / 1
   display: block
@@ -84,19 +93,22 @@ $picker-progress-size: 0.55rem
   overflow: hidden
   background: var(--background)
   opacity: 0
-  transform: translateX(var(--enter-offset, 0))
-  transition: transform $card-transition-duration $card-transition-easing, opacity $card-enter-opacity-duration $card-transition-easing
+  transition: opacity $card-enter-opacity-duration $card-transition-easing
+
+  // Below this, FeaturedReviewCardMobile's own .card_link is the one that's
+  // visible instead — see featured-review-card-mobile.module.sass's own
+  // comment.
+  @media (max-width: $featured-review-mobile-breakpoint)
+    display: none
 
   &.settled
     opacity: 1
-    transform: translateX(0)
 
   &:hover .read_more
     text-decoration-color: var(--brand)
 
   @media (prefers-reduced-motion: reduce)
     transition: opacity $card-enter-opacity-duration $card-transition-easing
-    transform: none
 
 // The outgoing card while it fades out — sits behind the incoming one and
 // ignores clicks so it doesn't intercept them while it's on its way out.
@@ -106,7 +118,7 @@ $picker-progress-size: 0.55rem
 .exiting
   z-index: 0
   pointer-events: none
-  transition: transform $card-transition-duration $card-transition-easing, opacity $card-transition-duration $card-transition-easing
+  transition: opacity $card-transition-duration $card-transition-easing
 
 .banner
   position: relative
@@ -124,12 +136,28 @@ $picker-progress-size: 0.55rem
   //mix-blend-mode: soft-light
   background-image: linear-gradient(to top, var(--background) 0%, color-mix(in srgb, var(--background) 60%, transparent) 15%, transparent 50%)
 
+// Carries the enter/exit slide that used to live on .card_link itself
+// (--enter-offset, set inline per-card by FeaturedReviewCard) — .banner is
+// this element's sibling inside .card_link, not its descendant, so keeping
+// the slide scoped here instead of on the shared parent is what lets the
+// banner fade in place while this, the poster/title/excerpt column, still
+// slides in from the side. transform (not the custom property lookup
+// itself) is what prefers-reduced-motion below turns off, so the property
+// stays defined either way and only the actual motion is skipped.
 .content
   position: relative
   display: flex
   flex-flow: row
   gap: 1.5rem
   padding: 1.5rem
+  transform: translateX(var(--enter-offset, 0))
+  transition: transform $card-transition-duration $card-transition-easing
+
+  .card_link.settled &
+    transform: translateX(0)
+
+  @media (prefers-reduced-motion: reduce)
+    transform: none
 
 // Pulled up over the banner's gradient fade so the poster/title read as
 // sitting on top of the backdrop rather than in a separate block below it —
@@ -287,6 +315,20 @@ $picker-progress-size: 0.55rem
 
   .picker_item_active &
     opacity: 1
+
+  // MediaMiniCardShell's own .wrapper (its sole root element, targeted here
+  // by plain descendant selector since its own module-scoped class name
+  // isn't reachable from here) reserves a content-visibility placeholder
+  // height sized off $mini-card-min-width (110px) — this strip's own
+  // .picker_item is only 4.5rem (72px) wide, well under that, so the
+  // reserved box is taller than the real rendered card until
+  // content-visibility resolves it, showing up as an oversized picker strip
+  // that shrinks down later. These items are always above the fold and few
+  // in number, so content-visibility's off-screen skip buys nothing here
+  // anyway — turned off so the strip is just sized correctly from the start.
+  > div
+    content-visibility: visible
+    contain-intrinsic-height: auto
 
 .picker_item_overlay
   position: absolute

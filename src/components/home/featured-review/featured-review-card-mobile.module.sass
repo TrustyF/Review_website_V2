@@ -1,0 +1,205 @@
+@use "@/app/styles/variables" as *
+@use "./featured-review-breakpoint" as *
+
+// Kept in step by hand with featured-review.module.sass's own copies — see
+// that file's comment on why these can't just be read from CSS at runtime.
+$card-transition-duration: 0.35s
+$card-enter-opacity-duration: 0.2s
+$card-transition-easing: ease-out
+
+// Matches content-wrapper's own hardcoded padding-inline (variables.sass) —
+// the page wrapper's side padding that .banner below cancels out to reach
+// the screen edges. Not read from that mixin directly (it only ever applies
+// itself, not exposes the value), so this is a second hand-kept copy, same
+// deal as the transition constants above.
+$page-padding: 1.25rem
+
+// Same enter/exit crossfade as FeaturedReviewCard, just on this card's own
+// markup — see featured-review.module.sass's .card_link for the full
+// reasoning (kept in step by hand between the two).
+.card_link
+  grid-area: 1 / 1
+  display: block
+  color: inherit
+  text-decoration: none
+  // No border-radius/overflow clipping here (unlike the desktop card) —
+  // .banner below deliberately bleeds past this box's own edges to reach
+  // the screen edges, which a clipping ancestor would just cut back off.
+  // Nothing else in this card needs clipping to compensate: .content sits
+  // inset with its own padding regardless.
+  background: var(--background)
+  opacity: 0
+  transition: opacity $card-enter-opacity-duration $card-transition-easing
+
+  // Above this, FeaturedReviewCard's own .card_link is the one that's
+  // visible instead — see featured-review.module.sass's own comment. +1px
+  // avoids both being hidden (or both shown) for the one pixel width
+  // exactly at $featured-review-mobile-breakpoint.
+  @media (min-width: $featured-review-mobile-breakpoint + 1px)
+    display: none
+
+  &.settled
+    opacity: 1
+
+  &:hover .read_more
+    text-decoration-color: var(--brand)
+
+  @media (prefers-reduced-motion: reduce)
+    transition: opacity $card-enter-opacity-duration $card-transition-easing
+
+.exiting
+  z-index: 0
+  pointer-events: none
+  transition: opacity $card-transition-duration $card-transition-easing
+
+// Cancels the page wrapper's own side padding ($page-padding above) so this
+// reaches all the way to the screen edges instead of sitting inset like the
+// rest of the card — width matches the padding pulled back in on each side,
+// same pair-of-negative-margins-plus-matching-width move as any other
+// "bleed past the parent's padding" element. Relies on .card_link (and
+// featured-review.module.sass's own .card_stack, below the same breakpoint)
+// not clipping past their own box for this to actually reach the edge
+// rather than getting cut back off where the padding used to be.
+.banner
+  position: relative
+  width: calc(100% + #{$page-padding} * 2)
+  margin-inline: calc(#{$page-padding} * -1)
+  aspect-ratio: 16/9
+  background-color: var(--background)
+
+.banner_image
+  object-fit: cover
+
+.banner_backdrop
+  position: absolute
+  inset: 0
+  pointer-events: none
+  background-image: linear-gradient(to top, var(--background) 0%, color-mix(in srgb, var(--background) 60%, transparent) 15%, transparent 50%)
+
+// Grid, not FeaturedReviewCard's own row — .excerpt needs its own full-width
+// row below .poster/.top instead of squeezed beside a fixed-width poster,
+// same "poster + top share a row, review gets its own row below" move as
+// MediaCardShellMobile makes for the regular grid cards.
+// Un-translated wrapper around .content, sized to this card's own normal
+// (already viewport-inset) width — .banner is this element's own sibling
+// inside .card_link, not its descendant, so this stays out of .banner's own
+// bleed entirely. overflow: hidden here (not on .content itself, which gets
+// translated and so can't usefully clip its own transformed rendering) is
+// what keeps .content's up-to-2rem enter/exit slide contained to that
+// normal width now that .card_stack/.card_link no longer clip anything on
+// mobile (see their own comments, for .banner's bleed) — without it the
+// slide would push the page's actual scrollable width past the viewport
+// instead of being caught by a body-level safety net (media-detail.
+// module.sass's own comment on .page covers why that net isn't reliable
+// here). content_overlap's negative margin lives here too, for the same
+// reason: shifting *this* box up over the banner (rather than .content
+// inside it) means the overlap is a normal-flow position change, not
+// something this element's own overflow could clip off if it were instead
+// on the box already being clipped.
+.content_clip
+  position: relative
+  overflow: hidden
+
+.content_overlap
+  margin-top: -7rem
+
+.content
+  position: relative
+  display: grid
+  grid-template-columns: 125px 1fr
+  grid-template-areas: "poster top" "excerpt excerpt" "more more"
+  column-gap: 1rem
+  row-gap: 0.5rem
+  padding: 1.25rem
+  // Carries the enter/exit slide that used to live on .card_link itself
+  // (--enter-offset) — see .content_clip's own comment above for why the
+  // slide and its containing clip end up split across two elements instead
+  // of one.
+  transform: translateX(var(--enter-offset, 0))
+  transition: transform $card-transition-duration $card-transition-easing
+
+  .card_link.settled &
+    transform: translateX(0)
+
+  @media (prefers-reduced-motion: reduce)
+    transform: none
+
+.poster
+  grid-area: poster
+
+.top
+  grid-area: top
+  align-self: center
+  display: flex
+  flex-flow: column
+  gap: 0.35rem
+  min-width: 0
+
+.eyebrow
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.3rem
+  color: var(--brand)
+  font-size: 0.7rem
+  font-weight: 600
+  text-transform: uppercase
+  letter-spacing: 0.03em
+
+.title
+  font-size: 1.2rem
+  line-height: 1.3
+  text-shadow: var(--background) 2px 2px 4px
+
+.meta_row
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.75rem
+  color: var(--accent1)
+  font-family: $font-mono
+  font-size: 0.85rem
+
+.rating
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.2rem
+  font-weight: bold
+  color: var(--body)
+
+.excerpt
+  grid-area: excerpt
+  display: flex
+  flex-flow: column
+  gap: 0.6rem
+  color: var(--body)
+  font-family: $font-body
+  font-size: 0.9rem
+  line-height: 1.35rem
+  max-height: 5.4rem
+  overflow: hidden
+
+.excerpt_line
+  white-space: pre-wrap
+
+.read_more
+  grid-area: more
+  position: relative
+  display: block
+  width: 100%
+  color: var(--brand-active)
+  font-size: 0.85rem
+  text-decoration: underline
+  text-decoration-color: transparent
+  transition: text-decoration-color 0.15s ease
+
+  &::before
+    content: ""
+    position: absolute
+    left: 0
+    right: 0
+    bottom: 100%
+    height: 2rem
+    background: linear-gradient(to bottom, transparent, var(--background) 100%)
+    pointer-events: none

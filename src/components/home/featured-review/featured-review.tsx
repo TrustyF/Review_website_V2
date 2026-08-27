@@ -2,7 +2,7 @@
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Settings, type LucideIcon, Sparkles, Heart } from "lucide-react";
+import { Settings } from "lucide-react";
 import { MediaRecord } from "@/components/media/types";
 import { MediaPoster } from "@/components/media/primitives/poster";
 import { MediaMiniCardShell } from "@/components/media/media-cards/media-mini-card/media-mini-card-shell";
@@ -17,15 +17,9 @@ import {
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useFeaturedManagerStore } from "@/components/home/featured-review/featured-manager/featured-manager-store";
+import { FeaturedReviewCardMobile } from "./featured-review-card-mobile";
+import { eyebrowFor, EXCERPT_MAX_BLOCKS } from "./featured-review-shared";
 import styles from "./featured-review.module.sass";
-
-// Teaser only — the full body is one click away on the media page itself.
-// A few paragraphs rather than just the first, capped visually by
-// .excerpt's own line-clamp for anything longer. Passed to ReviewBody as
-// maxBlocks (a post-parse block count, not a raw \n\n split) so a spoiler
-// spanning the cutoff point is either included whole or excluded whole,
-// never cut mid-way — see that prop's own comment for what broke before.
-const EXCERPT_MAX_BLOCKS = 3;
 
 // Must match $card-transition-duration in featured-review.module.sass (the
 // outgoing card's fade-out duration, not the faster incoming-only
@@ -38,23 +32,6 @@ const CARD_TRANSITION_MS = 350;
 // after the user interacts with the picker (see `paused` below) — one knob
 // for "how long is this comfortable to sit and read" covers both.
 const AUTO_ADVANCE_MS = 25000;
-
-// One entry per possible .eyebrow state — an icon is optional per variant
-// (only "Featured review" has one today), so adding a future label (e.g.
-// something for a highly-rated review) is just another branch here with
-// or without its own icon, no change needed to how FeaturedReviewCard
-// renders it.
-type EyebrowVariant = {
-	label: string;
-	icon?: LucideIcon;
-};
-
-function eyebrowFor(
-	review: NonNullable<MediaRecord["review"]>,
-): EyebrowVariant {
-	if (review.featured) return { label: "Featured review", icon: Heart };
-	return { label: "New review", icon: Sparkles };
-}
 
 type Props = {
 	// items[0] is always the single most-recently-reviewed item, pinned there
@@ -199,6 +176,24 @@ export function FeaturedReview({ items }: Props) {
 				)}
 				<FeaturedReviewCard
 					key={media.id}
+					media={media}
+					direction={direction}
+				/>
+				{/* Swapped in for the cards above via CSS below $mobile-breakpoint
+				    — see featured-review-card-mobile.module.sass's own comment.
+				    Same outgoing/incoming pair, same keys, so the crossfade and
+				    settle-on-mount timing line up identically to the desktop
+				    pair above, just with different markup underneath. */}
+				{outgoing && (
+					<FeaturedReviewCardMobile
+						key={`${outgoing.id}-mobile`}
+						media={outgoing}
+						direction={direction}
+						exiting
+					/>
+				)}
+				<FeaturedReviewCardMobile
+					key={`${media.id}-mobile`}
 					media={media}
 					direction={direction}
 				/>

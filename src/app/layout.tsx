@@ -15,7 +15,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { fontVariables } from "./fonts";
 
 export const metadata: Metadata = {
-	title: "Review app",
+	title: "Arthur's corner",
 	// Needed for Next to resolve a relative openGraph.images URL (see
 	// media/[id]/metadata.ts) into the absolute one link-preview crawlers
 	// (Discord, Slack, ...) require — they fetch server-side with no page

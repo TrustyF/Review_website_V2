@@ -23,7 +23,7 @@ export function LogoImage() {
 			    paints on top of it. */}
 			<div className={style.fill} aria-hidden="true" />
 			<Image
-				src="/ui/logo.webp?v=1"
+				src="/ui/logo.svg"
 				alt=""
 				width={502}
 				height={172}
