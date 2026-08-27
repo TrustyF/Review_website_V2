@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { AccountSettingsForm } from "@/components/account/account-settings-form/account-settings-form";
-import { DeleteAccountSection } from "@/components/account/delete-account-section/delete-account-section";
+// import { DeleteAccountSection } from "@/components/account/delete-account-section/delete-account-section";
 import styles from "./settings.module.sass";
 
 export default async function AccountSettingsPage() {
@@ -39,7 +39,8 @@ export default async function AccountSettingsPage() {
 					username: user.username,
 				}}
 			/>
-			<DeleteAccountSection hasPassword={user.passwordHash !== null} />
+			{/* Disabled for now — see this component's own file. */}
+			{/* <DeleteAccountSection hasPassword={user.passwordHash !== null} /> */}
 		</div>
 	);
 }

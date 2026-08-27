@@ -69,7 +69,15 @@ export async function getMyAvatar(): Promise<string | null> {
 // the browser out right after this resolves, since the JWT session cookie
 // otherwise stays "valid" (nothing here revokes it) until it naturally
 // expires or the user signs out.
+// Feature-disabled for now (see settings/page.tsx, where the UI for this is
+// commented out) — guarded here too rather than trusting that alone, since a
+// Server Action stays reachable as its own endpoint regardless of whether
+// any client component still calls it. Remove this once the UI comes back.
+const ACCOUNT_DELETION_ENABLED = false;
+
 export async function deleteAccount(password: string | null): Promise<void> {
+	if (!ACCOUNT_DELETION_ENABLED) throw new Error("Account deletion is disabled");
+
 	const session = await auth();
 	if (!session?.user?.id) throw new Error("Not signed in");
 
