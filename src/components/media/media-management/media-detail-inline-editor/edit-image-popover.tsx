@@ -1,6 +1,7 @@
 import { MediaRecord } from "@/components/media/types";
 import { MediaType } from "@prisma/client";
 import {
+	ImageOptionsPage,
 	ImagePicker,
 	PickableImage,
 } from "@/components/media/media-management/media-editor/components/image-picker";
@@ -12,7 +13,9 @@ type Props = {
 	fetchOptions: (
 		externalId: string,
 		type: MediaType,
-	) => Promise<PickableImage[]>;
+		offset: number,
+		limit: number,
+	) => Promise<ImageOptionsPage>;
 	onPick: (image: PickableImage) => void;
 	altText: string;
 	errorText: string;

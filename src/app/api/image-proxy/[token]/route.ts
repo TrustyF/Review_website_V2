@@ -25,7 +25,14 @@ export async function GET(
 	return new NextResponse(upstream.body, {
 		headers: {
 			"Content-Type": upstream.headers.get("content-type") ?? "image/jpeg",
-			"Cache-Control": "public, max-age=86400",
+			// s-maxage lets Vercel's edge CDN serve repeat requests for the same
+			// token (poster picker re-opened, another visitor, browser cache
+			// evicted) without re-invoking this function at all — max-age alone
+			// only covers the requesting browser's own cache. Tokens are
+			// content-addressed (same remote URL -> same token), so a long TTL
+			// is safe.
+			"Cache-Control":
+				"public, max-age=86400, s-maxage=2592000, stale-while-revalidate=86400",
 		},
 	});
 }

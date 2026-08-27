@@ -23,9 +23,24 @@ import {
 	resolvePoster,
 } from "@/server/resolvers/poster-resolver";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
+import type { PickableImage } from "@/components/media/media-management/media-editor/components/image-picker";
 import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/review-body-syntax";
 import { invalidateSearchIndex } from "@/components/search/search-actions";
 import { revalidateMediaPaths } from "@/server/cache/revalidate-media";
+
+// getAlternativePosters/getAlternativeBanners paginate rather than returning
+// everything at once — TMDB/IGDB can return 60-80+ candidates for a popular
+// title, and each one costs a separate /api/image-proxy invocation once its
+// thumbnail scrolls into view, so ImagePicker only asks for another page as
+// the user actually scrolls toward the bottom.
+type Page<T> = { images: T[]; hasMore: boolean };
+
+function paginate<T>(items: T[], offset: number, limit: number): Page<T> {
+	return {
+		images: items.slice(offset, offset + limit),
+		hasMore: offset + limit < items.length,
+	};
+}
 
 // Compares old/new values field by field and returns a MediaChangeLog row
 // for each one that actually changed — untouched fields produce no row. A
@@ -318,23 +333,29 @@ export async function suggestReviewCorrection(body: string): Promise<string> {
 export async function getAlternativePosters(
 	externalId: string,
 	type: MediaType,
-) {
+	offset = 0,
+	limit = 20,
+): Promise<Page<PickableImage>> {
 	await requireAdmin();
 
 	if (type === MediaType.MANGA) {
 		const covers = await fetchMangaDexCovers(externalId);
-		return covers.map((cover) => ({
-			filePath: cover.attributes.fileName,
-			// Proxied rather than hotlinked directly, so trying a poster never
-			// depends on whether the source allows hotlinking (see
-			// src/server/image-proxy.ts) — no download happens until it's saved.
-			thumbSrc: buildProxiedImageUrl(
-				posterUrlFor(type, externalId, cover.attributes.fileName, "thumb"),
-			),
-			previewSrc: buildProxiedImageUrl(
-				posterUrlFor(type, externalId, cover.attributes.fileName, "full"),
-			),
-		}));
+		return paginate(
+			covers.map((cover) => ({
+				filePath: cover.attributes.fileName,
+				// Proxied rather than hotlinked directly, so trying a poster never
+				// depends on whether the source allows hotlinking (see
+				// src/server/image-proxy.ts) — no download happens until it's saved.
+				thumbSrc: buildProxiedImageUrl(
+					posterUrlFor(type, externalId, cover.attributes.fileName, "thumb"),
+				),
+				previewSrc: buildProxiedImageUrl(
+					posterUrlFor(type, externalId, cover.attributes.fileName, "full"),
+				),
+			})),
+			offset,
+			limit,
+		);
 	}
 
 	if (type === MediaType.COMIC) {
@@ -343,16 +364,20 @@ export async function getAlternativePosters(
 		// filePath is a full URL rather than a path fragment, matching how
 		// poster-resolver.ts stores/reads COMIC posterPaths.
 		const issues = await fetchComicVineIssuesForVolume(externalId);
-		return issues
-			.filter((issue) => issue.image?.medium_url)
-			.map((issue) => {
-				const medium = issue.image!.medium_url!;
-				return {
-					filePath: medium,
-					thumbSrc: buildProxiedImageUrl(issue.image!.small_url ?? medium),
-					previewSrc: buildProxiedImageUrl(medium),
-				};
-			});
+		return paginate(
+			issues
+				.filter((issue) => issue.image?.medium_url)
+				.map((issue) => {
+					const medium = issue.image!.medium_url!;
+					return {
+						filePath: medium,
+						thumbSrc: buildProxiedImageUrl(issue.image!.small_url ?? medium),
+						previewSrc: buildProxiedImageUrl(medium),
+					};
+				}),
+			offset,
+			limit,
+		);
 	}
 
 	if (type === MediaType.GAME) {
@@ -362,30 +387,38 @@ export async function getAlternativePosters(
 		// in fetchIgdbGameCoverOptions. filePath is a bare image_id, matching
 		// how poster-resolver.ts stores/reads GAME posterPaths.
 		const covers = await fetchIgdbGameCoverOptions(externalId);
-		return covers.map((cover) => ({
-			filePath: cover.imageId,
-			thumbSrc: buildProxiedImageUrl(
-				posterUrlFor(type, externalId, cover.imageId, "thumb"),
-			),
-			previewSrc: buildProxiedImageUrl(
-				posterUrlFor(type, externalId, cover.imageId, "full"),
-			),
-		}));
+		return paginate(
+			covers.map((cover) => ({
+				filePath: cover.imageId,
+				thumbSrc: buildProxiedImageUrl(
+					posterUrlFor(type, externalId, cover.imageId, "thumb"),
+				),
+				previewSrc: buildProxiedImageUrl(
+					posterUrlFor(type, externalId, cover.imageId, "full"),
+				),
+			})),
+			offset,
+			limit,
+		);
 	}
 
 	const images = await fetchTmdbImages(externalId, type);
-	return images.posters
-		.slice()
-		.sort((a, b) => b.vote_average - a.vote_average)
-		.map((poster) => ({
-			filePath: poster.file_path,
-			thumbSrc: buildProxiedImageUrl(
-				posterUrlFor(type, externalId, poster.file_path, "thumb"),
-			),
-			previewSrc: buildProxiedImageUrl(
-				posterUrlFor(type, externalId, poster.file_path, "full"),
-			),
-		}));
+	return paginate(
+		images.posters
+			.slice()
+			.sort((a, b) => b.vote_average - a.vote_average)
+			.map((poster) => ({
+				filePath: poster.file_path,
+				thumbSrc: buildProxiedImageUrl(
+					posterUrlFor(type, externalId, poster.file_path, "thumb"),
+				),
+				previewSrc: buildProxiedImageUrl(
+					posterUrlFor(type, externalId, poster.file_path, "full"),
+				),
+			})),
+		offset,
+		limit,
+	);
 }
 
 // revalidate defaults to true for the full editor modal's one-click Save
@@ -434,11 +467,13 @@ export async function updateMediaPoster(
 export async function getAlternativeBanners(
 	externalId: string,
 	type: MediaType,
-) {
+	offset = 0,
+	limit = 20,
+): Promise<Page<PickableImage>> {
 	await requireAdmin();
 
 	if (type === MediaType.MANGA || type === MediaType.COMIC) {
-		return [];
+		return { images: [], hasMore: false };
 	}
 
 	if (type === MediaType.GAME) {
@@ -448,29 +483,37 @@ export async function getAlternativeBanners(
 		// (t_thumb would square-crop it) — see poster-resolver.ts's bannerUrlFor
 		// for the full-size template the preview/save path uses.
 		const game = await fetchIgdbGameById(externalId);
-		return artworksWithDimensions(game.artworks ?? [])
-			.slice()
-			.sort((a, b) => artworkAspectRatioDiff(a) - artworkAspectRatioDiff(b))
-			.map((artwork) => ({
-				filePath: artwork.image_id,
-				thumbSrc: buildProxiedImageUrl(
-					`https://images.igdb.com/igdb/image/upload/t_screenshot_med/${artwork.image_id}.jpg`,
-				),
-				previewSrc: buildProxiedImageUrl(bannerUrlFor(type, artwork.image_id)),
-			}));
+		return paginate(
+			artworksWithDimensions(game.artworks ?? [])
+				.slice()
+				.sort((a, b) => artworkAspectRatioDiff(a) - artworkAspectRatioDiff(b))
+				.map((artwork) => ({
+					filePath: artwork.image_id,
+					thumbSrc: buildProxiedImageUrl(
+						`https://images.igdb.com/igdb/image/upload/t_screenshot_med/${artwork.image_id}.jpg`,
+					),
+					previewSrc: buildProxiedImageUrl(bannerUrlFor(type, artwork.image_id)),
+				})),
+			offset,
+			limit,
+		);
 	}
 
 	const images = await fetchTmdbImages(externalId, type);
-	return images.backdrops
-		.slice()
-		.sort((a, b) => b.vote_average - a.vote_average)
-		.map((backdrop) => ({
-			filePath: backdrop.file_path,
-			thumbSrc: buildProxiedImageUrl(
-				`https://image.tmdb.org/t/p/w300${backdrop.file_path}`,
-			),
-			previewSrc: buildProxiedImageUrl(bannerUrlFor(type, backdrop.file_path)),
-		}));
+	return paginate(
+		images.backdrops
+			.slice()
+			.sort((a, b) => b.vote_average - a.vote_average)
+			.map((backdrop) => ({
+				filePath: backdrop.file_path,
+				thumbSrc: buildProxiedImageUrl(
+					`https://image.tmdb.org/t/p/w300${backdrop.file_path}`,
+				),
+				previewSrc: buildProxiedImageUrl(bannerUrlFor(type, backdrop.file_path)),
+			})),
+		offset,
+		limit,
+	);
 }
 
 // See updateMediaPoster's own comment on the revalidate param.
