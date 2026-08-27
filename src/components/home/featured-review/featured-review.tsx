@@ -349,10 +349,6 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 						sizes="(max-width: 950px) 100vw, 950px"
 						className={styles.banner_image}
 						style={{ objectPosition: `50% ${media.bannerFocusY}%` }}
-						// Same reasoning as every other /api/banner consumer (see
-						// MediaPoster's own comment) — that route already resizes
-						// and re-encodes server-side.
-						unoptimized
 						// Skips lazy-loading — true for the initial SSR'd hero (it's
 						// the page's LCP candidate) and just as true for a card an
 						// arrow click swaps in afterward: the user asked for it

@@ -44,10 +44,9 @@ async function main() {
 		console.log(`${dir}: removed ${files.length} file(s)`);
 	}
 
-	// Next's own optimizer cache — only populated by <Image> usages that
-	// don't pass `unoptimized` (most of this app's image components do, see
-	// e.g. MediaPoster, but this covers whichever don't). turbopackIgnore:
-	// process.cwd()-relative, never request-derived, same as
+	// Next's own optimizer cache — images.unoptimized in next.config.ts keeps
+	// this empty now, but clearing it is harmless if that ever changes.
+	// turbopackIgnore: process.cwd()-relative, never request-derived, same as
 	// LocalImageStorage.absDir above.
 	const nextImageCache = path.join(
 		/* turbopackIgnore: true */ process.cwd(),

@@ -65,7 +65,6 @@ export function FeaturedReviewCardMobile({ media, direction, exiting = false }: 
 						sizes="100vw"
 						className={styles.banner_image}
 						style={{ objectPosition: `50% ${media.bannerFocusY}%` }}
-						unoptimized
 						priority
 					/>
 					<div className={styles.banner_backdrop} />

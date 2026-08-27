@@ -109,12 +109,6 @@ export function NavSearch() {
 										width={64}
 										height={80}
 										className={styles.result_poster}
-										// Same /api/poster cold-cache timeout reasoning as
-										// MediaPoster's own unoptimized (see primitives.tsx) —
-										// this renders a different fixed size than that
-										// component, but goes through the same lazy-resolve
-										// route on the same server-side-fixed encoding.
-										unoptimized
 									/>
 								) : result.photoSrc ? (
 									<Image
@@ -123,7 +117,6 @@ export function NavSearch() {
 										width={64}
 										height={80}
 										className={styles.result_poster}
-										unoptimized
 									/>
 								) : (
 									<span className={styles.result_poster_placeholder}>

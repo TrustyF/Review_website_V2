@@ -65,15 +65,6 @@ export function MediaPoster({
 				className={`${styles.poster} ${isLoaded ? styles.poster_loaded : ""}`}
 				alt={`${title} poster`}
 				onLoad={() => setIsLoaded(true)}
-				// /api/poster already re-encodes to WebP server-side (see
-				// resolvePoster in poster-resolver.ts) at the source's own fixed
-				// size — same reasoning as BannerEditTrigger's own unoptimized:
-				// Vercel's Image Optimization would just redo that work, and its
-				// proxy fetch can time out against that route's slow cold-cache
-				// (download + re-encode + upload) path, logging
-				// INVALID_IMAGE_OPTIMIZE_REQUEST for a request that's actually
-				// still running and succeeds moments later.
-				unoptimized
 			/>
 		</div>
 	);

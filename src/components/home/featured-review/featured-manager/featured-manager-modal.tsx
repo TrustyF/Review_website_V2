@@ -33,9 +33,6 @@ function ResultRow({
 				width={40}
 				height={50}
 				className={styles.row_poster}
-				// Same reasoning as every other /api/poster consumer outside
-				// MediaPoster itself (see nav-search.tsx's own result thumbnail).
-				unoptimized
 			/>
 			<span className={styles.row_title}>{item.title}</span>
 			<button

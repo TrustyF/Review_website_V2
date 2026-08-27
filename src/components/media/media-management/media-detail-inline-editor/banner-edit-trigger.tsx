@@ -136,16 +136,6 @@ export function BannerEditTrigger({
 			style={{ objectPosition: `50% ${focusY}%` }}
 			onLoad={() => setIsLoaded(true)}
 			priority
-			// /api/banner already resizes/re-encodes to a fixed width and
-			// quality server-side (see BANNER_MAX_WIDTH/BANNER_QUALITY in
-			// poster-resolver.ts) — routing that back through Vercel's Image
-			// Optimization on top would just redo the same work, and on a cold
-			// cache (first request for a given banner) that route's own
-			// download-resize-upload chain is already slow enough that the
-			// optimizer's proxy fetch can time out before it finishes, logging
-			// INVALID_IMAGE_OPTIMIZE_REQUEST even though the request itself
-			// keeps running and finishes right after.
-			unoptimized
 		/>
 	);
 

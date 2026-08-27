@@ -26,65 +26,16 @@ const nextConfig: NextConfig = {
 		},
 	},
 	images: {
-		// Setting localPatterns at all switches next/image to an explicit
-		// allowlist for every local (same-origin) image path, not just ones
-		// with a query string — so the real cached posters need listing here
-		// too, alongside the picker-preview proxy endpoint.
-		localPatterns: [
-			{
-				pathname: "/posters/cache/**",
-			},
-			{
-				pathname: "/banners/cache/**",
-			},
-			{
-				pathname: "/posters/changelog-cache/**",
-			},
-			{
-				pathname: "/banners/changelog-cache/**",
-			},
-			{
-				pathname: "/posters/placeholder.jpg",
-			},
-			{
-				pathname: "/api/image-proxy/**",
-			},
-			{
-				pathname: "/api/poster/**",
-			},
-			{
-				pathname: "/api/banner/**",
-			},
-			{
-				pathname: "/ui/**",
-			},
-		],
-		// Only reachable when getImageStorage() selects the R2 driver —
-		// resolveChangelogPosterThumb/resolveChangelogBannerThumb and
-		// saveListThumbnail/cropAndSave (see src/server/storage/image-storage.ts)
-		// hand out a direct object-store URL instead of a local path in that
-		// mode, so next/image needs it allowlisted alongside localPatterns
-		// above. Harmless to leave both enabled under the local driver — they
-		// just never match anything. R2_PUBLIC_URL's host is read here rather
-		// than hardcoded because it's either a per-bucket *.r2.dev host or a
-		// custom domain, chosen when the bucket's public access is enabled.
-		remotePatterns: [
-			{
-				protocol: "https",
-				hostname: "*.public.blob.vercel-storage.com",
-			},
-			...(process.env.R2_PUBLIC_URL
-				? [
-						{
-							protocol: new URL(process.env.R2_PUBLIC_URL).protocol.replace(
-								":",
-								"",
-							) as "http" | "https",
-							hostname: new URL(process.env.R2_PUBLIC_URL).hostname,
-						},
-					]
-				: []),
-		],
+		// Every poster/banner src is already resized + re-encoded server-side
+		// before it ever reaches R2 or local disk cache (see poster-resolver.ts,
+		// image-storage.ts) — Vercel's Image Optimization would just redo that
+		// work against a cold, slow route, and each distinct src (posters/
+		// banners are content-addressed, so history keeps minting new ones —
+		// see change-log-list.tsx) permanently counts against the plan's
+		// transformation quota. Disabling it here serves every src as-is, and
+		// means next/image no longer needs a local/remote pattern allowlist
+		// (that only gated what the optimizer could fetch).
+		unoptimized: true,
 	},
 };
 
