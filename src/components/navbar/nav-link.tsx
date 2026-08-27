@@ -22,6 +22,12 @@ type NavLinkProps = {
 	// COLLAPSE_TIER (nav-constants.ts) for how tiers are assigned per
 	// nav_group. Ignored when iconOnly is set (there's no label to collapse).
 	collapseTier?: number;
+	// Defaults to false (same as Link's own default) — leave unset for
+	// anything dynamic/session-scoped (e.g. /account). Pass true only for a
+	// destination that's cheap to prefetch (static/ISR, no per-user data at
+	// the top level), since this is a single always-visible nav item, not a
+	// grid of many links.
+	prefetch?: boolean;
 };
 
 // Every plain top-level item (as opposed to a NavDropdown) goes through
@@ -35,12 +41,14 @@ export function NavLink({
 	children,
 	iconOnly = false,
 	collapseTier = 4,
+	prefetch = false,
 }: NavLinkProps) {
 	const isActive = isNavActive(pathname, href);
 	const label = typeof children === "string" ? children : undefined;
 	return (
 		<Link
 			href={href}
+			prefetch={prefetch}
 			className={className}
 			aria-current={isActive ? "page" : undefined}
 			aria-label={iconOnly ? label : undefined}

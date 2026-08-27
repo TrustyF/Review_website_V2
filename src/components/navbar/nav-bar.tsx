@@ -133,7 +133,11 @@ export default function Navbar() {
 								icon={ActivityIcon}
 								className={style.link}
 								pathname={pathname}
-								collapseTier={COLLAPSE_TIER.ACTIVITY}>
+								collapseTier={COLLAPSE_TIER.ACTIVITY}
+								// Static-ish (no per-user data at the top level, no
+								// loading.tsx) — safe to prefetch eagerly, unlike
+								// /account below.
+								prefetch>
 								Activity
 							</NavLink>
 							<NavLink
@@ -141,7 +145,8 @@ export default function Navbar() {
 								icon={LayoutList}
 								className={style.link}
 								pathname={pathname}
-								collapseTier={COLLAPSE_TIER.ACTIVITY}>
+								collapseTier={COLLAPSE_TIER.ACTIVITY}
+								prefetch>
 								Reviews
 							</NavLink>
 							<NavLink
@@ -149,7 +154,8 @@ export default function Navbar() {
 								icon={List}
 								className={style.link}
 								pathname={pathname}
-								collapseTier={COLLAPSE_TIER.ACTIVITY}>
+								collapseTier={COLLAPSE_TIER.ACTIVITY}
+								prefetch>
 								Lists
 							</NavLink>
 						</div>
