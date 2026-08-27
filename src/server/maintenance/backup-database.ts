@@ -5,6 +5,7 @@ import {
 	PutObjectCommand,
 	S3Client,
 } from "@aws-sdk/client-s3";
+import { appendJobSummary } from "./job-summary";
 
 // Uploads a pre-made pg_dump (see backup-database.yml, which invokes this
 // after running `pg_dump | gzip` itself — no Postgres client library here,
@@ -65,9 +66,12 @@ async function listBackups(bucket: string) {
 			// Reverse the ":" -> "-" swap from timestampedKey just for the two
 			// colons inside the time-of-day portion, so Date can parse it back.
 			const date = new Date(iso.replace(/T(\d\d)-(\d\d)-(\d\d)/, "T$1:$2:$3"));
-			if (!Number.isNaN(date.getTime())) objects.push({ key: object.Key, date });
+			if (!Number.isNaN(date.getTime()))
+				objects.push({ key: object.Key, date });
 		}
-		continuationToken = page.IsTruncated ? page.NextContinuationToken : undefined;
+		continuationToken = page.IsTruncated
+			? page.NextContinuationToken
+			: undefined;
 	} while (continuationToken);
 	return objects.sort((a, b) => b.date.getTime() - a.date.getTime());
 }
@@ -134,6 +138,14 @@ async function main() {
 		`Retention: kept ${keep.size} backup${keep.size === 1 ? "" : "s"}, ` +
 			`deleted ${toDelete.length}.`,
 	);
+
+	await appendJobSummary([
+		"## Backup Database",
+		"",
+		`Uploaded \`${key}\` (${(body.byteLength / 1024 / 1024).toFixed(2)} MiB).`,
+		"",
+		`Retention: kept ${keep.size} backup${keep.size === 1 ? "" : "s"}, deleted ${toDelete.length}.`,
+	]);
 }
 
 main().catch((e) => {

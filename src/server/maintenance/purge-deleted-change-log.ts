@@ -5,6 +5,7 @@ import {
 	mediaAssetFilename,
 } from "@/server/resolvers/poster-resolver";
 import { getImageStorage } from "@/server/storage/image-storage";
+import { appendJobSummary } from "./job-summary";
 
 // How long a soft-deleted entry stays visible (greyed out) before this
 // script permanently removes it — see change-log-actions.ts.
@@ -64,7 +65,10 @@ async function purgeThumbnails(
 		// remove() itself reports whether a file was actually there — already
 		// gone, or never got cached in the first place, is just as fine as a
 		// successful removal here.
-		const removed = await storage.remove(dir, mediaAssetFilename(mediaId, value));
+		const removed = await storage.remove(
+			dir,
+			mediaAssetFilename(mediaId, value),
+		);
 		if (removed) filesRemoved++;
 	}
 	return filesRemoved;
@@ -92,6 +96,11 @@ async function main() {
 		console.log(
 			`Purged 0 change log entries deleted more than ${RETENTION_DAYS} days ago.`,
 		);
+		await appendJobSummary([
+			"## Purge Deleted Changelogs",
+			"",
+			`Purged 0 change log entries deleted more than ${RETENTION_DAYS} days ago.`,
+		]);
 		return;
 	}
 
@@ -113,11 +122,12 @@ async function main() {
 		CHANGELOG_BANNER_THUMB_DIR,
 	);
 
-	console.log(
+	const summary =
 		`Purged ${toPurge.length} change log entr${toPurge.length === 1 ? "y" : "ies"} deleted more than ${RETENTION_DAYS} days ago ` +
-			`(removed ${posterFilesRemoved} poster thumbnail file${posterFilesRemoved === 1 ? "" : "s"}, ` +
-			`${bannerFilesRemoved} banner thumbnail file${bannerFilesRemoved === 1 ? "" : "s"}).`,
-	);
+		`(removed ${posterFilesRemoved} poster thumbnail file${posterFilesRemoved === 1 ? "" : "s"}, ` +
+		`${bannerFilesRemoved} banner thumbnail file${bannerFilesRemoved === 1 ? "" : "s"}).`;
+	console.log(summary);
+	await appendJobSummary(["## Purge Deleted Changelogs", "", summary]);
 }
 
 main()

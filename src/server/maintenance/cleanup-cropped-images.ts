@@ -1,5 +1,6 @@
 import { CROPPED_DIR } from "@/server/resolvers/image-crop-resolver";
 import { getImageStorage } from "@/server/storage/image-storage";
+import { appendJobSummary, formatSummaryList } from "./job-summary";
 
 // Unlike cleanup-posters.ts/purge-deleted-change-log.ts, nothing in the DB
 // ever references a /cropped/... path directly — a promoted file has
@@ -27,6 +28,13 @@ async function main() {
 
 	console.log(`Removed ${deleted.length} stale cropped file(s).`);
 	for (const file of deleted) console.log(`  ${file}`);
+
+	await appendJobSummary([
+		"## Cleanup Cropped Images",
+		"",
+		`Removed ${deleted.length} stale cropped file(s).`,
+		...(deleted.length > 0 ? ["", ...formatSummaryList(deleted)] : []),
+	]);
 }
 
 main().catch((e) => {

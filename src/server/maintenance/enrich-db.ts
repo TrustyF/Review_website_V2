@@ -27,6 +27,7 @@ import {
 import { updateBookFromGoogleBooks } from "@/server/google-books/ingest/book";
 import { invalidateSearchIndex } from "@/components/search/search-actions";
 import { Media, MediaType } from "@prisma/client";
+import { appendJobSummary, formatSummaryList } from "./job-summary";
 
 // One reachability check per underlying source (TMDB backs both MOVIE/SHORT
 // and TVSHOW, so they share a check) rather than per MediaType — run once up
@@ -228,7 +229,16 @@ const QUEUE_CONCURRENCY: Record<MediaType, number> = {
 // own pacing intact while letting all sources make progress at once instead
 // of taking turns — and within a single type's queue, items now also run up
 // to QUEUE_CONCURRENCY[type] at a time instead of strictly one by one.
-async function runQueue(type: MediaType, mediaList: Media[]) {
+type QueueResult = {
+	succeeded: number;
+	failures: { id: number; title: string }[];
+};
+
+async function runQueue(
+	type: MediaType,
+	mediaList: Media[],
+): Promise<QueueResult> {
+	const result: QueueResult = { succeeded: 0, failures: [] };
 	await runWithConcurrency(
 		mediaList,
 		QUEUE_CONCURRENCY[type],
@@ -247,14 +257,44 @@ async function runQueue(type: MediaType, mediaList: Media[]) {
 						`[${type}]${cacheTag} Failed enriching media ${media.id} (${media.title})`,
 						error,
 					);
+					result.failures.push({ id: media.id, title: media.title });
 				} else {
 					console.log(`[${type}]${cacheTag} enriched ${media.title}`);
+					result.succeeded++;
 				}
 			} finally {
 				dbSemaphore.release();
 			}
 		},
 	);
+	return result;
+}
+
+async function writeJobSummary(
+	results: Map<MediaType, QueueResult>,
+	skipped: MediaType[],
+) {
+	const lines = [
+		"## Enrich DB",
+		"",
+		"| Type | Succeeded | Failed |",
+		"| --- | --- | --- |",
+	];
+	for (const [type, { succeeded, failures }] of results) {
+		lines.push(`| ${type} | ${succeeded} | ${failures.length} |`);
+	}
+	for (const type of skipped) {
+		lines.push(`| ${type} | skipped (source unreachable) | — |`);
+	}
+
+	const allFailures = [...results.entries()].flatMap(([type, { failures }]) =>
+		failures.map((f) => `[${type}] ${f.title} (id ${f.id})`),
+	);
+	if (allFailures.length > 0) {
+		lines.push("", "### Failures", "", ...formatSummaryList(allFailures));
+	}
+
+	await appendJobSummary(lines);
 }
 
 const ENRICH_INTERVAL_DAYS = 3;
@@ -331,11 +371,20 @@ async function main() {
 
 	const reachable = await reachableMediaTypes([...queues.keys()]);
 
-	await Promise.all(
-		[...queues.entries()]
-			.filter(([type]) => reachable.has(type))
-			.map(([type, list]) => runQueue(type, list)),
+	const runnable = [...queues.entries()].filter(([type]) =>
+		reachable.has(type),
 	);
+	const skipped = [...queues.keys()].filter((type) => !reachable.has(type));
+
+	const results = new Map<MediaType, QueueResult>(
+		await Promise.all(
+			runnable.map(
+				async ([type, list]) => [type, await runQueue(type, list)] as const,
+			),
+		),
+	);
+
+	await writeJobSummary(results, skipped);
 
 	// Runs as a separate process from anything that would normally trigger
 	// this (see saveMediaDetails/setMediaDeleted/etc. in the admin actions) —
