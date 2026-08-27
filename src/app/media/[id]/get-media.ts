@@ -29,25 +29,62 @@ import { mediaCacheTag } from "@/server/cache/media-cache-tag";
 // invalidateSearchIndex's own 1-hour TTL (see search-actions.ts) for the
 // same problem.
 
+function queryMediaCore(mediaId: number) {
+	return db.media.findUnique({
+		where: { id: mediaId },
+		include: {
+			movie: true,
+			tvShow: true,
+			manga: true,
+			comic: true,
+			game: true,
+			book: true,
+			review: true,
+			originCountry: true,
+		},
+	});
+}
+
+type MediaCore = Awaited<ReturnType<typeof queryMediaCore>>;
+
+// unstable_cache persists its return value as JSON so it survives across
+// requests/instances — JSON has no Date type, so every DateTime column below
+// comes back as a plain ISO string on a cache hit, despite Prisma's (and
+// this function's) own type still saying Date. Revived once here, right
+// where the data exits the cache, so everything downstream — toMediaRecord,
+// page components, and anything that crosses into a Client Component from
+// there — can keep trusting a real Date instead of each formatting call
+// site defensively re-coercing it. Only Media and Review carry DateTime
+// columns among getMediaCore's included relations (see schema/media.prisma,
+// schema/rating.prisma, schema/country.prisma, schema/crew.prisma) — nothing
+// else here needs reviving.
+function reviveMediaCoreDates(media: MediaCore): MediaCore {
+	if (!media) return media;
+	return {
+		...media,
+		releaseDate: media.releaseDate ? new Date(media.releaseDate) : null,
+		createDate: media.createDate ? new Date(media.createDate) : null,
+		updateDate: media.updateDate ? new Date(media.updateDate) : null,
+		lastEnrichedAt: media.lastEnrichedAt ? new Date(media.lastEnrichedAt) : null,
+		review: media.review && {
+			...media.review,
+			reviewDate: media.review.reviewDate
+				? new Date(media.review.reviewDate)
+				: null,
+			createDate: new Date(media.review.createDate),
+			updateDate: media.review.updateDate
+				? new Date(media.review.updateDate)
+				: null,
+		},
+	};
+}
+
 export const getMediaCore = cache((mediaId: number) =>
 	unstable_cache(
-		() =>
-			db.media.findUnique({
-				where: { id: mediaId },
-				include: {
-					movie: true,
-					tvShow: true,
-					manga: true,
-					comic: true,
-					game: true,
-					book: true,
-					review: true,
-					originCountry: true,
-				},
-			}),
+		() => queryMediaCore(mediaId),
 		["media-core", String(mediaId)],
 		{ tags: [mediaCacheTag(mediaId)], revalidate: 3600 },
-	)(),
+	)().then(reviveMediaCoreDates),
 );
 
 export const getMediaCredits = cache((mediaId: number) =>
@@ -63,14 +100,31 @@ export const getMediaCredits = cache((mediaId: number) =>
 	)(),
 );
 
+function queryMediaChangeLog(mediaId: number) {
+	return db.mediaChangeLog.findMany({
+		where: { mediaId },
+		orderBy: { createdAt: "desc" },
+	});
+}
+
+type MediaChangeLogRow = Awaited<ReturnType<typeof queryMediaChangeLog>>[number];
+
+// Same JSON-round-trip problem as reviveMediaCoreDates above — see its own
+// comment.
+function reviveMediaChangeLogDates(
+	rows: MediaChangeLogRow[],
+): MediaChangeLogRow[] {
+	return rows.map((row) => ({
+		...row,
+		createdAt: new Date(row.createdAt),
+		deletedAt: row.deletedAt ? new Date(row.deletedAt) : null,
+	}));
+}
+
 export const getMediaChangeLog = cache((mediaId: number) =>
 	unstable_cache(
-		() =>
-			db.mediaChangeLog.findMany({
-				where: { mediaId },
-				orderBy: { createdAt: "desc" },
-			}),
+		() => queryMediaChangeLog(mediaId),
 		["media-change-log", String(mediaId)],
 		{ tags: [mediaCacheTag(mediaId)], revalidate: 3600 },
-	)(),
+	)().then(reviveMediaChangeLogDates),
 );
