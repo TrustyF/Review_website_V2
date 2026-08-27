@@ -304,6 +304,12 @@ $mobile-bar-height: 2rem + $mobile-icon-size
   width: $mobile-icon-size
   height: $mobile-icon-size
   color: var(--foreground)
+  // .mobile_controls's own gap (0.5rem) is deliberately tight for this
+  // width (see its own comment) — margin-left tops just this one side up to
+  // .account_identity's 1.5rem desktop gap instead, so the bell reads at
+  // its usual distance from the avatar without also pushing the hamburger
+  // toggle further away than it needs to be.
+  margin-left: 1rem
 
 // Hamburger trigger for the mobile drawer below. Also only ever rendered
 // inside .mobile_controls — see that rule's own comment.
@@ -335,7 +341,7 @@ $mobile-bar-height: 2rem + $mobile-icon-size
   .nav_content
     display: none
     position: fixed
-    top: $mobile-bar-height
+    top: 0
     left: 0
     right: 0
     max-height: calc(100vh - #{$mobile-bar-height})
@@ -355,27 +361,22 @@ $mobile-bar-height: 2rem + $mobile-icon-size
   // sizing, which only made sense inline next to the nav links.
   .search
     flex: 0 0 auto
-    width: 100%
+    width: 75%
     min-width: 0
 
   .groups
     flex-flow: column
     align-items: stretch
     flex-grow: 0
-    gap: 1.25rem
-
+    gap: 2rem
+    padding: 0.5rem 0 2rem 1rem
   .nav_group
     flex-flow: column
     align-items: stretch
-    gap: 0.75rem
+    gap: 1rem
 
     &:not(:first-child)
       margin-left: 0
-
-  .nav_group.nav_group_end
-    margin-left: 0
-    padding-top: 0.75rem
-    border-top: 1px solid var(--surface-border)
 
   // Every label is collapsed to icon-only well before $mobile-breakpoint
   // (see nav-label-collapse in variables.sass — its widest tier already

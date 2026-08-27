@@ -20,3 +20,23 @@
   display: grid
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))
   gap: 1.5rem
+
+// Same mount-only fade+slide-up, staggered by --stagger-index (set inline in
+// the tsx, this card's position in the grid), as activity-feed.module.sass's
+// own .entry / grouped-media-list.module.sass's own .item — kept as a
+// separate hand-copy rather than a shared import, same as those two.
+@keyframes item-enter
+  0%
+    opacity: 0
+    transform: translateY(0.5rem)
+  100%
+    opacity: 1
+    transform: translateY(0)
+
+.item
+  height: 100%
+  animation: item-enter 300ms ease both
+  animation-delay: min(calc(var(--stagger-index, 0) * 70ms), 1000ms)
+
+  @media (prefers-reduced-motion: reduce)
+    animation: none

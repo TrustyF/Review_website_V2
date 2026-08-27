@@ -129,11 +129,12 @@ $page-padding: 1.25rem
 
 .top
   grid-area: top
-  align-self: flex-end
+  align-self: center
   display: flex
   flex-flow: column
   gap: 0.35rem
   min-width: 0
+  align-items: flex-start
 
 .eyebrow
   display: flex
@@ -145,6 +146,9 @@ $page-padding: 1.25rem
   font-weight: 600
   text-transform: uppercase
   letter-spacing: 0.03em
+  background-color: color-mix(in srgb, var(--brand-muted), transparent 25%)
+  padding: 0.2rem 0.3rem
+  border-radius: 0.4rem
 
 .title
   font-size: 1.2rem

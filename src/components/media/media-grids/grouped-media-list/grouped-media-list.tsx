@@ -1,3 +1,4 @@
+import { CSSProperties } from "react";
 import { MediaCardResolver } from "@/components/media/media-cards/media-card/media-card-resolver";
 import { MediaGroup } from "@/components/media/media-grids/grouped-media-grid/grouped-media-grid";
 import listStyles from "@/components/media/media-grids/lazy-media-list/lazy-media-list.module.sass";
@@ -19,8 +20,11 @@ export function GroupedMediaList({ groups }: Props) {
 				<details key={group.key} open>
 					<summary className={styles.group_header}>{group.label}</summary>
 					<div className={listStyles.list}>
-						{group.items.map((item) => (
-							<div className={listStyles.item} key={item.id}>
+						{group.items.map((item, index) => (
+							<div
+								className={`${listStyles.item} ${styles.item}`}
+								key={item.id}
+								style={{ "--stagger-index": index } as CSSProperties}>
 								<MediaCardResolver media={item} />
 							</div>
 						))}

@@ -1,5 +1,5 @@
 "use client";
-import { Fragment } from "react";
+import { Fragment, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -200,12 +200,25 @@ function activityLabel(entry: ActivityFeedEntry): {
 	}
 }
 
-function ActivityRow({ entry }: { entry: ActivityFeedEntry }) {
+// index is this row's position within its own month group (not a global
+// index across every group) — passed straight through to --stagger-index
+// for .entry's own animation-delay (see activity-feed.module.sass), capped
+// there rather than here so a long group's later rows just settle at the
+// same fixed delay instead of the whole stagger growing unbounded.
+function ActivityRow({
+	entry,
+	index,
+}: {
+	entry: ActivityFeedEntry;
+	index: number;
+}) {
 	const Icon = TYPE_ICON[entry.type];
 	const { action, target, value } = activityLabel(entry);
 
 	return (
-		<li className={styles.entry}>
+		<li
+			className={styles.entry}
+			style={{ "--stagger-index": index } as CSSProperties}>
 			{entry.media ? (
 				<Image
 					className={styles.poster}
@@ -282,11 +295,14 @@ export function ActivityFeed({ entries }: { entries: ActivityFeedEntry[] }) {
 								return (
 									<Fragment key={entry.id}>
 										{showGapDivider && (
-											<li className={styles.timeline_gap} aria-hidden="true">
+											<li
+												className={styles.timeline_gap}
+												aria-hidden="true"
+												style={{ "--stagger-index": index } as CSSProperties}>
 												<span className={styles.timeline_gap_line} />
 											</li>
 										)}
-										<ActivityRow entry={entry} />
+										<ActivityRow entry={entry} index={index} />
 									</Fragment>
 								);
 							})}

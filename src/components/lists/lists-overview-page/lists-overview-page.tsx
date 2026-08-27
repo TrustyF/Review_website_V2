@@ -1,3 +1,4 @@
+import { CSSProperties } from "react";
 import { db } from "@/server/db/client";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import { NewListLink } from "@/components/lists/new-list-link/new-list-link";
@@ -27,15 +28,19 @@ export async function ListsOverviewPage() {
 				<p className={styles.empty}>No lists yet.</p>
 			) : (
 				<div className={styles.grid}>
-					{lists.map((list) => (
-						<ListPreviewCard
+					{lists.map((list, index) => (
+						<div
 							key={list.id}
-							id={list.id}
-							title={list.title}
-							description={list.description}
-							thumbnail={list.thumbnail}
-							itemCount={list._count.items}
-						/>
+							className={styles.item}
+							style={{ "--stagger-index": index } as CSSProperties}>
+							<ListPreviewCard
+								id={list.id}
+								title={list.title}
+								description={list.description}
+								thumbnail={list.thumbnail}
+								itemCount={list._count.items}
+							/>
+						</div>
 					))}
 				</div>
 			)}

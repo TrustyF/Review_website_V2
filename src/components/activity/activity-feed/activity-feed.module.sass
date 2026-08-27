@@ -41,6 +41,17 @@
   flex-flow: column
   list-style: none
 
+// Mount-only fade+slide for each row — .entry below runs this once per key
+// (entry.id), never re-triggered afterward, so a row already on screen when
+// the next lazy-loaded batch mounts stays put instead of replaying it.
+@keyframes entry-enter
+  0%
+    opacity: 0
+    transform: translateY(1rem)
+  100%
+    opacity: 1
+    transform: translateY(0)
+
 // Two columns: a taller poster, and a content block beside it that's
 // itself two stacked lines (title+date, then action+value) — a small
 // "card" per row rather than one flat table row. Poster height (5.5rem)
@@ -53,6 +64,15 @@
   column-gap: 0.75rem
   padding: 0.5rem 0
   height: 6rem
+  // --stagger-index (activity-feed.tsx, this row's position within its own
+  // month group) staggers the entrance instead of every row fading in at
+  // once — capped via min() so a long group's later rows all just settle at
+  // the same 300ms delay rather than the wait growing unbounded.
+  animation: entry-enter 300ms ease both
+  animation-delay: min(calc(var(--stagger-index, 0) * 70ms),1000ms)
+
+  @media (prefers-reduced-motion: reduce)
+    animation: none
 
 // Same sizing/fit as change-log-list.module.sass's own .poster_value — a
 // media row here should look like one lifted straight out of that list.
@@ -210,6 +230,15 @@
   height: 2rem
   // 2rem centers it under .entry's 4rem icon/poster column.
   margin: 0.5rem 0 0.2rem 2rem
+  // Same stagger as .entry above (this divider shares the following row's
+  // own --stagger-index, see activity-feed.tsx) so it animates in step with
+  // the row it introduces instead of sitting there static while everything
+  // else cascades in around it.
+  animation: entry-enter 300ms ease both
+  animation-delay: min(calc(var(--stagger-index, 0) * 70ms), 1000ms)
+
+  @media (prefers-reduced-motion: reduce)
+    animation: none
 
 .timeline_gap_line
   align-self: stretch
