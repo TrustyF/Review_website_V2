@@ -55,6 +55,9 @@ const nextConfig: NextConfig = {
 			{
 				pathname: "/api/banner/**",
 			},
+			{
+				pathname: "/ui/**",
+			},
 		],
 		// Only reachable when getImageStorage() selects the R2 driver —
 		// resolveChangelogPosterThumb/resolveChangelogBannerThumb and
