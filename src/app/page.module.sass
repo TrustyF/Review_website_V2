@@ -1,4 +1,5 @@
 @use "@/app/styles/variables" as *
+@use "@/components/home/featured-review/featured-review-breakpoint" as *
 
 .wrapper
   @include content-wrapper
@@ -6,3 +7,17 @@
   display: flex
   flex-flow: column
   gap: 3rem
+
+  // Cancels main's own padding-top (globals.sass, reserved for the fixed
+  // navbar) so the featured review hero's banner starts flush against the
+  // very top of the viewport instead of leaving that reserved height as
+  // empty space above it — same "cancel main's padding for this one page"
+  // move media-detail.module.sass's own mobile .wrapper margin-top makes for
+  // its banner. Keyed to $featured-review-mobile-breakpoint specifically
+  // (not the navbar's own wider $mobile-breakpoint) — only FeaturedReview's
+  // own mobile card actually bleeds its banner to the screen edge (see
+  // featured-review-card-mobile.module.sass) to make use of the reclaimed
+  // space; the desktop card above that width stays boxed and would just end
+  // up shifted up behind the fixed navbar instead.
+  @media (max-width: $featured-review-mobile-breakpoint)
+    margin-top: calc(-1 * var(--navbar-height))

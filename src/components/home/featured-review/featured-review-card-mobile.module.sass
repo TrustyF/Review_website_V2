@@ -106,7 +106,7 @@ $page-padding: 1.25rem
 .content
   position: relative
   display: grid
-  grid-template-columns: 125px 1fr
+  grid-template-columns: 90px 1fr
   grid-template-areas: "poster top" "excerpt excerpt" "more more"
   column-gap: 1rem
   row-gap: 0.5rem
@@ -129,7 +129,7 @@ $page-padding: 1.25rem
 
 .top
   grid-area: top
-  align-self: center
+  align-self: flex-end
   display: flex
   flex-flow: column
   gap: 0.35rem
@@ -177,7 +177,7 @@ $page-padding: 1.25rem
   font-family: $font-body
   font-size: 0.9rem
   line-height: 1.35rem
-  max-height: 5.4rem
+  height: 8.1rem
   overflow: hidden
 
 .excerpt_line
@@ -203,3 +203,9 @@ $page-padding: 1.25rem
     height: 2rem
     background: linear-gradient(to bottom, transparent, var(--background) 100%)
     pointer-events: none
+
+// Reserves .read_more's own row (see the tsx's own comment) without
+// showing it — visibility, not display: none, so the row's height still
+// counts toward .content's grid sizing.
+.read_more_hidden
+  visibility: hidden

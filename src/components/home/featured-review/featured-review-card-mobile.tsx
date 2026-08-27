@@ -114,9 +114,17 @@ export function FeaturedReviewCardMobile({ media, direction, exiting = false }: 
 							/>
 						</ReviewSpoilerProvider>
 					</div>
-					{isOverflowing && (
-						<span className={styles.read_more}>Read full review →</span>
-					)}
+					{/* Always mounted (rather than conditionally rendered) so its own
+					grid row keeps reserving the same height regardless of whether
+					this particular review overflows — visibility: hidden takes it
+					out of view without collapsing that row, so the card doesn't
+					change height (and shift the picker strip below it) as the hero
+					swaps between reviews that do and don't need it. */}
+					<span
+						className={`${styles.read_more} ${!isOverflowing ? styles.read_more_hidden : ""}`}
+						aria-hidden={!isOverflowing || undefined}>
+						Read full review →
+					</span>
 				</div>
 			</div>
 		</Link>

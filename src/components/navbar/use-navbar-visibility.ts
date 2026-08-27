@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from "react";
 // but only reappears once you've scrolled back up by at least this many
 // px — without a threshold, a single mouse-wheel tick or trackpad overshoot
 // mid-downward-scroll would flicker it back in.
-const TOP_EXEMPT_PX = 200;
-const REVEAL_THRESHOLD_PX = 200;
+const TOP_EXEMPT_PX = 100;
+const REVEAL_THRESHOLD_PX = 100;
 
 // Tracks the navbar's scroll-driven show/hide state and mirrors the result
 // onto --navbar-offset (globals.sass) directly, rather than toggling a class
