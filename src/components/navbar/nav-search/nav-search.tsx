@@ -38,7 +38,7 @@ export function NavSearch() {
 	const [error, setError] = useState<string | null>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 
-	useOutsideClick(containerRef, () => setIsOpen(false), { enabled: isOpen });
+	useOutsideClick(containerRef, resetSearch, { enabled: isOpen });
 
 	useEffect(() => {
 		if (!input.trim()) return;
@@ -65,10 +65,10 @@ export function NavSearch() {
 		}
 	}
 
-	// Link itself handles the navigation — this just resets the search's own
-	// state so the dropdown doesn't linger (with a stale query still typed
-	// in) once you've already landed on the result.
-	function handleSelect() {
+	// Resets the search's own state so the dropdown/input doesn't linger with
+	// a stale query — after a result Link has already handled navigation, or
+	// after clicking outside the search entirely (see useOutsideClick above).
+	function resetSearch() {
 		setInput("");
 		setResults([]);
 		setIsOpen(false);
@@ -101,7 +101,7 @@ export function NavSearch() {
 								}
 								key={`${result.kind}-${result.id}`}
 								className={styles.result}
-								onClick={handleSelect}>
+								onClick={resetSearch}>
 								{result.kind === "media" ? (
 									<Image
 										src={result.posterSrc}

@@ -13,6 +13,18 @@
   width: auto
   object-fit: contain
 
+// Matches .image's own box (same aspect ratio, same height) so the percentage
+// clip-path below lines up with the ticket art regardless of .tag's actual
+// rendered size. The interior bounds (4%/8% insets) were measured directly
+// off logo.webp's pixels (the transparent gap between its outline strokes),
+// not eyeballed — re-measure if that asset ever changes.
+.fill
+  position: absolute
+  height: 100%
+  aspect-ratio: 502 / 172
+  background: var(--background)
+  clip-path: inset(8% 31% 8% 4% round 3px)
+
 .name
   margin-left: 9px
   color: var(--foreground)

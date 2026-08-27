@@ -15,6 +15,13 @@ import style from "./logo-image.module.sass";
 export function LogoImage() {
 	return (
 		<div className={style.tag}>
+			{/* The ticket mark's own body (left of its dotted perforation) is
+			    transparent art — this sits behind it, clipped to just that
+			    blank interior, so the ticket reads as filled rather than
+			    showing the navbar background through it. Comes before .image
+			    in source order (and neither sets z-index) so .image still
+			    paints on top of it. */}
+			<div className={style.fill} aria-hidden="true" />
 			<Image
 				src="/ui/logo.webp?v=1"
 				alt=""
