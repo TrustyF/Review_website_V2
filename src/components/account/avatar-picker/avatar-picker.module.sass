@@ -13,6 +13,12 @@
   border-radius: 50%
   flex-shrink: 0
 
+// Hidden until .current is hovered/focused — same opacity+visibility fade
+// MediaEditButton uses for its own hover-only reveal (media-card-shell.
+// module.sass), rather than opacity alone: an invisible-but-still-there
+// badge would otherwise sit in the tab order and stay hoverable/clickable
+// even while faded out. Focus-within (not just hover) so keyboard/touch
+// users tabbing onto .current can still see it before activating it.
 .edit_badge
   position: absolute
   bottom: 0
@@ -26,6 +32,15 @@
   align-items: center
   justify-content: center
   border: 2px solid var(--background)
+  opacity: 0
+  visibility: hidden
+  transition: opacity 100ms ease, visibility 0s linear 100ms
+
+  .current:hover &,
+  .current:focus-visible &
+    opacity: 1
+    visibility: visible
+    transition-delay: 0s
 
 .current_image
   width: 100%

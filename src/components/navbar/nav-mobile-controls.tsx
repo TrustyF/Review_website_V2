@@ -31,14 +31,13 @@ export function NavMobileControls({
 }: Props) {
 	return (
 		<div className={style.mobile_controls}>
-			{/* The full account row (bell + avatar + sign out) lives inside the
-			drawer too (see NavAccountMenu), but both stay visible in the bar
-			even with the drawer closed, same as the hamburger beside them,
-			rather than being hidden away a tap deeper than everything else —
-			and .account_identity itself is hidden at this width so they don't
-			show up twice. Skipped entirely while signed out — there's nothing
-			to show yet, and "Sign in" is one tap away in the drawer
-			regardless. */}
+			{/* The full account row (bell + avatar) lives inside the drawer too
+			(see NavAccountMenu), but both stay visible in the bar even with the
+			drawer closed, same as the hamburger beside them, rather than being
+			hidden away a tap deeper than everything else — and
+			.account_identity itself is hidden at this width so they don't show
+			up twice. Skipped entirely while signed out — there's nothing to
+			show yet, and "Sign in" is one tap away in the drawer regardless. */}
 			{signedIn && (
 				<>
 					<NotificationBell />

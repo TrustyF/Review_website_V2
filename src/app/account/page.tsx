@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
 import { AvatarPicker } from "@/components/account/avatar-picker/avatar-picker";
+import { SignOutButton } from "@/components/account/sign-out-button/sign-out-button";
 import { getAvatarGroups } from "@/server/avatars/avatar-catalog";
 import { WatchlistStack } from "@/components/watchlist/watchlist-stack/watchlist-stack";
 import { WatchlistIcon } from "@/components/icons/watchlist-icon";
@@ -85,12 +86,15 @@ export default async function AccountPage() {
 					{/*	{session.user.role === "ADMIN" ? "Admin" : "Member"}*/}
 					{/*</p>*/}
 				</div>
-				<Link
-					href="/account/settings"
-					className={styles.settings_link}
-					aria-label="Account settings">
-					<Settings size={18} />
-				</Link>
+				<div className={styles.header_actions}>
+					<Link
+						href="/account/settings"
+						className={styles.settings_link}
+						aria-label="Account settings">
+						<Settings size={18} />
+					</Link>
+					<SignOutButton />
+				</div>
 			</div>
 
 			<div className={styles.grid}>

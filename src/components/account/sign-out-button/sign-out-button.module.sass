@@ -1,0 +1,19 @@
+// Same color/hover treatment as account.module.sass's own icon-only
+// .settings_link it sits beside, plus a label — .settings_link stays
+// icon-only (its gear is a familiar-enough symbol on its own), but "sign
+// out" isn't as guessable from its icon alone, hence the visible text here.
+// align-self lives on .header_actions (account.module.sass), the shared
+// wrapper around both of these, instead of here individually.
+.sign_out
+  display: flex
+  align-items: center
+  gap: 0.4rem
+  color: var(--accent3)
+  font-size: 0.9rem
+  cursor: pointer
+  background-color: var(--brand-muted)
+  padding: 0.5rem 0.75rem
+  border-radius: 0.5rem
+
+  &:hover
+    color: var(--foreground)

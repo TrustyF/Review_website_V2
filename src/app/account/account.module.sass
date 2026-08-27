@@ -37,12 +37,24 @@
   text-transform: uppercase
   letter-spacing: 0.03em
 
+// Groups the settings gear and SignOutButton into one cluster, pinned to
+// the header row's top edge (the row itself centers vertically against the
+// taller .identity block, which these two shouldn't stretch to match) —
+// .settings_link/.sign_out no longer need their own align-self now that
+// this wrapper carries it for both at once.
+.header_actions
+  display: flex
+  align-items: center
+  gap: 1rem
+  align-self: flex-start
+
 .settings_link
   display: flex
   align-items: center
   justify-content: center
-  align-self: flex-start
-  color: var(--accent1)
+  color: var(--accent3)
+  padding: 0.3rem
+  border-radius: 0.3rem
 
   &:hover
     color: var(--foreground)
