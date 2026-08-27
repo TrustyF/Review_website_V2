@@ -1,0 +1,42 @@
+name: Backup Database
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # ubuntu-latest's default apt package (postgresql-client 14) is older
+      # than Neon's server version — pg_dump refuses to run against a newer
+      # server, so this pulls a current client from the official PGDG repo
+      # instead of relying on whatever Ubuntu ships.
+      - name: Install postgresql-client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-common
+          yes '' | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+          sudo apt-get install -y postgresql-client-17
+
+      - name: Dump database
+        run: pg_dump "$DIRECT_URL" | gzip > db-backup.sql.gz
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+      - name: Upload to R2 and prune old backups
+        run: npm run backup_database -- db-backup.sql.gz
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BACKUP_ACCESS_KEY_ID: ${{ secrets.R2_BACKUP_ACCESS_KEY_ID }}
+          R2_BACKUP_SECRET_ACCESS_KEY: ${{ secrets.R2_BACKUP_SECRET_ACCESS_KEY }}
+          R2_BACKUP_BUCKET_NAME: ${{ secrets.R2_BACKUP_BUCKET_NAME }}
