@@ -6,21 +6,6 @@
   gap: 1.25rem
   padding: 1rem 0 1.25rem
 
-// Opt-in modifier (see the tsx's own singleRow prop) — swaps the fluid,
-// wrapping grid above for a fixed-width, non-wrapping row: cards stay
-// $mini-card-min-width wide regardless of viewport instead of stretching to
-// fill it, and whatever doesn't fit past the container's edge is clipped by
-// overflow: hidden rather than flowing onto a second row. That's what keeps
-// this a single row's height at every width, shrinking the visible card
-// count instead of growing taller as the viewport narrows.
-.single_row
-  display: flex
-  flex-wrap: nowrap
-  overflow: hidden
-
-  .item
-    flex: 0 0 $mini-card-min-width
-
 // Just a positioning anchor for renderOverlay (e.g. a list's remove
 // button) — same shape as the old, now-deleted list-media-grid.module.sass's
 // .item, proven to work as a plain grid item with no explicit size of its

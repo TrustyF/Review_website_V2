@@ -29,6 +29,19 @@ export function LogoImage() {
 				height={172}
 				className={style.image}
 			/>
+			{/* Below $mobile-breakpoint the full ticket mark (plus its .fill
+			    backing and the name text) is hidden in favor of this square
+			    app-icon mark instead — there isn't room for the wide wordmark
+			    in the mobile navbar's cramped title slot. Both stay mounted;
+			    logo-image.module.sass toggles which one paints via display,
+			    so there's no layout shift or conditional render on resize. */}
+			<Image
+				src="/ui/icon.svg"
+				alt=""
+				width={60}
+				height={60}
+				className={style.icon}
+			/>
 			<div className={style.name}>
 				Arthur&apos;s
 				<br />

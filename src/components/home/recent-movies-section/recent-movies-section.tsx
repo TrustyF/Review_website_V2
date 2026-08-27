@@ -14,11 +14,7 @@ export function RecentMoviesSection({ items }: Props) {
 		<section className={styles.wrapper}>
 			<h2 className={styles.title}>Recent releases</h2>
 			<MediaCardDisplayProvider showTitle={false}>
-				<LazyMediaGrid
-					items={items}
-					restoreKey="home-recent-movies"
-					singleRow
-				/>
+				<LazyMediaGrid items={items} restoreKey="home-recent-movies" />
 			</MediaCardDisplayProvider>
 		</section>
 	);

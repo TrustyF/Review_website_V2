@@ -13,6 +13,26 @@
   width: auto
   object-fit: contain
 
+  @media (max-width: $mobile-breakpoint)
+    display: none
+
+// Square app-icon mark (src/app/icon.svg, copied to public/ui so it can be
+// used as a plain Image src) swapped in for .image below $mobile-breakpoint
+// — see logo-image.tsx for why. Hidden by default and shown only inside the
+// same query that hides .image/.fill/.name, so exactly one mark is visible
+// at any width.
+.icon
+  display: none
+  position: absolute
+  height: 100%
+  width: auto
+  object-fit: contain
+
+  @media (max-width: $mobile-breakpoint)
+    display: block
+  @media (max-width: 400px)
+    height: 75%
+
 // Matches .image's own box (same aspect ratio, same height) so the percentage
 // clip-path below lines up with the ticket art regardless of .tag's actual
 // rendered size. The interior bounds (4%/8% insets) were measured directly
@@ -25,6 +45,9 @@
   background: var(--background)
   clip-path: inset(2% 28% 4% 1.5% round 3px)
 
+  @media (max-width: $mobile-breakpoint)
+    display: none
+
 .name
   margin-left: 9px
   color: var(--foreground)
@@ -33,3 +56,6 @@
   line-height: 0.9
   letter-spacing: -0.01em
   white-space: nowrap
+
+  @media (max-width: $mobile-breakpoint)
+    display: none
