@@ -1,7 +1,7 @@
 "use client";
 import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import { signUp } from "@/components/auth/auth-actions";
 import styles from "./signup-page.module.sass";
 

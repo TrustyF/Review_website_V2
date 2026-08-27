@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import { Menu, X } from "lucide-react";
 import { AccountIcon } from "@/components/icons/account-icon";
 import { NotificationBell } from "@/components/notifications/notification-bell";

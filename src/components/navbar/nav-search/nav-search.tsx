@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import Image from "next/image";
 import { UserRound } from "lucide-react";
 import { MediaType } from "@prisma/client";

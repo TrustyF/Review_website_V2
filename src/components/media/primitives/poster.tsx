@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import styles from "./primitives.module.sass";
 import { Tooltip } from "@/components/ui/tooltip";
 

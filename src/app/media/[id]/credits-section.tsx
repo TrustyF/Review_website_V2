@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import { MediaType } from "@prisma/client";
 import { toPersonPhotoSrc } from "@/server/resolvers/poster-resolver";
 import { MAX_BILLED_CAST } from "@/server/tmdb/ingest/credit-limits";

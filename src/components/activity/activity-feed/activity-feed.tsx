@@ -1,7 +1,7 @@
 "use client";
 import { Fragment, type CSSProperties } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import {
 	ArrowRight,
 	IterationCw,

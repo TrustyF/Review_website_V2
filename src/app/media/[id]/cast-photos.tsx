@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import { PersonPhoto } from "@/components/media/primitives/person-photo";
 import { Clickable } from "@/components/ui/clickable";
 import type { CreditLink } from "./credits-section";

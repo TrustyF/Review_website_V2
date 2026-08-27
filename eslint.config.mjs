@@ -25,6 +25,30 @@ const eslintConfig = defineConfig([
 					"src/**/": "NEXT_JS_APP_ROUTER_CASE",
 				},
 			],
+			// next/link's default prefetch fires a real server-side render for
+			// any dynamic route with a loading.tsx boundary the moment the link
+			// scrolls into the viewport — a grid of many links can silently cost
+			// dozens of invocations before anyone clicks anything (see
+			// components/ui/link.tsx's own comment). Import Link from there
+			// instead — same API, defaults prefetch to false.
+			"no-restricted-imports": [
+				"error",
+				{
+					paths: [
+						{
+							name: "next/link",
+							message:
+								'Import Link from "@/components/ui/link" instead of "next/link" — see that file\'s comment for why.',
+						},
+					],
+				},
+			],
+		},
+	},
+	{
+		files: ["src/components/ui/link.tsx"],
+		rules: {
+			"no-restricted-imports": "off",
 		},
 	},
 	// Override default ignores of eslint-config-next.

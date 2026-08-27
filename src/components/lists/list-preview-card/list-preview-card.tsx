@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import styles from "./list-preview-card.module.sass";
 
 type Props = {

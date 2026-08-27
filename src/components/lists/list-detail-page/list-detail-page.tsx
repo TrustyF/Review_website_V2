@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";

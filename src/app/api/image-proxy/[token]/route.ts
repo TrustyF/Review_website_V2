@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { resolveProxiedImageUrl } from "@/server/resolvers/image-proxy";
+import { recordInvocation } from "@/server/dev/invocation-tracker";
 
 export async function GET(
 	_req: Request,
@@ -13,6 +14,11 @@ export async function GET(
 	} catch {
 		return NextResponse.json({ error: "Invalid image token" }, { status: 400 });
 	}
+
+	// Split by upstream host too, not just the route — makes it obvious in
+	// the /dev/invocations breakdown whether a spike came from TMDB, IGDB, etc.
+	recordInvocation("GET /api/image-proxy");
+	recordInvocation(`GET /api/image-proxy (${url.hostname})`);
 
 	const upstream = await fetch(url, { headers: { Accept: "image/*" } });
 	if (!upstream.ok || !upstream.body) {

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import { dbPublic } from "@/server/db/client";
 import { MediaFilterGrid } from "@/components/media/media-grids/media-filter-grid/media-filter-grid";
 import { toMediaRecord } from "@/components/media/types";

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import { isNavActive } from "@/lib/nav-active";
 import type { LucideIcon, NavIcon } from "@/components/navbar/nav-types";
 import style from "./nav-bar.module.sass";

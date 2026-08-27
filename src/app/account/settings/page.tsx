@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { AccountSettingsForm } from "@/components/account/account-settings-form/account-settings-form";

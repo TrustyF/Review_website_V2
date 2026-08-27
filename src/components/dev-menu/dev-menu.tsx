@@ -1,6 +1,6 @@
 "use client";
 import { useTransition } from "react";
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { forceRevalidateAll } from "./dev-menu-actions";
@@ -48,6 +48,9 @@ export function DevMenu() {
 						</Link>
 						<Link href="/dev/logo" className={styles.link}>
 							Logo
+						</Link>
+						<Link href="/dev/invocations" className={styles.link}>
+							Invocations
 						</Link>
 					</div>
 				)}

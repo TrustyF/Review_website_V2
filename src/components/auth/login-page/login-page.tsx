@@ -2,7 +2,7 @@
 import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { Link } from "@/components/ui/link";
 import styles from "./login-page.module.sass";
 
 export function LoginPage() {

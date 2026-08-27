@@ -24,6 +24,7 @@ import {
 } from "@/server/resolvers/poster-resolver";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
 import type { PickableImage } from "@/components/media/media-management/media-editor/components/image-picker";
+import { recordInvocation } from "@/server/dev/invocation-tracker";
 import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/review-body-syntax";
 import { invalidateSearchIndex } from "@/components/search/search-actions";
 import { revalidateMediaPaths } from "@/server/cache/revalidate-media";
@@ -337,6 +338,7 @@ export async function getAlternativePosters(
 	limit = 20,
 ): Promise<Page<PickableImage>> {
 	await requireAdmin();
+	recordInvocation("action:getAlternativePosters");
 
 	if (type === MediaType.MANGA) {
 		const covers = await fetchMangaDexCovers(externalId);
@@ -432,6 +434,7 @@ export async function updateMediaPoster(
 	{ revalidate = true }: { revalidate?: boolean } = {},
 ) {
 	await requireAdmin();
+	recordInvocation("action:updateMediaPoster");
 
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
@@ -471,6 +474,7 @@ export async function getAlternativeBanners(
 	limit = 20,
 ): Promise<Page<PickableImage>> {
 	await requireAdmin();
+	recordInvocation("action:getAlternativeBanners");
 
 	if (type === MediaType.MANGA || type === MediaType.COMIC) {
 		return { images: [], hasMore: false };
@@ -523,6 +527,7 @@ export async function updateMediaBanner(
 	{ revalidate = true }: { revalidate?: boolean } = {},
 ) {
 	await requireAdmin();
+	recordInvocation("action:updateMediaBanner");
 
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
@@ -561,6 +566,7 @@ export async function updateMediaBannerFocus(
 	{ revalidate = true }: { revalidate?: boolean } = {},
 ) {
 	await requireAdmin();
+	recordInvocation("action:updateMediaBannerFocus");
 	const clamped = Math.max(0, Math.min(100, Math.round(focusY)));
 	await db.media.update({
 		where: { id: mediaId },
@@ -584,6 +590,7 @@ export async function updateMediaBannerFocus(
 // editing session instead of one per pick/drag.
 export async function publishMediaEdits(mediaId: number): Promise<void> {
 	await requireAdmin();
+	recordInvocation("action:publishMediaEdits");
 	const media = await db.media.findUniqueOrThrow({
 		where: { id: mediaId },
 		select: { type: true },
