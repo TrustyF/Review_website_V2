@@ -16,6 +16,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       # ubuntu-latest's default apt package (postgresql-client 14) is older
       # than Neon's server version — pg_dump refuses to run against a newer
