@@ -57,10 +57,12 @@ function eyebrowFor(
 }
 
 type Props = {
-	// Order is a daily-seeded shuffle of the featured/recent pool (see
-	// app/page.tsx's getFeaturedReviewItems) — the hero starts on items[0];
-	// the picker strip below lets you reveal any of the rest in the hero
-	// itself instead of a separate mini-card grid.
+	// items[0] is always the single most-recently-reviewed item, pinned there
+	// regardless of the shuffle; the rest is a daily-seeded shuffle of the
+	// remaining featured/recent pool (see app/page.tsx's
+	// getFeaturedReviewItems) — the hero starts on items[0], and the picker
+	// strip below lets you reveal any of the rest in the hero itself instead
+	// of a separate mini-card grid.
 	items: MediaRecord[];
 };
 

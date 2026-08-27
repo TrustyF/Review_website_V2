@@ -144,13 +144,17 @@ async function getAnticipatedReleases() {
 // Movies/shorts/shows that have been watched (a rating exists) but haven't
 // been written up yet — the mirror image of getFeaturedReviewItems'
 // REVIEWED_WHERE. Ordered by watchedDate (Review.createDate) since there's
-// no reviewDate to sort by yet.
-async function getRecentlyWatchedMovies() {
+// no reviewDate to sort by yet. excludeIds drops anything already surfaced
+// in "Recent releases" (see getRecentMovies) — the two sections' filters
+// otherwise overlap freely (both are just "screen media with a rating"),
+// so without this a just-watched new release would show up twice.
+async function getRecentlyWatchedMovies(excludeIds: number[]) {
 	const recentlyWatched = await dbPublic.media.findMany({
 		where: {
 			type: { in: SCREEN_MEDIA_TYPES },
 			enrichmentStatus: EnrichmentStatus.DONE,
 			isAdult: false,
+			id: { notIn: excludeIds },
 			review: {
 				rating: { not: null },
 				// OR: [{ body: null }, { body: "" }],
@@ -222,10 +226,10 @@ function seededShuffle<T>(items: T[], seed: string): T[] {
 // non-featured items to fill out the rest. Overfetching query B (2x) rather
 // than sizing it exactly is what keeps this a single round trip each,
 // instead of needing query A's ids before deciding how many of B to ask
-// for. The merged pool is then shuffled with a seed derived from today's
-// date (UTC) — same order for every visitor/request today, a new order
-// tomorrow — so the hero (items[0]) and picker strip rotate daily instead
-// of staying frozen on the same item or reshuffling on every reload.
+// for. The merged pool (minus the newest item, pulled out below) is then
+// shuffled with a seed derived from today's date (UTC) — same order for
+// every visitor/request today, a new order tomorrow — so the picker strip
+// rotates daily instead of reshuffling on every reload.
 async function getFeaturedReviewItems() {
 	const take = 1 + RECENT_REVIEWS_COUNT;
 	const [featured, recent] = await Promise.all([
@@ -252,21 +256,50 @@ async function getFeaturedReviewItems() {
 		...recent.filter((m) => !featuredIds.has(m.id)),
 	].slice(0, take);
 
+	// A brand-new review always opens the hero (items[0]) regardless of the
+	// shuffle below — it's pulled out here by the same reviewDate/createDate
+	// recency used to order the queries above, then re-prepended after the
+	// rest of the pool is shuffled, so only the picker strip behind it
+	// rotates day to day.
+	const [newest, ...rest] = [...merged].sort((a, b) =>
+		compareReviewRecency(a, b),
+	);
+	if (!newest) return merged;
+
 	const todaySeed = new Date().toISOString().slice(0, 10);
-	return seededShuffle(merged, todaySeed);
+	return [newest, ...seededShuffle(rest, todaySeed)];
+}
+
+// Same precedence as REVIEWED_ORDER_BY (reviewDate desc, nulls last, then
+// createDate desc) but as a comparator so the merged pool — already only
+// piecewise sorted by the two queries above — can be re-sorted as one list
+// to find its single most-recent item.
+function compareReviewRecency(
+	a: { review: { reviewDate: Date | null; createDate: Date } | null },
+	b: { review: { reviewDate: Date | null; createDate: Date } | null },
+): number {
+	const aDate = a.review?.reviewDate;
+	const bDate = b.review?.reviewDate;
+	if (aDate && bDate) return bDate.getTime() - aDate.getTime();
+	if (aDate) return -1;
+	if (bDate) return 1;
+	return b.review!.createDate.getTime() - a.review!.createDate.getTime();
 }
 
 export default async function HomePage() {
 	// dbPublic (not db) — soft-deleted media is excluded automatically, see
-	// src/server/db/client.ts. None of these queries depend on each other, so
-	// there's no reason to make one wait on another.
-	const [reviewed, recentMoviesRaw, recentlyWatchedRaw, anticipatedRaw] =
-		await Promise.all([
-			getFeaturedReviewItems(),
-			getRecentMovies(),
-			getRecentlyWatchedMovies(),
-			getAnticipatedReleases(),
-		]);
+	// src/server/db/client.ts. recentMoviesRaw has to resolve before
+	// getRecentlyWatchedMovies can run (it excludes those ids), so it's
+	// pulled out of the Promise.all below; the rest still don't depend on
+	// each other.
+	const [reviewed, recentMoviesRaw, anticipatedRaw] = await Promise.all([
+		getFeaturedReviewItems(),
+		getRecentMovies(),
+		getAnticipatedReleases(),
+	]);
+	const recentlyWatchedRaw = await getRecentlyWatchedMovies(
+		recentMoviesRaw.map((m) => m.id),
+	);
 
 	const reviewedList = reviewed.map(toMediaRecord);
 	const recentMovies = recentMoviesRaw.map(toMediaRecord);

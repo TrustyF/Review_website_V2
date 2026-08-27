@@ -26,7 +26,7 @@ $mobile-bar-height: 2rem + $mobile-icon-size
   align-items: center
   gap: 3rem
   width: 100%
-  min-height: 3.5rem
+  min-height: 5rem
   padding: 1rem 3rem
   @media (max-width: $mobile-breakpoint)
     padding: 1rem 1.25rem
@@ -60,6 +60,8 @@ $mobile-bar-height: 2rem + $mobile-icon-size
 // from getting squeezed by .nav_content, which is the one item in this row
 // actually meant to give ground (see its own comment on min-width: 0).
 .title
+  //position: absolute
+  padding-right: 2rem
   display: flex
   align-items: center
   flex-shrink: 0

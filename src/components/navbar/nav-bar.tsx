@@ -85,16 +85,16 @@ export default function Navbar() {
 					</div>
 
 					<div className={style.groups}>
-						<div className={style.nav_group}>
-							<NavLink
-								href="/"
-								icon={HomeIcon}
-								className={style.link}
-								pathname={pathname}
-								collapseTier={COLLAPSE_TIER.HOME}>
-								Home
-							</NavLink>
-						</div>
+						{/*<div className={style.nav_group}>*/}
+						{/*	<NavLink*/}
+						{/*		href="/"*/}
+						{/*		icon={HomeIcon}*/}
+						{/*		className={style.link}*/}
+						{/*		pathname={pathname}*/}
+						{/*		collapseTier={COLLAPSE_TIER.HOME}>*/}
+						{/*		Home*/}
+						{/*	</NavLink>*/}
+						{/*</div>*/}
 
 						<div className={style.nav_group}>
 							<NavDropdown
