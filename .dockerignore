@@ -1,0 +1,8 @@
+node_modules
+.next
+.git
+backups
+.fixtures
+.env
+.env.neon
+*.log

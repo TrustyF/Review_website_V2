@@ -234,17 +234,17 @@ let cached: ImageStorage | null = null;
 export function getImageStorage(): ImageStorage {
 	if (cached) return cached;
 
-	// Pinned to R2 in production, no env var to override it — VERCEL is set
-	// to "1" automatically in every one of Vercel's own environments
-	// (Production, Preview, and `vercel dev`), so this needs nothing to
-	// remember to flip before a deploy. This used to be overridable via an
-	// IMAGE_STORAGE_DRIVER env var (for a since-removed Vercel Blob backend,
-	// and for testing R2 from a local machine); a stale value left over in
-	// the Vercel project's env settings silently kept production writing to
-	// Blob long after the code moved to R2, running up Blob's "Advanced
-	// Operations" billing. Set R2_* env vars locally (see .env.example) to
-	// exercise this path outside Vercel.
+	// R2 is used only when explicitly opted into via IMAGE_STORAGE_DRIVER=r2
+	// (set in the self-hosted app's own env — see docker-compose.yml's `app`
+	// service, the scheduled GitHub Actions workflows, and .env.example) —
+	// everything else (plain local dev, `next build` run by hand) stays on
+	// local disk by default. This is deliberately opt-in rather than keyed
+	// off NODE_ENV=production: a stray `npm run build` on a laptop already
+	// sets NODE_ENV=production and must not silently start writing to the
+	// real R2 bucket.
 	cached =
-		process.env.VERCEL === "1" ? new R2ImageStorage() : new LocalImageStorage();
+		process.env.IMAGE_STORAGE_DRIVER === "r2"
+			? new R2ImageStorage()
+			: new LocalImageStorage();
 	return cached;
 }
