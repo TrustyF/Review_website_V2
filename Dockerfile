@@ -34,10 +34,13 @@ COPY . .
 # `npm run build` runs `prisma migrate deploy` against the real DB and (via
 # build-search-index.ts) writes the persisted search index through
 # getImageStorage() — both need real credentials at build time, same as they
-# already do on Vercel. DATABASE_URL/DIRECT_URL should point at Neon; the R2_*
-# secrets make the build write the search index to R2 rather than this
-# stage's disposable local disk. See docker-compose.yml for how each secret
-# id below is sourced from the deploying host's own env.
+# already do on Vercel. DATABASE_URL points at the `db` compose service's
+# published port via docker-compose.yml's `build: network: host` (no
+# DIRECT_URL — local Postgres has no pooler, so prisma.config.ts's fallback
+# to DATABASE_URL applies, same as local dev). The R2_* secrets make the
+# build write the search index to R2 rather than this stage's disposable
+# local disk. See docker-compose.yml for how each secret id below is sourced
+# from the deploying host's own env.
 #
 # IMAGE_STORAGE_DRIVER isn't a secret (just a mode switch) so it stays a
 # plain ARG — override to empty (`--build-arg IMAGE_STORAGE_DRIVER=`) for a
@@ -45,20 +48,28 @@ COPY . .
 # local disk instead of touching a real R2 bucket.
 ARG IMAGE_STORAGE_DRIVER=r2
 RUN --mount=type=secret,id=database_url \
-	--mount=type=secret,id=direct_url \
 	--mount=type=secret,id=r2_account_id \
 	--mount=type=secret,id=r2_access_key_id \
 	--mount=type=secret,id=r2_secret_access_key \
 	--mount=type=secret,id=r2_bucket_name \
 	--mount=type=secret,id=r2_public_url \
 	DATABASE_URL="$(cat /run/secrets/database_url)" \
-	DIRECT_URL="$(cat /run/secrets/direct_url)" \
 	R2_ACCOUNT_ID="$(cat /run/secrets/r2_account_id)" \
 	R2_ACCESS_KEY_ID="$(cat /run/secrets/r2_access_key_id)" \
 	R2_SECRET_ACCESS_KEY="$(cat /run/secrets/r2_secret_access_key)" \
 	R2_BUCKET_NAME="$(cat /run/secrets/r2_bucket_name)" \
 	R2_PUBLIC_URL="$(cat /run/secrets/r2_public_url)" \
 	IMAGE_STORAGE_DRIVER="$IMAGE_STORAGE_DRIVER" NEXT_TELEMETRY_DISABLED=1 npm run build
+
+# Not part of the `app` image — see docker-compose.yml's `maintenance`
+# service. Reuses `deps`'s already-installed full node_modules (incl.
+# devDependencies like tsx/typescript, needed to run these scripts directly
+# from source) and generated Prisma client, without running the production
+# `next build`.
+FROM base AS maintenance
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
 FROM base AS runner
 WORKDIR /app

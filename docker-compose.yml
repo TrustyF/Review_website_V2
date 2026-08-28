@@ -1,12 +1,20 @@
 services:
+  # The permanent production database (migrated off Neon), not just a local
+  # dev sidecar — needs `restart` like everything else here. Port bound to
+  # loopback only: nothing outside thinkguy needs to reach Postgres directly
+  # (the `app`/`maintenance` services reach it over the compose network as
+  # `db:5432`) — `127.0.0.1:5432` still lets you `psql`/`prisma studio`
+  # against it from the host itself (e.g. over an SSH tunnel) without
+  # exposing it to the LAN.
   db:
-    image: postgres:17.10
+    image: postgres:17.11
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -15,53 +23,52 @@ services:
       timeout: 3s
       retries: 10
 
-  db-backup:
-    image: prodrigestivill/postgres-backup-local
-    container_name: pgdump_backup
-    restart: unless-stopped
-    depends_on:
-      - db
-    volumes:
-      - ./backups:/backups
-    environment:
-      POSTGRES_HOST: db
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      SCHEDULE: "@daily"
-      BACKUP_KEEP_DAYS: 7
-      BACKUP_KEEP_WEEKS: 4
-      BACKUP_KEEP_MONTHS: 6
-      HEALTHCHECK_PORT: 8080
-
-  # Self-hosted app server (see the ThinkCentre migration plan). Sourced from
-  # NEON_DATABASE_URL/NEON_DIRECT_URL (see .env.example), not the plain
-  # DATABASE_URL/DIRECT_URL used by local dev and the local `db` service above
-  # — the DB itself isn't migrating, only the front-end, and keeping separate
-  # var names means `.env` holds both and nothing needs manually swapping
-  # before a build. Build secrets (below, sourced from this same .env via the
-  # top-level `secrets:` block) are only consumed
-  # at image-build time (prisma migrate deploy + the build-time search-index
-  # rebuild) and never persisted into the image's layers — see Dockerfile's
-  # --mount=type=secret usage. The matching `environment` entries are what the
-  # running container actually reads at runtime.
+  # Self-hosted app server (see the ThinkCentre migration plan). `db` is now
+  # the permanent production database (migrated off Neon), not just a local
+  # dev sidecar — so `app` depends on it directly rather than pointing at an
+  # external host.
+  #
+  # DATABASE_URL differs between build and runtime because the build
+  # container isn't attached to this compose file's network the way a
+  # running container is: the build secret (below) reads the plain
+  # DATABASE_URL from `.env` (host-facing, `localhost:5432` — the same value
+  # local dev already uses, since `db`'s port is published to the host) and
+  # `network: host` on the build makes that resolve correctly during `docker
+  # compose build`. The `environment:` entry below is a *different*,
+  # compose-network-facing URL (`db:5432`) for the actually-running
+  # container. `db` must already be up before building `app`, since compose
+  # doesn't gate `build:` on `depends_on`.
+  #
+  # No DIRECT_URL anywhere — that split only ever existed for Neon's pooler;
+  # local Postgres has none, so prisma.config.ts's fallback to DATABASE_URL
+  # applies both at build and runtime, same as local dev already relied on.
+  #
+  # R2 build secrets are only consumed at image-build time (the build-time
+  # search-index rebuild) and never persisted into the image's layers — see
+  # Dockerfile's --mount=type=secret usage.
   app:
     build:
       context: .
+      network: host
       secrets:
         - database_url
-        - direct_url
         - r2_account_id
         - r2_access_key_id
         - r2_secret_access_key
         - r2_bucket_name
         - r2_public_url
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    # Loopback only: `cloudflared` reaches `app` over the compose network
+    # (as `app:3000`), not through this published port — this is purely for
+    # debugging directly on thinkguy (`curl localhost:3000`), not meant to be
+    # reachable from the LAN.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     environment:
-      DATABASE_URL: ${NEON_DATABASE_URL}
-      DIRECT_URL: ${NEON_DIRECT_URL}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       IMAGE_STORAGE_DRIVER: r2
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
@@ -72,6 +79,14 @@ services:
       AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID}
       AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET}
       AUTH_TRUST_HOST: "true"
+      # Auth.js v5 needs its own canonical base URL explicitly — the tunneled
+      # request's Host header isn't reliably reaching it as
+      # review.arthursirjacobs.com, so without this it falls back to the
+      # standalone server's own bind address (HOSTNAME=0.0.0.0 from the
+      # Dockerfile) and builds broken OAuth redirect_uris. Same value as
+      # SITE_URL (both are "the canonical public URL"), reused directly
+      # rather than a second var to keep in sync.
+      AUTH_URL: ${SITE_URL}
       SITE_URL: ${SITE_URL}
       TMDB_ACCESS_TOKEN: ${TMDB_ACCESS_TOKEN}
       TMDB_API_KEY: ${TMDB_API_KEY}
@@ -81,17 +96,74 @@ services:
       GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
 
+  # Cloudflare Tunnel exposing `app` at review.arthursirjacobs.com, so the
+  # ThinkCentre needs no inbound port-forwarding. Token-based (created via the
+  # Cloudflare dashboard's Networking > Tunnels > Routes UI, not a locally
+  # managed config.yml) — the ingress rules (hostname -> service) live on
+  # Cloudflare's side, not in this repo. On the same default network as `app`
+  # so it can reach it by service name.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - app
+
+  # Not run continuously — invoked ad hoc (`docker compose run --rm
+  # maintenance npm run <script>`) by thinkguy's crontab for the scheduled
+  # jobs that used to be GitHub Actions workflows (enrich-db, cleanup-*,
+  # purge-deleted-changelogs, backup-database), which broke once the DB
+  # stopped being reachable from the public internet. Built from the `deps`
+  # Dockerfile stage (full node_modules incl. devDependencies like tsx, plus
+  # a generated Prisma client) rather than the trimmed `runner` stage `app`
+  # uses, since these are source-level tsx scripts, not the built server.
+  maintenance:
+    build:
+      context: .
+      target: maintenance
+      # The `deps` stage's `prisma generate` needs DATABASE_URL to resolve to
+      # *something* at build time (see Dockerfile's own comment on this) —
+      # without declaring the secret here too, `deps`' build only worked
+      # when Docker happened to reuse a layer cached by `app`'s build (which
+      # does declare it); once that cache expires, this build fails outright
+      # with a missing secret file.
+      secrets:
+        - database_url
+    # Only used to hand the pg_dump output (produced on the host by
+    # thinkguy's crontab, via `docker compose exec db pg_dump`) to
+    # backup_database.ts's `npm run backup_database -- backups/<file>` — the
+    # file only lives here transiently, deleted by the same cron entry right
+    # after upload. Not a durable backup location itself (R2 is).
+    volumes:
+      - ./backups:/app/backups
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      IMAGE_STORAGE_DRIVER: r2
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      R2_BUCKET_NAME: ${R2_BUCKET_NAME}
+      R2_PUBLIC_URL: ${R2_PUBLIC_URL}
+      R2_BACKUP_ACCESS_KEY_ID: ${R2_BACKUP_ACCESS_KEY_ID}
+      R2_BACKUP_SECRET_ACCESS_KEY: ${R2_BACKUP_SECRET_ACCESS_KEY}
+      R2_BACKUP_BUCKET_NAME: ${R2_BACKUP_BUCKET_NAME}
+      TMDB_ACCESS_TOKEN: ${TMDB_ACCESS_TOKEN}
+      TMDB_API_KEY: ${TMDB_API_KEY}
+      IGDB_CLIENT_ID: ${IGDB_CLIENT_ID}
+      IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET}
+      COMIC_VINE_KEY: ${COMIC_VINE_KEY}
+      GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY}
+
 volumes:
   pgdata:
 
 # Sourced from this same .env at `docker compose build` time and exposed to
 # the Dockerfile only via --mount=type=secret,env=... (see Dockerfile) — kept
-# out of build args/image layers since these are real Neon/R2 credentials.
+# out of build args/image layers since these are real R2 credentials (and,
+# for database_url, the local Postgres password).
 secrets:
   database_url:
-    environment: NEON_DATABASE_URL
-  direct_url:
-    environment: NEON_DIRECT_URL
+    environment: DATABASE_URL
   r2_account_id:
     environment: R2_ACCOUNT_ID
   r2_access_key_id:

@@ -70,5 +70,6 @@ next-env.d.ts
 /CLAUDE.md
 /AGENTS.md
 /backups/
+/cron-logs/
 /logo.psd
 /logo.ai
