@@ -98,6 +98,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      firewall-init:
+        condition: service_completed_successfully
     # Loopback only: `cloudflared` reaches `app` over the compose network
     # (as `app:3000`), not through this published port — this is purely for
     # debugging directly on the host (`curl localhost:3000`), not meant to be
@@ -206,6 +208,9 @@ services:
   uptime-kuma:
     image: louislam/uptime-kuma:1
     restart: unless-stopped
+    depends_on:
+      firewall-init:
+        condition: service_completed_successfully
     ports:
       - "3001:3001"
     volumes:
@@ -218,10 +223,39 @@ services:
   beszel-hub:
     image: henrygd/beszel:latest
     restart: unless-stopped
+    depends_on:
+      firewall-init:
+        condition: service_completed_successfully
     ports:
       - "8090:8090"
     volumes:
       - beszel-hub-data:/beszel_data
+
+  # Applies the DOCKER-USER iptables rules (see scripts/docker-user-lan-
+  # isolation.sh) that stop this project's Docker network from reaching the
+  # LAN/other private ranges. Runs as part of the compose stack itself
+  # (rather than a hand-installed host-level systemd unit) so a fresh deploy
+  # can never forget or drift from this protection — `docker compose up`
+  # reapplies it (idempotently) on every redeploy. `network_mode: host` +
+  # `NET_ADMIN` are required since DOCKER-USER is a host-level iptables
+  # chain, not reachable from a container's own network namespace. Exits
+  # after applying the rules; other services block on it via
+  # `service_completed_successfully` so they never come up LAN-reachable
+  # before this has run.
+  firewall-init:
+    image: alpine:3.20
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./scripts/docker-user-lan-isolation.sh:/docker-user-lan-isolation.sh:ro
+    entrypoint:
+      [
+        "sh",
+        "-c",
+        "apk add --no-cache iptables >/dev/null && /docker-user-lan-isolation.sh",
+      ]
+    restart: "no"
 
   # `network_mode: host` (rather than the compose network everything else
   # uses) is what Beszel's own docs call for here — it's how the agent gets
@@ -247,6 +281,18 @@ volumes:
   pgdata:
   uptime-kuma-data:
   beszel-hub-data:
+
+# Pinned rather than left to Docker's IPAM allocator so
+# scripts/docker-user-lan-isolation.sh's hardcoded SUBNET can never silently
+# drift from whatever subnet this project's network actually gets — this is
+# the subnet already in use, so pinning it here is a no-op today and only
+# guards against a future `docker compose down` + network recreation picking
+# a different one.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
 
 # Sourced from this same .env at `docker compose build` time and exposed to
 # the Dockerfile only via --mount=type=secret,env=... (see Dockerfile) — kept

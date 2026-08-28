@@ -14,4 +14,4 @@ git fetch origin main
 git reset --hard origin/main
 
 sudo docker compose build app maintenance
-sudo docker compose up -d db app cloudflared
+sudo docker compose up -d db app cloudflared firewall-init uptime-kuma beszel-hub beszel-agent
