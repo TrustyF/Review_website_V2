@@ -249,11 +249,16 @@ services:
       - NET_ADMIN
     volumes:
       - ./scripts/docker-user-lan-isolation.sh:/docker-user-lan-isolation.sh:ro
+    # Invoked as `sh /docker-user-lan-isolation.sh` rather than executing the
+    # bind-mounted script directly — this repo's had git-on-Windows fail to
+    # preserve the executable bit on shell scripts before (see "Changed mode
+    # to register as executable"), and this sidesteps that class of bug
+    # entirely rather than relying on the bit surviving every future edit.
     entrypoint:
       [
         "sh",
         "-c",
-        "apk add --no-cache iptables >/dev/null && /docker-user-lan-isolation.sh",
+        "apk add --no-cache iptables >/dev/null && sh /docker-user-lan-isolation.sh",
       ]
     restart: "no"
 
