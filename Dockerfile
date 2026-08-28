@@ -32,20 +32,23 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # `npm run build` runs `prisma migrate deploy` against the real DB and (via
-# build-search-index.ts) writes the persisted search index through
-# getImageStorage() — both need real credentials at build time, same as they
-# already do on Vercel. DATABASE_URL points at the `db` compose service's
-# published port via docker-compose.yml's `build: network: host` (no
-# DIRECT_URL — local Postgres has no pooler, so prisma.config.ts's fallback
-# to DATABASE_URL applies, same as local dev). The R2_* secrets make the
-# build write the search index to R2 rather than this stage's disposable
-# local disk. See docker-compose.yml for how each secret id below is sourced
-# from the deploying host's own env.
+# build-search-index.ts) writes the persisted search index to local disk —
+# search-actions.ts always uses getLocalDiskStorage() for this regardless of
+# IMAGE_STORAGE_DRIVER (this container is long-lived, not many churning
+# serverless instances, so there's no cross-instance store to keep it in
+# sync with — see that file's own comment), so it lands in this stage's
+# public/ and rides along with everything else COPYed into `runner` below.
+# DATABASE_URL points at the `db` compose service's published port via
+# docker-compose.yml's `build: network: host` (no DIRECT_URL — local
+# Postgres has no pooler, so prisma.config.ts's fallback to DATABASE_URL
+# applies, same as local dev).
 #
-# IMAGE_STORAGE_DRIVER isn't a secret (just a mode switch) so it stays a
-# plain ARG — override to empty (`--build-arg IMAGE_STORAGE_DRIVER=`) for a
-# local test build that writes the search index to this stage's disposable
-# local disk instead of touching a real R2 bucket.
+# The R2_* secrets and IMAGE_STORAGE_DRIVER ARG below are no longer needed
+# for the search index specifically, but are still threaded through in case
+# a future build-time step needs to read/write real R2 objects (e.g.
+# pre-rendering a page that touches poster-resolver.ts). See docker-
+# compose.yml for how each secret id is sourced from the deploying host's
+# own env.
 ARG IMAGE_STORAGE_DRIVER=r2
 RUN --mount=type=secret,id=database_url \
 	--mount=type=secret,id=r2_account_id \

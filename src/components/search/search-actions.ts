@@ -7,7 +7,7 @@ import { EnrichmentStatus, MediaType } from "@prisma/client";
 // server action's cold-start bundle doesn't pull in sharp's native binary —
 // see asset-paths.ts's own comment for why that matters here specifically.
 import { toPersonPhotoSrc, toPosterSrc } from "@/server/resolvers/asset-paths";
-import { getImageStorage } from "@/server/storage/image-storage";
+import { getLocalDiskStorage } from "@/server/storage/image-storage";
 import { hasPhotoEligibleRole } from "@/server/resolvers/person-photo-eligibility";
 
 export type GlobalSearchResult =
@@ -30,6 +30,15 @@ export type GlobalSearchResult =
 			// Every DONE, non-deleted credit they have, any role — not just the
 			// ones counted toward mainRole.
 			creditCount: number;
+	  }
+	| {
+			kind: "company";
+			id: number;
+			name: string;
+			// Same mainRoleFor pick as person entries (Studio/Developer/Publisher
+			// are the only role names a Company ever carries — see crew.prisma).
+			mainRole: string;
+			creditCount: number;
 	  };
 
 const SEARCH_LIMIT = 8;
@@ -37,10 +46,11 @@ const SEARCH_LIMIT = 8;
 // Same typo tolerance as everywhere else fuzzy search happens in this app
 // (list-actions.ts, the old per-page search) — 0.35 survives a couple of
 // wrong/missing letters without turning every query into a firehose of
-// unrelated results. Both entry kinds below share the "title" key (a
-// person's own name, aliased to it — see SearchablePerson) so one Fuse
-// index ranks media and people against each other directly instead of
-// running two separate searches and interleaving results after the fact.
+// unrelated results. All three entry kinds below share the "title" key (a
+// person's or company's own name, aliased to it — see SearchablePerson and
+// SearchableCompany) so one Fuse index ranks media, people, and companies
+// against each other directly instead of running separate searches and
+// interleaving results after the fact.
 const FUSE_OPTIONS = {
 	keys: [
 		{ name: "title", weight: 0.7 },
@@ -76,7 +86,16 @@ type SearchablePerson = {
 	creditCount: number;
 };
 
-type SearchableEntry = SearchableMedia | SearchablePerson;
+type SearchableCompany = {
+	kind: "company";
+	id: number;
+	// Aliased from Company.name, same reasoning as SearchablePerson's title.
+	title: string;
+	mainRole: string;
+	creditCount: number;
+};
+
+type SearchableEntry = SearchableMedia | SearchablePerson | SearchableCompany;
 
 // Priority order for which of a person's own credited roles gets featured
 // as their headline in search results — notability-based, not frequency-
@@ -95,6 +114,7 @@ const ROLE_LABEL_PRIORITY = [
 	"Developer",
 	"Story",
 	"Artist",
+	"Studio",
 	"Publisher",
 	"Executive Producer",
 	"Producer",
@@ -142,27 +162,25 @@ const CACHE_TTL_MS = 60 * 60_000;
 // it looks like it should on a cold, un-JIT-warmed instance.
 const DURABLE_TTL_MS = 3 * 24 * 60 * 60_000;
 
-// Without Vercel Fluid Compute (no warm-instance reuse across requests), the
-// module-scope cache above almost never hits — nearly every search pays the
-// full DB-query-plus-Fuse-build cold path (measured at ~850ms in production,
-// [search-index] cacheHit:false, dbMs~830, back when this was a single
-// media-plus-credits-join query). Persisting the query's *result* (not the
-// Fuse instance itself — that's not serializable, and rebuilding it from
-// data is the cheap part anyway) through the same ImageStorage backend
-// already used for posters/banners means a cold instance reads this from R2
-// (a network round trip, but far cheaper than two fresh Postgres queries)
-// instead of hitting the database at all. Repurposing ImageStorage
-// for a JSON blob instead of image bytes is a bit of a name mismatch, but
-// it's already the one abstraction in this app for "durable key-value
-// storage that survives past this instance," and stood up exactly once per
-// environment (see getImageStorage) — not worth a second storage backend
-// just for this.
+// Originally this measured ~850ms in production (media-plus-credits-join
+// query) without Vercel Fluid Compute's warm-instance reuse — every cold
+// instance paid the full DB-query-plus-Fuse-build path, so the result was
+// persisted through R2 for the next cold instance to read back cheaply
+// instead of hitting the database again. Now that the app is one long-lived
+// self-hosted container (see docker-compose.yml) rather than many churning
+// serverless instances, that cross-instance sharing problem doesn't exist —
+// this is kept on disk mainly so the build-time rebuild (build-search-
+// index.ts, baked into the image) is already warm for this container's
+// whole life, and so a runtime invalidation doesn't cost every subsequent
+// search a fresh DB round trip. getLocalDiskStorage() (not getImageStorage())
+// on purpose — this never needs R2's durability or a public URL, just a
+// local file that outlives this one process.
 const PERSISTED_INDEX_DIR = "search-index";
 const PERSISTED_INDEX_FILENAME = "media.json";
 
 // Bumped any time SearchableEntry's own shape *or* the persisted payload's
 // shape changes (last: adding the serialized `fuseIndex` alongside `items`).
-// Without this, a blob written by an older deploy — still sitting in R2,
+// Without this, a blob written by an older deploy — still sitting on disk,
 // still inside its own DURABLE_TTL_MS window — would get read back
 // and trusted as-is: a schema change like an added/renamed field wouldn't
 // necessarily throw during JSON.parse, it'd just silently produce
@@ -173,14 +191,15 @@ const PERSISTED_INDEX_FILENAME = "media.json";
 // because old blobs had no `kind` field to match "media" against. A version
 // mismatch is treated exactly like the TTL/corrupt-JSON cases below: just
 // another reason to treat this as a miss and rebuild from the DB.
-const PERSISTED_INDEX_VERSION = 4;
+const PERSISTED_INDEX_VERSION = 5;
 
 // JSON has no Date type — a media entry's releaseDate round-trips as an ISO
 // string (or null) on either side of read/writePersistedIndex instead;
-// person entries pass through unchanged.
+// person and company entries pass through unchanged.
 type PersistedSearchEntry =
 	| (Omit<SearchableMedia, "releaseDate"> & { releaseDate: string | null })
-	| SearchablePerson;
+	| SearchablePerson
+	| SearchableCompany;
 
 // The Fuse index built from `items` (Fuse.createIndex(...).toJSON()),
 // persisted alongside the raw items so a cold instance can hand it straight
@@ -201,7 +220,7 @@ type PersistedSearchIndex = {
 };
 
 function toPersisted(entry: SearchableEntry): PersistedSearchEntry {
-	if (entry.kind === "person") return entry;
+	if (entry.kind !== "media") return entry;
 	return {
 		...entry,
 		releaseDate: entry.releaseDate ? entry.releaseDate.toISOString() : null,
@@ -209,7 +228,7 @@ function toPersisted(entry: SearchableEntry): PersistedSearchEntry {
 }
 
 function fromPersisted(entry: PersistedSearchEntry): SearchableEntry {
-	if (entry.kind === "person") return entry;
+	if (entry.kind !== "media") return entry;
 	return {
 		...entry,
 		releaseDate: entry.releaseDate ? new Date(entry.releaseDate) : null,
@@ -226,7 +245,7 @@ async function readPersistedIndex(): Promise<{
 	fuseIndex: SerializedFuseIndex;
 } | null> {
 	try {
-		const bytes = await getImageStorage().read(
+		const bytes = await getLocalDiskStorage().read(
 			PERSISTED_INDEX_DIR,
 			PERSISTED_INDEX_FILENAME,
 		);
@@ -257,7 +276,7 @@ async function writePersistedIndex(items: SearchableEntry[]): Promise<void> {
 		items: items.map(toPersisted),
 		fuseIndex,
 	};
-	await getImageStorage().write(
+	await getLocalDiskStorage().write(
 		PERSISTED_INDEX_DIR,
 		PERSISTED_INDEX_FILENAME,
 		Buffer.from(JSON.stringify(payload)),
@@ -266,16 +285,16 @@ async function writePersistedIndex(items: SearchableEntry[]): Promise<void> {
 
 // Called by the admin actions that change title/overview/isDeleted/DONE
 // status — the fields this index is actually built from. Clears this
-// instance's module-scope cache immediately; other warm instances still
-// converge via CACHE_TTL_MS rather than instantly, an acceptable gap for how
-// rarely and low-stakes these edits are. The durable copy is removed too
-// (rather than left to its own TTL) so a cold instance elsewhere can't
-// resurrect the pre-edit data in the meantime — the next getSearchIndex()
-// call anywhere pays one DB rebuild and re-persists a fresh copy, same
-// one-time cost as before this durable cache existed.
+// process's module-scope cache immediately and removes the on-disk copy so a
+// restart right after an edit can't resurrect the pre-edit data — the next
+// getSearchIndex() call pays one DB rebuild and re-persists a fresh copy,
+// same one-time cost as before this durable cache existed.
 export async function invalidateSearchIndex() {
 	cachedIndex = null;
-	await getImageStorage().remove(PERSISTED_INDEX_DIR, PERSISTED_INDEX_FILENAME);
+	await getLocalDiskStorage().remove(
+		PERSISTED_INDEX_DIR,
+		PERSISTED_INDEX_FILENAME,
+	);
 	logSearchIndexEvent({ invalidated: true });
 }
 
@@ -304,15 +323,16 @@ function logSearchIndexEvent(event: Record<string, unknown>) {
 	console.log("[search-index]", JSON.stringify(event));
 }
 
-// Two independent queries rather than one media-with-credits-join like this
-// used to be — a person surfaces as their own result now (see
-// GlobalSearchResult's "person" variant) instead of just nudging a media
-// item's own relevance, so there's no join left to do here. Only people
-// credited on at least one DONE, non-deleted media are included — otherwise
-// a search could surface someone whose only work here is still PENDING or
-// deleted, a dead end with nothing to actually show for them.
+// Three independent queries rather than one media-with-credits-join like this
+// used to be — a person or company surfaces as its own result now (see
+// GlobalSearchResult's "person"/"company" variants) instead of just nudging a
+// media item's own relevance, so there's no join left to do here. Only
+// people/companies credited on at least one DONE, non-deleted media are
+// included — otherwise a search could surface an entity whose only work here
+// is still PENDING or deleted, a dead end with nothing to actually show for
+// it.
 async function fetchSearchEntriesFromDb(): Promise<SearchableEntry[]> {
-	const [mediaRows, personRows] = await Promise.all([
+	const [mediaRows, personRows, companyRows] = await Promise.all([
 		dbPublic.media.findMany({
 			where: { enrichmentStatus: EnrichmentStatus.DONE },
 			select: {
@@ -359,6 +379,35 @@ async function fetchSearchEntriesFromDb(): Promise<SearchableEntry[]> {
 			},
 			orderBy: { id: "asc" },
 		}),
+		db.company.findMany({
+			where: {
+				credits: {
+					some: {
+						media: {
+							enrichmentStatus: EnrichmentStatus.DONE,
+							isDeleted: false,
+						},
+					},
+				},
+			},
+			select: {
+				id: true,
+				name: true,
+				// Same reasoning as Person.credits above — every DONE, non-deleted
+				// credit, one row per credit, feeding both creditCount and
+				// mainRoleFor.
+				credits: {
+					where: {
+						media: {
+							enrichmentStatus: EnrichmentStatus.DONE,
+							isDeleted: false,
+						},
+					},
+					select: { role: { select: { name: true } } },
+				},
+			},
+			orderBy: { id: "asc" },
+		}),
 	]);
 
 	const mediaEntries: SearchableEntry[] = mediaRows.map((m) => ({
@@ -392,7 +441,24 @@ async function fetchSearchEntriesFromDb(): Promise<SearchableEntry[]> {
 			Number(b.photoPath != null) - Number(a.photoPath != null) ||
 			b.creditCount - a.creditCount,
 	);
-	return [...mediaEntries, ...personEntries];
+
+	// No photo signal to sort by (Company has no logo-in-search concept yet —
+	// see credit-media-list-page.tsx, which doesn't render Company.logoPath
+	// either), so most-credited first is the only notability signal available.
+	const companyEntries: SearchableEntry[] = companyRows
+		.map((c) => {
+			const roleNames = c.credits.map((cr) => cr.role.name);
+			return {
+				kind: "company" as const,
+				id: c.id,
+				title: c.name,
+				mainRole: mainRoleFor(roleNames),
+				creditCount: c.credits.length,
+			};
+		})
+		.sort((a, b) => b.creditCount - a.creditCount);
+
+	return [...mediaEntries, ...personEntries, ...companyEntries];
 }
 
 async function getSearchIndex(): Promise<Fuse<SearchableEntry>> {
@@ -445,7 +511,7 @@ async function getSearchIndex(): Promise<Fuse<SearchableEntry>> {
 	return fuse;
 }
 
-// Media-and-people fuzzy search across the whole collection, for the
+// Media/people/company fuzzy search across the whole collection, for the
 // navbar's jump-to-anything search — unlike MediaFilterGrid's old per-page
 // search, this isn't scoped to one type or one already-loaded list. A quick
 // "jump to a title (or a person)" tool doesn't need overview-text matches
@@ -507,26 +573,60 @@ export async function searchAllMedia(
 		if (person) matches[slot] = person;
 	});
 
-	const results = matches.slice(0, SEARCH_LIMIT).map(
-		({ item }): GlobalSearchResult =>
-			item.kind === "media"
-				? {
+	// Same idea as the person reranking above, minus the photo signal (Company
+	// has no logo-in-search concept — see fetchSearchEntriesFromDb's own
+	// comment on companyEntries): credit count breaks a near-tie in fuzzy
+	// match quality, but never overrides a genuinely better/worse text match.
+	const companySlots = matches
+		.map((m, i) => (m.item.kind === "company" ? i : -1))
+		.filter((i) => i !== -1);
+	const companiesRanked = matches
+		.filter(
+			(m): m is (typeof matches)[number] & { item: SearchableCompany } =>
+				m.item.kind === "company",
+		)
+		.sort((a, b) => {
+			const scoreDiff = (a.score ?? 0) - (b.score ?? 0);
+			if (Math.abs(scoreDiff) > PERSON_SCORE_TIE_THRESHOLD) return scoreDiff;
+			return b.item.creditCount - a.item.creditCount;
+		});
+	companySlots.forEach((slot, i) => {
+		const company = companiesRanked[i];
+		if (company) matches[slot] = company;
+	});
+
+	const results = matches
+		.slice(0, SEARCH_LIMIT)
+		.map(({ item }): GlobalSearchResult => {
+			switch (item.kind) {
+				case "media":
+					return {
 						kind: "media",
 						id: item.id,
 						title: item.title,
 						type: item.type,
 						releaseDate: item.releaseDate,
 						posterSrc: toPosterSrc(item.id, item.posterPath),
-					}
-				: {
+					};
+				case "person":
+					return {
 						kind: "person",
 						id: item.id,
 						name: item.title,
 						photoSrc: toPersonPhotoSrc(item.id, item.photoPath),
 						mainRole: item.mainRole,
 						creditCount: item.creditCount,
-					},
-	);
+					};
+				case "company":
+					return {
+						kind: "company",
+						id: item.id,
+						name: item.title,
+						mainRole: item.mainRole,
+						creditCount: item.creditCount,
+					};
+			}
+		});
 
 	console.log(
 		"[search-action]",

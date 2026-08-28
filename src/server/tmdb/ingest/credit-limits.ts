@@ -7,11 +7,11 @@
 // touch rows already ingested.
 
 // TMDB's cast `order` is billing order (0 = top-billed) — the only
-// notability signal cast credits actually carry. 25 comfortably covers every
-// named/speaking role a media page or search result would plausibly be
-// shown for; TMDB casts often run into the hundreds once background/extra
+// notability signal cast credits actually carry. 100 comfortably covers
+// every named/speaking role a media page or search result would plausibly
+// be shown for; TMDB casts often run into the hundreds once background/extra
 // entries are included.
-export const MAX_BILLED_CAST = 25;
+export const MAX_BILLED_CAST = 250;
 
 // Crew has no equivalent ranking field, and rosters can run into the
 // hundreds for VFX-heavy productions (individual compositors, riggers,

@@ -193,16 +193,16 @@ export async function MediaCreditsDetails({
 				</div>
 			)}
 
-			{/*{studioEntries.length > 0 && (*/}
-			{/*	<dl className={styles.facts}>*/}
-			{/*		<div className={styles.fact}>*/}
-			{/*			<dt className={styles.fact_label}>Studio</dt>*/}
-			{/*			<dd className={styles.fact_value}>*/}
-			{/*				<CreditNames entries={studioEntries} />*/}
-			{/*			</dd>*/}
-			{/*		</div>*/}
-			{/*	</dl>*/}
-			{/*)}*/}
+			{studioEntries.length > 0 && (
+				<dl className={styles.facts}>
+					<div className={styles.fact}>
+						<dt className={styles.fact_label}>Studio</dt>
+						<dd className={styles.fact_value}>
+							<CreditNames entries={studioEntries} />
+						</dd>
+					</div>
+				</dl>
+			)}
 
 			{otherRoles.length > 0 && (
 				<details className={styles.credits}>

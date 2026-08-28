@@ -248,3 +248,19 @@ export function getImageStorage(): ImageStorage {
 			: new LocalImageStorage();
 	return cached;
 }
+
+// Cached separately from getImageStorage()'s own instance — always local
+// disk regardless of IMAGE_STORAGE_DRIVER. For data that (unlike posters/
+// banners/crops) is never served directly to a browser and doesn't need a
+// public URL or R2's cross-instance durability: this app now runs as one
+// long-lived self-hosted container rather than many churning Vercel
+// instances (see search-actions.ts's own persisted-index comments, written
+// back when R2 was the only way a cold serverless instance could share that
+// data at all), so a plain local file already outlives everything that
+// actually needs it to.
+let cachedLocal: ImageStorage | null = null;
+
+export function getLocalDiskStorage(): ImageStorage {
+	if (!cachedLocal) cachedLocal = new LocalImageStorage();
+	return cachedLocal;
+}

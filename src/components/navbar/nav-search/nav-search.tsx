@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@/components/ui/link";
 import Image from "next/image";
-import { UserRound } from "lucide-react";
+import { Building2, UserRound } from "lucide-react";
 import { MediaType } from "@prisma/client";
 import {
 	GlobalSearchResult,
@@ -97,7 +97,9 @@ export function NavSearch() {
 								href={
 									result.kind === "media"
 										? `/media/${result.id}`
-										: `/credits/person/${result.id}`
+										: result.kind === "person"
+											? `/credits/person/${result.id}`
+											: `/credits/company/${result.id}`
 								}
 								key={`${result.kind}-${result.id}`}
 								className={styles.result}
@@ -110,7 +112,7 @@ export function NavSearch() {
 										height={80}
 										className={styles.result_poster}
 									/>
-								) : result.photoSrc ? (
+								) : result.kind === "person" && result.photoSrc ? (
 									<Image
 										src={result.photoSrc}
 										alt=""
@@ -120,7 +122,11 @@ export function NavSearch() {
 									/>
 								) : (
 									<span className={styles.result_poster_placeholder}>
-										<UserRound size={24} />
+										{result.kind === "company" ? (
+											<Building2 size={24} />
+										) : (
+											<UserRound size={24} />
+										)}
 									</span>
 								)}
 								<div className={styles.result_info}>
