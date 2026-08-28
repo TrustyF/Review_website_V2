@@ -1,5 +1,5 @@
 # TODO: Make app able to run from fresh build. Tested via a real fresh
-# `git clone` + `cp .env.example .env` + `docker compose up -d` on thinkguy
+# `git clone` + `cp .env.example .env` + `docker compose up -d` on the host
 # (a throwaway `review-website-nextjs-fresh-test` checkout) — found:
 #   - `docker compose up -d` with no service names also starts `cloudflared`
 #     (fails without a real CLOUDFLARE_TUNNEL_TOKEN, can't be defaulted) and
@@ -11,7 +11,7 @@
 #     `MissingSecret` in production the moment anything calls auth() (most
 #     pages), unlike DATABASE_URL/IMAGE_STORAGE_DRIVER which now have real
 #     fallbacks — no code path degrades gracefully without it.
-#   - Two thinkguy-specific test-only gotchas already resolved during that
+#   - Two host-specific test-only gotchas already resolved during that
 #     same session, not app bugs: ports 5432/3000 collide with the real
 #     production containers on the same host (fix: a
 #     docker-compose.override.yml remapping them for a side-by-side test),
@@ -21,7 +21,7 @@
 services:
   # The permanent production database (migrated off Neon), not just a local
   # dev sidecar — needs `restart` like everything else here. Port bound to
-  # loopback only: nothing outside thinkguy needs to reach Postgres directly
+  # loopback only: nothing outside the host needs to reach Postgres directly
   # (the `app`/`maintenance` services reach it over the compose network as
   # `db:5432`) — `127.0.0.1:5432` still lets you `psql`/`prisma studio`
   # against it from the host itself (e.g. over an SSH tunnel) without
@@ -53,7 +53,7 @@ services:
       timeout: 3s
       retries: 10
 
-  # Self-hosted app server (see the ThinkCentre migration plan). `db` is now
+  # Self-hosted app server (see the self-hosting migration plan). `db` is now
   # the permanent production database (migrated off Neon), not just a local
   # dev sidecar — so `app` depends on it directly rather than pointing at an
   # external host.
@@ -100,7 +100,7 @@ services:
         condition: service_healthy
     # Loopback only: `cloudflared` reaches `app` over the compose network
     # (as `app:3000`), not through this published port — this is purely for
-    # debugging directly on thinkguy (`curl localhost:3000`), not meant to be
+    # debugging directly on the host (`curl localhost:3000`), not meant to be
     # reachable from the LAN.
     ports:
       - "127.0.0.1:3000:3000"
@@ -137,7 +137,7 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
 
   # Cloudflare Tunnel exposing `app` at review.arthursirjacobs.com, so the
-  # ThinkCentre needs no inbound port-forwarding. Token-based (created via the
+  # host needs no inbound port-forwarding. Token-based (created via the
   # Cloudflare dashboard's Networking > Tunnels > Routes UI, not a locally
   # managed config.yml) — the ingress rules (hostname -> service) live on
   # Cloudflare's side, not in this repo. On the same default network as `app`
@@ -150,7 +150,7 @@ services:
       - app
 
   # Not run continuously — invoked ad hoc (`docker compose run --rm
-  # maintenance npm run <script>`) by thinkguy's crontab for the scheduled
+  # maintenance npm run <script>`) by the host's crontab for the scheduled
   # jobs that used to be GitHub Actions workflows (enrich-db, cleanup-*,
   # purge-deleted-changelogs, backup-database), which broke once the DB
   # stopped being reachable from the public internet. Built from the `deps`
@@ -170,7 +170,7 @@ services:
       secrets:
         - database_url
     # Only used to hand the pg_dump output (produced on the host by
-    # thinkguy's crontab, via `docker compose exec db pg_dump`) to
+    # the host's crontab, via `docker compose exec db pg_dump`) to
     # backup_database.ts's `npm run backup_database -- backups/<file>` — the
     # file only lives here transiently, deleted by the same cron entry right
     # after upload. Not a durable backup location itself (R2 is).
@@ -195,8 +195,55 @@ services:
       COMIC_VINE_KEY: ${COMIC_VINE_KEY}
       GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY}
 
+  # Uptime monitoring: pings `app` (and can be pointed at review.arthursirjacobs.com
+  # itself) and alerts if it goes down. Loopback only, same as `app`/`db` —
+  # this is an admin-only dashboard, not meant to be reachable from the LAN.
+  # SSH-tunnel to it (`ssh -L 3001:localhost:3001 <host>`) or add a second
+  # `cloudflared` route later if remote access without SSH is wanted.
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+
+  # System/container resource monitoring (CPU, RAM, disk, network, per-container
+  # stats) — hub is the dashboard + data store, agent is what actually reads
+  # the host's stats and reports them in. Same loopback-only rationale as
+  # uptime-kuma above.
+  beszel-hub:
+    image: henrygd/beszel:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8090:8090"
+    volumes:
+      - beszel-hub-data:/beszel_data
+
+  # `network_mode: host` (rather than the compose network everything else
+  # uses) is what Beszel's own docs call for here — it's how the agent gets
+  # accurate host-level network/disk stats instead of just the container's
+  # own. Docker socket is mounted read-only so it can also report per-container
+  # stats (for `app`, `db`, etc.) alongside host-level ones.
+  #
+  # BESZEL_AGENT_KEY has no default and can't be filled in ahead of time: it's
+  # a public key beszel-hub generates when you add a new "system" from its web
+  # UI (127.0.0.1:8090 above) — create the system there first, copy the key it
+  # shows you into .env, then start this service.
+  beszel-agent:
+    image: henrygd/beszel-agent:latest
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      KEY: ${BESZEL_AGENT_KEY}
+      HUB_URL: http://127.0.0.1:8090
+
 volumes:
   pgdata:
+  uptime-kuma-data:
+  beszel-hub-data:
 
 # Sourced from this same .env at `docker compose build` time and exposed to
 # the Dockerfile only via --mount=type=secret,env=... (see Dockerfile) — kept

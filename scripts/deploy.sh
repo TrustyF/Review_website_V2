@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run on thinkguy (~/review-website-nextjs) to deploy whatever's currently on
+# Run on the host (~/review-website-nextjs) to deploy whatever's currently on
 # origin/main — collapses the manual sequence (git pull, docker compose
 # build, docker compose up -d) into one command. Not triggered automatically
 # by anything; you run this yourself when you want to deploy.

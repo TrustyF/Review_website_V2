@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# Multi-stage build for self-hosting off Vercel (see the ThinkCentre migration
+# Multi-stage build for self-hosting off Vercel (see the self-hosting migration
 # plan). Uses next.config.ts's `output: "standalone"` so the runtime stage
 # only needs the traced server bundle, not the full node_modules tree.
 #

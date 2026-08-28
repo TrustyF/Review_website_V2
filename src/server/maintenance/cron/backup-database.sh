@@ -1,5 +1,5 @@
 #!/bin/bash
-# Invoked by thinkguy's crontab (see the ThinkCentre migration plan) —
+# Invoked by the host's crontab (see the self-hosting migration plan) —
 # replaces the old backup-database.yml GitHub Actions workflow, which dumped
 # Neon over the network. Dumps the local `db` service directly instead, then
 # hands the file to backup-database.ts (via the `maintenance` service) for

@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
 	/* config options here */
-	// Self-hosted deployments (see the ThinkCentre migration plan) run the
+	// Self-hosted deployments (see the self-hosting migration plan) run the
 	// traced standalone server bundle rather than `next start` against the
 	// full node_modules tree — this is a no-op for Vercel's own build.
 	output: "standalone",

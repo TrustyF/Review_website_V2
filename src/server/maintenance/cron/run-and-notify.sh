@@ -1,6 +1,6 @@
 #!/bin/bash
 # Usage: run-and-notify.sh <job-name> <command...>
-# Wraps every thinkguy cron job (see thinkguy's crontab) so a failure of any
+# Wraps every host cron job (see the host's crontab) so a failure of any
 # kind — a JS exception inside the job, a `docker compose run`/build
 # failure, pg_dump erroring inside backup-database.sh, anything with a
 # non-zero exit — creates an in-app admin notification, not just an
