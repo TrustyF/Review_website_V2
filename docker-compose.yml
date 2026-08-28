@@ -6,19 +6,29 @@ services:
   # `db:5432`) — `127.0.0.1:5432` still lets you `psql`/`prisma studio`
   # against it from the host itself (e.g. over an SSH tunnel) without
   # exposing it to the LAN.
+  #
+  # POSTGRES_USER/PASSWORD/DB default to user/password/review_db when unset —
+  # these are inherently local/throwaway credentials (a fresh Postgres
+  # container with no external exposure), safe to bake a convention default
+  # into, unlike AUTH_SECRET or any API key. Lets `docker compose up` work
+  # against a real local db with zero .env configured; still overridable.
   db:
     image: postgres:17.11
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-review_db}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-user} -d ${POSTGRES_DB:-review_db}",
+        ]
       interval: 3s
       timeout: 3s
       retries: 10
@@ -68,7 +78,7 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-review_db}
       IMAGE_STORAGE_DRIVER: r2
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
@@ -137,7 +147,7 @@ services:
     volumes:
       - ./backups:/app/backups
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-review_db}
       IMAGE_STORAGE_DRIVER: r2
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
