@@ -11,6 +11,7 @@ export type NotificationEntry = {
 	readAt: Date | null;
 	list: { id: number; title: string } | null;
 	media: { id: number; title: string } | null;
+	message: string | null;
 };
 
 const NOTIFICATION_SELECT = {
@@ -20,6 +21,7 @@ const NOTIFICATION_SELECT = {
 	readAt: true,
 	list: { select: { id: true, title: true } },
 	media: { select: { id: true, title: true } },
+	message: true,
 } as const;
 
 async function requireUserId(): Promise<string> {
@@ -37,6 +39,7 @@ export async function createNotification(input: {
 	userId: string;
 	listId?: number;
 	mediaId?: number;
+	message?: string;
 }): Promise<void> {
 	await db.notification.create({ data: input });
 }

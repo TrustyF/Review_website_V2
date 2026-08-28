@@ -11,6 +11,11 @@
 enum NotificationType {
   LIST_CREATED
   LIST_ITEM_ADDED
+  // Recipient is every ADMIN user, not the usual "always a normal user" case
+  // below — see src/server/maintenance/cron/notify-admin-failure.ts, the
+  // sole write site. Has no list/media to link to, so it's the one type that
+  // uses `message` instead.
+  CRON_JOB_FAILED
 }
 
 model Notification {
@@ -34,6 +39,10 @@ model Notification {
 
   mediaId Int?
   media   Media? @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  // Only CRON_JOB_FAILED sets this — everything else derives its text from
+  // the linked list/media instead (see notification-content.ts).
+  message String?
 
   readAt    DateTime?
   createdAt DateTime  @default(now())
