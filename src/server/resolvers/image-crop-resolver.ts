@@ -45,9 +45,13 @@ export const CROPPED_DIR = "cropped";
 // a real path and check it's still inside CROPPED_ROOT" check, which doesn't
 // apply once storage is no longer necessarily a real filesystem): url is
 // arbitrary pasted text (a form field), and this only matches a bare
-// hex-hash filename directly under /cropped/, so there's no `../`-style
-// segment for either backend to misinterpret.
-const CROPPED_FILE_URL = /^\/cropped\/([a-f0-9]+\.(?:webp|avif))$/;
+// hex-hash filename directly under /cropped/ (optionally behind a
+// scheme+host, since R2ImageStorage.urlFor returns an absolute
+// R2_PUBLIC_URL-prefixed link rather than LocalImageStorage's bare
+// "/cropped/…" — a caller comparing against a hardcoded host would silently
+// stop matching production's own URLs the moment that domain changed), so
+// there's no `../`-style segment for either backend to misinterpret.
+const CROPPED_FILE_URL = /^(?:https?:\/\/[^/]+)?\/cropped\/([a-f0-9]+\.(?:webp|avif))$/;
 
 export async function readCroppedFile(url: string): Promise<Buffer | null> {
 	const match = CROPPED_FILE_URL.exec(url);

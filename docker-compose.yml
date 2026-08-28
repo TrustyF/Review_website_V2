@@ -1,3 +1,23 @@
+# TODO: Make app able to run from fresh build. Tested via a real fresh
+# `git clone` + `cp .env.example .env` + `docker compose up -d` on thinkguy
+# (a throwaway `review-website-nextjs-fresh-test` checkout) — found:
+#   - `docker compose up -d` with no service names also starts `cloudflared`
+#     (fails without a real CLOUDFLARE_TUNNEL_TOKEN, can't be defaulted) and
+#     `maintenance` (no long-running process at all — only meant for
+#     `docker compose run --rm maintenance npm run <script>`). Right command
+#     is `docker compose up -d db app`, not bare `up -d` — undocumented
+#     anywhere right now.
+#   - AUTH_SECRET is blank in .env.example and NextAuth v5 hard-throws
+#     `MissingSecret` in production the moment anything calls auth() (most
+#     pages), unlike DATABASE_URL/IMAGE_STORAGE_DRIVER which now have real
+#     fallbacks — no code path degrades gracefully without it.
+#   - Two thinkguy-specific test-only gotchas already resolved during that
+#     same session, not app bugs: ports 5432/3000 collide with the real
+#     production containers on the same host (fix: a
+#     docker-compose.override.yml remapping them for a side-by-side test),
+#     and a leftover `db` volume from an earlier failed attempt in the same
+#     directory carried over stale data across a supposedly "fresh" retry
+#     (fix: `docker compose down -v` before retrying).
 services:
   # The permanent production database (migrated off Neon), not just a local
   # dev sidecar — needs `restart` like everything else here. Port bound to

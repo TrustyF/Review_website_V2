@@ -4,7 +4,11 @@ import { db, dbPublic } from "@/server/db/client";
 import { EnrichmentStatus, ListSortMode } from "@prisma/client";
 import { toPosterSrc } from "@/server/resolvers/poster-resolver";
 import { fuzzySearch } from "@/lib/fuzzy-search";
-import { saveListThumbnail } from "@/server/resolvers/list-thumbnail-resolver";
+import {
+	isListThumbnailUrl,
+	saveListThumbnail,
+	saveListThumbnailFromUrl,
+} from "@/server/resolvers/list-thumbnail-resolver";
 import { readCroppedFile } from "@/server/resolvers/image-crop-resolver";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createNotification } from "@/components/notifications/notification-actions";
@@ -20,23 +24,23 @@ type ListInput = {
 	targetUserId: string | null;
 };
 
-// The Thumbnail URL field accepts a path copied out of /dev/image-crop
-// (public/cropped/... — see that tool's own note on why it's temporary) as
-// well as a real external URL. A /cropped/ path gets promoted here: its
-// bytes get copied into public/list-thumbnails via saveListThumbnail (the
-// same place a direct file upload already lands), and the permanent URL is
-// what actually gets persisted — otherwise the list's thumbnail would stop
-// resolving the moment cleanup-cropped-images.ts's maintenance sweep
-// removes the temp file it still pointed at. Anything else (an external
-// URL, or an already-/list-thumbnails/... value on an untouched edit)
-// passes through unchanged, since readCroppedFile only returns bytes for a
-// real /cropped/ file.
+// The Thumbnail URL field accepts a path copied out of /dev/image-crop, a
+// direct link to some other site's image, or an already-permanent
+// list-thumbnails URL from a prior save. Every case ends up self-hosted: an
+// already-/list-thumbnails/... value (an untouched edit) passes through
+// unchanged rather than re-fetching itself, a /cropped/ temp file is
+// promoted via a direct storage read (readCroppedFile/saveListThumbnail —
+// otherwise the list's thumbnail would stop resolving the moment
+// cleanup-cropped-images.ts's maintenance sweep removes the temp file it
+// still pointed at), and literally anything else gets downloaded and saved
+// the same way, so a list is never left hotlinking some other host.
 async function resolveThumbnailUrl(raw: string | null | undefined): Promise<string | null> {
 	const trimmed = raw?.trim();
 	if (!trimmed) return null;
+	if (isListThumbnailUrl(trimmed)) return trimmed;
 
 	const cropped = await readCroppedFile(trimmed);
-	return cropped ? saveListThumbnail(cropped) : trimmed;
+	return cropped ? saveListThumbnail(cropped) : saveListThumbnailFromUrl(trimmed);
 }
 
 export async function createList(input: ListInput): Promise<number> {
