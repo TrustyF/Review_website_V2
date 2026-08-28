@@ -50,11 +50,9 @@ export function ReviewSpoilerProvider({ children }: { children: ReactNode }) {
 const SPOILER_LABEL = "Spoilers, click to reveal";
 
 // Starts blanked out — click or Enter/Space reveals it, and every other
-// spoiler in the same review, permanently for this render. Still a <span>
-// (a <div> here would be invalid inside the <p> a paragraph block renders
-// into — see ReviewBody below), styled display: block so each spoiler
-// reads as its own standalone bar rather than an inline highlight sitting
-// mid-sentence.
+// spoiler in the same review, permanently for this render. Renders inline,
+// sitting mid-sentence like a highlighted span rather than breaking onto
+// its own line — see review.module.sass's .spoiler.
 //
 // interactive=false (featured-review.tsx's excerpt) drops all of that —
 // no role/tabIndex/aria-label/handlers, so a click has nothing of this
@@ -100,13 +98,11 @@ function SpoilerText({
 	);
 }
 
-// One block-level unit of a parsed review body — either a paragraph's
-// worth of inline content (plain text, links, or both) or a standalone
-// spoiler. Unlike a paragraph, a spoiler is allowed to span what were
-// originally multiple \n\n-separated paragraphs — see splitReviewBody.
-type ReviewBodyBlock =
-	| { type: "paragraph"; key: number; nodes: ReactNode[] }
-	| { type: "spoiler"; key: number; text: string };
+// A paragraph's worth of inline content — plain text, links, and spoilers
+// all sit in the same flow, split apart only on \n\n. A spoiler is inline
+// just like a link: it never forces a paragraph break of its own, even
+// when its captured text itself contains a \n\n — see splitReviewBody.
+type ReviewBodyBlock = { key: number; nodes: ReactNode[] };
 
 // Parses ||spoiler|| and [text](url) markup over the *entire* input in one
 // pass, unlike the old per-paragraph approach this replaced — REVIEW_MARKUP
@@ -116,7 +112,10 @@ type ReviewBodyBlock =
 // matches still gets split into separate paragraph blocks on \n\n — a
 // spoiler match itself never does, even when its own captured text
 // contains one, since that's exactly the case this exists to support.
-function splitReviewBody(text: string): ReviewBodyBlock[] {
+function splitReviewBody(
+	text: string,
+	spoilersInteractive: boolean,
+): ReviewBodyBlock[] {
 	const blocks: ReviewBodyBlock[] = [];
 	let currentNodes: ReactNode[] = [];
 	let blockKey = 0;
@@ -124,7 +123,7 @@ function splitReviewBody(text: string): ReviewBodyBlock[] {
 
 	function flushParagraph() {
 		if (currentNodes.length === 0) return;
-		blocks.push({ type: "paragraph", key: blockKey++, nodes: currentNodes });
+		blocks.push({ key: blockKey++, nodes: currentNodes });
 		currentNodes = [];
 	}
 
@@ -142,8 +141,11 @@ function splitReviewBody(text: string): ReviewBodyBlock[] {
 		if (index > lastIndex) pushPlainText(text.slice(lastIndex, index));
 
 		if (match[1] !== undefined) {
-			flushParagraph();
-			blocks.push({ type: "spoiler", key: blockKey++, text: match[1] });
+			currentNodes.push(
+				<SpoilerText key={inlineKey++} interactive={spoilersInteractive}>
+					{match[1]}
+				</SpoilerText>,
+			);
 		} else {
 			const linkText = match[2]!;
 			const url = match[3]!;
@@ -176,59 +178,35 @@ function splitReviewBody(text: string): ReviewBodyBlock[] {
 
 type ReviewBodyProps = {
 	text: string;
-	// Applied to each plain-text paragraph's own <p> — a standalone spoiler
-	// block isn't wrapped in one (see splitReviewBody), it's already a
-	// block-level element in its own right (see review.module.sass's
-	// .spoiler), so this only ever reaches actual paragraphs.
+	// Applied to each paragraph's own <p> — spoilers render inline inside
+	// whichever paragraph they fall in (see splitReviewBody), so this never
+	// reaches a spoiler directly.
 	paragraphClassName?: string | undefined;
-	// Teaser truncation (e.g. featured-review.tsx's excerpt) — caps how many
-	// *parsed* blocks render, each spoiler counting as exactly one
-	// regardless of how many \n\n it spans internally. Deliberately not
-	// "caller pre-truncates the raw text before handing it to ReviewBody":
-	// truncating the raw text by \n\n count first, the way this used to
-	// work, can land the cut point between a spoiler's opening and closing
-	// ||, leaving an unterminated delimiter in the truncated string — the
-	// regex then simply doesn't match at all, so what should've been a
-	// spoiler block renders as literal "||text" instead. Truncating after
-	// parsing (here) can't do that: a spoiler is already a single atomic
-	// block by the time this slices, so it's either included whole or not
-	// at all.
-	maxBlocks?: number | undefined;
-	// Passed straight through to every spoiler block — see SpoilerText's own
-	// comment on what false does and why (featured-review.tsx's hero excerpt
-	// is the one caller that needs it: that whole card is already a Link to
-	// the review page, so a spoiler's own click-to-reveal has to get out of
-	// the way rather than fight that navigation).
+	// Passed straight through to every spoiler in the body — see SpoilerText's
+	// own comment on what false does and why (featured-review.tsx's hero
+	// excerpt is the one caller that needs it: that whole card is already a
+	// Link to the review page, so a spoiler's own click-to-reveal has to get
+	// out of the way rather than fight that navigation).
 	spoilersInteractive?: boolean | undefined;
 };
 
-// Renders a review body (or however much of one a caller wants — see
-// maxBlocks above) as a sequence of paragraphs and standalone spoiler
-// blocks, in original order. Replaces the old pattern of splitting on \n\n
-// and rendering each paragraph independently, which is what made a spoiler
-// unable to span a paragraph break in the first place.
+// Renders a review body as a sequence of paragraphs, each with spoilers and
+// links inline in their original position. Replaces the old pattern of
+// splitting on \n\n and rendering each paragraph independently, which is
+// what made a spoiler unable to span a paragraph break in the first place.
 export function ReviewBody({
 	text,
 	paragraphClassName,
-	maxBlocks,
 	spoilersInteractive = true,
 }: ReviewBodyProps) {
-	const allBlocks = splitReviewBody(text);
-	const blocks =
-		maxBlocks === undefined ? allBlocks : allBlocks.slice(0, maxBlocks);
+	const blocks = splitReviewBody(text, spoilersInteractive);
 	return (
 		<>
-			{blocks.map((block) =>
-				block.type === "spoiler" ? (
-					<SpoilerText key={block.key} interactive={spoilersInteractive}>
-						{block.text}
-					</SpoilerText>
-				) : (
-					<p className={paragraphClassName} key={block.key}>
-						{block.nodes}
-					</p>
-				),
-			)}
+			{blocks.map((block) => (
+				<p className={paragraphClassName} key={block.key}>
+					{block.nodes}
+				</p>
+			))}
 		</>
 	);
 }

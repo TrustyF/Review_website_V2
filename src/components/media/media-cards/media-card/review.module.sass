@@ -38,15 +38,10 @@
   &:hover
     text-decoration-color: var(--foreground)
 
-// display: block (a <span> still — see review-body.tsx's own comment — CSS
-// display doesn't change what tags are valid inside the surrounding <p>)
-// puts each spoiler marker on its own line as a standalone redaction area,
-// instead of sitting inline mid-sentence; width: fit-content keeps it sized
-// to its real (hidden) text's own natural wrapped shape, not stretched to
-// the full paragraph width.
+// Inline (the default for a <span>) so a spoiler sits mid-sentence like any
+// other highlighted text instead of breaking onto its own line — the actual
+// redaction look comes from .spoiler_text's background below.
 .spoiler
-  display: block
-  width: fit-content
   cursor: pointer
 
 // The real spoiler text, laid out completely normally (plain inline flow,

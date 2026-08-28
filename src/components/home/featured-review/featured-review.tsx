@@ -17,7 +17,7 @@ import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useFeaturedManagerStore } from "@/components/home/featured-review/featured-manager/featured-manager-store";
 import { FeaturedReviewCardMobile } from "./featured-review-card-mobile";
 import { FeaturedReviewPicker } from "./featured-review-picker";
-import { eyebrowFor, EXCERPT_MAX_BLOCKS } from "./featured-review-shared";
+import { eyebrowFor } from "./featured-review-shared";
 import styles from "./featured-review.module.sass";
 
 // Must match $card-transition-duration in featured-review.module.sass (the
@@ -255,14 +255,19 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 	// "Read full review" is only useful (and only shown) when .excerpt is
 	// actually clipping something — no way to know that without measuring
 	// the rendered box, so it starts hidden and this flips it on once we can
-	// tell there's more text than the max-height fits. Runs once per mount,
-	// same as the settle effect above (this card remounts fresh per item —
-	// see FeaturedReview's key={media.id}).
+	// tell there's more text than the max-height fits. Re-measured on every
+	// resize of the box itself (not just on mount) — see
+	// featured-review-card-mobile.tsx's own comment on this same pattern.
 	const excerptRef = useRef<HTMLDivElement>(null);
 	const [isOverflowing, setIsOverflowing] = useState(false);
 	useEffect(() => {
 		const el = excerptRef.current;
-		if (el) setIsOverflowing(el.scrollHeight > el.clientHeight);
+		if (!el) return;
+		const observer = new ResizeObserver(() => {
+			setIsOverflowing(el.scrollHeight > el.clientHeight);
+		});
+		observer.observe(el);
+		return () => observer.disconnect();
 	}, []);
 
 	const review = media.review;
@@ -340,7 +345,6 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 							<ReviewBody
 								text={review.body!}
 								paragraphClassName={styles.excerpt_line}
-								maxBlocks={EXCERPT_MAX_BLOCKS}
 								// This whole card is already a Link to the review page —
 								// a spoiler's own click-to-reveal would either fight that
 								// navigation or need to hijack the click to suppress it.

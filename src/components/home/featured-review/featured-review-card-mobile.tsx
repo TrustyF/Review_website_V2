@@ -10,7 +10,7 @@ import {
 	ReviewBody,
 	ReviewSpoilerProvider,
 } from "@/components/media/media-cards/media-card/review-body";
-import { eyebrowFor, EXCERPT_MAX_BLOCKS } from "./featured-review-shared";
+import { eyebrowFor } from "./featured-review-shared";
 import styles from "./featured-review-card-mobile.module.sass";
 
 type Props = {
@@ -36,11 +36,21 @@ export function FeaturedReviewCardMobile({ media, direction, exiting = false }: 
 		return () => cancelAnimationFrame(frame);
 	}, [exiting]);
 
+	// Re-measured on every resize of the box itself (not just on mount) — its
+	// content is the same for the whole time this card is mounted, but its
+	// available height isn't: a viewport resize (or anything else that
+	// reflows .info, e.g. a title wrapping to a second line) can flip whether
+	// the excerpt actually clips without this card ever remounting.
 	const excerptRef = useRef<HTMLDivElement>(null);
 	const [isOverflowing, setIsOverflowing] = useState(false);
 	useEffect(() => {
 		const el = excerptRef.current;
-		if (el) setIsOverflowing(el.scrollHeight > el.clientHeight);
+		if (!el) return;
+		const observer = new ResizeObserver(() => {
+			setIsOverflowing(el.scrollHeight > el.clientHeight);
+		});
+		observer.observe(el);
+		return () => observer.disconnect();
 	}, []);
 
 	const review = media.review;
@@ -108,7 +118,6 @@ export function FeaturedReviewCardMobile({ media, direction, exiting = false }: 
 							<ReviewBody
 								text={review.body!}
 								paragraphClassName={styles.excerpt_line}
-								maxBlocks={EXCERPT_MAX_BLOCKS}
 								spoilersInteractive={false}
 							/>
 						</ReviewSpoilerProvider>
