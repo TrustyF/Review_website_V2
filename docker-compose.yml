@@ -196,27 +196,30 @@ services:
       GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY}
 
   # Uptime monitoring: pings `app` (and can be pointed at review.arthursirjacobs.com
-  # itself) and alerts if it goes down. Loopback only, same as `app`/`db` —
-  # this is an admin-only dashboard, not meant to be reachable from the LAN.
-  # SSH-tunnel to it (`ssh -L 3001:localhost:3001 <host>`) or add a second
-  # `cloudflared` route later if remote access without SSH is wanted.
+  # itself) and alerts if it goes down. Bound to all interfaces (not just
+  # loopback like `app`/`db`) so it's reachable from other devices on the
+  # home LAN without an SSH tunnel — still not internet-reachable, since
+  # nothing forwards these ports from the router, and it has its own login
+  # (forced on first run). Widens the trust boundary from "only this host"
+  # to "anything on the LAN" — accepted deliberately since this is just a
+  # monitoring dashboard, not `db`/`app`.
   uptime-kuma:
     image: louislam/uptime-kuma:1
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3001:3001"
+      - "3001:3001"
     volumes:
       - uptime-kuma-data:/app/data
 
   # System/container resource monitoring (CPU, RAM, disk, network, per-container
   # stats) — hub is the dashboard + data store, agent is what actually reads
-  # the host's stats and reports them in. Same loopback-only rationale as
+  # the host's stats and reports them in. Same LAN-reachable rationale as
   # uptime-kuma above.
   beszel-hub:
     image: henrygd/beszel:latest
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8090:8090"
+      - "8090:8090"
     volumes:
       - beszel-hub-data:/beszel_data
 
@@ -228,7 +231,7 @@ services:
   #
   # BESZEL_AGENT_KEY has no default and can't be filled in ahead of time: it's
   # a public key beszel-hub generates when you add a new "system" from its web
-  # UI (127.0.0.1:8090 above) — create the system there first, copy the key it
+  # UI (port 8090 above) — create the system there first, copy the key it
   # shows you into .env, then start this service.
   beszel-agent:
     image: henrygd/beszel-agent:latest
