@@ -1,0 +1,168 @@
+// The visible dot's own diameter — .picker_item (the click/touch target
+// around it) and .picker_item_progress (the countdown ring, sized relative
+// to this so it always reads as a halo around the dot rather than
+// overlapping some other dimension) both key off this one number.
+$picker-dot-size: 0.5rem
+
+// The picker progress indicator's actual on-screen diameter — change this
+// alone to resize it. .picker_item_progress below lays itself out at 2x
+// this (for the supersample-then-scale-down trick that keeps its edges
+// smooth, see that rule's own comment) rather than at this size directly,
+// so this is the one number to touch either way. Deliberately bigger than
+// $picker-dot-size so the ring reads as a halo around the dot instead of
+// just covering it.
+$picker-progress-size: 0.7rem
+
+// overflow-x: auto is cheap insurance against the homepage's layout width
+// getting pushed if the featured pool ever grows large, even though a row
+// of dots this small is in practice never wide enough to need it.
+.picker
+  display: flex
+  flex-flow: row
+  justify-content: center
+  gap: 0.5rem
+  margin-top: 1rem
+  padding-bottom: 0.25rem
+
+// The clickable unit is .picker_dot (see below), not this — this is just
+// the positioning context for it and .picker_item_progress, its countdown-
+// ring sibling. Sized past the visible dot itself so the button keeps a
+// comfortable tap target without the dot having to visually grow to match.
+.picker_item
+  position: relative
+  flex-shrink: 0
+  display: flex
+  align-items: center
+  justify-content: center
+  width: 1.5rem
+  height: 1.5rem
+
+// The dot. Dimmed by default, brighter on hover, full strength and
+// brand-colored once active — same progression the old poster-thumbnail
+// picker used, just applied to a plain circle instead of dimming a nested
+// image. ::before pads out its click/touch target past the visible circle,
+// so the dot doesn't have to visually grow just to stay tappable.
+.picker_dot
+  position: relative
+  z-index: 1
+  width: $picker-dot-size
+  height: $picker-dot-size
+  border: none
+  border-radius: 50%
+  padding: 0
+  background: var(--accent1)
+  cursor: pointer
+  transform-origin: center
+  transition: transform 0.15s ease, background-color 0.15s ease
+
+  &::before
+    content: ""
+    position: absolute
+    inset: -0.8rem
+
+  .picker_item:hover &
+    background: var(--brand)
+
+  .picker_item_active &
+    background: var(--brand)
+    transform: scale(1.4)
+
+// Registered so the browser actually tweens --picker-progress-angle as an
+// angle (sweeping the conic-gradient wedge below) instead of snapping
+// straight from 0deg to 360deg — plain custom properties don't interpolate
+// in keyframes without this.
+@property --picker-progress-angle
+  syntax: "<angle>"
+  inherits: false
+  initial-value: 0deg
+
+// Halo ring centered behind the *next* picker item's dot (see
+// featured-review-picker.tsx). pointer-events: none so it never competes
+// with .picker_dot's own click target on top of it. Starts invisible and
+// fades in (see .picker_item_progress_fade below) rather than popping in at
+// 0% — it'd otherwise sit there idle for the first quarter of the countdown
+// before the wedge has swept anywhere worth looking at.
+//
+// Laid out at 2x the visual size and scaled back down (transform, anchored
+// to center so it stays centered on the dot) rather than sized directly at
+// $picker-progress-size — a circle/wedge this small rasterizes visibly
+// jagged at 1x, and painting it larger then letting the compositor's own
+// downscale filter shrink it is what actually smooths those edges, same
+// trick as supersampling.
+//
+// Centered via top/left 50% + translate(-50%, -50%), not inset: 0 + margin:
+// auto — .picker_item is a flex container, and this box (2x
+// $picker-progress-size) is larger than it (1.5rem), which makes Chrome
+// resolve the auto margins unevenly on the flex main-axis (the whole
+// negative deficit lands on margin-right instead of splitting it), pushing
+// the ring visibly off-center. The translate approach doesn't route through
+// auto-margin resolution at all, so it centers correctly regardless of the
+// box being larger than its container.
+.picker_item_progress
+  position: absolute
+  z-index: 0
+  top: 50%
+  left: 50%
+  width: $picker-progress-size * 2
+  height: $picker-progress-size * 2
+  border-radius: 50%
+  transform: translate(-50%, -50%) scale(0.5)
+  transform-origin: center
+  opacity: 0
+  pointer-events: none
+  animation: picker-progress-fade var(--picker-progress-duration) linear forwards
+
+  @media (prefers-reduced-motion: reduce)
+    display: none
+
+// Invisible until a quarter of the countdown has passed, fully visible by
+// three-quarters, flat before/after — same var(--picker-progress-duration)
+// as the wedge sweep below so both read off one clock.
+@keyframes picker-progress-fade
+  0%
+    opacity: 0
+  25%
+    opacity: 0.5
+  50%
+    opacity: 0.75
+  90%
+    opacity: 0.75
+  95%
+    opacity: 0.75
+
+// The actual "pacman" wedge — a white pie slice that sweeps clockwise from
+// nothing to a full circle over the countdown duration, i.e. the open mouth
+// closing as the countdown to this item becoming active runs out. The
+// transparent stop trails the white one by a couple degrees (rather than
+// both sitting at the same angle) so the boundary is a soft feather instead
+// of a hard, aliased cutoff — barely visible on its own, but it noticeably
+// smooths the wedge's edge combined with .picker_item_progress's 2x-then-
+// scale-down sizing above.
+.picker_item_progress_fill
+  width: 100%
+  height: 100%
+  border-radius: 50%
+  background: conic-gradient(var(--brand) calc(var(--picker-progress-angle) - 8deg), transparent calc(var(--picker-progress-angle) + 8deg))
+  animation: picker-progress-fill var(--picker-progress-duration) linear forwards
+  // drop-shadow (not box-shadow) — this follows the wedge's actual visible
+  // pixels, not the full circular box, so the shadow traces the pacman
+  // shape itself instead of ringing the transparent "mouth" too. Zero
+  // offset (blur only) so the shadow reads as a halo around the wedge
+  // instead of skewing it visually off-center against the dot — an earlier
+  // 2px/2px offset did exactly that. Blur value doubled from the intended
+  // 1.5px on-screen result: this element sits inside .picker_item_progress's
+  // scale(0.5), which halves whatever's written here.
+  filter: drop-shadow(0 0 2px black)
+
+// Reaches a full circle at 95% rather than 100% — closing the mouth
+// slightly before the actual swap keeps the "full" ring from sitting there
+// already complete for one last frame right as the hero changes, since
+// forwards means the fill holds whatever angle it last reached rather than
+// resetting after this animation ends.
+@keyframes picker-progress-fill
+  0%
+    --picker-progress-angle: 0deg
+  90%
+    --picker-progress-angle: 360deg
+  100%
+    --picker-progress-angle: 360deg

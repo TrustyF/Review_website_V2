@@ -23,7 +23,7 @@ export function LogoImage() {
 			    paints on top of it. */}
 			<div className={style.fill} aria-hidden="true" />
 			<Image
-				src="/ui/logo.svg"
+				src="/ui/logo.webp"
 				alt=""
 				width={502}
 				height={172}
@@ -36,7 +36,7 @@ export function LogoImage() {
 			    logo-image.module.sass toggles which one paints via display,
 			    so there's no layout shift or conditional render on resize. */}
 			<Image
-				src="/ui/icon.svg"
+				src="/ui/icon.webp"
 				alt=""
 				width={60}
 				height={60}

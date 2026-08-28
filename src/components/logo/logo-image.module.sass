@@ -16,7 +16,7 @@
   @media (max-width: $mobile-breakpoint)
     display: none
 
-// Square app-icon mark (src/app/icon.svg, copied to public/ui so it can be
+// Square app-icon mark (src/app/favicon.svg, copied to public/ui so it can be
 // used as a plain Image src) swapped in for .image below $mobile-breakpoint
 // — see logo-image.tsx for why. Hidden by default and shown only inside the
 // same query that hides .image/.fill/.name, so exactly one mark is visible
@@ -24,14 +24,14 @@
 .icon
   display: none
   position: absolute
-  height: 100%
+  height: 50px
   width: auto
   object-fit: contain
 
   @media (max-width: $mobile-breakpoint)
     display: block
-  @media (max-width: 400px)
-    height: 75%
+  @media (max-width: 500px)
+    height: 35px
 
 // Matches .image's own box (same aspect ratio, same height) so the percentage
 // clip-path below lines up with the ticket art regardless of .tag's actual

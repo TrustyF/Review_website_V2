@@ -5,8 +5,6 @@ import { Link } from "@/components/ui/link";
 import { Settings } from "lucide-react";
 import { MediaRecord } from "@/components/media/types";
 import { MediaPoster } from "@/components/media/primitives/poster";
-import { MediaMiniCardShell } from "@/components/media/media-cards/media-mini-card/media-mini-card-shell";
-import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaReleaseDate } from "@/components/media/primitives/release-date";
 import { StarIcon } from "@/components/media/icons/star-icon";
@@ -18,6 +16,7 @@ import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useFeaturedManagerStore } from "@/components/home/featured-review/featured-manager/featured-manager-store";
 import { FeaturedReviewCardMobile } from "./featured-review-card-mobile";
+import { FeaturedReviewPicker } from "./featured-review-picker";
 import { eyebrowFor, EXCERPT_MAX_BLOCKS } from "./featured-review-shared";
 import styles from "./featured-review.module.sass";
 
@@ -31,7 +30,7 @@ const CARD_TRANSITION_MS = 350;
 // to the next one. Also reused as the idle delay before auto-advance resumes
 // after the user interacts with the picker (see `paused` below) — one knob
 // for "how long is this comfortable to sit and read" covers both.
-const AUTO_ADVANCE_MS = 25000;
+const AUTO_ADVANCE_MS = 15000;
 
 type Props = {
 	// items[0] is always the single most-recently-reviewed item, pinned there
@@ -215,75 +214,16 @@ export function FeaturedReview({ items }: Props) {
 				</button>
 			)}
 
-			{reviewed.length > 1 && (
-				<div className={styles.picker}>
-					{/* Title off — this strip is a row of small posters, not a
-					    labeled grid, and the title would just wrap/truncate at
-					    4.5rem wide anyway. Review icon off too — every item here
-					    already has a review by construction (see `reviewed`
-					    above), so it'd just be dead weight on every single one. */}
-					<MediaCardDisplayProvider
-						showTitle={false}
-						showReviewIcon={false}
-						showRating={false}>
-						{reviewed.map((item, i) => (
-							<div
-								key={item.id}
-								className={`${styles.picker_item} ${i === index ? styles.picker_item_active : ""}`}>
-								{/* MediaMiniCardShell already renders exactly what this
-								    strip wants (poster + rating), but its poster is a Link
-								    to the media page — this strip wants a click to swap
-								    the item into the hero in place, not navigate away. inert
-								    turns the whole shell into inanimate visuals: it drops
-								    out of the tab order and stops accepting pointer events
-								    (both the poster Link and the admin-only edit button),
-								    so the overlay button below is the only actually
-								    interactive/focusable element here. */}
-								<div inert className={styles.picker_item_inert}>
-									<MediaMiniCardShell media={item} />
-								</div>
-								{/* Sits on the *next* item in line, not the active one —
-								    it's a countdown to when that item takes over, not a
-								    status of the current one. Only while auto-advance is
-								    actually counting down — hidden while paused (see
-								    `paused` above) rather than frozen mid-fill, since a
-								    resumed auto-advance restarts its interval from
-								    scratch rather than continuing where the reader left
-								    off. Keyed by index so every advance (auto or picked)
-								    remounts it and restarts the fill from empty instead
-								    of jumping backwards from whatever the previous
-								    "next" item's fill had reached. */}
-								<button
-									type="button"
-									className={styles.picker_item_overlay}
-									aria-current={i === index ? "true" : undefined}
-									aria-label={`Show featured review: ${item.title}`}
-									onClick={() => select(i)}
-								/>
-								{reviewed.length > 1 &&
-									!paused &&
-									i === (index + 1) % reviewed.length && (
-										<div
-											key={index}
-											className={styles.picker_item_progress}
-											// Set here (not on .picker_item_progress_fill) so the
-											// fade and the wedge sweep below share the exact same
-											// clock — the var inherits down to the fill's own
-											// animation rather than needing its own copy.
-											style={
-												{
-													"--picker-progress-duration": `${AUTO_ADVANCE_MS}ms`,
-												} as CSSProperties
-											}
-											aria-hidden="true">
-											<div className={styles.picker_item_progress_fill} />
-										</div>
-									)}
-							</div>
-						))}
-					</MediaCardDisplayProvider>
-				</div>
-			)}
+			{/* Auto-advance pauses on interaction (see `paused` above), so the
+			    countdown ring rendered here only ever shows while it's actually
+			    running. */}
+			<FeaturedReviewPicker
+				items={reviewed}
+				activeIndex={index}
+				paused={paused}
+				autoAdvanceMs={AUTO_ADVANCE_MS}
+				onSelect={select}
+			/>
 		</div>
 	);
 }
