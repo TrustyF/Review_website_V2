@@ -60,6 +60,13 @@ services:
     build:
       context: .
       network: host
+      # Passed through to the Dockerfile's own `ARG IMAGE_STORAGE_DRIVER=r2`
+      # default — without this, the build always used "r2" regardless of
+      # .env (nothing was overriding that ARG), so the build-time
+      # search-index rebuild always required real R2 credentials even when
+      # IMAGE_STORAGE_DRIVER was deliberately left unset for local disk.
+      args:
+        IMAGE_STORAGE_DRIVER: ${IMAGE_STORAGE_DRIVER}
       secrets:
         - database_url
         - r2_account_id
@@ -79,7 +86,10 @@ services:
       - "127.0.0.1:3000:3000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-review_db}
-      IMAGE_STORAGE_DRIVER: r2
+      # Was hardcoded to "r2" here, ignoring .env entirely — see
+      # image-storage.ts's own opt-in design (unset = local disk). Production
+      # is unaffected: its real .env already sets this to "r2" explicitly.
+      IMAGE_STORAGE_DRIVER: ${IMAGE_STORAGE_DRIVER}
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
       R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
@@ -148,7 +158,8 @@ services:
       - ./backups:/app/backups
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-review_db}
-      IMAGE_STORAGE_DRIVER: r2
+      # Was hardcoded to "r2" here too — same fix as `app`'s own comment above.
+      IMAGE_STORAGE_DRIVER: ${IMAGE_STORAGE_DRIVER}
       R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
       R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
