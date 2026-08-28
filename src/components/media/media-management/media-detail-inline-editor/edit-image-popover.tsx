@@ -26,17 +26,9 @@ type Props = {
 	optionAspectRatio: string | undefined;
 	urlInput: string;
 	onUrlInputChange: (value: string) => void;
+	// Stages the pasted URL into the page-level draft and closes — same as
+	// picking a grid option (see use-image-edit-popover.ts's submitUrl).
 	onSubmitUrl: () => void;
-	// Whatever pick()/onSubmitUrl last staged, or null if nothing's staged —
-	// onSave is a no-op (just closes) when this is null, and it doubles as
-	// the check for whether the currently typed urlInput is the thing that's
-	// actually staged (see the "will apply on publish" note below).
-	pendingPath: string | null;
-	// Hands off to the page-level draft and closes — synchronous, nothing
-	// here touches the network (see use-image-edit-popover.ts's onStage), so
-	// unlike a real save this never fails and never needs an isSaving state.
-	onSave: () => void;
-	// Closes without saving — discards whatever pick()/onSubmitUrl staged.
 	onClose: () => void;
 };
 
@@ -56,8 +48,6 @@ export function EditImagePopover({
 	urlInput,
 	onUrlInputChange,
 	onSubmitUrl,
-	pendingPath,
-	onSave,
 	onClose,
 }: Props) {
 	const trimmedUrl = urlInput.trim();
@@ -105,18 +95,6 @@ export function EditImagePopover({
 				// eslint-disable-next-line @next/next/no-img-element
 				<img src={trimmedUrl} alt="" className={styles.url_preview} />
 			)}
-			{pendingPath === trimmedUrl && trimmedUrl && (
-				<span className={styles.url_applied}>Will apply on publish</span>
-			)}
-
-			<div className={styles.actions}>
-				<button type="button" onClick={onClose}>
-					Discard
-				</button>
-				<button type="button" onClick={onSave} disabled={pendingPath === null}>
-					Stage
-				</button>
-			</div>
 		</div>
 	);
 }

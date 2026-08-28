@@ -6,6 +6,7 @@ import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import {
 	publishMediaEdits,
+	saveReview,
 	updateMediaBanner,
 	updateMediaBannerFocus,
 	updateMediaPoster,
@@ -17,15 +18,16 @@ type Props = {
 	mediaId: number;
 };
 
-// PosterEditTrigger/BannerEditTrigger stage every poster/banner pick and
-// focus-slider drag into media-publish-store instead of writing to the DB
-// (see their own onStage/stageBannerFocus comments) — so an admin can try a
-// few options against the live preview without any of it being real yet.
-// This is the one button that actually commits the staged draft: the DB
-// writes it was deferring, and one revalidation for all of them together —
-// instead of every single pick hitting the DB and wiping the ISR cache on
-// its own (see media-editor-actions.ts's own comment on the ISR write quota
-// this was blowing through).
+// PosterEditTrigger/BannerEditTrigger/ReviewBodyEditTrigger stage every
+// poster/banner pick, focus-slider drag, and review body edit into
+// media-publish-store instead of writing to the DB (see their own
+// onStage/stageBannerFocus/stageReview comments) — so an admin can try a few
+// options against the live preview without any of it being real yet. This is
+// the one button that actually commits the staged draft: the DB writes it
+// was deferring, and one revalidation for all of them together — instead of
+// every single pick hitting the DB and wiping the ISR cache on its own (see
+// media-editor-actions.ts's own comment on the ISR write quota this was
+// blowing through).
 export function MediaPublishButton({ mediaId }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
@@ -40,6 +42,14 @@ export function MediaPublishButton({ mediaId }: Props) {
 
 	if (!isAdmin) return null;
 	if (!draft || draft.mediaId !== mediaId) return null;
+
+	// Just drops the staged draft — every trigger reads straight off it
+	// (falling back to the last-published value once it's null), so clearing
+	// it is all reverting the live preview needs.
+	function handleCancel() {
+		clear();
+		setError(null);
+	}
 
 	async function handlePublish() {
 		if (!draft) return;
@@ -61,8 +71,13 @@ export function MediaPublishButton({ mediaId }: Props) {
 							revalidate: false,
 						})
 					: Promise.resolve(),
+				draft.pendingReview
+					? saveReview(mediaId, draft.pendingReview, { revalidate: false })
+					: Promise.resolve(),
 			]);
-			await publishMediaEdits(mediaId);
+			await publishMediaEdits(mediaId, {
+				includeActivity: draft.pendingReview != null,
+			});
 			clear();
 			// Cheap now that the server-side cache is already fresh — just gets
 			// this admin's own tab to reflect it immediately too, rather than
@@ -77,13 +92,22 @@ export function MediaPublishButton({ mediaId }: Props) {
 
 	return (
 		<div className={styles.wrapper}>
-			<Clickable
-				className={styles.button}
-				onClick={handlePublish}
-				disabled={isPublishing}
-				aria-label="Publish poster/banner changes">
-				{isPublishing ? "Publishing…" : "Publish changes"}
-			</Clickable>
+			<div className={styles.button_row}>
+				<Clickable
+					className={styles.cancel_button}
+					onClick={handleCancel}
+					disabled={isPublishing}
+					aria-label="Discard staged media changes">
+					Cancel
+				</Clickable>
+				<Clickable
+					className={styles.button}
+					onClick={handlePublish}
+					disabled={isPublishing}
+					aria-label="Publish media changes">
+					{isPublishing ? "Publishing…" : "Publish changes"}
+				</Clickable>
+			</div>
 			{error && <div className={styles.error}>{error}</div>}
 		</div>
 	);

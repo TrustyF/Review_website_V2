@@ -45,9 +45,7 @@ export function PosterEditTrigger({ media, ratio }: Props) {
 		setUrlInput,
 		pick,
 		submitUrl,
-		saveDraft,
-		discardDraft,
-		pendingPath,
+		close,
 	} = useImageEditPopover({
 		initialSrc: media.posterSrc,
 		stagedSrc: draftPreviewSrc,
@@ -81,9 +79,7 @@ export function PosterEditTrigger({ media, ratio }: Props) {
 					urlInput={urlInput}
 					onUrlInputChange={setUrlInput}
 					onSubmitUrl={submitUrl}
-					pendingPath={pendingPath}
-					onSave={saveDraft}
-					onClose={discardDraft}
+					onClose={close}
 				/>
 			)}
 		</div>

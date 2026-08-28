@@ -4,7 +4,7 @@ import { MediaRecord } from "@/components/media/types";
 import { MediaReview } from "@/components/media/media-cards/media-card/review";
 import { Hitbox } from "@/components/ui/hitbox";
 import { ReviewBodyModal } from "@/components/media/media-management/media-editor/components/review-body-modal";
-import { saveReview } from "@/components/media/media-management/media-editor/media-editor-actions";
+import { useMediaPublishStore } from "@/components/media/media-management/media-detail-inline-editor/media-publish-store";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import styles from "./review-body-edit-trigger.module.sass";
@@ -15,10 +15,11 @@ type Props = {
 
 // Drop-in replacement for a plain <MediaReview> on the detail page — click
 // anywhere in the review to open the same body editor (with its AI
-// suggestion diff) the full editor modal uses. Closing it saves immediately
-// rather than waiting on a separate Save step, same as PosterEditTrigger/
-// BannerEditTrigger — there's no other "commit" action anywhere else on
-// this page to batch behind.
+// suggestion diff) the full editor modal uses. Closing it stages the edit
+// into the page-level draft (media-publish-store) instead of saving
+// immediately — same as PosterEditTrigger/BannerEditTrigger, so every
+// inline edit on this page commits together behind MediaPublishButton's
+// Publish click.
 //
 // Scoped to the whole review card rather than just its body text: MediaReview
 // doesn't expose its body as a separately-targetable sub-element (nor
@@ -35,31 +36,29 @@ export function ReviewBodyEditTrigger({ media }: Props) {
 	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const review = media.review;
 
-	const [body, setBody] = useState(review?.body ?? "");
+	const draft = useMediaPublishStore((s) => s.draft);
+	const stageReview = useMediaPublishStore((s) => s.stageReview);
+	const draftBody =
+		draft?.mediaId === media.id ? draft.pendingReview?.body : undefined;
+
+	const [body, setBody] = useState(draftBody ?? review?.body ?? "");
 	const [isOpen, setIsOpen] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
-	const [error, setError] = useState<string | null>(null);
 
 	if (!review || !isAdmin) {
 		return <MediaReview review={review} watchedDate={media.watchedDate} />;
 	}
 
-	async function handleClose() {
+	// Synchronous, since nothing here touches the network (see
+	// media-publish-store.ts's stageReview) — the actual save happens once
+	// MediaPublishButton's Publish is clicked.
+	function handleClose() {
 		setIsOpen(false);
-		setIsSaving(true);
-		setError(null);
-		try {
-			await saveReview(media.id, {
-				rating: review!.rating,
-				liked: review!.liked,
-				difficulty: review!.difficulty,
-				body,
-			});
-		} catch (e) {
-			setError(e instanceof Error ? e.message : "Failed to save. Try again.");
-		} finally {
-			setIsSaving(false);
-		}
+		stageReview(media.id, {
+			rating: review!.rating,
+			liked: review!.liked,
+			difficulty: review!.difficulty,
+			body,
+		});
 	}
 
 	return (
@@ -78,9 +77,6 @@ export function ReviewBodyEditTrigger({ media }: Props) {
 					onClose={handleClose}
 				/>
 			)}
-
-			{isSaving && <div className={styles.status}>Saving…</div>}
-			{error && <div className={styles.status_error}>{error}</div>}
 		</div>
 	);
 }

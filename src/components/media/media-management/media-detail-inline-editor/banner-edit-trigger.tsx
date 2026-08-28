@@ -74,9 +74,7 @@ export function BannerEditTrigger({
 		setUrlInput,
 		pick,
 		submitUrl,
-		saveDraft,
-		discardDraft,
-		pendingPath,
+		close,
 	} = useImageEditPopover({
 		initialSrc: bannerSrc,
 		stagedSrc: draftPreviewSrc,
@@ -210,9 +208,7 @@ export function BannerEditTrigger({
 					urlInput={urlInput}
 					onUrlInputChange={setUrlInput}
 					onSubmitUrl={submitUrl}
-					pendingPath={pendingPath}
-					onSave={saveDraft}
-					onClose={discardDraft}
+					onClose={close}
 				/>
 			)}
 		</div>

@@ -8,6 +8,13 @@ import { create } from "zustand";
 // preview until it's actually been through resolvePoster/resolveBanner on
 // publish — same "no preview yet" gap that already existed pre-publish, not
 // a new one.
+export type PendingReview = {
+	rating: number | null;
+	liked: boolean;
+	difficulty: number | null;
+	body: string;
+};
+
 export type MediaEditDraft = {
 	mediaId: number;
 	posterPath: string | null;
@@ -15,6 +22,11 @@ export type MediaEditDraft = {
 	bannerPath: string | null;
 	bannerPreviewSrc: string | null;
 	bannerFocusY: number | null;
+	// rating/liked/difficulty are carried along unchanged from the review
+	// ReviewBodyEditTrigger was seeded with — only body is actually editable
+	// there — so MediaPublishButton has a complete object to hand saveReview
+	// without needing its own copy of the review.
+	pendingReview: PendingReview | null;
 };
 
 function emptyDraft(mediaId: number): MediaEditDraft {
@@ -25,6 +37,7 @@ function emptyDraft(mediaId: number): MediaEditDraft {
 		bannerPath: null,
 		bannerPreviewSrc: null,
 		bannerFocusY: null,
+		pendingReview: null,
 	};
 }
 
@@ -45,6 +58,7 @@ export const useMediaPublishStore = create<{
 		previewSrc: string | null,
 	) => void;
 	stageBannerFocus: (mediaId: number, focusY: number) => void;
+	stageReview: (mediaId: number, review: PendingReview) => void;
 	clear: () => void;
 }>((set, get) => ({
 	draft: null,
@@ -62,6 +76,11 @@ export const useMediaPublishStore = create<{
 		const current = get().draft;
 		const base = current?.mediaId === mediaId ? current : emptyDraft(mediaId);
 		set({ draft: { ...base, bannerFocusY: focusY } });
+	},
+	stageReview: (mediaId, review) => {
+		const current = get().draft;
+		const base = current?.mediaId === mediaId ? current : emptyDraft(mediaId);
+		set({ draft: { ...base, pendingReview: review } });
 	},
 	clear: () => set({ draft: null }),
 }));

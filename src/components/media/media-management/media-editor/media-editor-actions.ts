@@ -592,7 +592,14 @@ export async function updateMediaBannerFocus(
 // focus tweaks on the detail page (see PosterEditTrigger/BannerEditTrigger,
 // which save with revalidate: false) — one revalidation for the whole
 // editing session instead of one per pick/drag.
-export async function publishMediaEdits(mediaId: number): Promise<void> {
+export async function publishMediaEdits(
+	mediaId: number,
+	// Set when the staged draft included a review body edit (see
+	// media-publish-store.ts's pendingReview) — mirrors saveReview's own
+	// revalidatePath("/activity"), which that call skips here via
+	// revalidate: false.
+	{ includeActivity = false }: { includeActivity?: boolean } = {},
+): Promise<void> {
 	await requireAdmin();
 	recordInvocation("action:publishMediaEdits");
 	const media = await db.media.findUniqueOrThrow({
@@ -600,6 +607,7 @@ export async function publishMediaEdits(mediaId: number): Promise<void> {
 		select: { type: true },
 	});
 	revalidateMediaPaths(mediaId, media.type);
+	if (includeActivity) revalidatePath("/activity");
 }
 
 // Same one-revalidation-per-session idea as publishMediaEdits, for the full
