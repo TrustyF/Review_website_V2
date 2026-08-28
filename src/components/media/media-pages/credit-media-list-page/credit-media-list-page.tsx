@@ -254,6 +254,24 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 		(a, b) => b.media.length - a.media.length,
 	);
 
+	// Only the single most-credited group gets its own titled grid; every
+	// other role collapses into one combined "Also involved in" grid instead
+	// of a titled section per role, so a prolific credit list doesn't turn
+	// into a long scroll of small grids. Deduped by media id (the same title
+	// can appear in more than one of the collapsed groups) and also excludes
+	// anything already shown in the top group (e.g. someone both Directed and
+	// Produced the same title — no reason to show it twice).
+	const [topGroup, ...restGroups] = mergedGroups;
+	const topMediaIds = new Set(topGroup?.media.map((item) => item.id) ?? []);
+	const otherMedia = [
+		...new Map(
+			restGroups
+				.flatMap((group) => group.media)
+				.filter((item) => !topMediaIds.has(item.id))
+				.map((item) => [item.id, item]),
+		).values(),
+	];
+
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
@@ -295,18 +313,28 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 			{roleGroups.length === 0 ? (
 				<p className={styles.empty}>No credited media in the collection.</p>
 			) : (
-				mergedGroups.map((group) => (
-					<div className={styles.other_role_group} key={group.names.join(",")}>
-						<h2 className={styles.other_role_title}>
-							{group.names.length === 1 && group.names[0] === "Actor"
-								? "Starring in"
-								: joinNames(group.names)}
-						</h2>
-						<MediaCardDisplayProvider showTitle={false}>
-							<LazyMediaGrid items={group.media} />
-						</MediaCardDisplayProvider>
-					</div>
-				))
+				<>
+					{topGroup && (
+						<div className={styles.other_role_group}>
+							<h2 className={styles.other_role_title}>
+								{topGroup.names.length === 1 && topGroup.names[0] === "Actor"
+									? "Starring in"
+									: joinNames(topGroup.names)}
+							</h2>
+							<MediaCardDisplayProvider showTitle={false}>
+								<LazyMediaGrid items={topGroup.media} />
+							</MediaCardDisplayProvider>
+						</div>
+					)}
+					{otherMedia.length > 0 && (
+						<div className={styles.other_role_group}>
+							<h2 className={styles.other_role_title}>Also involved in</h2>
+							<MediaCardDisplayProvider showTitle={false}>
+								<LazyMediaGrid items={otherMedia} />
+							</MediaCardDisplayProvider>
+						</div>
+					)}
+				</>
 			)}
 		</div>
 	);

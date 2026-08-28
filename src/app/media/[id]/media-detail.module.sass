@@ -231,20 +231,6 @@ $var_banner_width: 110%
     display: inline
     color: inherit
 
-// Same bordered-pill treatment as .controls_bar below, for a plain-text
-// fact (currently just runtime) instead of an icon control. Sits between
-// the poster and .controls_bar in .poster_column.
-.poster_info
-  display: flex
-  align-items: center
-  justify-content: center
-  padding: 0.15rem 0.6rem
-  border: 1px solid var(--surface-border)
-  border-radius: 1rem
-  color: var(--accent1)
-  font-family: $font-mono
-  font-size: 0.85rem
-
 // Holder for icon-sized detail-page controls — today just the watchlist
 // toggle, styled as a bordered pill so more icons can join it later without
 // a redesign. Sits under the poster, centered in .poster_column.
@@ -359,6 +345,9 @@ $var_banner_width: 110%
 .difficulty_dot_hard
   background: var(--danger)
 
+// Also reused for runtime (a single Fact, no gauge) — same bordered-off
+// treatment for any dl/Fact block that needs to sit apart from the rows
+// above it in .secondary_facts.
 .finance_group
   display: flex
   flex-flow: row
@@ -367,8 +356,8 @@ $var_banner_width: 110%
   padding-top: 0.75rem
   border-top: 1px solid var(--surface-border)
 
-  // No public rating above it — no divider needed either, since there's
-  // nothing on the other side of it to separate from.
+  // Nothing above it in .secondary_facts — no divider needed either, since
+  // there's nothing on the other side of it to separate from.
   &:first-child
     padding-top: 0
     border-top: none
@@ -433,13 +422,13 @@ $var_banner_width: 110%
 .credits_list
   display: flex
   flex-flow: column
-  gap: 0.3rem
+  gap: 0.6rem
   margin-top: 0.5rem
 
 .credit_row
   display: flex
   flex-flow: row
-  gap: 0.5rem
+  gap: 1.5rem
   font-size: 0.9rem
 
   // .credit_role's 8rem label column eats over a third of the row's own
@@ -468,9 +457,19 @@ $var_banner_width: 110%
   display: flex
   flex-flow: row wrap
 
+// Used instead of .credit_names wherever names don't need to read as
+// comma-joined prose (Studio, each collapsed-credits row) — gap alone
+// spaces and wraps the list, no separator punctuation rendered between
+// entries.
+.credit_names_flex
+  display: flex
+  flex-flow: row wrap
+  gap: 0.35rem 0.6rem
+
 // A little extra breathing room after the comma, beyond the single space
 // character it replaced — margin instead of just baking more spaces into
-// the text, since plain whitespace collapses in HTML.
+// the text, since plain whitespace collapses in HTML. Only used by
+// .credit_names (the comma-joined byline case).
 .credit_separator
   margin-right: 0.35rem
 

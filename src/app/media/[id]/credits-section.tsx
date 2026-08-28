@@ -38,14 +38,25 @@ export type CreditLink = {
 	character: string | null;
 };
 
-// Comma-separated linked names — shared by the promoted Director/Cast/Studio
-// facts and each row of the collapsed "everything else" list.
-function CreditNames({ entries }: { entries: CreditLink[] }) {
+// Shared by the promoted Director/Cast/Studio facts and each row of the
+// collapsed "everything else" list — linked names, comma-separated when
+// they need to read as inline prose (the "by <names>" byline), or plain
+// flex-wrapped (gap doing the spacing, no punctuation) everywhere else,
+// where each name already reads as its own item rather than a sentence.
+function CreditNames({
+	entries,
+	flex = false,
+}: {
+	entries: CreditLink[];
+	flex?: boolean;
+}) {
 	return (
-		<span className={styles.credit_names}>
+		<span className={flex ? styles.credit_names_flex : styles.credit_names}>
 			{entries.map((entry, i) => (
 				<span key={entry.key}>
-					{i > 0 && <span className={styles.credit_separator}>,</span>}
+					{!flex && i > 0 && (
+						<span className={styles.credit_separator}>,</span>
+					)}
 					<Link href={entry.href} className={styles.credit_link}>
 						{entry.name}
 					</Link>
@@ -110,35 +121,60 @@ async function groupCredits(mediaId: number, type: MediaType) {
 	const creatorRoleEntries = [
 		...(creditsByRole.get("Creator")?.values() ?? []),
 	];
+	// Manga only: MangaDex only ever hands back an Author and/or Artist
+	// relationship per title (see manga-credits.ts) — no separate "Director"
+	// concept at all — so those are what belongs in the byline instead.
+	// Merged into one list (deduped by person, e.g. a mangaka credited as
+	// both) rather than shown as two separate facts.
+	const authorArtistEntries = [
+		...new Map(
+			[
+				...(creditsByRole.get("Author")?.values() ?? []),
+				...(creditsByRole.get("Artist")?.values() ?? []),
+			].map((entry) => [entry.key, entry]),
+		).values(),
+	];
 
-	// TV shows only: aggregate_credits' "Director" job reflects every
-	// individual episode's director across the show's whole run (see
+	// TV shows: aggregate_credits' "Director" job reflects every individual
+	// episode's director across the show's whole run (see
 	// tv-show-credits.ts), not who actually created the show — a 50+ name
 	// byline for a long-running series. Creator (from TMDB's created_by,
 	// same file) is what the byline should show instead, when the show
-	// actually has one. Every other media type keeps using Director as
-	// before — Comics in particular already put a generic "Creator" credit
-	// on every credited person (see comic-credits.ts), and that's meant to
-	// stay in the collapsed list below, not get promoted here.
+	// actually has one.
+	// Comics: ComicVine has no per-person role breakdown at the volume level
+	// at all (see comic-credits.ts) — everyone credited lands under the same
+	// generic "Creator" role, which is the closest thing a comic has to a
+	// byline.
 	const promoteCreator =
-		type === MediaType.TVSHOW && creatorRoleEntries.length > 0;
-	const directorEntries = promoteCreator
-		? creatorRoleEntries
-		: directorRoleEntries;
+		(type === MediaType.TVSHOW || type === MediaType.COMIC) &&
+		creatorRoleEntries.length > 0;
+	const promoteAuthorArtist =
+		type === MediaType.MANGA && authorArtistEntries.length > 0;
+	// Capped at 2 — the byline is meant for a quick "who made this", not a
+	// full credits dump (that's what the collapsed list below is for). A
+	// prolific TV Creator lineup or ComicVine's flat, unranked Creator list
+	// could otherwise run long.
+	const directorEntries = (
+		promoteCreator
+			? creatorRoleEntries
+			: promoteAuthorArtist
+				? authorArtistEntries
+				: directorRoleEntries
+	).slice(0, 2);
 
 	const studioEntries = [...(creditsByRole.get("Studio")?.values() ?? [])];
 	const actorEntries = [...(creditsByRole.get("Actor")?.values() ?? [])]
 		.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
 		.slice(0, MAX_BILLED_CAST);
 
+	// Director/Creator/Author/Artist stay in here too, even though a capped
+	// slice of them is also promoted into the byline above (directorEntries)
+	// — the byline only ever shows 2, so anyone past that still needs
+	// somewhere to show up. Studio and Actor are the only roles fully
+	// promoted out of this list, since they always get their own dedicated
+	// section below regardless of how many entries they have.
 	const otherRoles = [...creditsByRole.entries()]
-		.filter(
-			([role]) =>
-				role !== "Director" &&
-				role !== "Studio" &&
-				role !== "Actor" &&
-				!(promoteCreator && role === "Creator"),
-		)
+		.filter(([role]) => role !== "Studio" && role !== "Actor")
 		.sort(([a], [b]) => {
 			const priorityDiff = (ROLE_PRIORITY[a] ?? 99) - (ROLE_PRIORITY[b] ?? 99);
 			return priorityDiff !== 0 ? priorityDiff : a.localeCompare(b);
@@ -198,7 +234,7 @@ export async function MediaCreditsDetails({
 					<div className={styles.fact}>
 						<dt className={styles.fact_label}>Studio</dt>
 						<dd className={styles.fact_value}>
-							<CreditNames entries={studioEntries} />
+							<CreditNames entries={studioEntries} flex />
 						</dd>
 					</div>
 				</dl>
@@ -214,7 +250,7 @@ export async function MediaCreditsDetails({
 						{otherRoles.map(([role, entries]) => (
 							<div className={styles.credit_row} key={role}>
 								<span className={styles.credit_role}>{role}</span>
-								<CreditNames entries={[...entries.values()]} />
+								<CreditNames entries={[...entries.values()]} flex />
 							</div>
 						))}
 					</div>

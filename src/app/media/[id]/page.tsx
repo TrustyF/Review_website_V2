@@ -138,8 +138,8 @@ export default async function MediaDetailPage({
 		media.type === "MOVIE" || media.type === "SHORT"
 			? media.movie.tagline
 			: null;
-	// Same story for runtime — it now sits in the info container under the
-	// poster instead of the type-specific facts list.
+	// Same story for runtime — it now sits in the secondary-facts block
+	// beside the review instead of the type-specific facts list.
 	const runtime =
 		media.type === "MOVIE" || media.type === "SHORT"
 			? media.movie.runtime
@@ -207,9 +207,6 @@ export default async function MediaDetailPage({
 									/>
 								</Suspense>
 							</div>
-							{runtimeLabel && (
-								<div className={styles.poster_info}>{runtimeLabel}</div>
-							)}
 							{(session?.user || media.sourceUrl) && (
 								<div className={styles.controls_bar}>
 									{session?.user && (
@@ -255,13 +252,21 @@ export default async function MediaDetailPage({
 								<div className={styles.review_col}>
 									<ReviewBodyEditTrigger media={media} />
 								</div>
-								{(publicRating != null ||
+								{(runtimeLabel != null ||
+									publicRating != null ||
 									difficulty === 1 ||
 									difficulty === 2 ||
 									budget != null ||
 									revenue != null ||
 									roi != null) && (
 									<div className={styles.secondary_facts}>
+										{runtimeLabel != null && (
+											<div className={styles.finance_group}>
+												<dl className={styles.financials_facts}>
+													<Fact label="Runtime" value={runtimeLabel} />
+												</dl>
+											</div>
+										)}
 										{publicRating != null && (
 											<div className={styles.public_rating}>
 												{publicRating.toFixed(1)}

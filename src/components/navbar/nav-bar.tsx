@@ -103,8 +103,8 @@ export default function Navbar() {
 								collapseTier={COLLAPSE_TIER.BROWSE}
 								items={[
 									{ href: "/movies", label: "Movies" },
-									{ href: "/shorts", label: "Shorts" },
 									{ href: "/tv", label: "TV" },
+									{ href: "/shorts", label: "Shorts" },
 								]}
 							/>
 							<NavDropdown
