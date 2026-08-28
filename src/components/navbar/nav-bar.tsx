@@ -72,18 +72,13 @@ export default function Navbar() {
 					<LogoImage />
 				</Link>
 
-				{/* Both the search box and every nav link cluster live inside this
-				one absolutely-positioned container (see .nav_content's own
-				comment in nav-bar.module.sass) so the links flow immediately
-				after the search box wherever it ends up sitting, rather than
-				the two being positioned independently of each other. Below
+				{/* Flows immediately after .title (see nav-bar.module.sass's own
+				comment on .nav_content) so the nav links start right where the
+				logo's own width ends, rather than being aligned to a separate,
+				independently-computed position of their own. Below
 				$mobile-breakpoint this same container becomes the drawer the
 				hamburger button (below) toggles, via [data-mobile-open] above. */}
 				<div className={style.nav_content}>
-					<div className={style.search}>
-						<NavSearch />
-					</div>
-
 					<div className={style.groups}>
 						<div className={style.nav_group}>
 							<NavLink
@@ -137,6 +132,7 @@ export default function Navbar() {
 								// Static-ish (no per-user data at the top level, no
 								// loading.tsx) — safe to prefetch eagerly, unlike
 								// /account below.
+								iconOnly
 								prefetch>
 								Activity
 							</NavLink>
@@ -146,6 +142,7 @@ export default function Navbar() {
 								className={style.link}
 								pathname={pathname}
 								collapseTier={COLLAPSE_TIER.ACTIVITY}
+								iconOnly
 								prefetch>
 								Reviews
 							</NavLink>
@@ -155,12 +152,19 @@ export default function Navbar() {
 								className={style.link}
 								pathname={pathname}
 								collapseTier={COLLAPSE_TIER.ACTIVITY}
+								iconOnly
 								prefetch>
 								Lists
 							</NavLink>
 						</div>
 
 						<div className={`${style.nav_group} ${style.nav_group_end}`}>
+							{/* Pushed out here (see nav-bar.module.sass's own .search
+							comment) now that .title occupies the body-aligned slot
+							the search box used to dock to — this is just the last
+							icon before the account cluster, not a special docked
+							position of its own anymore. */}
+							<NavSearch />
 							<NavAccountMenu
 								signedIn={signedIn}
 								pathname={pathname}

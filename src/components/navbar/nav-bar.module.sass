@@ -13,14 +13,10 @@ $mobile-icon-size: 2.25rem
 $mobile-bar-height: 2rem + $mobile-icon-size
 
 // min-height pinned explicitly rather than left to derive from in-flow
-// content — .title (the one in-flow child that used to set it) is gone for
-// now (see nav-bar.tsx), and both .nav_content and .add_media_link are
-// position: absolute, so without this the wrapper would collapse to just
-// its own 2rem of padding. 1.5rem is .title's own font-size — with body's
-// line-height: 1 (globals.sass) that's exactly the content line-box height
-// .title used to contribute — so this reproduces the old title-driven
-// height rather than the (already-approximate, ~3rem) var(--navbar-height)
-// value other pages reserve space against.
+// content — .add_media_link is position: absolute, so without this the
+// wrapper's height would depend entirely on .title/.nav_content's own
+// content. 5rem comfortably clears .title's current logo height (see
+// logo-image.module.sass) with room to spare.
 .wrapper
   display: flex
   align-items: center
@@ -30,6 +26,23 @@ $mobile-bar-height: 2rem + $mobile-icon-size
   padding: 1rem 3rem
   @media (max-width: $mobile-breakpoint)
     padding: 1rem 1.25rem
+
+  // Left-aligns .title (the first in-flow child) to the same body-column
+  // start every page's own centered content uses (950px content column, see
+  // e.g. add-media.module.sass's own .wrapper) instead of .wrapper's own
+  // fixed 3rem edge padding — visually ties the logo to the page content
+  // sitting below it. .nav_content simply flows right after .title in the
+  // same row (padding-right stays the plain 3rem set above), so it lands
+  // wherever .title's own rendered width pushes it rather than needing a
+  // second independently-computed alignment of its own.
+  //
+  // Matches .nav_content's own old inline breakpoint (950px content column +
+  // 2 * 20rem, the pre-icon search box's docked floor) — kept as-is since it
+  // still comfortably clears .title's own width at that viewport, even
+  // though the 20rem search figure itself no longer drives anything here.
+  @media (min-width: 1591px)
+    padding-left: calc((100vw - 950px) / 2)
+
   position: fixed
   top: 0
   left: 0
@@ -58,105 +71,38 @@ $mobile-bar-height: 2rem + $mobile-icon-size
 
 // Wraps the compact Logo mark (see nav-bar.tsx) — flex-shrink: 0 keeps it
 // from getting squeezed by .nav_content, which is the one item in this row
-// actually meant to give ground (see its own comment on min-width: 0).
+// actually meant to give ground (see its own comment on min-width: 0). Left
+// alignment to the page's own content column comes from .wrapper's own
+// padding-left above, not from anything set here — this is a plain in-flow
+// flex item.
 .title
-  //position: absolute
   padding-right: 2rem
   display: flex
   align-items: center
   flex-shrink: 0
 
-// Both .search and .groups sit inside this one container (rather than each
-// being positioned independently) so the nav links flow immediately after
-// the search box, wherever it ends up — not separately pinned to the far
-// right of the page regardless of where the search box lands. Absolutely
-// positioned (rather than a normal flex item, as it becomes below
-// $navbar-dock-breakpoint — see the media query below) so its left edge can
-// be pinned to a viewport-relative position — .wrapper's own position:
-// fixed (with no border, full width) makes its padding box's left edge sit
-// exactly at x = 0, so `left` here is effectively measured straight from
-// the viewport edge, same trick .add_media_link below already relies on.
-//
-// (100vw - 950px) / 2 is where every page's own centered content column
-// starts (950px is that column's width — see e.g. add-media.module.sass's
-// own .wrapper) — lining the search bar up with it visually connects the
-// navbar to the content sitting below it. That alignment only holds while
-// the viewport's wide enough for it to clear the left edge with room to
-// spare, though — $navbar-dock-breakpoint below is exactly the width where
-// this formula would cross 20rem, and rather than clamping there and
-// staying artificially docked at a fixed 20rem offset that no longer
-// actually lines up with anything once the viewport keeps shrinking past
-// it, the media query below unlocks .nav_content from this alignment
-// entirely and lets it fall into normal flex flow alongside everything
-// else in .wrapper instead.
-//
-// `right` bounds this box's width without pulling its content to hug that
-// edge — children still lay out from `left` per flex's default
-// justify-content: flex-start, so on a wide viewport (content narrower than
-// the left..right span) this is indistinguishable from the old unbounded
-// version, just with unused space past the content instead of no boundary
-// at all. What it actually buys is a real width for .search's flex-shrink
-// below to shrink against — without a bound here, .nav_content has nothing
-// to run out of and just grows past the edge instead of ever handing space
-// back.
+// Plain flex item flowing right after .title (see .wrapper's own comment on
+// why that's now where the body-column alignment lives) rather than being
+// independently positioned — the nav links simply start wherever .title's
+// own rendered width ends. flex-shrink: 1 with min-width: 0 lets this give
+// ground once the row runs out of space, same fallback nav-bar.module.sass
+// used to reserve only for narrow viewports.
 .nav_content
-  position: absolute
-  top: 50%
-  left: calc((100vw - 950px) / 2)
-  right: 2rem
-  transform: translateY(-50%)
   display: flex
   align-items: center
-  gap: 3rem
+  flex: 1 1 auto
+  min-width: 0
 
-  // 950px content column + 2 * 20rem (the old docked floor, in its 16px-
-  // root px equivalent — this breakpoint would need revisiting if the root
-  // font-size ever stops being the browser default) is exactly the
-  // viewport width where `left` above would cross 20rem — below it,
-  // .nav_content drops out of the absolute/viewport-aligned layout above
-  // and becomes a plain flex item of .wrapper instead, flowing right after
-  // whatever precedes it (nothing, currently — see .title's own comment)
-  // the same way every other item in that row does.
-  @media (max-width: 1590px)
-    position: static
-    top: auto
-    left: auto
-    right: auto
-    transform: none
-    flex: 1 1 auto
-    min-width: 0
-
-// The one shrinkable flex item in .nav_content — .groups (below) is pinned
-// to its own content size, so once the row gets too narrow for both, all
-// the give comes from here instead: the search input gets pushed down
-// toward its own floor before any nav link would ever wrap or clip. flex's
-// own basis carries the same clamp() nav-search.module.sass's .input used
-// to size itself with directly; min-width matches that clamp's own 8rem
-// floor (see its comment there) so shrinking here still can't crush the
-// input past "a few words before eliding." .input itself now just fills
-// whatever width this box resolves to (see that file) rather than sizing
-// itself independently of the flex context it sits in.
-.search
-  flex: 0 1 clamp(8rem, 18vw, 20rem)
-  min-width: 8rem
-
-// Every .nav_group cluster's shared container — one flex item of
-// .nav_content. gap on .nav_group below still layers its own extra 0.75rem
-// spacing on top of this container's own gap, same as before. flex-grow: 1
-// stretches this box out to fill whatever's left of .nav_content past
-// .search's own width, rather than sizing to just its own groups' combined
-// width — otherwise .nav_group_end's own margin-left: auto below would have
-// no leftover space inside .groups to actually push into.
+// Every .nav_group cluster's shared container — its only child now that
+// NavSearch has moved into .nav_group_end (nav-bar.tsx). flex-grow: 1
+// stretches this box out to fill whatever's left of .nav_content, so
+// .nav_group_end's own margin-left: auto below has leftover space inside
+// .groups to actually push into.
 //
-// flex-shrink: 1 (not 0) is the fallback for once .search (nav-bar.tsx's
-// COLLAPSE_TIER) has already hit its own 8rem floor and every group is
-// already icon-only — at that point .search has nothing left to give, and
-// without this, .groups (and everything pinned to its far end via
-// .nav_group_end) would just hold its full natural width and overflow
-// straight past .nav_content's own right bound instead. min-width: 0 on
-// .nav_group below is the other half of this — a flex item's default
-// content-based min-width would otherwise refuse to shrink at all past that
-// same point regardless of flex-shrink here.
+// flex-shrink: 1 (not 0), paired with min-width: 0 on .nav_group below, lets
+// the groups give ground once every one of them is already icon-only and the
+// row still doesn't fit — without it they'd hold their full natural width
+// and overflow straight past .wrapper's own edge instead.
 //
 // gap itself is exactly what flex-shrink above can't touch, though — it's a
 // fixed length, not a flex item's own basis/width, so no amount of shrink
@@ -356,13 +302,6 @@ $mobile-bar-height: 2rem + $mobile-icon-size
 
     [data-mobile-open="true"] &
       display: flex
-
-  // Fills the drawer's width instead of clamping to the old docked-search
-  // sizing, which only made sense inline next to the nav links.
-  .search
-    flex: 0 0 auto
-    width: 75%
-    min-width: 0
 
   .groups
     flex-flow: column

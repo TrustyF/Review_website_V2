@@ -1,28 +1,66 @@
 @use "@/app/styles/variables" as *
 
+// Flex row so the trigger icon and (once expanded) .overlay's input sit
+// inline next to each other, growing the navbar row itself rather than
+// floating a panel on top of it.
 .wrapper
-  position: relative
+  display: flex
+  align-items: center
 
-// Fills whatever width nav-bar.module.sass's own .search flex item resolves
-// to, rather than sizing itself independently — that flex item is the one
-// place the clamp(8rem, 18vw, 20rem) sizing (8rem hand-picked floor, still
-// fits a few words of a title before eliding; 20rem the old fixed size kept
-// as a ceiling) now actually lives, so this and that stay in sync instead of
-// each having their own copy of the same clamp. .dropdown below tracks this
-// via .wrapper's own width (rather than keeping its own independent value)
-// but floors at the old fixed 20rem regardless — a shrunk input is fine to
-// type into, but the results panel underneath it (poster thumbnail + title
-// + meta per row) gets cramped below that width, so it's allowed to render
-// wider than the input that opened it.
+// Icon-only trigger — this is all .search (nav-bar.module.sass) needs to
+// size itself against while collapsed.
+.trigger
+  display: flex
+  align-items: center
+  justify-content: center
+  flex-shrink: 0
+  width: 2.25rem
+  height: 2.25rem
+  border-radius: 50%
+  color: var(--foreground)
+  cursor: pointer
+
+  &:hover
+    background: var(--ticket-accent-dark)
+
+// The input lives inline in the navbar row here (a plain flex item of
+// .wrapper, before .trigger in source order so it grows out to the icon's
+// left) rather than floated over it — expanding it grows .wrapper's own
+// width in place, same as every other flex sibling in .nav_group_end.
+// position: relative just gives .dropdown below a positioning context to
+// float under the input specifically, without pulling in .trigger too.
+//
+// Collapsed to width: 0 with no gap to .trigger (rather than not rendering
+// at all — see nav-search.tsx's own comment) so .expanded below has an
+// actual width (and margin) change to animate instead of an instant mount,
+// and the icon sits flush with nothing beside it while collapsed. No
+// overflow: hidden here — .input's own width: 100% already tracks this
+// box's animated width with nothing to clip, and clipping would also cut
+// off .dropdown below, which needs to render past this box's own bottom
+// edge (and, while collapsed, its own zero width) to be visible at all.
+.overlay
+  position: relative
+  width: 0
+  margin-right: 0
+  display: flex
+  flex-flow: column
+  transition: 0.25s ease
+  visibility: hidden
+  opacity: 0
+
+  &.expanded
+    width: 20rem
+    margin-right: 0.5rem
+    visibility: visible
+    opacity: 1
+
 .input
   width: 100%
   min-width: 0
-  padding: 0.5rem
-  border-radius: 0.5rem
-  border: none
-  //border-bottom: 1px solid var(--brand-active)
-  //background: color-mix(in srgb,var(--background) 50%,var(--brand-active) 20%)
-  background-color: var(--ticket-accent-dark)
+  padding: 0.6rem 0.75rem
+  border-radius: 1rem
+  background-color: unset
+  border: 1px solid var(--brand-muted)
   color: var(--foreground)
   font-family: $font-body
   font-size: 0.9rem
@@ -31,16 +69,15 @@
     outline: none
     border-color: var(--brand)
 
-  //&::placeholder
-  //  color: var(--accent1)
-
+// Still a floating overlay, unlike .overlay above — a results list pushing
+// the navbar's own height around as it fills in would be far more
+// distracting than the one-time width change opening the input causes.
 .dropdown
   position: absolute
   top: calc(100% + 0.5rem)
   left: 0
   z-index: 20
   width: 100%
-  min-width: 20rem
   max-height: 22rem
   overflow-y: auto
   display: flex
