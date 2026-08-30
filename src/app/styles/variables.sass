@@ -22,6 +22,16 @@ $content-width: 950px
 // gets this narrow.
 $mobile-breakpoint: 830px
 
+// nav-mobile-controls.module.sass's own .mobile_account_link/.mobile_toggle
+// square size — also feeds nav-bar.module.sass's own $mobile-bar-height, so
+// the drawer's top/max-height actually starts flush against the mobile
+// bar's real rendered height instead of reusing --navbar-height (a ~3rem
+// estimate calibrated for the shorter desktop bar, used elsewhere —
+// globals.sass's main padding-top, --navbar-offset for sticky elements).
+// Shared here (rather than declared once and duplicated) since both files
+// need the exact same value to agree.
+$mobile-icon-size: 2.25rem
+
 // Replaces a page wrapper's own `width: $content-width` literal — caps at
 // $max-width same as before, but once the viewport can no longer fit that
 // (i.e. the wrapper is effectively full-width) it also picks up side

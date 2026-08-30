@@ -1,15 +1,8 @@
 @use "@/app/styles/variables" as *
 
-// .mobile_account_link/.mobile_toggle's own square size, and (combined with
-// .wrapper's own mobile padding below) the actual rendered height of the
-// mobile bar — var(--navbar-height) is a shared ~3rem estimate used
-// elsewhere (globals.sass's main padding-top, --navbar-offset for sticky
-// elements) calibrated for the *desktop* bar, which is shorter than this
-// one; reusing it for the mobile drawer's own top/max-height left a visible
-// gap where the drawer started before the bar it's supposed to sit flush
-// against actually ended. A real value derived from the same numbers the
-// bar itself is built from, rather than another hand-guessed constant.
-$mobile-icon-size: 2.25rem
+// Combined with .wrapper's own mobile padding below, the actual rendered
+// height of the mobile bar — see $mobile-icon-size's own comment
+// (variables.sass) for why this isn't just var(--navbar-height).
 $mobile-bar-height: 2rem + $mobile-icon-size
 
 // min-height pinned explicitly rather than left to derive from in-flow
@@ -145,21 +138,7 @@ $mobile-bar-height: 2rem + $mobile-icon-size
 .nav_group.nav_group_end
   margin-left: auto
 
-// Groups the notification bell and avatar link within .nav_group_end — see
-// nav-bar.tsx's own comment for why. gap matches .nav_group's own desktop
-// gap (1.5rem, not the mobile-narrowed 0.75rem below) since this is only
-// ever visible at that width — see the mobile override below, which hides
-// this whole group rather than narrowing it.
-.account_identity
-  display: flex
-  align-items: center
-  gap: 1.5rem
-
-  @media (max-width: $mobile-breakpoint)
-    display: none
-
-.link,
-.sign_out_button
+.link
   display: flex
   align-items: center
   gap: 0.4rem
@@ -189,94 +168,7 @@ $mobile-bar-height: 2rem + $mobile-icon-size
   .link_label_tier#{$tier}
     @include nav-label-collapse($tier)
 
-// Pinned to its own corner instead of sitting in .nav_group's flex flow
-// (see nav-bar.tsx) — .wrapper's own position: fixed makes it the
-// containing block for this, and that containing block is the padding
-// box (not the border box), so right: 0 / bottom: 0 land exactly on
-// .wrapper's own padding edge — the same edge the rest of the flex content
-// naturally ends at — without duplicating .wrapper's padding values here.
-.add_media_link
-  position: absolute
-  right: 2rem
-  top: 120%
-  display: flex
-  flex-flow: column
-  align-items: flex-end
-  gap: 0.5rem
-
-// Same look as .link, but a real <button> reset — this triggers signOut()
-// rather than navigating anywhere.
-.sign_out_button
-  border: none
-  font: inherit
-  cursor: pointer
-  color: var(--brand)
-  background-color: var(--ticket-accent-dark)
-  padding: 0.5rem 0.75rem
-  border-radius: 0.5rem
-  text-shadow: unset
-
-// Groups .mobile_account_link and .mobile_toggle so exactly one margin-left:
-// auto pushes the *pair* of them to .wrapper's right edge — .nav_content
-// (this element's only preceding sibling) is display: none at this width
-// unless the drawer's open, so with nothing ahead of it taking up space,
-// this is what stands in for it. Putting margin-left: auto on each of the
-// two icons individually (rather than once, here) would split whatever
-// free space .wrapper has between *both* of their auto margins per the flex
-// spec, shoving the icons apart from each other too, not just away from
-// .nav_content's spot — gap below is what actually spaces the icons from
-// each other instead, same as .wrapper's own 3rem is scaled way down for
-// this width (see its own comment) rather than reused as-is here.
-// Hidden entirely above $mobile-breakpoint, where .nav_content's normal row
-// layout has the room these exist to replace.
-.mobile_controls
-  display: none
-  align-items: center
-  gap: 0.5rem
-  margin-left: auto
-
-  @media (max-width: $mobile-breakpoint)
-    display: flex
-
-// The account link already lives inside the drawer too (see nav-bar.tsx's
-// own .nav_group_end), but this keeps the avatar visible/tappable without
-// opening it, the same way the hamburger itself stays visible. Only ever
-// rendered inside .mobile_controls (conditionally on session — see
-// nav-bar.tsx), so no display/breakpoint rules of its own are needed here.
-.mobile_account_link
-  display: flex
-  align-items: center
-  justify-content: center
-  width: $mobile-icon-size
-  height: $mobile-icon-size
-  color: var(--foreground)
-  // .mobile_controls's own gap (0.5rem) is deliberately tight for this
-  // width (see its own comment) — margin-left tops just this one side up to
-  // .account_identity's 1.5rem desktop gap instead, so the bell reads at
-  // its usual distance from the avatar without also pushing the hamburger
-  // toggle further away than it needs to be.
-  margin-left: 1rem
-
-// Hamburger trigger for the mobile drawer below. Also only ever rendered
-// inside .mobile_controls — see that rule's own comment.
-.mobile_toggle
-  display: flex
-  align-items: center
-  justify-content: center
-  width: $mobile-icon-size
-  height: $mobile-icon-size
-  border: none
-  background: transparent
-  color: var(--foreground)
-  cursor: pointer
-
 @media (max-width: $mobile-breakpoint)
-  // Admin tools (Add media / User lists) aren't offered on mobile at all —
-  // .add_media_link's absolute corner placement doesn't fit the drawer
-  // layout below anyway, and there's no drawer-friendly replacement for it.
-  .add_media_link
-    display: none
-
   // Collapses out of the fixed/viewport-aligned centering (see .nav_content's
   // own comment above) into a hidden-by-default drawer instead — toggled via
   // the [data-mobile-open] attribute nav-bar.tsx sets on <nav> itself.

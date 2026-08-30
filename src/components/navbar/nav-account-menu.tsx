@@ -1,11 +1,10 @@
-import { Link } from "@/components/ui/link";
 import { LogIn } from "lucide-react";
-import { AccountIcon } from "@/components/icons/account-icon";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { NavLink } from "@/components/navbar/nav-link";
+import { NavAccountAvatar } from "@/components/navbar/nav-account-avatar";
 import { COLLAPSE_TIER } from "@/components/navbar/nav-constants";
-import { isNavActive } from "@/lib/nav-active";
-import style from "./nav-bar.module.sass";
+import barStyle from "./nav-bar.module.sass";
+import style from "./nav-account-menu.module.sass";
 
 type Props = {
 	signedIn: boolean;
@@ -21,8 +20,9 @@ type Props = {
 // isn't reached often enough to earn permanent navbar space on every page.
 // Both already live outside the drawer at mobile widths too (see
 // NavMobileControls) — this group is hidden there (see its own rule in
-// nav-bar.module.sass) so they don't show up twice, but stays for desktop,
-// where the drawer doesn't exist and this row is the only place they live.
+// nav-account-menu.module.sass) so they don't show up twice, but stays for
+// desktop, where the drawer doesn't exist and this row is the only place
+// they live.
 export function NavAccountMenu({
 	signedIn,
 	pathname,
@@ -46,24 +46,14 @@ export function NavAccountMenu({
 	return (
 		<div className={style.account_identity}>
 			<NotificationBell />
-			<Link
-				href="/account"
-				className={style.link}
-				aria-current={isNavActive(pathname, "/account") ? "page" : undefined}
-				aria-label="Account"
-				title="Account">
-				{showAvatar && avatarSrc ? (
-					// eslint-disable-next-line @next/next/no-img-element
-					<img
-						src={avatarSrc}
-						alt=""
-						className={style.nav_avatar}
-						onError={onAvatarError}
-					/>
-				) : (
-					<AccountIcon size={14} className={style.nav_icon} />
-				)}
-			</Link>
+			<NavAccountAvatar
+				pathname={pathname}
+				avatarSrc={avatarSrc}
+				showAvatar={showAvatar}
+				onAvatarError={onAvatarError}
+				className={barStyle.link}
+				iconSize={14}
+			/>
 		</div>
 	);
 }

@@ -1,9 +1,7 @@
-import { Link } from "@/components/ui/link";
 import { Menu, X } from "lucide-react";
-import { AccountIcon } from "@/components/icons/account-icon";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { isNavActive } from "@/lib/nav-active";
-import style from "./nav-bar.module.sass";
+import { NavAccountAvatar } from "@/components/navbar/nav-account-avatar";
+import style from "./nav-mobile-controls.module.sass";
 
 type Props = {
 	signedIn: boolean;
@@ -16,10 +14,10 @@ type Props = {
 };
 
 // Hidden above $mobile-breakpoint (see .mobile_controls in
-// nav-bar.module.sass) — groups the avatar and hamburger so a single
-// margin-left: auto (on .mobile_controls itself) pushes them to the bar's
-// right edge together, rather than each icon's own auto margin fighting the
-// other for the same leftover space.
+// nav-mobile-controls.module.sass) — groups the avatar and hamburger so a
+// single margin-left: auto (on .mobile_controls itself) pushes them to the
+// bar's right edge together, rather than each icon's own auto margin
+// fighting the other for the same leftover space.
 export function NavMobileControls({
 	signedIn,
 	pathname,
@@ -41,26 +39,14 @@ export function NavMobileControls({
 			{signedIn && (
 				<>
 					<NotificationBell />
-					<Link
-						href="/account"
+					<NavAccountAvatar
+						pathname={pathname}
+						avatarSrc={avatarSrc}
+						showAvatar={showAvatar}
+						onAvatarError={onAvatarError}
 						className={style.mobile_account_link}
-						aria-current={
-							isNavActive(pathname, "/account") ? "page" : undefined
-						}
-						aria-label="Account"
-						title="Account">
-						{showAvatar && avatarSrc ? (
-							// eslint-disable-next-line @next/next/no-img-element
-							<img
-								src={avatarSrc}
-								alt=""
-								className={style.nav_avatar}
-								onError={onAvatarError}
-							/>
-						) : (
-							<AccountIcon size={18} className={style.nav_icon} />
-						)}
-					</Link>
+						iconSize={18}
+					/>
 				</>
 			)}
 

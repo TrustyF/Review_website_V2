@@ -1,0 +1,23 @@
+@use "@/app/styles/variables" as *
+
+// Pinned to its own corner instead of sitting in .nav_group's flex flow
+// (see nav-admin-links.tsx) — <nav>'s own position: fixed (nav-bar.module
+// .sass's .wrapper) makes it the containing block for this, and that
+// containing block is the padding box (not the border box), so right: 0 /
+// top: 120% land relative to that same edge the rest of the flex content
+// naturally ends at — without duplicating .wrapper's padding values here.
+.add_media_link
+  position: absolute
+  right: 2rem
+  top: 120%
+  display: flex
+  flex-flow: column
+  align-items: flex-end
+  gap: 0.5rem
+
+  // Admin tools (Add media / User lists) aren't offered on mobile at all —
+  // this absolute corner placement doesn't fit the drawer layout nav-bar
+  // .module.sass switches to below $mobile-breakpoint anyway, and there's
+  // no drawer-friendly replacement for it.
+  @media (max-width: $mobile-breakpoint)
+    display: none
