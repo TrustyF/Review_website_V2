@@ -25,11 +25,30 @@ LOG_FILE="cron-logs/${JOB_NAME}.log"
 } >> "$LOG_FILE" 2>&1
 EXIT_CODE=$?
 
+# tsx (the runtime every npm script here uses) silently truncates a
+# multi-line CLI argument to its first line — confirmed by reproducing it
+# directly, unrelated to anything docker/cron-specific. Both messages below
+# are almost always multi-line (a log tail, a markdown summary), so both go
+# through base64 (-w 0: no line-wrapping, or the encoded form would hit the
+# same problem) rather than as raw args; notify-admin-failure.ts/
+# notify-admin-success.ts decode it back on the other end.
 if [ "$EXIT_CODE" -ne 0 ]; then
-	TAIL=$(tail -c 2000 "$LOG_FILE")
-	sudo docker compose run --rm maintenance npm run notify_cron_failure -- "$JOB_NAME" "$TAIL"
+	TAIL_B64=$(tail -c 2000 "$LOG_FILE" | base64 -w 0)
+	sudo docker compose run --rm maintenance npm run notify_cron_failure -- "$JOB_NAME" "$TAIL_B64"
 else
-	sudo docker compose run --rm maintenance npm run notify_cron_success -- "$JOB_NAME"
+	# $LOG_FILE accumulates every past run's own SUMMARY_START/END block too
+	# (see job-summary.ts) — awk resets `buf` on each START it sees, so by
+	# EOF it only holds the most recent (this run's) block, not a previous
+	# run's leftovers.
+	SUMMARY_B64=$(
+		awk '
+			/===JOB_SUMMARY_START===/ { flag=1; buf=""; next }
+			/===JOB_SUMMARY_END===/ { flag=0 }
+			flag { buf = buf $0 "\n" }
+			END { printf "%s", buf }
+		' "$LOG_FILE" | base64 -w 0
+	)
+	sudo docker compose run --rm maintenance npm run notify_cron_success -- "$JOB_NAME" "$SUMMARY_B64"
 fi
 
 exit "$EXIT_CODE"

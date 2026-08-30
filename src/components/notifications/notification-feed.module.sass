@@ -86,12 +86,15 @@
   text-overflow: ellipsis
   font-weight: 500
 
+// pre-wrap (not nowrap+ellipsis) so a multi-line body — a cron job's
+// summary (job-summary.ts) or failure log tail — renders in full instead of
+// being clipped to its first line; short bodies (a list title) are
+// unaffected since they never wrap anyway.
 .body
   color: var(--accent3)
   font-size: 0.85rem
-  overflow: hidden
-  white-space: nowrap
-  text-overflow: ellipsis
+  white-space: pre-wrap
+  overflow-wrap: break-word
 
 .date
   flex-shrink: 0

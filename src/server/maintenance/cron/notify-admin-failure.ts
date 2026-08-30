@@ -9,11 +9,17 @@ import { createNotification } from "@/components/notifications/notification-acti
 // as the rest of the codebase's role: "ADMIN" lookups.
 async function main() {
 	const jobName = process.argv[2];
-	const message = process.argv[3];
-	if (!jobName || !message) {
-		console.error("Usage: tsx notify-admin-failure.ts <job-name> <message>");
+	// base64 — tsx silently truncates a multi-line CLI argument to its first
+	// line, and this log tail is almost always multi-line; see
+	// run-and-notify.sh's own comment on the same fix for notify_cron_success.
+	const messageB64 = process.argv[3];
+	if (!jobName || !messageB64) {
+		console.error(
+			"Usage: tsx notify-admin-failure.ts <job-name> <base64-message>",
+		);
 		process.exit(1);
 	}
+	const message = Buffer.from(messageB64, "base64").toString("utf-8");
 
 	const admins = await db.user.findMany({ where: { role: UserRole.ADMIN } });
 	for (const admin of admins) {
