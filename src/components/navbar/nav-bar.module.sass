@@ -1,25 +1,12 @@
 @use "@/app/styles/variables" as *
 
-// Combined with .wrapper's own mobile padding below, the actual rendered
-// height of the mobile bar — see $mobile-icon-size's own comment
-// (variables.sass) for why this isn't just var(--navbar-height).
+// Rendered mobile bar height (see $mobile-icon-size, variables.sass).
 $mobile-bar-height: 2rem + $mobile-icon-size
 
-// The gap between the viewport edge and the page's own centered body
-// column (variables.sass's own $content-width) at any given viewport
-// width — half of whatever's left over once that column's width is
-// subtracted out. .wrapper's own padding-left (below) spends this whole
-// value directly since .title is the row's first child; .nav_group_end and
-// .nav_group_account instead each spend it relative to .wrapper's own
-// fixed 3rem edge padding, since they sit behind that padding rather than
-// replacing it — see their own comments.
+// Gap between viewport edge and the centered body column at any width.
 $body-edge-gap: calc((100vw - #{$content-width}) / 2)
 
-// min-height pinned explicitly rather than left to derive from in-flow
-// content — .add_media_link is position: absolute, so without this the
-// wrapper's height would depend entirely on .title/.nav_content's own
-// content. 5rem comfortably clears .title's current logo height (see
-// logo-image.module.sass) with room to spare.
+// Fixed min-height since .add_media_link is absolutely positioned.
 .wrapper
   display: flex
   align-items: center
@@ -30,19 +17,7 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   @media (max-width: $mobile-breakpoint)
     padding: 1rem 1.25rem
 
-  // Left-aligns .title (the first in-flow child) to the same body-column
-  // start every page's own centered content uses (950px content column, see
-  // e.g. add-media.module.sass's own .wrapper) instead of .wrapper's own
-  // fixed 3rem edge padding — visually ties the logo to the page content
-  // sitting below it. .nav_content simply flows right after .title in the
-  // same row (padding-right stays the plain 3rem set above), so it lands
-  // wherever .title's own rendered width pushes it rather than needing a
-  // second independently-computed alignment of its own.
-  //
-  // Matches .nav_content's own old inline breakpoint (950px content column +
-  // 2 * 20rem, the pre-icon search box's docked floor) — kept as-is since it
-  // still comfortably clears .title's own width at that viewport, even
-  // though the 20rem search figure itself no longer drives anything here.
+  // Aligns .title to the page body column's left edge.
   @media (min-width: 1591px)
     padding-left: $body-edge-gap
 
@@ -54,75 +29,29 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   color: var(--foreground)
   user-select: none
 
-  // Plain color gradient, no blur — the frosted-glass version (backdrop-
-  // filter, masked to fade out) looked smudgy where it faded and darkened
-  // the banner more than wanted. This is just --nav-scrim fading to
-  // transparent, applied directly on .wrapper rather than needing a masked
-  // pseudo-element, since a plain gradient doesn't need protecting the text
-  // from a mask the way the blurred version did.
-  //
-  // Eased stops, not a plain 2-stop linear fade — a straight opaque-to-
-  // transparent ramp shows a visible seam partway through (alpha
-  // interpolates linearly, but the eye doesn't perceive it that way against
-  // busy content underneath), so this front-loads the fade — strong near
-  // the top, then a long soft tail — the standard "easing gradient" curve
-  // used to avoid that banding.
+  // Eased gradient (not a linear 2-stop fade) to avoid a visible seam.
   background: linear-gradient(to bottom, var(--nav-scrim) 0%, color-mix(in srgb, var(--nav-scrim) 74%, transparent) 19%, color-mix(in srgb, var(--nav-scrim) 54%, transparent) 34%, color-mix(in srgb, var(--nav-scrim) 38%, transparent) 47%, color-mix(in srgb, var(--nav-scrim) 21%, transparent) 62.5%, color-mix(in srgb, var(--nav-scrim) 11%, transparent) 75%, color-mix(in srgb, var(--nav-scrim) 4%, transparent) 87%, transparent 100%)
 
 .hidden
   transform: translateY(-100%)
 
-// Wraps the compact Logo mark (see nav-bar.tsx) — flex-shrink: 0 keeps it
-// from getting squeezed by .nav_content, which is the one item in this row
-// actually meant to give ground (see its own comment on min-width: 0). Left
-// alignment to the page's own content column comes from .wrapper's own
-// padding-left above, not from anything set here — this is a plain in-flow
-// flex item.
 .title
   padding-right: 2rem
   display: flex
   align-items: center
   flex-shrink: 0
 
-// Plain flex item flowing right after .title (see .wrapper's own comment on
-// why that's now where the body-column alignment lives) rather than being
-// independently positioned — the nav links simply start wherever .title's
-// own rendered width ends. flex-shrink: 1 with min-width: 0 lets this give
-// ground once the row runs out of space, same fallback nav-bar.module.sass
-// used to reserve only for narrow viewports.
+// Flows right after .title; shrinks first when the row runs out of space.
 .nav_content
-  // Overrides globals.sass's own universal `*` reset (position: relative on
-  // every element) — .nav_group_account's own position: absolute (below)
-  // needs to skip past this and .groups (same override, same reason) to
-  // resolve against .wrapper itself, the one ancestor actually positioned
-  // (fixed) on purpose, rather than picking up a nearer "positioned" one by
-  // accident and measuring its `right` offset from the wrong edge.
+  // position: static so .nav_group_account's absolute position resolves
+  // against .wrapper, not this.
   position: static
   display: flex
   align-items: center
   flex: 1 1 auto
   min-width: 0
 
-// Every .nav_group cluster's shared container — its only child now that
-// NavSearch has moved into .nav_group_end (nav-bar.tsx). flex-grow: 1
-// stretches this box out to fill whatever's left of .nav_content, so
-// .nav_group_end's own margin-left: auto below has leftover space inside
-// .groups to actually push into.
-//
-// flex-shrink: 1 (not 0), paired with min-width: 0 on .nav_group below, lets
-// the groups give ground once every one of them is already icon-only and the
-// row still doesn't fit — without it they'd hold their full natural width
-// and overflow straight past .wrapper's own edge instead.
-//
-// gap itself is exactly what flex-shrink above can't touch, though — it's a
-// fixed length, not a flex item's own basis/width, so no amount of shrink
-// room on the groups themselves (already at their icon-only floor, with
-// nothing left to give) reclaims the 3 × 3rem this adds up between the 4
-// clusters. clamp() shrinks the gap itself in step with the viewport
-// instead — down to 1rem, past which it'd start reading as one run-on group
-// rather than four distinct ones.
 .groups
-  // Same override, same reason as .nav_content's own copy above.
   position: static
   display: flex
   flex-shrink: 1
@@ -130,12 +59,11 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   align-items: center
   gap: clamp(1rem, 3vw, 3rem)
 
-// Three clusters — browse (Home/Media/Reading/Games), collection (Lists/
-// Add), account (Watchlist/Account/sign in-out) — each a flex item of
-// .groups in its own right, so .groups's own gap already separates them;
-// the extra margin-left here is just a bit more breathing room on top of
-// that, marking them as distinct groups rather than one long run of links.
-// min-width: 0 — see .groups's own comment above.
+  // Right-packs against the body column's right edge once there's room.
+  @media (min-width: 1591px)
+    justify-content: flex-end
+    padding-right: calc(#{$body-edge-gap} - 3rem)
+
 .nav_group
   display: flex
   align-items: center
@@ -145,58 +73,11 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   &:not(:first-child)
     margin-left: 0.75rem
 
-// Modifier on top of .nav_group, wrapping NavSearch alone (nav-bar.tsx) —
-// flex-grow: 1 (rather than the margin-left: auto this used to be) claims
-// every bit of .groups's own leftover growth space as this group's own
-// literal box width instead of invisible margin, so NavSearch's own
-// .wrapper/.overlay (nav-search.module.sass) — a flex-grow item further
-// down inside this same group, once expanded — actually has real space to
-// grow into rather than just requesting a fixed width regardless of what's
-// free. justify-content: flex-end re-packs this group's own children (just
-// the search box now) flush against its own right edge, so any of that
-// claimed width nothing inside actually uses (i.e. whenever the search box
-// is collapsed) shows up as blank space before it — the same visual result
-// margin-left: auto used to produce directly.
-// margin-left: 0 overrides .nav_group:not(:first-child)'s own 0.75rem
-// above, same as margin-left: auto used to — flex-grow already reserves
-// this group's full share of .groups's space on its own. Chained onto
-// .nav_group (rather than standalone) to match — and, coming later in
-// source order, beat — that :not(:first-child) rule's own specificity: :not()
-// counts its argument's specificity, so a bare .nav_group_end here would
-// lose that cascade regardless of source order.
-.nav_group.nav_group_end
-  flex-grow: 1
-  justify-content: flex-end
-  margin-left: auto
-
-  // Past this point every other group (Home, Media/Reading/Games, Activity/
-  // Reviews/Lists, and this one) has room to spare, so — same idea as
-  // .wrapper's own padding-left above — this pads its own right-packed
-  // content (the search icon) in from .wrapper's fixed 3rem edge padding
-  // until it lines up with the body column's own right edge instead,
-  // mirroring .title's left alignment. $body-edge-gap already accounts for
-  // the *viewport* edge; subtracting the 3rem .wrapper itself already pads
-  // with is what stops this from double-counting that margin.
-  @media (min-width: 1591px)
-    padding-right: calc(#{$body-edge-gap} - 3rem)
-
-// Modifier on top of .nav_group, wrapping NavAccountMenu alone (nav-bar.tsx)
-// — deliberately excluded from .nav_group_end's own body-edge alignment
-// above: this stays pinned to .wrapper's actual outer edge (3rem, its own
-// fixed padding) at every width rather than drifting inward with the rest
-// of the row on a wide viewport, so it keeps reading as a separate, always-
-// in-the-same-spot cluster rather than one more item in the body-aligned
-// group. Ordinary in-flow flex item below the alignment breakpoint — same
-// as before this was split out of .nav_group_end — since there's no spare
-// row width worth reclaiming at that size anyway.
+// NavAccountMenu — pinned to the navbar's own outer edge, not the body
+// column the other groups align to.
 .nav_group.nav_group_account
   @media (min-width: 1591px)
     position: absolute
-    // .wrapper is itself position: fixed, so this resolves against *its*
-    // box — top/transform recenters vertically the way align-items: center
-    // did while this was still a normal flex item; right matches .wrapper's
-    // own fixed edge padding exactly, not $body-edge-gap, since this is the
-    // one cluster that's meant to ignore the body column.
     top: 50%
     right: 3rem
     transform: translateY(-50%)
@@ -208,12 +89,7 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   white-space: nowrap
   @include nav-item-look
 
-// Deliberately bigger than the other 14px monochrome nav icons (AccountIcon
-// included, when there's no avatar to show yet) — at 14px a photo just
-// reads as an indistinct dark blob against the navbar, indistinguishable
-// from the plain icon it's replacing. The border gives it the same reason
-// to read as "a picture" that AvatarPicker's own .current_image gets from
-// sitting in a bigger circle against the account page's background.
+// Bigger than other nav icons — at 14px a photo reads as an indistinct blob.
 .nav_avatar
   width: 40px
   aspect-ratio: 1
@@ -221,18 +97,8 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   object-fit: cover
   flex-shrink: 0
 
-// Wraps every NavLink's (and the sign-out button's) text — hidden below its
-// own tier's breakpoint (see nav-label-collapse in variables.sass and
-// nav-bar.tsx's COLLAPSE_TIER) so the item shrinks down to just its icon
-// instead of contributing to horizontal overflow, one nav_group at a time
-// rather than every label vanishing together. See nav-bar.tsx's own comment
-// on why every call site is given an icon.
-//
-// .nav_icon_tier#{$tier} rides along on the same per-tier breakpoint (see
-// nav-icon-brighten in variables.sass) — NavLink (nav-link.tsx) adds it
-// alongside .nav_icon itself, keyed off its own collapseTier prop, so the
-// icon brightens at exactly the width its own label (this tier) actually
-// disappears at, not nav-item-look's old one-size-fits-all breakpoint.
+// Label text, hidden per-tier below its own breakpoint (see
+// nav-label-collapse/nav-icon-brighten, variables.sass).
 @for $tier from 1 through 4
   .link_label_tier#{$tier}
     @include nav-label-collapse($tier)
@@ -240,29 +106,15 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   .nav_icon.nav_icon_tier#{$tier}
     @include nav-icon-brighten($tier)
 
-// For a NavLink rendered with iconOnly (Activity/Reviews/Lists — see
-// nav-bar.tsx) — no label ever mounts at any tier, so the icon just stays
-// at full brightness unconditionally rather than waiting on a breakpoint
-// that has nothing to do with it.
+// iconOnly NavLinks stay full-brightness unconditionally.
 .nav_icon.nav_icon_always
   @include nav-icon-brighten()
 
-// The label NavLink still renders (rather than omitting entirely) for an
-// iconOnly item — same idea as .link_label_tier* above, just unconditional
-// (no nav-label-collapse breakpoint) rather than width-gated, so the mobile
-// drawer's own reveal rule below has a real label in the DOM to bring back
-// once there's room for one, the same way it does for every tiered label.
 .link_label_icon_only
   display: none
 
 @media (max-width: $mobile-breakpoint)
-  // Collapses out of the fixed/viewport-aligned centering (see .nav_content's
-  // own comment above) into a hidden-by-default drawer instead — toggled via
-  // the [data-mobile-open] attribute nav-bar.tsx sets on <nav> itself.
-  // Attribute selectors aren't scoped by CSS Modules the way class names are,
-  // so this (and nav-dropdown.module.sass's own copy) reaches across files
-  // the same way :global() used to, without needing a class mirrored onto
-  // <html> — nothing outside <nav>'s own subtree needs this state.
+  // Hidden-by-default drawer, toggled via [data-mobile-open] on <nav>.
   .nav_content
     display: none
     position: fixed
@@ -296,15 +148,7 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
     &:not(:first-child)
       margin-left: 0
 
-  // Every label is collapsed to icon-only well before $mobile-breakpoint
-  // (see nav-label-collapse in variables.sass — its widest tier already
-  // hides below 910px) — the drawer has the vertical room labels don't have
-  // in the collapsed desktop row, so every tier's label comes back once the
-  // drawer is actually open. .link_label_icon_only rides along too — an
-  // iconOnly NavLink (Activity/Reviews/Lists) is meant to stay icon-only on
-  // the desktop row at every width, but the drawer's own vertical room is
-  // exactly the same "there's space for a label now" case the tiers exist
-  // for, so it gets the same treatment rather than being permanently mute.
+  // Drawer has room, so every label (including iconOnly ones) comes back.
   [data-mobile-open="true"] .link_label_tier1,
   [data-mobile-open="true"] .link_label_tier2,
   [data-mobile-open="true"] .link_label_tier3,

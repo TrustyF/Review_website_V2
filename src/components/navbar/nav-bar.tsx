@@ -158,22 +158,22 @@ export default function Navbar() {
 							</NavLink>
 						</div>
 
-						{/* The last of the body-right-aligned groups (see .nav_group_end's
-						own comment, nav-bar.module.sass) — Search still needs
-						flex-grow's leftover space to expand its overlay into, same
-						as before; it's just no longer sharing this group with the
-						account cluster, which now aligns to the navbar's own outer
-						edge instead of the body column. */}
-						<div className={`${style.nav_group} ${style.nav_group_end}`}>
+						{/* Flows right after Activity/Reviews/Lists in the same .groups
+						row (see .groups's own comment, nav-bar.module.sass) rather than
+						being pinned to its own reserved space — NavSearch's own
+						.overlay (nav-search.module.sass) spends whatever's left of the
+						row on expand, and once that runs out actually pushes the
+						groups before it aside via their own flex-shrink. */}
+						<div className={style.nav_group}>
 							<NavSearch />
 						</div>
 
-						{/* Deliberately its own group, not part of .nav_group_end above
+						{/* Deliberately its own group, not part of the flowing row above
 						— everything else in this row lines up with the page's own
-						body column (see .nav_group_end's own comment), but the
-						account cluster stays pinned to the navbar's actual outer
-						edge instead, so it doesn't visually wander inward on a wide
-						viewport the way the rest of the row now does. */}
+						body column, but the account cluster stays pinned to the
+						navbar's actual outer edge instead, so it doesn't visually
+						wander inward on a wide viewport the way the rest of the row
+						now does. */}
 						<div className={`${style.nav_group} ${style.nav_group_account}`}>
 							<NavAccountMenu
 								signedIn={signedIn}
