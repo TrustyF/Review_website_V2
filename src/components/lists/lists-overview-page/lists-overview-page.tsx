@@ -22,7 +22,7 @@ export async function ListsOverviewPage() {
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				<h1 className={styles.title}>
-					<List size={28} className={styles.title_icon} />
+					<List size={20} className={styles.title_icon} />
 					Lists
 				</h1>
 				<NewListLink />

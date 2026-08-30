@@ -15,7 +15,7 @@ export async function AllReviewsListPage() {
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				<h1 className={styles.title}>
-					<LayoutList size={28} className={styles.title_icon} />
+					<LayoutList size={20} className={styles.title_icon} />
 					Reviews
 				</h1>
 			</div>

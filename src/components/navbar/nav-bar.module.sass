@@ -5,6 +5,16 @@
 // (variables.sass) for why this isn't just var(--navbar-height).
 $mobile-bar-height: 2rem + $mobile-icon-size
 
+// The gap between the viewport edge and the page's own centered body
+// column (variables.sass's own $content-width) at any given viewport
+// width — half of whatever's left over once that column's width is
+// subtracted out. .wrapper's own padding-left (below) spends this whole
+// value directly since .title is the row's first child; .nav_group_end and
+// .nav_group_account instead each spend it relative to .wrapper's own
+// fixed 3rem edge padding, since they sit behind that padding rather than
+// replacing it — see their own comments.
+$body-edge-gap: calc((100vw - #{$content-width}) / 2)
+
 // min-height pinned explicitly rather than left to derive from in-flow
 // content — .add_media_link is position: absolute, so without this the
 // wrapper's height would depend entirely on .title/.nav_content's own
@@ -34,7 +44,7 @@ $mobile-bar-height: 2rem + $mobile-icon-size
   // still comfortably clears .title's own width at that viewport, even
   // though the 20rem search figure itself no longer drives anything here.
   @media (min-width: 1591px)
-    padding-left: calc((100vw - 950px) / 2)
+    padding-left: $body-edge-gap
 
   position: fixed
   top: 0
@@ -81,6 +91,13 @@ $mobile-bar-height: 2rem + $mobile-icon-size
 // ground once the row runs out of space, same fallback nav-bar.module.sass
 // used to reserve only for narrow viewports.
 .nav_content
+  // Overrides globals.sass's own universal `*` reset (position: relative on
+  // every element) — .nav_group_account's own position: absolute (below)
+  // needs to skip past this and .groups (same override, same reason) to
+  // resolve against .wrapper itself, the one ancestor actually positioned
+  // (fixed) on purpose, rather than picking up a nearer "positioned" one by
+  // accident and measuring its `right` offset from the wrong edge.
+  position: static
   display: flex
   align-items: center
   flex: 1 1 auto
@@ -105,6 +122,8 @@ $mobile-bar-height: 2rem + $mobile-icon-size
 // instead — down to 1rem, past which it'd start reading as one run-on group
 // rather than four distinct ones.
 .groups
+  // Same override, same reason as .nav_content's own copy above.
+  position: static
   display: flex
   flex-shrink: 1
   flex-grow: 1
@@ -126,18 +145,18 @@ $mobile-bar-height: 2rem + $mobile-icon-size
   &:not(:first-child)
     margin-left: 0.75rem
 
-// Modifier on top of .nav_group (see nav-bar.tsx's own account/sign-out
-// group) — flex-grow: 1 (rather than the margin-left: auto this used to be)
-// claims every bit of .groups's own leftover growth space as this group's
-// own literal box width instead of invisible margin, so NavSearch's own
-// .wrapper/.overlay (nav-search.module.sass) — flex-grow items further down
-// inside this same group, once expanded — actually have real space to grow
-// into rather than just requesting a fixed width regardless of what's free.
-// justify-content: flex-end re-packs this group's own children (the search
-// box, then the account cluster) flush against its own right edge, so any
-// of that claimed width nothing inside actually uses (i.e. whenever the
-// search box is collapsed) shows up as blank space before them — the same
-// visual result margin-left: auto used to produce directly.
+// Modifier on top of .nav_group, wrapping NavSearch alone (nav-bar.tsx) —
+// flex-grow: 1 (rather than the margin-left: auto this used to be) claims
+// every bit of .groups's own leftover growth space as this group's own
+// literal box width instead of invisible margin, so NavSearch's own
+// .wrapper/.overlay (nav-search.module.sass) — a flex-grow item further
+// down inside this same group, once expanded — actually has real space to
+// grow into rather than just requesting a fixed width regardless of what's
+// free. justify-content: flex-end re-packs this group's own children (just
+// the search box now) flush against its own right edge, so any of that
+// claimed width nothing inside actually uses (i.e. whenever the search box
+// is collapsed) shows up as blank space before it — the same visual result
+// margin-left: auto used to produce directly.
 // margin-left: 0 overrides .nav_group:not(:first-child)'s own 0.75rem
 // above, same as margin-left: auto used to — flex-grow already reserves
 // this group's full share of .groups's space on its own. Chained onto
@@ -148,7 +167,39 @@ $mobile-bar-height: 2rem + $mobile-icon-size
 .nav_group.nav_group_end
   flex-grow: 1
   justify-content: flex-end
-  margin-left: 0
+  margin-left: auto
+
+  // Past this point every other group (Home, Media/Reading/Games, Activity/
+  // Reviews/Lists, and this one) has room to spare, so — same idea as
+  // .wrapper's own padding-left above — this pads its own right-packed
+  // content (the search icon) in from .wrapper's fixed 3rem edge padding
+  // until it lines up with the body column's own right edge instead,
+  // mirroring .title's left alignment. $body-edge-gap already accounts for
+  // the *viewport* edge; subtracting the 3rem .wrapper itself already pads
+  // with is what stops this from double-counting that margin.
+  @media (min-width: 1591px)
+    padding-right: calc(#{$body-edge-gap} - 3rem)
+
+// Modifier on top of .nav_group, wrapping NavAccountMenu alone (nav-bar.tsx)
+// — deliberately excluded from .nav_group_end's own body-edge alignment
+// above: this stays pinned to .wrapper's actual outer edge (3rem, its own
+// fixed padding) at every width rather than drifting inward with the rest
+// of the row on a wide viewport, so it keeps reading as a separate, always-
+// in-the-same-spot cluster rather than one more item in the body-aligned
+// group. Ordinary in-flow flex item below the alignment breakpoint — same
+// as before this was split out of .nav_group_end — since there's no spare
+// row width worth reclaiming at that size anyway.
+.nav_group.nav_group_account
+  @media (min-width: 1591px)
+    position: absolute
+    // .wrapper is itself position: fixed, so this resolves against *its*
+    // box — top/transform recenters vertically the way align-items: center
+    // did while this was still a normal flex item; right matches .wrapper's
+    // own fixed edge padding exactly, not $body-edge-gap, since this is the
+    // one cluster that's meant to ignore the body column.
+    top: 50%
+    right: 3rem
+    transform: translateY(-50%)
 
 .link
   display: flex

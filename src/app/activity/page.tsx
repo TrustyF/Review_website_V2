@@ -10,7 +10,7 @@ export default async function ActivityPage() {
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				<h1 className={styles.title}>
-					<ActivityIcon size={28} className={styles.title_icon} />
+					<ActivityIcon size={20} className={styles.title_icon} />
 					Activity
 				</h1>
 			</div>

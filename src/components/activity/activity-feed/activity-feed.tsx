@@ -281,9 +281,8 @@ export function ActivityFeed({ entries }: { entries: ActivityFeedEntry[] }) {
 	return (
 		<>
 			<div className={styles.groups}>
-				{groups.map((group) => (
-					<details key={group.key} open>
-						<summary className={styles.group_header}>{group.label}</summary>
+				{groups.map((group, groupIndex) => {
+					const list = (
 						<ul className={styles.list}>
 							{group.entries.map((entry, index) => {
 								const prevEntry = group.entries[index - 1];
@@ -307,8 +306,24 @@ export function ActivityFeed({ entries }: { entries: ActivityFeedEntry[] }) {
 								);
 							})}
 						</ul>
-					</details>
-				))}
+					);
+
+					// The first group is always "this month" (or whichever month the
+					// newest entry falls in) — self-evident from context, so it skips
+					// the label (and the <details>/<summary> pair that only exists to
+					// carry one) and only earlier groups get one marking where they
+					// start. Same treatment as GroupedMediaList's own first group.
+					if (groupIndex === 0) {
+						return <Fragment key={group.key}>{list}</Fragment>;
+					}
+
+					return (
+						<details key={group.key} open>
+							<summary className={styles.group_header}>{group.label}</summary>
+							{list}
+						</details>
+					);
+				})}
 			</div>
 			{visibleCount < entries.length && (
 				<div className={styles.sentinel} ref={sentinelRef} />

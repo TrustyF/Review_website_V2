@@ -80,16 +80,16 @@ export default function Navbar() {
 				hamburger button (below) toggles, via [data-mobile-open] above. */}
 				<div className={style.nav_content}>
 					<div className={style.groups}>
-						<div className={style.nav_group}>
-							<NavLink
-								href="/"
-								icon={HomeIcon}
-								className={style.link}
-								pathname={pathname}
-								collapseTier={COLLAPSE_TIER.HOME}>
-								Home
-							</NavLink>
-						</div>
+						{/*<div className={style.nav_group}>*/}
+						{/*	<NavLink*/}
+						{/*		href="/"*/}
+						{/*		icon={HomeIcon}*/}
+						{/*		className={style.link}*/}
+						{/*		pathname={pathname}*/}
+						{/*		collapseTier={COLLAPSE_TIER.HOME}>*/}
+						{/*		Home*/}
+						{/*	</NavLink>*/}
+						{/*</div>*/}
 
 						<div className={style.nav_group}>
 							<NavDropdown
@@ -158,13 +158,23 @@ export default function Navbar() {
 							</NavLink>
 						</div>
 
+						{/* The last of the body-right-aligned groups (see .nav_group_end's
+						own comment, nav-bar.module.sass) — Search still needs
+						flex-grow's leftover space to expand its overlay into, same
+						as before; it's just no longer sharing this group with the
+						account cluster, which now aligns to the navbar's own outer
+						edge instead of the body column. */}
 						<div className={`${style.nav_group} ${style.nav_group_end}`}>
-							{/* Pushed out here (see nav-bar.module.sass's own .search
-							comment) now that .title occupies the body-aligned slot
-							the search box used to dock to — this is just the last
-							icon before the account cluster, not a special docked
-							position of its own anymore. */}
 							<NavSearch />
+						</div>
+
+						{/* Deliberately its own group, not part of .nav_group_end above
+						— everything else in this row lines up with the page's own
+						body column (see .nav_group_end's own comment), but the
+						account cluster stays pinned to the navbar's actual outer
+						edge instead, so it doesn't visually wander inward on a wide
+						viewport the way the rest of the row now does. */}
+						<div className={`${style.nav_group} ${style.nav_group_account}`}>
 							<NavAccountMenu
 								signedIn={signedIn}
 								pathname={pathname}

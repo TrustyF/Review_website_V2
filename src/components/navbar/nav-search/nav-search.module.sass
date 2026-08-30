@@ -26,6 +26,7 @@
   justify-content: flex-end
   flex-grow: 1
   min-width: 0
+  max-width: 10rem
 
 // Icon-only trigger — this is all .search (nav-bar.module.sass) needs to
 // size itself against while collapsed.
@@ -119,7 +120,6 @@
   // rather than growing the input indefinitely on a wide screen.
   &.expanded
     flex-grow: 1
-    max-width: 20rem
     margin-right: 0.5rem
     transform: scaleX(1)
     visibility: visible
