@@ -291,10 +291,15 @@ services:
   # DOZZLE_AUTH_PROVIDER=simple gates the UI behind a login (Dozzle has none
   # by default, unlike uptime-kuma/beszel-hub which force one on first run)
   # — backed by a users.yml this can't generate on its own the way
-  # beszel-agent's key is issued via its hub's web UI: one-time setup after
-  # first `docker compose up -d dozzle`, run once from the host:
-  #   docker compose run --rm dozzle generate-users admin --password <pw> -n "Admin"
-  # which writes users.yml into the dozzle-data volume below.
+  # beszel-agent's key is issued via its hub's web UI. `generate` only prints
+  # the YAML to stdout, it does NOT write /data/users.yml itself — without
+  # that file present, dozzle fatal-errors and crash-loops on every start
+  # (published port never actually listens). One-time setup, run once from
+  # the host BEFORE `docker compose up -d dozzle`:
+  #   docker compose run --rm dozzle generate admin --password <pw> -n "Admin" > /tmp/users.yml
+  #   docker run --rm -v review-website-nextjs_dozzle-data:/data -v /tmp/users.yml:/src/users.yml:ro busybox cp /src/users.yml /data/users.yml
+  # (dozzle's own image has no shell, hence the busybox helper) then start
+  # dozzle normally.
   dozzle:
     image: amir20/dozzle:latest
     restart: unless-stopped
