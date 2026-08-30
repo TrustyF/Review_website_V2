@@ -12,20 +12,11 @@ type NavLinkProps = {
 	className: string | undefined;
 	pathname: string;
 	children: React.ReactNode;
-	// Code-level opt-in (as opposed to the viewport-driven collapse every
-	// other label already goes through — see collapseTier below) — the
-	// label stays visually hidden at every desktop width rather than
-	// width-gated by a tier (see .link_label_icon_only, nav-bar.module.sass),
-	// with `children` also moved to aria-label/title so the link's name is
-	// exposed to screen readers and as a hover tooltip while it's hidden.
-	// Still a real element in the DOM (not omitted) so the mobile drawer's
-	// own reveal rule — same one every tiered label already gets — can bring
-	// it back once there's room for one.
+	// Label stays hidden on desktop with `children` moved to aria-label/title
+	// instead, so the link's name is still exposed to screen readers and as
+	// a hover tooltip. Still a real element in the DOM (not omitted) so the
+	// mobile drawer can bring the label back.
 	iconOnly?: boolean;
-	// Which staggered collapse breakpoint this link's label hides at — see
-	// COLLAPSE_TIER (nav-constants.ts) for how tiers are assigned per
-	// nav_group. Ignored when iconOnly is set (there's no label to collapse).
-	collapseTier?: number;
 	// Defaults to false (same as Link's own default) — leave unset for
 	// anything dynamic/session-scoped (e.g. /account). Pass true only for a
 	// destination that's cheap to prefetch (static/ISR, no per-user data at
@@ -44,7 +35,6 @@ export function NavLink({
 	pathname,
 	children,
 	iconOnly = false,
-	collapseTier = 4,
 	prefetch = false,
 }: NavLinkProps) {
 	const isActive = isNavActive(pathname, href);
@@ -63,22 +53,11 @@ export function NavLink({
 			{Icon && (
 				<Icon
 					size={14}
-					className={`${style.nav_icon} ${iconOnly ? style.nav_icon_always : style[`nav_icon_tier${collapseTier}`]}`}
+					className={`${style.nav_icon} ${iconOnly ? style.nav_icon_always : ""}`}
 					// fill={isActive ? "currentColor" : "none"}
 				/>
 			)}
-			{/* Collapses away below $navbar-collapse-width (see nav-bar.module
-			.sass's .link_label), leaving just the icon above — every NavLink
-			call site is given an icon for exactly this reason, so nothing
-			disappears entirely at narrow widths. iconOnly uses the same
-			always-hidden-until-the-drawer class instead of a tier — see its
-			own comment above. */}
-			<span
-				className={
-					iconOnly
-						? style.link_label_icon_only
-						: style[`link_label_tier${collapseTier}`]
-				}>
+			<span className={iconOnly ? style.link_label_icon_only : style.link_label}>
 				{children}
 			</span>
 		</Link>

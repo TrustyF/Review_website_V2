@@ -14,12 +14,8 @@ $mini-card-min-width: 110px
 // was independently hardcoded as `width: 950px` in each of those files.
 $content-width: 950px
 
-// Below this, the navbar switches from its desktop row layout (search +
-// grouped links, collapsing to icon-only via nav-label-collapse below) to a
-// hamburger-triggered drawer — see nav-bar.module.sass/.tsx. Chosen below
-// $navbar-collapse-width's own narrowest tier, since even a fully icon-only
-// desktop row still doesn't leave room for the search box once the viewport
-// gets this narrow.
+// The single navbar breakpoint — below this it's a hamburger-triggered
+// drawer, at or above it the full desktop row (see nav-bar.module.sass/.tsx).
 $mobile-breakpoint: 830px
 
 // nav-mobile-controls.module.sass's own .mobile_account_link/.mobile_toggle
@@ -44,33 +40,6 @@ $mobile-icon-size: 2.25rem
 
   @media (max-width: $max-width)
     padding-inline: 1.25rem
-
-// Below this, the navbar's nav items collapse from icon+label to icon-only
-// (see nav-bar.module.sass's .link_label_tier* and nav-dropdown.module.sass's
-// .label_stack_tier*) — the fixed desktop layout (nav_group gaps, search's
-// own 10rem left margin, every label's full text, ...) doesn't reflow on its
-// own, so without this it just overflows the viewport below this width
-// instead of shrinking to fit.
-//
-// Rather than every label vanishing at once, each nav_group collapses at its
-// own width, staggered right to left (see nav-bar.tsx's own COLLAPSE_TIER)
-// so the rightmost group sheds its labels first as the viewport narrows,
-// then the next one in, and so on — this is tier 1's width (the widest,
-// first-to-collapse tier); tier N's is $navbar-collapse-step narrower per
-// step. nav-label-collapse below computes each tier's actual breakpoint.
-$navbar-collapse-width: 1400px
-$navbar-collapse-step: 130px
-
-// Factored out of nav-label-collapse below so nav-icon-brighten (further
-// down) can react to the exact same per-tier breakpoint without
-// recalculating it independently.
-@mixin nav-collapse-tier($tier: 1)
-  @media (max-width: $navbar-collapse-width - $navbar-collapse-step * ($tier - 1))
-    @content
-
-@mixin nav-label-collapse($tier: 1)
-  @include nav-collapse-tier($tier)
-    display: none
 
 // Shared "nothing here yet" text treatment — was independently redefined in
 // four different module.sass files (change log, search results, credit
@@ -196,30 +165,10 @@ $navbar-collapse-step: 130px
   &[aria-current="page"] .nav_icon
     color: var(--brand)
 
-// Brightens a nav-item-look icon (above) from its dim resting accent3 up to
-// full foreground, for whenever it's the item's only visible content — i.e.
-// actually icon-only, not just "the viewport happens to be narrow": staying
-// at the same dim tone it uses when it's merely a label's sidekick would
-// make every icon-only item read as washed-out. Still yields to
-// nav-item-look's own :hover/[aria-current] rule above it (higher
-// specificity — three simple selectors there vs. these two-class compound
-// selectors), same as the dim resting state does.
-//
-// Applied via a modifier class alongside .nav_icon itself (see
-// nav-bar.module.sass/nav-dropdown.module.sass's own .nav_icon_tier*/
-// .nav_icon_always) — compounded onto .nav_icon (".nav_icon.nav_icon_tier1",
-// not a bare ".nav_icon_tier1") so its specificity matches nav-item-look's
-// own ".link .nav_icon" dim rule (two classes either way) and wins the tie
-// by coming later in each file, rather than losing outright to a higher-
-// specificity rule it can never override. A $tier scopes the brighten to
-// nav-label-collapse's own breakpoint for that tier, so it kicks in exactly
-// when *this* item's own label actually collapses rather than some other
-// item's tier's width; no $tier (the default) is unconditional, for an item
-// that's icon-only by prop with no label to ever collapse in the first
-// place.
-@mixin nav-icon-brighten($tier: null)
-  @if $tier
-    @include nav-collapse-tier($tier)
-      color: var(--foreground)
-  @else
-    color: var(--foreground)
+// Brightens a nav-item-look icon (above) to full foreground for an item
+// that's icon-only (no label ever shown) — otherwise it stays at the dim
+// resting accent3 tone. Compounded onto .nav_icon (".nav_icon.nav_icon_always")
+// so its specificity matches nav-item-look's own dim rule and wins by
+// source order.
+@mixin nav-icon-brighten
+  color: var(--foreground)

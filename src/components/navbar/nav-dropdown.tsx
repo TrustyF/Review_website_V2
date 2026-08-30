@@ -22,16 +22,10 @@ type Props = {
 	label: string;
 	icon?: LucideIcon | NavIcon;
 	items: Item[];
-	// Which staggered collapse breakpoint this dropdown's label text hides
-	// at — see nav-bar.tsx's own COLLAPSE_TIER map for how tiers are
-	// assigned per nav_group (1 = widest/collapses first, rightmost group).
-	// Ignored when iconOnly is set (there's no label to collapse).
-	collapseTier?: number;
 	// Same code-level opt-in as NavLink's own iconOnly (nav-bar.tsx) — the
-	// trigger's sliding label_stack stays out of the DOM at every width
-	// instead of just collapsing at collapseTier's breakpoint, with `label`
-	// moved to aria-label/title so the trigger's name is still exposed to
-	// screen readers and as a hover tooltip.
+	// trigger's sliding label_stack stays out of the DOM, with `label` moved
+	// to aria-label/title instead so it's still exposed to screen readers
+	// and as a hover tooltip.
 	iconOnly?: boolean;
 	// Which side of the trigger the panel grows from — "right" for a
 	// dropdown pinned against the navbar's own right edge (see
@@ -94,7 +88,6 @@ export function NavDropdown({
 	label,
 	icon: Icon,
 	items,
-	collapseTier = 1,
 	iconOnly = false,
 	align = "left",
 }: Props) {
@@ -251,7 +244,7 @@ export function NavDropdown({
 					{Icon && (
 						<Icon
 							size={14}
-							className={`${style.nav_icon} ${iconOnly ? style.nav_icon_always : style[`nav_icon_tier${collapseTier}`]}`}
+							className={`${style.nav_icon} ${iconOnly ? style.nav_icon_always : ""}`}
 							// fill={activeItem ? "currentColor" : "none"}
 						/>
 					)}
@@ -260,8 +253,7 @@ export function NavDropdown({
 					rather than a redundant one — same reasoning as NavLink's own
 					iconOnly (nav-bar.tsx). */}
 					{!iconOnly && (
-						<span
-							className={`${style.label_stack} ${style[`label_stack_tier${collapseTier}`]}`}>
+						<span className={style.label_stack}>
 							{labelVariants.map((variant) => {
 								const isActive = variant.key === activeLabelKey;
 								// Only the variant that just lost active status gets

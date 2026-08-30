@@ -14,12 +14,9 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   width: 100%
   min-height: 5rem
   padding: 1rem 3rem
-  @media (max-width: $mobile-breakpoint)
-    padding: 1rem 1.25rem
-
-  // Aligns .title to the page body column's left edge.
-  @media (min-width: 1591px)
-    padding-left: $body-edge-gap
+  // Aligns .title to the page body column's left edge; max() keeps it from
+  // going below the plain 3rem edge padding on a narrower desktop width.
+  padding-left: max(3rem, #{$body-edge-gap})
 
   position: fixed
   top: 0
@@ -51,18 +48,17 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   flex: 1 1 auto
   min-width: 0
 
+// Right-packs against the body column's right edge; max(0px, ...) keeps
+// the padding from going negative on a narrower desktop width.
 .groups
   position: static
   display: flex
   flex-shrink: 1
   flex-grow: 1
   align-items: center
+  justify-content: flex-end
   gap: clamp(1rem, 3vw, 3rem)
-
-  // Right-packs against the body column's right edge once there's room.
-  @media (min-width: 1591px)
-    justify-content: flex-end
-    padding-right: calc(#{$body-edge-gap} - 3rem)
+  padding-right: max(0px, calc(#{$body-edge-gap} - 3rem))
 
 .nav_group
   display: flex
@@ -76,11 +72,10 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
 // NavAccountMenu — pinned to the navbar's own outer edge, not the body
 // column the other groups align to.
 .nav_group.nav_group_account
-  @media (min-width: 1591px)
-    position: absolute
-    top: 50%
-    right: 3rem
-    transform: translateY(-50%)
+  position: absolute
+  top: 50%
+  right: 3rem
+  transform: translateY(-50%)
 
 .link
   display: flex
@@ -97,23 +92,21 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   object-fit: cover
   flex-shrink: 0
 
-// Label text, hidden per-tier below its own breakpoint (see
-// nav-label-collapse/nav-icon-brighten, variables.sass).
-@for $tier from 1 through 4
-  .link_label_tier#{$tier}
-    @include nav-label-collapse($tier)
+.link_label
+  white-space: nowrap
 
-  .nav_icon.nav_icon_tier#{$tier}
-    @include nav-icon-brighten($tier)
-
-// iconOnly NavLinks stay full-brightness unconditionally.
 .nav_icon.nav_icon_always
-  @include nav-icon-brighten()
+  @include nav-icon-brighten
 
 .link_label_icon_only
   display: none
 
 @media (max-width: $mobile-breakpoint)
+  // Single boundary for the whole navbar: everything above is one desktop
+  // layout, everything here is the drawer.
+  .wrapper
+    padding: 1rem 1.25rem
+
   // Hidden-by-default drawer, toggled via [data-mobile-open] on <nav>.
   .nav_content
     display: none
@@ -137,6 +130,7 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   .groups
     flex-flow: column
     align-items: stretch
+    justify-content: flex-start
     flex-grow: 0
     gap: 2rem
     padding: 0.5rem 0 2rem 1rem
@@ -148,10 +142,9 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
     &:not(:first-child)
       margin-left: 0
 
-  // Drawer has room, so every label (including iconOnly ones) comes back.
-  [data-mobile-open="true"] .link_label_tier1,
-  [data-mobile-open="true"] .link_label_tier2,
-  [data-mobile-open="true"] .link_label_tier3,
-  [data-mobile-open="true"] .link_label_tier4,
+  .nav_group_account
+    position: static
+
+  // Drawer has room, so iconOnly labels come back too.
   [data-mobile-open="true"] .link_label_icon_only
     display: inline

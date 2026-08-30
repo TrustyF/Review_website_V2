@@ -65,39 +65,10 @@
   // Scoped to just this stack rather than raised globally.
   line-height: 1.3
 
-// Same collapse-to-icon behavior as nav-bar.module.sass's .link_label_tier*
-// (see that file and nav-label-collapse in variables.sass) — the trigger's
-// icon + chevron stay, just the sliding label text goes, at whichever tier
-// this dropdown's own nav_group was assigned (see nav-bar.tsx's
-// COLLAPSE_TIER).
-//
-// .nav_icon_tier#{$tier}/.nav_icon_always mirror nav-bar.module.sass's own
-// copies (see that file's own comment) — NavDropdown (nav-dropdown.tsx) adds
-// one of them alongside .nav_icon itself, so the trigger's icon brightens
-// exactly when its own label_stack (this tier, or unconditionally for an
-// iconOnly dropdown) actually goes rather than at some other item's tier.
-@for $tier from 1 through 4
-  .label_stack_tier#{$tier}
-    @include nav-label-collapse($tier)
-
-  .nav_icon.nav_icon_tier#{$tier}
-    @include nav-icon-brighten($tier)
-
+// Mirrors nav-bar.module.sass's own .nav_icon_always — NavDropdown adds this
+// alongside .nav_icon for an iconOnly trigger.
 .nav_icon.nav_icon_always
-  @include nav-icon-brighten()
-
-// Every tier is already collapsed well before $mobile-breakpoint (see
-// nav-label-collapse's own comment) — the mobile drawer (nav-bar.module.sass)
-// has the vertical room labels don't have in the collapsed desktop row, so
-// bring the label back once it's open. [data-mobile-open="true"] is the
-// attribute nav-bar.tsx sets on <nav> for its own drawer styles — plain
-// module classes aren't reachable across files, so this (an attribute
-// selector, unaffected by CSS Modules' class-name scoping) is the bridge.
-[data-mobile-open="true"] .label_stack_tier1,
-[data-mobile-open="true"] .label_stack_tier2,
-[data-mobile-open="true"] .label_stack_tier3,
-[data-mobile-open="true"] .label_stack_tier4
-  display: grid
+  @include nav-icon-brighten
 
 // Default (unset) state sits a full line below, waiting — so a variant
 // that becomes active always slides up into place from the bottom. The

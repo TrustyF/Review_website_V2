@@ -19,7 +19,6 @@ import { NavLink } from "@/components/navbar/nav-link";
 import { NavAccountMenu } from "@/components/navbar/nav-account-menu";
 import { NavMobileControls } from "@/components/navbar/nav-mobile-controls";
 import { NavAdminLinks } from "@/components/navbar/nav-admin-links";
-import { COLLAPSE_TIER } from "@/components/navbar/nav-constants";
 import { useNavbarVisibility } from "@/components/navbar/use-navbar-visibility";
 import { useMobileDrawer } from "@/components/navbar/use-mobile-drawer";
 import { useAvatarImage } from "@/components/navbar/use-avatar-image";
@@ -85,8 +84,7 @@ export default function Navbar() {
 						{/*		href="/"*/}
 						{/*		icon={HomeIcon}*/}
 						{/*		className={style.link}*/}
-						{/*		pathname={pathname}*/}
-						{/*		collapseTier={COLLAPSE_TIER.HOME}>*/}
+						{/*		pathname={pathname}>*/}
 						{/*		Home*/}
 						{/*	</NavLink>*/}
 						{/*</div>*/}
@@ -95,7 +93,6 @@ export default function Navbar() {
 							<NavDropdown
 								label="Media"
 								icon={MovieIcon}
-								collapseTier={COLLAPSE_TIER.BROWSE}
 								items={[
 									{ href: "/movies", label: "Movies" },
 									{ href: "/tv", label: "TV" },
@@ -105,7 +102,6 @@ export default function Navbar() {
 							<NavDropdown
 								label="Reading"
 								icon={BookOpen}
-								collapseTier={COLLAPSE_TIER.BROWSE}
 								items={[
 									{ href: "/manga", label: "Manga" },
 									{ href: "/comics", label: "Comics" },
@@ -116,8 +112,7 @@ export default function Navbar() {
 								href="/games"
 								icon={GamepadDirectional}
 								className={style.link}
-								pathname={pathname}
-								collapseTier={COLLAPSE_TIER.BROWSE}>
+								pathname={pathname}>
 								Games
 							</NavLink>
 						</div>
@@ -128,7 +123,6 @@ export default function Navbar() {
 								icon={ActivityIcon}
 								className={style.link}
 								pathname={pathname}
-								collapseTier={COLLAPSE_TIER.ACTIVITY}
 								// Static-ish (no per-user data at the top level, no
 								// loading.tsx) — safe to prefetch eagerly, unlike
 								// /account below.
@@ -141,7 +135,6 @@ export default function Navbar() {
 								icon={LayoutList}
 								className={style.link}
 								pathname={pathname}
-								collapseTier={COLLAPSE_TIER.ACTIVITY}
 								iconOnly
 								prefetch>
 								Reviews
@@ -151,7 +144,6 @@ export default function Navbar() {
 								icon={List}
 								className={style.link}
 								pathname={pathname}
-								collapseTier={COLLAPSE_TIER.ACTIVITY}
 								iconOnly
 								prefetch>
 								Lists

@@ -2,7 +2,6 @@ import { LogIn } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { NavLink } from "@/components/navbar/nav-link";
 import { NavAccountAvatar } from "@/components/navbar/nav-account-avatar";
-import { COLLAPSE_TIER } from "@/components/navbar/nav-constants";
 import barStyle from "./nav-bar.module.sass";
 import style from "./nav-account-menu.module.sass";
 
@@ -14,15 +13,9 @@ type Props = {
 	onAvatarError: () => void;
 };
 
-// The desktop .nav_group_end cluster — signed in shows the notification
-// bell and avatar/account link; signed out just links to /login. Sign-out
-// itself lives on the account page now (see SignOutButton), not here — it
-// isn't reached often enough to earn permanent navbar space on every page.
-// Both already live outside the drawer at mobile widths too (see
-// NavMobileControls) — this group is hidden there (see its own rule in
-// nav-account-menu.module.sass) so they don't show up twice, but stays for
-// desktop, where the drawer doesn't exist and this row is the only place
-// they live.
+// Signed in shows the notification bell and avatar/account link; signed out
+// just links to /login. Sign-out lives on the account page (SignOutButton),
+// not here. Hidden in the mobile drawer (NavMobileControls covers it there).
 export function NavAccountMenu({
 	signedIn,
 	pathname,
@@ -36,8 +29,7 @@ export function NavAccountMenu({
 				href="/login"
 				icon={LogIn}
 				className={style.sign_out_button}
-				pathname={pathname}
-				collapseTier={COLLAPSE_TIER.ACCOUNT}>
+				pathname={pathname}>
 				Sign in
 			</NavLink>
 		);
