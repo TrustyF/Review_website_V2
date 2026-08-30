@@ -52,6 +52,9 @@ export function DevMenu() {
 						<Link href="/dev/invocations" className={styles.link}>
 							Invocations
 						</Link>
+						<Link href="/dev/responsive-preview" className={styles.link}>
+							Responsive preview
+						</Link>
 					</div>
 				)}
 				{isAdmin && (

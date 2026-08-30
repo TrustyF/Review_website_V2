@@ -12,6 +12,13 @@ $card-transition-duration: 0.35s
 $card-enter-opacity-duration: 0.2s
 $card-transition-easing: ease-out
 
+// Matches content-wrapper's own hardcoded padding-inline (variables.sass) —
+// same hand-kept copy as featured-review-card-mobile.module.sass's own
+// $page-padding, used the same way: .banner below cancels it out so the
+// banner ignores the page wrapper's own side padding instead of shrinking
+// with it.
+$page-padding: 1.25rem
+
 .wrapper
   position: relative
 
@@ -59,15 +66,17 @@ $card-transition-easing: ease-out
   display: grid
   overflow: hidden
 
-  // Below this, FeaturedReviewCardMobile's own .banner deliberately bleeds
-  // past this box's edges to reach the screen edges (see that file's own
-  // comment) — hidden here would clip it right back off. The mobile card's
-  // own translateX slide is clipped locally instead, on its own .content
-  // (see that rule's own comment) rather than relying on this box, since
-  // globals.sass's body { overflow-x: hidden } safety net isn't actually
-  // reliable for this (see media-detail.module.sass's own .page comment on
-  // why it needs its own local clip too).
-  @media (max-width: $featured-review-mobile-breakpoint)
+  // Below $content-width, FeaturedReviewCard's own .banner (max-width, this
+  // component's desktop card, still showing above $featured-review-mobile-
+  // breakpoint) and FeaturedReviewCardMobile's own .banner (below it)
+  // deliberately bleed past this box's edges to reach the screen edges (see
+  // .banner's and FeaturedReviewCardMobile's own comments) — hidden here
+  // would clip either right back off. Each card's own translateX slide is
+  // clipped locally instead (on .content, desktop; on .content_clip,
+  // mobile), since globals.sass's body { overflow-x: hidden } safety net
+  // isn't actually reliable for this (see media-detail.module.sass's own
+  // .page comment on why it needs its own local clip too).
+  @media (max-width: $content-width)
     overflow: visible
 
 // Starts transparent, then FeaturedReviewCard adds .settled a frame after
@@ -94,6 +103,16 @@ $card-transition-easing: ease-out
   @media (max-width: $featured-review-mobile-breakpoint)
     display: none
 
+  // Between $featured-review-mobile-breakpoint and $content-width, this
+  // card is still the one showing but the page wrapper has already picked
+  // up its own side padding (content-wrapper, variables.sass) — dropped
+  // here (rather than just on .banner) so .banner's own bleed below isn't
+  // clipped back off by this box's rounding, same trade-off
+  // FeaturedReviewCardMobile's own .card_link makes permanently.
+  @media (max-width: $content-width) and (min-width: $featured-review-mobile-breakpoint + 1px)
+    border-radius: 0
+    overflow: visible
+
   &.settled
     opacity: 1
 
@@ -113,11 +132,20 @@ $card-transition-easing: ease-out
   pointer-events: none
   transition: opacity $card-transition-duration $card-transition-easing
 
+// width/margin-inline bleed matches FeaturedReviewCardMobile's own .banner
+// — cancels content-wrapper's own page-padding so this reaches the screen
+// edges instead of shrinking with it, active only where that padding
+// actually applies (see .card_link's own override, needed so it isn't
+// clipped back off).
 .banner
   position: relative
   width: 100%
   aspect-ratio: 21/9
   background-color: var(--background)
+
+  @media (max-width: $content-width)
+    width: calc(100% + #{$page-padding} * 2)
+    margin-inline: calc(#{$page-padding} * -1)
 
 .banner_image
   object-fit: cover

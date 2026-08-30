@@ -1,0 +1,84 @@
+// No fixed 950px wrapper (unlike gauges-dev.module.sass's own) — the panes
+// below routinely need more than that themselves.
+.wrapper
+  padding: 20px
+  color: var(--foreground)
+
+.controls
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 16px
+  border: 1px solid var(--border-highlight)
+  border-radius: 4px
+  padding: 12px 20px
+  margin-bottom: 20px
+
+.control_row
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 10px
+  flex: 1
+
+  label
+    flex-shrink: 0
+
+  input[type="text"]
+    flex: 1
+    padding: 4px 8px
+    background: var(--surface)
+    border: 1px solid var(--surface-border)
+    border-radius: 4px
+    color: var(--foreground)
+
+.reload_button
+  flex-shrink: 0
+  padding: 6px 14px
+  border: 1px solid var(--border-highlight)
+  border-radius: 4px
+  background: var(--surface)
+  color: var(--foreground)
+  cursor: pointer
+
+  &:hover
+    background: var(--surface-border)
+
+// Horizontal scroll instead of wrapping — the whole point is comparing real
+// pixel widths side by side, so a pane never shrinks to fit the screen.
+.panes
+  display: flex
+  flex-flow: row
+  align-items: flex-start
+  gap: 20px
+  overflow-x: auto
+  padding-bottom: 12px
+
+.pane
+  display: flex
+  flex-flow: column
+  gap: 6px
+  flex-shrink: 0
+
+.pane_label
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 4px
+  font-size: 0.85rem
+  opacity: 0.8
+
+.width_input
+  width: 64px
+  padding: 2px 6px
+  background: var(--surface)
+  border: 1px solid var(--surface-border)
+  border-radius: 4px
+  color: var(--foreground)
+  font-variant-numeric: tabular-nums
+
+.pane_frame
+  height: calc(100vh - 220px)
+  border: 1px solid var(--border-highlight)
+  border-radius: 4px
+  background: var(--background)

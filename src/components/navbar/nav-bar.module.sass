@@ -6,6 +6,11 @@ $mobile-bar-height: 2rem + $mobile-icon-size
 // Gap between viewport edge and the centered body column at any width.
 $body-edge-gap: calc((100vw - #{$content-width}) / 2)
 
+// .nav_content's own gap (below) between .groups and .nav_group_account —
+// pulled out since .nav_group_account's min-width formula needs the exact
+// same value to net out correctly (see its own comment).
+$nav-content-gap: 0.75rem
+
 // Fixed min-height since .add_media_link is absolutely positioned.
 .wrapper
   display: flex
@@ -39,26 +44,28 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   flex-shrink: 0
 
 // Flows right after .title; shrinks first when the row runs out of space.
+// .groups and .nav_group_account are its two direct children (nav-bar.tsx)
+// — kept as siblings rather than one nesting the other so each can align to
+// its own edge independently, without one's width throwing off the other's
+// math (see .nav_group_account's own comment below).
 .nav_content
-  // position: static so .nav_group_account's absolute position resolves
-  // against .wrapper, not this.
-  position: static
   display: flex
   align-items: center
+  gap: $nav-content-gap
   flex: 1 1 auto
   min-width: 0
 
-// Right-packs against the body column's right edge; max(0px, ...) keeps
-// the padding from going negative on a narrower desktop width.
+// Right-packs; search's own right edge lands at .nav_content's right edge
+// minus .nav_group_account's own reserved width (see that class's comment)
+// minus the gap between them — which nets out to exactly the body column's
+// right edge, unaffected by however wide the account cluster actually is.
 .groups
-  position: static
   display: flex
   flex-shrink: 1
   flex-grow: 1
   align-items: center
   justify-content: flex-end
   gap: clamp(1rem, 3vw, 3rem)
-  padding-right: max(0px, calc(#{$body-edge-gap} - 3rem))
 
 .nav_group
   display: flex
@@ -66,16 +73,31 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   gap: 1.5rem
   min-width: 0
 
-  &:not(:first-child)
-    margin-left: 0.75rem
+// Scoped to .groups's own children specifically — .nav_group_account is
+// also a .nav_group, but a sibling of .groups (not nested inside it), and
+// its spacing from .groups is nav_content's own gap alone; a bare
+// `.nav_group:not(:first-child)` here would double up on that.
+.groups > .nav_group:not(:first-child)
+  margin-left: 0.75rem
 
-// NavAccountMenu — pinned to the navbar's own outer edge, not the body
-// column the other groups align to.
+// A sibling of .groups (nav-bar.tsx), not nested inside it, and still an
+// ordinary flex item — no position: absolute, so it shrinks/gets pushed
+// along with the rest of the row instead of overlapping it.
+//
+// min-width reserves a blank floor equal to the body column's own right
+// margin (so .groups's own right edge, above, lands exactly at the body
+// column's right edge, not eaten into by however wide this cluster actually
+// renders) — flex-shrink: 0 keeps that floor from being shrunk away, and
+// justify-content: flex-end packs the avatar/bell against this box's own
+// right edge, which (since flex-shrink: 0 never lets this box shrink below
+// its own content either) lands flush against .nav_content's right edge —
+// the navbar's actual screen edge. On a narrower desktop width, once the
+// reserved floor drops below this cluster's own natural width, the box just
+// falls back to sizing to its content instead (no overlap, no negative math).
 .nav_group.nav_group_account
-  position: absolute
-  top: 50%
-  right: 3rem
-  transform: translateY(-50%)
+  justify-content: flex-end
+  flex-shrink: 0
+  min-width: max(0px, calc(#{$body-edge-gap} - 3rem - #{$nav-content-gap}))
 
 .link
   display: flex
@@ -143,7 +165,8 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
       margin-left: 0
 
   .nav_group_account
-    position: static
+    justify-content: flex-start
+    min-width: 0
 
   // Drawer has room, so iconOnly labels come back too.
   [data-mobile-open="true"] .link_label_icon_only

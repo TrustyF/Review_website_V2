@@ -159,22 +159,21 @@ export default function Navbar() {
 						<div className={style.nav_group}>
 							<NavSearch />
 						</div>
+					</div>
 
-						{/* Deliberately its own group, not part of the flowing row above
-						— everything else in this row lines up with the page's own
-						body column, but the account cluster stays pinned to the
-						navbar's actual outer edge instead, so it doesn't visually
-						wander inward on a wide viewport the way the rest of the row
-						now does. */}
-						<div className={`${style.nav_group} ${style.nav_group_account}`}>
-							<NavAccountMenu
-								signedIn={signedIn}
-								pathname={pathname}
-								avatarSrc={avatarSrc}
-								showAvatar={showAvatar}
-								onAvatarError={onAvatarError}
-							/>
-						</div>
+					{/* Sibling of .groups (not nested inside it) — see .nav_group_account's
+					own comment, nav-bar.module.sass, for why: its own width would
+					otherwise throw off .groups's own body-edge alignment above. Still an
+					ordinary flex item of .nav_content, so it flows/shrinks with the rest
+					of the row rather than needing position: absolute. */}
+					<div className={`${style.nav_group} ${style.nav_group_account}`}>
+						<NavAccountMenu
+							signedIn={signedIn}
+							pathname={pathname}
+							avatarSrc={avatarSrc}
+							showAvatar={showAvatar}
+							onAvatarError={onAvatarError}
+						/>
 					</div>
 				</div>
 
