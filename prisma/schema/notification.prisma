@@ -16,6 +16,11 @@ enum NotificationType {
   // sole write site. Has no list/media to link to, so it's the one type that
   // uses `message` instead.
   CRON_JOB_FAILED
+  // Same shape as CRON_JOB_FAILED (every ADMIN user, `message` holds the job
+  // name — see notify-admin-success.ts) but created with readAt already set
+  // (createNotification's markAsRead) so a routine success doesn't bump the
+  // unread badge — it's a paper trail, not something that needs attention.
+  CRON_JOB_SUCCEEDED
 }
 
 model Notification {

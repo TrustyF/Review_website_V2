@@ -34,14 +34,23 @@ async function requireUserId(): Promise<string> {
 // notification (createList, addMediaToList in list-actions.ts) — kept here
 // rather than inlined at each call site so a 3rd write site later is a
 // one-line call, not a duplicated db.notification.create.
+//
+// markAsRead is for CRON_JOB_SUCCEEDED (see notify-admin-success.ts) — a
+// routine success shouldn't bump getUnreadNotificationCount's badge the way
+// an actual failure should, but should still show up for anyone who opens
+// the notification list looking for a paper trail of what ran.
 export async function createNotification(input: {
 	type: NotificationType;
 	userId: string;
 	listId?: number;
 	mediaId?: number;
 	message?: string;
+	markAsRead?: boolean;
 }): Promise<void> {
-	await db.notification.create({ data: input });
+	const { markAsRead, ...data } = input;
+	await db.notification.create({
+		data: { ...data, readAt: markAsRead ? new Date() : null },
+	});
 }
 
 const PAGE_SIZE = 50;
