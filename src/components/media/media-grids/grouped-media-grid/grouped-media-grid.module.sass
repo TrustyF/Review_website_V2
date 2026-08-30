@@ -1,3 +1,5 @@
+@use "@/app/styles/variables" as *
+
 .groups
   display: flex
   flex-flow: column
@@ -5,34 +7,4 @@
   margin-top: 1rem
 
 .group_header
-  cursor: pointer
-  padding: 0.5rem
-  border-radius: 0.5rem
-  display: flex
-  flex-flow: row
-  align-items: center
-  gap: 0.25rem
-  font-size: 1.25rem
-  font-weight: 600
-  width: fit-content
-  // Sticks to the top of the viewport while its <details> is scrolling
-  // past, then scrolls away with the rest of that group once the next
-  // <details> pushes it out — sticky's containing block is the parent
-  // <details>, so it naturally can't overstay into the next group.
-  // top: var(--navbar-offset) (see globals.sass) rather than a fixed
-  // value — the navbar auto-hides on scroll-down (nav-bar.tsx), so a fixed
-  // offset is only ever right in one of its two states: 0 collides with a
-  // still-visible navbar, and the navbar's full height leaves a permanent
-  // gap once it's auto-hidden itself away. The transition here mirrors the
-  // navbar's own 0.25s slide so this eases into its new offset in step
-  // with it instead of snapping. z-index below the navbar's so it tucks
-  // behind it during the brief top-of-page window where the navbar is
-  // still visible. Opaque background is needed since the grid scrolls
-  // underneath it once stuck.
-  position: sticky
-  top: calc(var(--navbar-offset) + 1rem)
-
-  z-index: 5
-  background: var(--background)
-  transform: translateX(-1rem)
-  transition: top 0.25s ease
+  @include sticky-group-header

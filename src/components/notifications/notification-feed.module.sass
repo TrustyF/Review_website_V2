@@ -17,25 +17,11 @@
 .groups
   display: flex
   flex-flow: column
-  gap: 2rem
+  gap: 1rem
+  margin-top: 1rem
 
 .group_header
-  cursor: pointer
-  padding: 1rem
-  margin: 0 0 1rem -1rem
-  border-radius: 0.5rem
-  display: flex
-  flex-flow: row
-  align-items: center
-  gap: 0.25rem
-  font-size: 1.25rem
-  font-weight: 600
-  width: fit-content
-  position: sticky
-  top: calc(var(--navbar-offset) + 1rem)
-  z-index: 5
-  background: var(--background)
-  transform: translateX(-1rem)
+  @include sticky-group-header
 
 .list
   display: flex
