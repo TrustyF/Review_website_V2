@@ -2,11 +2,10 @@
 # `git clone` + `cp .env.example .env` + `docker compose up -d` on the host
 # (a throwaway `review-website-nextjs-fresh-test` checkout) — found:
 #   - `docker compose up -d` with no service names also starts `cloudflared`
-#     (fails without a real CLOUDFLARE_TUNNEL_TOKEN, can't be defaulted) and
-#     `maintenance` (no long-running process at all — only meant for
-#     `docker compose run --rm maintenance npm run <script>`). Right command
-#     is `docker compose up -d db app`, not bare `up -d` — undocumented
-#     anywhere right now.
+#     (fails without a real CLOUDFLARE_TUNNEL_TOKEN, can't be defaulted).
+#     Right command is `docker compose up -d db app`, not bare `up -d` —
+#     undocumented anywhere right now. Add `maintenance` too if you want the
+#     scheduled jobs (see its own comment below) running.
 #   - AUTH_SECRET is blank in .env.example and NextAuth v5 hard-throws
 #     `MissingSecret` in production the moment anything calls auth() (most
 #     pages), unlike DATABASE_URL/IMAGE_STORAGE_DRIVER which now have real
@@ -43,6 +42,11 @@ services:
       - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # Shared transient staging with `maintenance` (see its own /backups
+      # mount) for the two-step backup: ofelia's backup_dump job-exec below
+      # writes the gzipped dump here, `maintenance`'s backup_upload job-exec
+      # picks up the newest one and uploads it to R2.
+      - ./backups:/backups
     healthcheck:
       test:
         [
@@ -52,6 +56,18 @@ services:
       interval: 3s
       timeout: 3s
       retries: 10
+    # ofelia (see its own service below) discovers jobs via these labels and
+    # runs them with `docker exec` against this same container — pg_dump
+    # needs to run here specifically, dumping over the container's own local
+    # socket rather than the network, same as the old host-side `docker
+    # compose exec db pg_dump` did. Plain `-f` dump-then-gzip rather than a
+    # `pg_dump | gzip >` pipe: with no pipefail in POSIX sh, a failed pg_dump
+    # mid-pipe wouldn't fail this whole command, and a corrupt-but-present
+    # .sql.gz would look like a real backup to the upload job.
+    labels:
+      ofelia.enabled: "true"
+      ofelia.job-exec.backup_dump.schedule: "0 3 * * *"
+      ofelia.job-exec.backup_dump.command: "sh -c 'set -e; rm -f /backups/*.sql /backups/*.sql.gz; pg_dump -U $$POSTGRES_USER -f /backups/$(date -u +%Y-%m-%dT%H-%M-%SZ).sql $$POSTGRES_DB; gzip /backups/*.sql'"
 
   # Self-hosted app server (see the self-hosting migration plan). `db` is now
   # the permanent production database (migrated off Neon), not just a local
@@ -151,14 +167,21 @@ services:
     depends_on:
       - app
 
-  # Not run continuously — invoked ad hoc (`docker compose run --rm
-  # maintenance npm run <script>`) by the host's crontab for the scheduled
-  # jobs that used to be GitHub Actions workflows (enrich-db, cleanup-*,
-  # purge-deleted-changelogs, backup-database), which broke once the DB
-  # stopped being reachable from the public internet. Built from the `deps`
-  # Dockerfile stage (full node_modules incl. devDependencies like tsx, plus
-  # a generated Prisma client) rather than the trimmed `runner` stage `app`
-  # uses, since these are source-level tsx scripts, not the built server.
+  # Runs the scheduled jobs that used to be GitHub Actions workflows
+  # (enrich-db, cleanup-*, purge-deleted-changelogs, backup-database), which
+  # broke once the DB stopped being reachable from the public internet.
+  # Built from the `deps` Dockerfile stage (full node_modules incl.
+  # devDependencies like tsx, plus a generated Prisma client) rather than the
+  # trimmed `runner` stage `app` uses, since these are source-level tsx
+  # scripts, not the built server.
+  #
+  # Kept running via `sleep infinity` (rather than the old ad hoc `docker
+  # compose run --rm maintenance npm run <script>` invoked by the host's
+  # crontab) purely so ofelia's job-exec labels below have a live container
+  # to `docker exec` into — this has no process of its own beyond that.
+  # Scripts are invoked as `sh <path>` rather than executed directly, so a
+  # lost executable bit (has happened before on this repo, from editing on
+  # Windows — see run-job.sh's own history) can't silently break a job again.
   maintenance:
     build:
       context: .
@@ -171,13 +194,37 @@ services:
       # with a missing secret file.
       secrets:
         - database_url
-    # Only used to hand the pg_dump output (produced on the host by
-    # the host's crontab, via `docker compose exec db pg_dump`) to
-    # backup_database.ts's `npm run backup_database -- backups/<file>` — the
-    # file only lives here transiently, deleted by the same cron entry right
-    # after upload. Not a durable backup location itself (R2 is).
+    restart: unless-stopped
+    command: ["sleep", "infinity"]
+    depends_on:
+      db:
+        condition: service_healthy
+    # Shared transient staging with `db` — see its own /backups mount and
+    # backup_dump job-exec label. Not a durable backup location itself (R2
+    # is) — upload-backup.sh deletes the file here right after uploading.
     volumes:
-      - ./backups:/app/backups
+      - ./backups:/backups
+    # ofelia (see its own service below) discovers jobs via these labels and
+    # runs them with `docker exec` against this same container. Each
+    # schedule matches the old crontab's exactly. notify_cron_failure is
+    # triggered by run-job.sh on any non-zero exit, same as the old
+    # run-and-notify.sh did — see that script's own comment.
+    labels:
+      ofelia.enabled: "true"
+      ofelia.job-exec.cleanup_posters.schedule: "0 0 * * *"
+      ofelia.job-exec.cleanup_posters.command: "sh src/server/maintenance/cron/run-job.sh cleanup_posters npm run cleanup_posters"
+      ofelia.job-exec.cleanup_cropped_images.schedule: "0 5 * * *"
+      ofelia.job-exec.cleanup_cropped_images.command: "sh src/server/maintenance/cron/run-job.sh cleanup_cropped_images npm run cleanup_cropped_images"
+      ofelia.job-exec.purge_deleted_changelogs.schedule: "0 6 * * *"
+      ofelia.job-exec.purge_deleted_changelogs.command: "sh src/server/maintenance/cron/run-job.sh purge_deleted_changelogs npm run purge_deleted_changelogs"
+      ofelia.job-exec.enrich_db.schedule: "0 0 * * 0"
+      ofelia.job-exec.enrich_db.command: "sh src/server/maintenance/cron/run-job.sh enrich_db npm run enrich_db"
+      # 5 minutes after `db`'s backup_dump job — comfortably enough for a
+      # personal-scale dump to finish first; see upload-backup.sh's own
+      # comment on how a failed/missing dump still surfaces as a failure
+      # notification from here.
+      ofelia.job-exec.backup_upload.schedule: "5 3 * * *"
+      ofelia.job-exec.backup_upload.command: "sh src/server/maintenance/cron/run-job.sh backup_database sh src/server/maintenance/cron/upload-backup.sh"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-review_db}
       # Was hardcoded to "r2" here too — same fix as `app`'s own comment above.
@@ -196,6 +243,21 @@ services:
       IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET}
       COMIC_VINE_KEY: ${COMIC_VINE_KEY}
       GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY}
+
+  # Docker-native job scheduler, replacing the host crontab entirely — job
+  # definitions live as `ofelia.job-exec.*` labels on `db`/`maintenance`
+  # above, so the whole schedule is version-controlled in this file instead
+  # of separately-maintained host state (a crontab plus the now-deleted
+  # run-and-notify.sh/backup-database.sh host wrapper scripts). Discovers
+  # labeled containers via the Docker socket and runs each job with `docker
+  # exec` against whichever container its labels are on — no port, no LAN
+  # exposure, nothing for docker-user-lan-isolation.sh to gate.
+  ofelia:
+    image: mcuadros/ofelia:latest
+    restart: unless-stopped
+    command: daemon --docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
 
   # Uptime monitoring: pings `app` (and can be pointed at review.arthursirjacobs.com
   # itself) and alerts if it goes down. Bound to all interfaces (not just
@@ -282,11 +344,11 @@ services:
       KEY: ${BESZEL_AGENT_KEY}
       HUB_URL: http://127.0.0.1:8090
 
-  # Log viewer: reads every container's logs (app, db, maintenance runs,
-  # etc.) live from the Docker socket. Same LAN-reachable rationale as
-  # uptime-kuma/beszel-hub above. Also mounts cron-logs so the host crontab's
-  # maintenance-job logs (see run-and-notify.sh) are readable from the same
-  # UI even though they're written outside any container.
+  # Log viewer: reads every container's logs live from the Docker socket —
+  # app, db, and (since `docker exec` output isn't part of a container's own
+  # log stream) every scheduled job's run, which shows up under `ofelia`'s
+  # own logs rather than under `maintenance`/`db`. Same LAN-reachable
+  # rationale as uptime-kuma/beszel-hub above.
   #
   # DOZZLE_AUTH_PROVIDER=simple gates the UI behind a login (Dozzle has none
   # by default, unlike uptime-kuma/beszel-hub which force one on first run)

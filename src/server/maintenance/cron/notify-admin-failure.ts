@@ -2,11 +2,11 @@ import { UserRole } from "@prisma/client";
 import { db } from "@/server/db/client";
 import { createNotification } from "@/components/notifications/notification-actions";
 
-// Invoked by run-and-notify.sh on any non-zero exit from a cron job — not
+// Invoked by run-job.sh on any non-zero exit from a scheduled job — not
 // just an uncaught exception in the job's own .ts file, since that wrapper
-// wraps the whole command (docker build/run failures included). One
-// Notification per ADMIN user, same "there could be more than one" stance
-// as the rest of the codebase's role: "ADMIN" lookups.
+// runs the whole command. One Notification per ADMIN user, same "there
+// could be more than one" stance as the rest of the codebase's role: "ADMIN"
+// lookups.
 async function main() {
 	const jobName = process.argv[2];
 	const message = process.argv[3];
