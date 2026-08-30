@@ -61,8 +61,15 @@ $mobile-icon-size: 2.25rem
 $navbar-collapse-width: 1400px
 $navbar-collapse-step: 130px
 
-@mixin nav-label-collapse($tier: 1)
+// Factored out of nav-label-collapse below so nav-icon-brighten (further
+// down) can react to the exact same per-tier breakpoint without
+// recalculating it independently.
+@mixin nav-collapse-tier($tier: 1)
   @media (max-width: $navbar-collapse-width - $navbar-collapse-step * ($tier - 1))
+    @content
+
+@mixin nav-label-collapse($tier: 1)
+  @include nav-collapse-tier($tier)
     display: none
 
 // Shared "nothing here yet" text treatment — was independently redefined in
@@ -117,12 +124,30 @@ $navbar-collapse-step: 130px
   &[aria-current="page"] .nav_icon
     color: var(--brand)
 
-  // Below $navbar-collapse-width the label text is hidden (see .link_label/
-  // .label_stack) and the icon is the item's only visible content — staying
-  // at the same dim accent3 it uses when it's merely a label's sidekick
-  // would make every collapsed nav item read as washed-out, so it steps up
-  // to full foreground brightness instead. Still yields to :hover/
-  // [aria-current] below it, same as the rest state above.
-  @media (max-width: $navbar-collapse-width)
-    .nav_icon
+// Brightens a nav-item-look icon (above) from its dim resting accent3 up to
+// full foreground, for whenever it's the item's only visible content — i.e.
+// actually icon-only, not just "the viewport happens to be narrow": staying
+// at the same dim tone it uses when it's merely a label's sidekick would
+// make every icon-only item read as washed-out. Still yields to
+// nav-item-look's own :hover/[aria-current] rule above it (higher
+// specificity — three simple selectors there vs. these two-class compound
+// selectors), same as the dim resting state does.
+//
+// Applied via a modifier class alongside .nav_icon itself (see
+// nav-bar.module.sass/nav-dropdown.module.sass's own .nav_icon_tier*/
+// .nav_icon_always) — compounded onto .nav_icon (".nav_icon.nav_icon_tier1",
+// not a bare ".nav_icon_tier1") so its specificity matches nav-item-look's
+// own ".link .nav_icon" dim rule (two classes either way) and wins the tie
+// by coming later in each file, rather than losing outright to a higher-
+// specificity rule it can never override. A $tier scopes the brighten to
+// nav-label-collapse's own breakpoint for that tier, so it kicks in exactly
+// when *this* item's own label actually collapses rather than some other
+// item's tier's width; no $tier (the default) is unconditional, for an item
+// that's icon-only by prop with no label to ever collapse in the first
+// place.
+@mixin nav-icon-brighten($tier: null)
+  @if $tier
+    @include nav-collapse-tier($tier)
       color: var(--foreground)
+  @else
+    color: var(--foreground)

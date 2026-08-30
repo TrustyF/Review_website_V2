@@ -127,16 +127,28 @@ $mobile-bar-height: 2rem + $mobile-icon-size
     margin-left: 0.75rem
 
 // Modifier on top of .nav_group (see nav-bar.tsx's own account/sign-out
-// group) — margin-left: auto eats every bit of .groups's own leftover
-// growth space (see flex-grow above), pushing this one group flush against
-// .nav_content's right edge regardless of how much room the groups before
-// it actually use, rather than just trailing immediately after them.
-// Chained onto .nav_group (rather than standalone) to match — and, coming
-// later in source order, beat — .nav_group:not(:first-child)'s own
-// margin-left above: :not() counts its argument's specificity, so a bare
-// .nav_group_end here would lose that cascade regardless of source order.
+// group) — flex-grow: 1 (rather than the margin-left: auto this used to be)
+// claims every bit of .groups's own leftover growth space as this group's
+// own literal box width instead of invisible margin, so NavSearch's own
+// .wrapper/.overlay (nav-search.module.sass) — flex-grow items further down
+// inside this same group, once expanded — actually have real space to grow
+// into rather than just requesting a fixed width regardless of what's free.
+// justify-content: flex-end re-packs this group's own children (the search
+// box, then the account cluster) flush against its own right edge, so any
+// of that claimed width nothing inside actually uses (i.e. whenever the
+// search box is collapsed) shows up as blank space before them — the same
+// visual result margin-left: auto used to produce directly.
+// margin-left: 0 overrides .nav_group:not(:first-child)'s own 0.75rem
+// above, same as margin-left: auto used to — flex-grow already reserves
+// this group's full share of .groups's space on its own. Chained onto
+// .nav_group (rather than standalone) to match — and, coming later in
+// source order, beat — that :not(:first-child) rule's own specificity: :not()
+// counts its argument's specificity, so a bare .nav_group_end here would
+// lose that cascade regardless of source order.
 .nav_group.nav_group_end
-  margin-left: auto
+  flex-grow: 1
+  justify-content: flex-end
+  margin-left: 0
 
 .link
   display: flex
@@ -164,9 +176,33 @@ $mobile-bar-height: 2rem + $mobile-icon-size
 // instead of contributing to horizontal overflow, one nav_group at a time
 // rather than every label vanishing together. See nav-bar.tsx's own comment
 // on why every call site is given an icon.
+//
+// .nav_icon_tier#{$tier} rides along on the same per-tier breakpoint (see
+// nav-icon-brighten in variables.sass) — NavLink (nav-link.tsx) adds it
+// alongside .nav_icon itself, keyed off its own collapseTier prop, so the
+// icon brightens at exactly the width its own label (this tier) actually
+// disappears at, not nav-item-look's old one-size-fits-all breakpoint.
 @for $tier from 1 through 4
   .link_label_tier#{$tier}
     @include nav-label-collapse($tier)
+
+  .nav_icon.nav_icon_tier#{$tier}
+    @include nav-icon-brighten($tier)
+
+// For a NavLink rendered with iconOnly (Activity/Reviews/Lists — see
+// nav-bar.tsx) — no label ever mounts at any tier, so the icon just stays
+// at full brightness unconditionally rather than waiting on a breakpoint
+// that has nothing to do with it.
+.nav_icon.nav_icon_always
+  @include nav-icon-brighten()
+
+// The label NavLink still renders (rather than omitting entirely) for an
+// iconOnly item — same idea as .link_label_tier* above, just unconditional
+// (no nav-label-collapse breakpoint) rather than width-gated, so the mobile
+// drawer's own reveal rule below has a real label in the DOM to bring back
+// once there's room for one, the same way it does for every tiered label.
+.link_label_icon_only
+  display: none
 
 @media (max-width: $mobile-breakpoint)
   // Collapses out of the fixed/viewport-aligned centering (see .nav_content's
@@ -213,9 +249,14 @@ $mobile-bar-height: 2rem + $mobile-icon-size
   // (see nav-label-collapse in variables.sass — its widest tier already
   // hides below 910px) — the drawer has the vertical room labels don't have
   // in the collapsed desktop row, so every tier's label comes back once the
-  // drawer is actually open.
+  // drawer is actually open. .link_label_icon_only rides along too — an
+  // iconOnly NavLink (Activity/Reviews/Lists) is meant to stay icon-only on
+  // the desktop row at every width, but the drawer's own vertical room is
+  // exactly the same "there's space for a label now" case the tiers exist
+  // for, so it gets the same treatment rather than being permanently mute.
   [data-mobile-open="true"] .link_label_tier1,
   [data-mobile-open="true"] .link_label_tier2,
   [data-mobile-open="true"] .link_label_tier3,
-  [data-mobile-open="true"] .link_label_tier4
+  [data-mobile-open="true"] .link_label_tier4,
+  [data-mobile-open="true"] .link_label_icon_only
     display: inline

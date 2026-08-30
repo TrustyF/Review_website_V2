@@ -45,7 +45,14 @@ export function NavAccountAvatar({
 					onError={onAvatarError}
 				/>
 			) : (
-				<AccountIcon size={iconSize} className={style.nav_icon} />
+				// Always icon-only — there's no label this link could ever pair
+				// the icon with — so it stays at full brightness unconditionally,
+				// same as NavLink's own iconOnly icons (nav-bar.module.sass's own
+				// .nav_icon_always).
+				<AccountIcon
+					size={iconSize}
+					className={`${style.nav_icon} ${style.nav_icon_always}`}
+				/>
 			)}
 		</Link>
 	);

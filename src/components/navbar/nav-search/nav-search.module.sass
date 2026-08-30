@@ -3,9 +3,29 @@
 // Flex row so the trigger icon and (once expanded) .overlay's input sit
 // inline next to each other, growing the navbar row itself rather than
 // floating a panel on top of it.
+//
+// flex-grow: 1 claims .nav_group_end's own leftover space (nav-bar.module
+// .sass's own comment on that group's flex-grow explains why that space is
+// real box width now, not margin) as this element's own box, so
+// .overlay.expanded below — a flex-grow item of *this* element — has actual
+// room of its own to grow into instead of just requesting a fixed width
+// regardless of what's free. justify-content: flex-end re-packs .overlay
+// and .trigger flush against this box's own right edge, so whatever of that
+// claimed width .overlay isn't using (i.e. while collapsed) shows up as
+// blank space before them, the same visual spot .nav_group_end's own
+// former margin-left: auto used to leave empty.
+//
+// min-width: 0 — same reasoning as .nav_content/.groups/.nav_group's own
+// copies of this in nav-bar.module.sass — lets this shrink below its
+// content's automatic minimum too, as a last-resort safety net for the
+// rare case where even .overlay's collapsed/floor state doesn't leave
+// enough room.
 .wrapper
   display: flex
   align-items: center
+  justify-content: flex-end
+  flex-grow: 1
+  min-width: 0
 
 // Icon-only trigger — this is all .search (nav-bar.module.sass) needs to
 // size itself against while collapsed.
@@ -23,36 +43,110 @@
   &:hover
     background: var(--ticket-accent-dark)
 
+// Left-aligned like the rest of the mobile drawer's own rows (nav-bar
+// .module.sass), rather than flush against the row's far edge the way the
+// desktop trigger sits — there's no "far edge" of a shared row to hug once
+// this is its own line in the drawer. gap replaces .overlay's own
+// margin-right below for spacing once .trigger is reordered in front of it
+// (see .trigger's own rule here) — gap tracks whichever item ends up first
+// in *display* order automatically, where a margin tied to one specific
+// item wouldn't.
+[data-mobile-open="true"] .wrapper
+  justify-content: flex-start
+  gap: 0.5rem
+
+// Visually swaps the icon in front of the input — DOM order stays
+// icon-after-input (see .overlay's own comment on why), so this is
+// presentational only, via order rather than flex-direction: row-reverse,
+// which would also flip what .wrapper's own justify-content: flex-start
+// above means.
+[data-mobile-open="true"] .trigger
+  order: -1
+
 // The input lives inline in the navbar row here (a plain flex item of
 // .wrapper, before .trigger in source order so it grows out to the icon's
-// left) rather than floated over it — expanding it grows .wrapper's own
-// width in place, same as every other flex sibling in .nav_group_end.
-// position: relative just gives .dropdown below a positioning context to
-// float under the input specifically, without pulling in .trigger too.
+// left) rather than floated over it, and .wrapper's own flex-grow (above)
+// gives it real room to claim rather than floating over the row. position:
+// relative just gives .dropdown below a positioning context to float under
+// the input specifically, without pulling in .trigger too.
 //
 // Collapsed to width: 0 with no gap to .trigger (rather than not rendering
-// at all — see nav-search.tsx's own comment) so .expanded below has an
-// actual width (and margin) change to animate instead of an instant mount,
-// and the icon sits flush with nothing beside it while collapsed. No
-// overflow: hidden here — .input's own width: 100% already tracks this
-// box's animated width with nothing to clip, and clipping would also cut
-// off .dropdown below, which needs to render past this box's own bottom
-// edge (and, while collapsed, its own zero width) to be visible at all.
+// at all — see nav-search.tsx's own comment) so the icon sits flush with
+// nothing beside it while collapsed. No overflow: hidden here — .input's
+// own width: 100% already tracks this box's width with nothing to clip, and
+// clipping would also cut off .dropdown below, which needs to render past
+// this box's own bottom edge (and, while collapsed, its own zero width) to
+// be visible at all.
 .overlay
   position: relative
+  // Explicit floor (rather than the automatic min-content one, which .input's
+  // own min-width: 0 below already keeps small) so flex-shrink has nothing
+  // left to refuse in the rare case .wrapper's own min-width: 0 above passes
+  // real shrink pressure down to here.
+  min-width: 0
   width: 0
   margin-right: 0
   display: flex
   flex-flow: column
-  transition: 0.25s ease
+  // The actual layout width (flex-grow/max-width/margin-right below) isn't
+  // itself in this list — it snaps straight to its target so claiming
+  // .wrapper's space doesn't reflow .trigger/.nav_group_end mid-transition.
+  // transform supplies the visible "grows in" effect instead: scaleX(0.7)
+  // here is this box's own resting (collapsed, invisible) scale, right-
+  // anchored via transform-origin so it reads as growing out of .trigger's
+  // own left edge — the same direction the real width already expands
+  // from — rather than out of its own center. Opacity/visibility fade
+  // alongside it, same as before. Listing 'visibility' explicitly (rather
+  // than via an 'all' shorthand) is what keeps its own special transition
+  // behavior — switching to visible immediately on open, staying visible
+  // until the very end on close — since the layout properties above
+  // deliberately aren't part of this transition to begin with.
+  transform: scaleX(0.7)
+  transform-origin: right center
+  transition: transform 0.25s ease, opacity 0.25s ease, visibility 0.25s ease
   visibility: hidden
   opacity: 0
 
+  // flex-grow: 1 (up from the width: 0 flex-basis above) claims whatever
+  // share of .wrapper's own box (itself grown to fill .nav_group_end's
+  // leftover space — see .wrapper's own comment) is actually free — filling
+  // it exactly when there's less than 20rem going spare, rather than
+  // requesting 20rem outright and letting the row overflow past the
+  // viewport edge regardless of what's really open. max-width caps it at
+  // the same 20rem this used to jump straight to, for whenever there's
+  // *more* than that free — past that point the leftover stays as blank
+  // space before .trigger (via .wrapper's own justify-content: flex-end)
+  // rather than growing the input indefinitely on a wide screen.
   &.expanded
-    width: 20rem
+    flex-grow: 1
+    max-width: 20rem
     margin-right: 0.5rem
+    transform: scaleX(1)
     visibility: visible
     opacity: 1
+
+// Inside the mobile drawer (nav-bar.module.sass's own [data-mobile-open]
+// rules — an attribute selector, so it reaches across files the same way
+// :global() used to) there's no reason to make the input a second tap
+// away behind the trigger — the drawer already has the vertical room the
+// collapsed-to-icon default exists to save on the desktop row — so it
+// shows pre-expanded regardless of whether .expanded above (NavSearch's own
+// isExpanded state) is actually set. Equal specificity to &.expanded (an
+// attribute plus a class vs. two classes) and placed after it here, so this
+// wins even if a drawer tap on the trigger also happens to flip isExpanded —
+// the input stays open either way instead of becoming collapsible again
+// once the drawer's up. margin-right: 0 (rather than &.expanded's own
+// 0.5rem) since .wrapper's own gap above now provides the space between
+// .trigger and this — a margin fixed to .overlay's own right edge would
+// otherwise land on whichever side .trigger's order: -1 leaves it on, not
+// necessarily the side facing .trigger.
+[data-mobile-open="true"] .overlay
+  flex-grow: 1
+  max-width: 20rem
+  margin-right: 0
+  transform: scaleX(1)
+  visibility: visible
+  opacity: 1
 
 .input
   width: 100%

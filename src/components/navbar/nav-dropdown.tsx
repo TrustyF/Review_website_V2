@@ -251,7 +251,7 @@ export function NavDropdown({
 					{Icon && (
 						<Icon
 							size={14}
-							className={style.nav_icon}
+							className={`${style.nav_icon} ${iconOnly ? style.nav_icon_always : style[`nav_icon_tier${collapseTier}`]}`}
 							// fill={activeItem ? "currentColor" : "none"}
 						/>
 					)}
