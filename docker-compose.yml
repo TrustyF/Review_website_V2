@@ -217,7 +217,12 @@ services:
       ofelia.job-exec.cleanup_cropped_images.command: "sh src/server/maintenance/cron/run-job.sh cleanup_cropped_images npm run cleanup_cropped_images"
       ofelia.job-exec.purge_deleted_changelogs.schedule: "0 6 * * *"
       ofelia.job-exec.purge_deleted_changelogs.command: "sh src/server/maintenance/cron/run-job.sh purge_deleted_changelogs npm run purge_deleted_changelogs"
-      ofelia.job-exec.enrich_db.schedule: "0 0 * * 0"
+      # Not "0 0 * * 0" — ofelia's 5-field cron parser rejects `0` as
+      # Sunday in the weekday field (accepts 1-7 there, not 0-6), confirmed
+      # by reproducing it against a scratch container. `@weekly` means the
+      # same thing (midnight Sunday) and is what ofelia's own docs use for
+      # this exact case.
+      ofelia.job-exec.enrich_db.schedule: "@weekly"
       ofelia.job-exec.enrich_db.command: "sh src/server/maintenance/cron/run-job.sh enrich_db npm run enrich_db"
       # 5 minutes after `db`'s backup_dump job — comfortably enough for a
       # personal-scale dump to finish first; see upload-backup.sh's own
