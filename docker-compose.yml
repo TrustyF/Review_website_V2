@@ -282,10 +282,39 @@ services:
       KEY: ${BESZEL_AGENT_KEY}
       HUB_URL: http://127.0.0.1:8090
 
+  # Log viewer: reads every container's logs (app, db, maintenance runs,
+  # etc.) live from the Docker socket. Same LAN-reachable rationale as
+  # uptime-kuma/beszel-hub above. Also mounts cron-logs so the host crontab's
+  # maintenance-job logs (see run-and-notify.sh) are readable from the same
+  # UI even though they're written outside any container.
+  #
+  # DOZZLE_AUTH_PROVIDER=simple gates the UI behind a login (Dozzle has none
+  # by default, unlike uptime-kuma/beszel-hub which force one on first run)
+  # — backed by a users.yml this can't generate on its own the way
+  # beszel-agent's key is issued via its hub's web UI: one-time setup after
+  # first `docker compose up -d dozzle`, run once from the host:
+  #   docker compose run --rm dozzle generate-users admin --password <pw> -n "Admin"
+  # which writes users.yml into the dozzle-data volume below.
+  dozzle:
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    depends_on:
+      firewall-init:
+        condition: service_completed_successfully
+    environment:
+      DOZZLE_AUTH_PROVIDER: simple
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./cron-logs:/cron-logs:ro
+      - dozzle-data:/data
+
 volumes:
   pgdata:
   uptime-kuma-data:
   beszel-hub-data:
+  dozzle-data:
 
 # Pinned rather than left to Docker's IPAM allocator so
 # scripts/docker-user-lan-isolation.sh's hardcoded SUBNET can never silently
