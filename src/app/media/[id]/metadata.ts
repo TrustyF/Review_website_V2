@@ -32,13 +32,26 @@ export async function generateMediaMetadata({
 		media.bannerPath,
 	);
 
+	// Prefer the personal review rating over the source's publicRating — it's
+	// what the site itself is about — falling back to publicRating for
+	// unrated titles so the preview still carries a score when one exists.
+	const rating = media.review?.rating ?? media.publicRating;
+	const description = [
+		rating != null ? `★ ${rating.toFixed(1)}` : null,
+		media.overview,
+	]
+		.filter(Boolean)
+		.join(" — ") || undefined;
+
 	return {
 		title: media.title,
-		description: media.overview ?? undefined,
+		description,
 		openGraph: {
 			title: media.title,
-			description: media.overview ?? undefined,
-			images: linkEmbedImageUrl ? [{ url: linkEmbedImageUrl }] : undefined,
+			description,
+			images: linkEmbedImageUrl
+				? [{ url: linkEmbedImageUrl, width: 1200, height: 630 }]
+				: undefined,
 		},
 	};
 }
