@@ -33,7 +33,12 @@ EXIT_CODE=$?
 # same problem) rather than as raw args; notify-admin-failure.ts/
 # notify-admin-success.ts decode it back on the other end.
 if [ "$EXIT_CODE" -ne 0 ]; then
-	TAIL_B64=$(tail -c 2000 "$LOG_FILE" | base64 -w 0)
+	# $LOG_FILE is never rotated/truncated, and a frequent job's own output
+	# can be tiny — a raw tail -c 2000 of the whole file can be dominated by
+	# older, successful runs, hiding this run's (possibly output-less)
+	# failure. Scope to lines from this run's own "=== timestamp ===" marker
+	# onward (mirrors the SUMMARY_START/END isolation below) before tailing.
+	TAIL_B64=$(awk '/^=== .* ===$/ { buf="" } { buf = buf $0 "\n" } END { printf "%s", buf }' "$LOG_FILE" | tail -c 2000 | base64 -w 0)
 	sudo docker compose run --rm maintenance npm run notify_cron_failure -- "$JOB_NAME" "$TAIL_B64"
 else
 	# $LOG_FILE accumulates every past run's own SUMMARY_START/END block too
