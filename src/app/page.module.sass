@@ -13,11 +13,14 @@
   // very top of the viewport instead of leaving that reserved height as
   // empty space above it — same "cancel main's padding for this one page"
   // move media-detail.module.sass's own mobile .wrapper margin-top makes for
-  // its banner. Keyed to $featured-review-mobile-breakpoint specifically
-  // (not the navbar's own wider $mobile-breakpoint) — only FeaturedReview's
-  // own mobile card actually bleeds its banner to the screen edge (see
-  // featured-review-card-mobile.module.sass) to make use of the reclaimed
-  // space; the desktop card above that width stays boxed and would just end
-  // up shifted up behind the fixed navbar instead.
-  @media (max-width: $featured-review-mobile-breakpoint)
+  // its banner (and keyed to the same $mobile-breakpoint, for the same
+  // reason: this is canceling space reserved for the navbar, so it should
+  // track the navbar's own breakpoint, not FeaturedReview's separate
+  // poster/content one). The desktop card (featured-review.module.sass)
+  // still shows down to $featured-review-mobile-breakpoint regardless — its
+  // own banner already bleeds to the screen's sides on its own, independent
+  // $content-width-gated trick (see that file's .banner) — this is just the
+  // vertical half, and now switches on earlier, once the navbar itself has
+  // already gone into its mobile/hamburger mode.
+  @media (max-width: $mobile-breakpoint)
     margin-top: calc(-1 * var(--navbar-height))

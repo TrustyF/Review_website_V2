@@ -189,6 +189,8 @@ $page-padding: 1.25rem
 .poster
   flex-shrink: 0
   width: 180px
+  @media (max-width: $mobile-breakpoint)
+    width: clamp(80px, 20vw, 150px)
 
 // padding-top, not margin-top — .info is stretched (align-items' default)
 // to the poster's full height and its content is bottom-anchored (below),
