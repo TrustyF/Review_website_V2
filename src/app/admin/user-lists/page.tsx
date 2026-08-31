@@ -10,20 +10,12 @@ import { UserPicker } from "@/components/lists/list-form/user-picker";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import styles from "./user-lists.module.sass";
 
-// Admin-only browser for navigating straight to any user's recommendation
-// lists (List.targetUserId — see list.prisma's own comment) instead of
-// having to sign in as them. Reuses UserPicker/listRecommendationTargets,
-// the same "recommend to" picker ListForm already uses, so choosing a user
-// here looks and behaves exactly like choosing one there.
+// Admin-only browser for viewing any user's recommendation lists without signing in as them.
 export default function UserListsPage() {
 	const [targets, setTargets] = useState<RecommendationTargetOption[]>([]);
 	const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 	const [lists, setLists] = useState<UserListSummary[]>([]);
-	// Which user `lists` was actually fetched for — compared against
-	// selectedUserId below to derive the loading state, rather than a
-	// separate isLoading flag set synchronously at the top of the effect
-	// (which react-hooks/set-state-in-effect flags as a cascading-render
-	// risk — see AGENTS.md's eslint note).
+	// Which user `lists` was fetched for; derives loading state instead of a separate flag (avoids react-hooks/set-state-in-effect).
 	const [listsUserId, setListsUserId] = useState<string | null>(null);
 
 	useEffect(() => {

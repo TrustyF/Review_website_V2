@@ -19,24 +19,10 @@ type Props = {
 	id: number;
 };
 
-// Flips the query's own ordering between release date and rating — still a
-// flat, ungrouped LazyMediaGrid either way, just sorted differently at the
-// source. A code-level switch, not a per-visitor control, so it's just a
-// constant rather than anything threaded through props or context.
+// Flips the query's ordering between release date and rating. A code-level switch, not a per-visitor control, so it's just a constant.
 const SORT_MODE: "RATED" | "UNSORTED" = "RATED";
 
-// Roles that reflect someone actually shaping a work's own vision, not just
-// executing it or funding it — the avg-rating row below is scoped to these
-// when a person has any, judged separately from every other credit they've
-// had a smaller hand in (an acting or casting credit says much less about
-// someone's own creative output than a directing or writing credit does).
-// Producer/Executive Producer and pure-craft roles (Editor, Director of
-// Photography, ...) are deliberately left out even though they're on
-// NOTABLE_CREW_JOBS (credit-limits.ts) — notable enough to keep in the DB,
-// but not "authored this" the way these are. Covers every source's own
-// authorial role name, not just TMDB's (MangaDex/ComicVine use
-// Author/Artist, IGDB uses Developer), same reasoning as
-// search-actions.ts's ROLE_LABEL_PRIORITY.
+// Roles that reflect authoring a work's own vision, not just executing/funding it — the avg-rating row below is scoped to these when present. Producer and pure-craft roles are deliberately excluded despite being on NOTABLE_CREW_JOBS. Covers every source's own authorial role name (TMDB, MangaDex/ComicVine, IGDB).
 const CREATIVE_ROLES = new Set([
 	"Director",
 	"Writer",
@@ -48,23 +34,12 @@ const CREATIVE_ROLES = new Set([
 	"Developer",
 ]);
 
-// Queries every DONE, non-deleted media row this entity is credited on,
-// across every role at once, and groups the result by role name — one query
-// instead of the old one-per-role fan-out (each of which paid its own round
-// trip to the DB; a prolific person/company could easily have 5-10 distinct
-// roles). Within each role's group, dedupe to one card per media (the same
-// person/company can be credited more than once on one title under the same
-// role, e.g. actor + character listed twice) — different roles are never
-// merged here, so the same title can (deliberately) still show up once per
-// role's own grid below.
+// One query for every role at once, instead of an old one-per-role fan-out. Dedupes to one card per media within each role's group (a person/company can be credited twice on one title under the same role) — different roles are never merged here.
 async function loadRoleMediaByRole(
 	kind: "person" | "company",
 	id: number,
 ): Promise<Map<string, MediaRecord[]>> {
-	// Queried from Credit rather than Media, so dbPublic's auto-filter can't
-	// reach it (Prisma extensions don't run for nested include/where — see
-	// dbPublic's own comment in src/server/db/client.ts) — isDeleted: false
-	// has to be spelled out here by hand instead.
+	// Queried from Credit not Media, so dbPublic's auto-filter can't reach it (extensions don't run for nested include/where) — isDeleted: false spelled out by hand.
 	const credits = await db.credit.findMany({
 		where: {
 			...(kind === "person" ? { personId: id } : { companyId: id }),
@@ -84,18 +59,14 @@ async function loadRoleMediaByRole(
 				},
 			},
 		},
-		// Unrated media (or media with no Review row at all) sorts last rather
-		// than first — same "missing value loses" convention RatedTierGrid uses
-		// for its own "Unrated" tier.
+		// Unrated media sorts last, not first — same convention as RatedTierGrid's "Unrated" tier.
 		orderBy:
 			SORT_MODE === "RATED"
 				? { media: { review: { rating: { sort: "desc", nulls: "last" } } } }
 				: { media: { releaseDate: "desc" } },
 	});
 
-	// orderBy above already sorted the underlying credits, and Map preserves
-	// insertion order, so both the per-role dedupe and the role grouping
-	// itself stay in that order too.
+	// orderBy already sorted the credits, and Map preserves insertion order, so dedupe/grouping stay in that order too.
 	const byRole = new Map<string, Map<number, RawMediaRecord>>();
 	for (const credit of credits) {
 		let byMediaId = byRole.get(credit.role.name);
@@ -115,19 +86,7 @@ async function loadRoleMediaByRole(
 	);
 }
 
-// Self-weighted mean (Σr³ / Σr²) rather than a plain mean, ignoring media
-// with no value for the field in question (unrated, or no public rating
-// scraped yet) rather than treating a missing rating as a 0 that would drag
-// the average down. Weighting each rating by its own square means a 9 pulls
-// the result up more than a 5 pulls it down — a higher score is taken as a
-// stronger, more meaningful signal than a middling one, rather than every
-// credited title counting for the same one point regardless of how good or
-// mediocre it was. WEIGHT_POWER=3 chosen over the milder 2 after comparing
-// both against real credited-rating data — 3 pulled consistently higher
-// without swinging wildly for anyone in that sample. Falls back to a plain
-// mean when every value is 0 (Σr² would otherwise be 0, making Σr³/Σr²
-// divide by zero) — there's no meaningful "weight toward the higher score"
-// among a set of all-zero ratings anyway.
+// Self-weighted mean (Σr³/Σr²), ignoring media with no value rather than treating it as a 0. A higher rating pulls the average up more than a lower one pulls it down. WEIGHT_POWER=3 chosen over 2 after comparing against real data. Falls back to a plain mean when every value is 0 (avoids divide-by-zero).
 const WEIGHT_POWER = 3;
 
 function weightedRating(values: number[]): number | null {
@@ -138,21 +97,15 @@ function weightedRating(values: number[]): number | null {
 	return poweredSum / weightSum;
 }
 
-// "Director, Producer and Screenplay" — Oxford-less list join for merged
-// role group titles.
+// "Director, Producer and Screenplay" — Oxford-less list join.
 function joinNames(names: string[]): string {
 	if (names.length <= 1) return names.join("");
 	return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
-// Shared by both /credits/person/[id] and /credits/company/[id]: look up the
-// credited entity and render one titled grid per role they're credited
-// under (Actor, Director, Writer, Studio, ...) — no query param needed, this
-// always shows every credit type the entity has.
+// Shared by /credits/person/[id] and /credits/company/[id]: renders one titled grid per role the entity is credited under.
 export async function CreditMediaListPage({ kind, id }: Props) {
-	// entity and mediaByRole don't depend on each other — both only need
-	// kind/id, already known from the route param — so there's no reason to
-	// make this page wait on them one after another.
+	// entity and mediaByRole don't depend on each other, so fetch in parallel.
 	const [entity, mediaByRole] = await Promise.all([
 		kind === "person"
 			? db.person.findUnique({ where: { id } })
@@ -161,23 +114,14 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 	]);
 	if (!entity) notFound();
 
-	// Every role this entity has a DONE, non-deleted credit under. Actor is
-	// sorted first (it gets the avg-rating row below) and the rest follow
-	// alphabetically. Computed before photoSrc below since it also decides
-	// that.
+	// Every role this entity has a credit under. Actor sorts first (gets the avg-rating row), rest alphabetically. Computed before photoSrc since it also decides that.
 	const roleNames = [...mediaByRole.keys()].sort((a, b) => {
 		if (a === "Actor") return -1;
 		if (b === "Actor") return 1;
 		return a.localeCompare(b);
 	});
 
-	// Only Person carries a photoPath (see Credit.character's neighboring
-	// comment on Person.photoPath in the schema) — the "in" check also
-	// narrows entity's type for the toPersonPhotoSrc call below. Gated by
-	// role like everywhere else a person's photo might show (see
-	// person-photo-eligibility.ts) — landing on this specific person's own
-	// page isn't itself treated as reason enough to download a photo for a
-	// role that isn't otherwise eligible.
+	// Only Person carries a photoPath — the "in" check also narrows entity's type for toPersonPhotoSrc below. Still gated by role eligibility like everywhere else a person's photo might show.
 	const photoSrc =
 		"photoPath" in entity && hasPhotoEligibleRole(roleNames)
 			? toPersonPhotoSrc(entity.id, entity.photoPath)
@@ -188,12 +132,7 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 		media: mediaByRole.get(name)!,
 	}));
 
-	// Average of this person's own ratings and of the media's public rating.
-	// Scoped to just their creative-role credits when they have any, deduped
-	// so a title credited under more than one of those roles (e.g. a writer-
-	// director) isn't counted twice. Everyone else (pure actors, producers,
-	// studios, ...) falls back to every title they're credited on regardless
-	// of role, same as before this scoping existed.
+	// Average of personal and public ratings, scoped to creative-role credits when any exist (deduped so a writer-director's title isn't counted twice); otherwise falls back to every credited title.
 	const creativeMedia = [
 		...new Map(
 			roleGroups
@@ -222,11 +161,7 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 			.filter((rating): rating is number => rating != null),
 	);
 
-	// Roles credited on the exact same set of titles (e.g. a writer-director
-	// whose directing and writing credits line up 1:1) share one grid instead
-	// of two identical-looking ones back to back. Order of first appearance
-	// is preserved, so Actor (sorted first above) still leads its merged
-	// title when it's part of one.
+	// Roles credited on the exact same set of titles share one grid instead of two identical ones back to back. Order of first appearance preserved, so Actor still leads when merged.
 	const groupByMediaKey = new Map<
 		string,
 		{ names: string[]; media: MediaRecord[] }
@@ -247,20 +182,12 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 			});
 		}
 	}
-	// Most-credited role group first — a more useful default than the
-	// Actor-first/alphabetical order roleNames was built in above (which only
-	// exists to decide *query* order, not display order).
+	// Most-credited role group first — a more useful default than roleNames' query order (Actor-first/alphabetical).
 	const mergedGroups = [...groupByMediaKey.values()].sort(
 		(a, b) => b.media.length - a.media.length,
 	);
 
-	// Only the single most-credited group gets its own titled grid; every
-	// other role collapses into one combined "Also involved in" grid instead
-	// of a titled section per role, so a prolific credit list doesn't turn
-	// into a long scroll of small grids. Deduped by media id (the same title
-	// can appear in more than one of the collapsed groups) and also excludes
-	// anything already shown in the top group (e.g. someone both Directed and
-	// Produced the same title — no reason to show it twice).
+	// Only the top group gets its own titled grid; the rest collapse into one "Also involved in" grid so a prolific credit list doesn't sprawl. Deduped by media id and excludes anything already in the top group.
 	const [topGroup, ...restGroups] = mergedGroups;
 	const topMediaIds = new Set(topGroup?.media.map((item) => item.id) ?? []);
 	const otherMedia = [

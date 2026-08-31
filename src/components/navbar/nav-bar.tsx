@@ -29,10 +29,7 @@ import { LogoImage } from "@/components/logo/logo-image";
 
 export default function Navbar() {
 	const { data: session } = useSession();
-	// Fetched client-side (see avatar-context.tsx) rather than off the
-	// session, which only refreshes at sign-in — `session?.user` below is
-	// still what decides whether the Account link (vs "Sign in") shows at
-	// all, that part's fine coming from the JWT.
+	// Fetched client-side since the session JWT only refreshes at sign-in.
 	const { avatarSrc } = useAvatar();
 	const isAdmin = useIsAdmin();
 	const pathname = usePathname();
@@ -42,26 +39,15 @@ export default function Navbar() {
 	const signedIn = Boolean(session?.user);
 
 	return (
-		// Every nav icon (here and in NavDropdown, which sits inside this
-		// tree) is rendered at a small size (14px) against Lucide's native
-		// 24px-viewBox design, which scales the default 2px stroke down to a
-		// non-integer ~1.17px — soft/anti-aliased rather than crisp at that
-		// size. absoluteStrokeWidth makes `strokeWidth` a real, fixed pixel
-		// width regardless of icon size (it inflates the pre-scale stroke by
-		// 24/size so the post-scale result comes out exactly 1.5px), instead
-		// of guessing a size that happens to divide 24 evenly. One provider
-		// here beats passing the same two props at every individual <Icon>
-		// call site (NavLink's own icon, NavDropdown's trigger and panel
-		// items, the chevron).
+		// Nav icons render at 14px, where Lucide's default stroke (designed
+		// for its native 24px viewBox) would look soft. absoluteStrokeWidth
+		// keeps the visible stroke a fixed 1.5px regardless of icon size, set
+		// once here instead of per <Icon> call site.
 		<LucideProvider strokeWidth={1.5} absoluteStrokeWidth>
 			<nav
 				className={`${style.wrapper} ${hidden ? style.hidden : ""}`}
-				// Scopes the mobile drawer's open state to this element's own
-				// subtree (see nav-bar.module.sass/nav-dropdown.module.sass's
-				// [data-mobile-open] rules and useMobileDrawer's own comment) —
-				// nothing outside <nav> needs to read this, unlike --navbar-offset
-				// (useNavbarVisibility), which page content elsewhere genuinely
-				// does need and so stays a real global.
+				// Scoped to <nav>'s own subtree, unlike --navbar-offset which page
+				// content elsewhere needs as a real global.
 				data-mobile-open={mobileOpen}
 				onClick={handleNavClick}>
 				<Link
@@ -71,12 +57,8 @@ export default function Navbar() {
 					<LogoImage />
 				</Link>
 
-				{/* Flows immediately after .title (see nav-bar.module.sass's own
-				comment on .nav_content) so the nav links start right where the
-				logo's own width ends, rather than being aligned to a separate,
-				independently-computed position of their own. Below
-				$mobile-breakpoint this same container becomes the drawer the
-				hamburger button (below) toggles, via [data-mobile-open] above. */}
+				{/* Below $mobile-breakpoint this same container becomes the drawer,
+				toggled by the hamburger button via [data-mobile-open] above. */}
 				<div className={style.nav_content}>
 					<div className={style.groups}>
 						{/*<div className={style.nav_group}>*/}
@@ -123,9 +105,7 @@ export default function Navbar() {
 								icon={ActivityIcon}
 								className={style.link}
 								pathname={pathname}
-								// Static-ish (no per-user data at the top level, no
-								// loading.tsx) — safe to prefetch eagerly, unlike
-								// /account below.
+								// Static-ish, safe to prefetch eagerly, unlike /account below.
 								iconOnly
 								prefetch>
 								Activity
@@ -150,22 +130,16 @@ export default function Navbar() {
 							</NavLink>
 						</div>
 
-						{/* Flows right after Activity/Reviews/Lists in the same .groups
-						row (see .groups's own comment, nav-bar.module.sass) rather than
-						being pinned to its own reserved space — NavSearch's own
-						.overlay (nav-search.module.sass) spends whatever's left of the
-						row on expand, and once that runs out actually pushes the
-						groups before it aside via their own flex-shrink. */}
+						{/* NavSearch's expand spends whatever room is left in .groups,
+						pushing earlier groups aside via their own flex-shrink once it
+						runs out. */}
 						<div className={style.nav_group}>
 							<NavSearch />
 						</div>
 					</div>
 
-					{/* Sibling of .groups (not nested inside it) — see .nav_group_account's
-					own comment, nav-bar.module.sass, for why: its own width would
-					otherwise throw off .groups's own body-edge alignment above. Still an
-					ordinary flex item of .nav_content, so it flows/shrinks with the rest
-					of the row rather than needing position: absolute. */}
+					{/* Sibling of .groups, not nested — its width would otherwise throw
+					off .groups's own body-edge alignment. */}
 					<div className={`${style.nav_group} ${style.nav_group_account}`}>
 						<NavAccountMenu
 							signedIn={signedIn}

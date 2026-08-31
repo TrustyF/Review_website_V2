@@ -7,11 +7,8 @@ type Props = {
 	pathname: string;
 };
 
-// Detached from the .nav_group flex flow and pinned to its own corner
-// instead (see .add_media_link in nav-admin-links.module.sass) — still a
-// child of <nav> (not a separate fixed element), so it still hides/reveals
-// in step with the rest of the navbar on scroll. Hidden below
-// $mobile-breakpoint — the admin tools aren't offered on mobile at all.
+// Pinned to its own corner, but still a child of <nav> so it hides/reveals
+// with the rest of the navbar on scroll. Hidden on mobile.
 export function NavAdminLinks({ pathname }: Props) {
 	return (
 		<div className={style.add_media_link}>

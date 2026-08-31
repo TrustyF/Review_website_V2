@@ -4,13 +4,9 @@ import { MediaType } from "@prisma/client";
 import { fetchIgdbGameById } from "@/server/igdb/client";
 import { fetchComicVineById } from "@/server/comicvine/client";
 
-// One-time backfill: sourceUrl only started being set going forward once
-// ingest was updated to write it — every media row created before that has
-// it null. TMDB/MangaDex URLs are fully derivable from (type, externalId)
-// alone, no API call needed. IGDB/ComicVine URLs are slug-based and only
-// the provider knows the real slug, so those need one live call per row —
-// reuses the same fetch functions ingest already uses, with IGDB's
-// existing 429 retry/backoff along for the ride.
+// One-time backfill for rows created before ingest started writing
+// sourceUrl. TMDB/MangaDex URLs are derivable from (type, externalId)
+// alone; IGDB/ComicVine URLs are slug-based and need a live call per row.
 function localSourceUrl(type: MediaType, externalId: string): string | null {
 	switch (type) {
 		case MediaType.MOVIE:
@@ -110,9 +106,7 @@ async function backfillComics() {
 
 async function main() {
 	await backfillLocal();
-	// GAME and COMIC each hit their own independent provider — run
-	// concurrently rather than making one wait on the other, same reasoning
-	// as enrich-db.ts's per-type queues.
+	// GAME and COMIC each hit their own independent provider — run concurrently.
 	await Promise.all([backfillGames(), backfillComics()]);
 }
 

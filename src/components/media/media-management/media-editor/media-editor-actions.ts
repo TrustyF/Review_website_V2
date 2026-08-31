@@ -29,11 +29,8 @@ import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/r
 import { invalidateSearchIndex } from "@/components/search/search-actions";
 import { revalidateMediaPaths } from "@/server/cache/revalidate-media";
 
-// getAlternativePosters/getAlternativeBanners paginate rather than returning
-// everything at once — TMDB/IGDB can return 60-80+ candidates for a popular
-// title, and each one costs a separate /api/image-proxy invocation once its
-// thumbnail scrolls into view, so ImagePicker only asks for another page as
-// the user actually scrolls toward the bottom.
+// Paginated rather than all at once — each candidate costs a separate /api/image-proxy
+// invocation once its thumbnail scrolls into view.
 type Page<T> = { images: T[]; hasMore: boolean };
 
 function paginate<T>(items: T[], offset: number, limit: number): Page<T> {
@@ -43,16 +40,9 @@ function paginate<T>(items: T[], offset: number, limit: number): Page<T> {
 	};
 }
 
-// Compares old/new values field by field and returns a MediaChangeLog row
-// for each one that actually changed — untouched fields produce no row. A
-// field going from no prior value to having one isn't a "change" in that
-// sense either — it's the field being set for the first time, which reads
-// as noise ("— → 8") rather than a change worth recording — so that's
-// skipped too, regardless of whether a caller's own guard (e.g. saveReview's
-// `if (existing)`) already prevents it from happening. This is a hard
-// invariant, not a caller-by-caller convention — 21 legacy rows for rating/
-// liked/difficulty violating it (predating whatever guard was already here)
-// were found and deleted when this was added.
+// Returns a MediaChangeLog row per field that actually changed. A field going from no prior
+// value to having one is skipped too — it reads as noise ("— → 8"), not a real change. Enforced
+// here as a hard invariant, not left to caller-by-caller guards.
 function diffFields(
 	mediaId: number,
 	before: Record<string, unknown>,
@@ -91,19 +81,14 @@ export async function saveReview(
 ) {
 	await requireAdmin();
 
-	// A rating is the one thing that has to exist for a review to mean
-	// anything here — "Watched on" reads straight off Review.createDate now
-	// (see toMediaRecord's watchedDate), which only holds up if createDate
-	// can never predate an actual rating. Enforced here rather than left as
-	// a UI nicety so it can't be bypassed by any other caller either.
+	// "Watched on" reads off Review.createDate, which only holds up if createDate never
+	// predates an actual rating. Enforced here so it can't be bypassed by any other caller.
 	if (review.rating == null) {
 		throw new Error("A rating is required to save a review.");
 	}
 
-	// Same 0/1/2 (or null) domain the editor's own number input clamps to
-	// (see media-editor-modal.tsx) — enforced here too so a caller that
-	// skips the UI can't write something MediaPoster's notch logic was
-	// never meant to see.
+	// Same 0/1/2 (or null) domain the editor's number input clamps to, enforced here too so a
+	// caller bypassing the UI can't write a value MediaPoster's notch logic wasn't meant to see.
 	if (
 		review.difficulty != null &&
 		(!Number.isInteger(review.difficulty) ||
@@ -118,10 +103,8 @@ export async function saveReview(
 		db.media.findUniqueOrThrow({ where: { id: mediaId }, select: { type: true } }),
 	]);
 
-	// Set once, the first time body actually goes from unset to set — see
-	// this field's own comment in rating.prisma. Keyed off reviewDate's own
-	// presence rather than re-derived from hadBody every time, so a body
-	// cleared out and rewritten later doesn't move it.
+	// Set once, the first time body goes from unset to set. Keyed off reviewDate's presence
+	// rather than re-derived every time, so clearing and rewriting the body later doesn't move it.
 	const hadBody = Boolean(existing?.body?.trim());
 	const hasBody = Boolean(review.body?.trim());
 	const reviewDate =
@@ -130,9 +113,7 @@ export async function saveReview(
 	await db.review.upsert({
 		where: { mediaId },
 		update: { ...review, ...(reviewDate ? { reviewDate } : {}) },
-		// initialRating only goes in the create branch — see its own comment
-		// in rating.prisma, the whole point is that it never moves again once
-		// set, unlike `rating` itself.
+		// initialRating only goes in the create branch — it never moves again once set, unlike `rating`.
 		create: {
 			mediaId,
 			...review,
@@ -141,12 +122,9 @@ export async function saveReview(
 		},
 	});
 
-	// Only log the usual field-by-field diff once a review already exists —
-	// the very first save just creates it, and a wall of "— → 8" entries for
-	// fields that never had a prior value isn't a change worth recording.
-	// Body/reviewDate stay out of this — see change-log-list.tsx's
-	// synthesized "Reviewed on" entry (sourced from reviewDate, same as
-	// "Watched on" reads createDate) instead of a real changelog row here.
+	// Only diff once a review already exists — the first save just creates it, and a wall of
+	// "— → 8" entries for never-before-set fields isn't worth recording. Body/reviewDate stay
+	// out of this — see change-log-list.tsx's synthesized "Reviewed on" entry instead.
 	if (existing) {
 		const changes = diffFields(mediaId, existing, {
 			rating: review.rating,
@@ -164,11 +142,8 @@ export async function saveReview(
 	}
 }
 
-// A rewatch has no field of its own to diff — it's not "rating changed",
-// it's "watched it again" — so unlike everything else in this file it's
-// logged directly on request rather than inferred from a before/after
-// comparison. Repeatable (unlike "reviewed"): every call adds another
-// "Rewatched on" row, one per actual rewatch.
+// A rewatch has no field to diff — "watched it again", not "rating changed" — so it's logged
+// directly on request. Repeatable, unlike "reviewed": every call adds another row.
 export async function logRewatch(mediaId: number) {
 	await requireAdmin();
 	const [, media] = await Promise.all([
@@ -181,10 +156,8 @@ export async function logRewatch(mediaId: number) {
 	revalidatePath("/activity");
 }
 
-// Base Media fields (title/overview/releaseDate) are otherwise only ever
-// set by a source's ingest — this is the one path that lets them be
-// hand-edited, for media a provider doesn't have data for (or has wrong
-// data for) at all.
+// The one path that lets base Media fields be hand-edited, for media a provider has no
+// (or wrong) data for.
 export async function saveMediaDetails(
 	mediaId: number,
 	details: {
@@ -245,13 +218,9 @@ export async function saveMediaDetails(
 	if (revalidate) revalidateMediaPaths(mediaId, existing!.type);
 }
 
-// Soft delete just flips Media.isDeleted — every public list query filters
-// it out (see src/app/page.tsx, media-type-list-page.tsx,
-// credit-media-list-page.tsx), but the row (and its files, review, credits,
-// change log) stays put, and /media/[id] stays directly reachable so this
-// same toggle can restore it later. Note the @@unique([externalId, type])
-// constraint still holds while soft-deleted — re-adding the same title from
-// search will collide with it; restoring here is the way back, not search.
+// Soft delete just flips Media.isDeleted — public list queries filter it out, but the row and
+// /media/[id] stay put so this toggle can restore it. @@unique([externalId, type]) still holds
+// while soft-deleted, so re-adding from search collides; restoring here is the way back.
 export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
 	await requireAdmin();
 
@@ -275,12 +244,8 @@ export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
 	revalidateMediaPaths(mediaId, existing!.type);
 }
 
-// Irreversible: the row itself is gone, and with it every relation that
-// cascades from Media (Movie/TvShow/Manga/Comic/Game, Review, Credit,
-// MediaGenre, MediaChangeLog — see onDelete: Cascade in schema.prisma). No
-// change log entry follows, since there'd be nothing left for it to point
-// at. Cached poster/banner files on disk aren't touched here — they're
-// swept up as orphans by the next cleanup-posters run.
+// Irreversible: the row and every cascading relation (onDelete: Cascade in schema.prisma) are
+// gone, so no change log entry follows. Cached poster/banner files are swept up later as orphans.
 export async function hardDeleteMedia(mediaId: number) {
 	await requireAdmin();
 	const deleted = await db.media.delete({ where: { id: mediaId } });
@@ -290,13 +255,8 @@ export async function hardDeleteMedia(mediaId: number) {
 
 const MARKUP_PLACEHOLDER_REGEX = /⟦MARKUP(\d+)⟧/g;
 
-// Swaps every ||spoiler|| / [text](url) span for an opaque placeholder so
-// the model sent to suggestReviewCorrection never sees (and so can never
-// mangle) the actual syntax — restoreMarkup puts the original spans back
-// wherever those placeholders land in the response. Driven by the same
-// regex the renderer uses, so new markup syntax is excluded automatically;
-// nothing here needs to change for it. The one real cost: text inside a
-// span doesn't get proofread, since the model never sees it either.
+// Swaps every ||spoiler||/[text](url) span for a placeholder so the model never sees (and can't
+// mangle) the syntax; restoreMarkup puts the spans back. Cost: text inside a span isn't proofread.
 function extractMarkup(body: string): { stripped: string; spans: string[] } {
 	const spans: string[] = [];
 	const stripped = body.replace(REVIEW_MARKUP_REGEX, (match) => {
@@ -312,8 +272,7 @@ function restoreMarkup(text: string, spans: string[]): string {
 	});
 }
 
-// Read-only — returns a suggested rewrite, never touches the draft or DB.
-// The caller decides what (if anything) to copy into the actual body field.
+// Read-only — returns a suggested rewrite; the caller decides what to copy in.
 export async function suggestReviewCorrection(body: string): Promise<string> {
 	await requireAdmin();
 	if (!body.trim()) return "";
@@ -349,9 +308,7 @@ export async function getAlternativePosters(
 		return paginate(
 			covers.map((cover) => ({
 				filePath: cover.attributes.fileName,
-				// Proxied rather than hotlinked directly, so trying a poster never
-				// depends on whether the source allows hotlinking (see
-				// src/server/image-proxy.ts) — no download happens until it's saved.
+				// Proxied rather than hotlinked so trying a poster doesn't depend on source hotlink support.
 				thumbSrc: buildProxiedImageUrl(
 					posterUrlFor(type, externalId, cover.attributes.fileName, "thumb"),
 				),

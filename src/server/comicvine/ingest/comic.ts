@@ -3,8 +3,7 @@ import { ComicVineVolume } from "@/server/comicvine/schema";
 import { db } from "@/server/db/client";
 import { syncComicCreditsAndGenres } from "@/server/comicvine/ingest/comic-credits";
 
-// ComicVine's "description" is a snippet of HTML (usually just <p> tags and
-// links), unlike TMDB/MangaDex/IGDB which all hand back plain text.
+// ComicVine's "description" is HTML, unlike the other sources' plain text.
 function stripHtml(html: string): string {
 	return html
 		.replace(/<[^>]*>/g, " ")
@@ -18,10 +17,7 @@ function buildOverview(volume: ComicVineVolume): string | null {
 	return null;
 }
 
-// existing is only passed by updateComicFromComicVine (undefined on create) —
-// every field below except status/publicRating only fills in if existing
-// doesn't already have a value, whether that's a prior ingest or a hand edit
-// in the media editor.
+// Fields other than status/publicRating only fill in if existing has no value, preserving prior ingests/hand edits.
 function buildMediaFields(
 	volume: ComicVineVolume,
 	existing?: {
@@ -37,8 +33,7 @@ function buildMediaFields(
 		releaseDate:
 			existing?.releaseDate ??
 			(volume.start_year ? new Date(Number(volume.start_year), 0, 1) : null),
-		// ComicVine's volume endpoint has no ongoing/completed/cancelled signal
-		// to key off of — every tracked volume is treated as a released run.
+		// No ongoing/completed/cancelled signal on the volume endpoint, so every tracked volume is treated as released.
 		status: MediaStatus.RELEASED,
 		publicRating: null,
 		posterPath: existing?.posterPath ?? (volume.image?.medium_url ?? null),

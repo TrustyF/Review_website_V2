@@ -1,29 +1,18 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-// Hides the instant you scroll down (past a small top-of-page exemption —
-// otherwise the tiniest scroll right at the top would hide it pointlessly),
-// but only reappears once you've scrolled back up by at least this many
-// px — without a threshold, a single mouse-wheel tick or trackpad overshoot
-// mid-downward-scroll would flicker it back in.
+// Hides on scroll-down (past a top-of-page exemption), reappears only after
+// scrolling back up past a threshold, so a single wheel tick doesn't flicker it.
 const TOP_EXEMPT_PX = 100;
 const REVEAL_THRESHOLD_PX = 100;
 
-// Tracks the navbar's scroll-driven show/hide state and mirrors the result
-// onto --navbar-offset (globals.sass) directly, rather than toggling a class
-// on <html> for globals.sass to translate into the same variable — the
-// variable's the only thing anything outside the navbar actually needs (a
-// sticky element elsewhere on the page, e.g. GroupedMediaGrid/
-// GroupedMediaList's own .group_header, positions itself against it so it
-// sits right below the navbar instead of either colliding with it or
-// leaving a permanent gap once the navbar's hidden itself away), so this
-// sets it in one place instead of splitting the logic across a JS class
-// toggle and a CSS rule that reacts to it.
+// Mirrors the show/hide state directly onto --navbar-offset rather than a
+// class translated by CSS — other elements (e.g. sticky group headers)
+// position against that variable to sit below the navbar correctly.
 export function useNavbarVisibility() {
 	const [hidden, setHidden] = useState(false);
-	// Refs, not state — every scroll frame writes these, and re-rendering on
-	// each one (rather than only when `hidden` actually flips) would be pure
-	// waste.
+	// Refs, not state — every scroll frame writes these; re-rendering on each
+	// one would be wasted.
 	const lastScrollY = useRef(0);
 	const scrolledUpBy = useRef(0);
 

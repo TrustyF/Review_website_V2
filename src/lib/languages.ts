@@ -1,5 +1,4 @@
-// Just a preference stored on the account (User.preferredLanguage) — no
-// i18n library or actual translations exist yet, see /account's own note.
+// Just a preference stored on User.preferredLanguage — no i18n library or translations exist yet.
 export const LANGUAGE_OPTIONS = [
 	{ value: "en", label: "English" },
 	{ value: "fr", label: "French" },

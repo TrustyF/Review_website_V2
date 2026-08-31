@@ -8,6 +8,11 @@ const SRC_DIR = path.resolve(import.meta.dirname, "..", "src");
 const ALLOWED_FILES = new Set([
 	path.join(SRC_DIR, "app", "styles", "globals.sass"),
 ]);
+// Dev-only routes (src/app/dev/**, never shipped to real visitors) often mock
+// a third-party UI (Discord, WhatsApp, ...) where the literal colors ARE the
+// point — they're not part of this site's own theme and don't belong as
+// design tokens.
+const DEV_ROUTES_DIR = path.join(SRC_DIR, "app", "dev") + path.sep;
 const HEX_PATTERN = /#[0-9a-fA-F]{3,8}\b/g;
 // rgb()/rgba() where r, g, b aren't all equal — i.e. an actual hue, not a
 // black/white/gray shadow tuned to a one-off opacity (those are left alone;
@@ -43,7 +48,7 @@ const sassFiles = await collectSassFiles(SRC_DIR);
 const violations = [];
 
 for (const file of sassFiles) {
-	if (ALLOWED_FILES.has(file)) continue;
+	if (ALLOWED_FILES.has(file) || file.startsWith(DEV_ROUTES_DIR)) continue;
 	const content = await readFile(file, "utf8");
 	const lines = content.split("\n");
 	lines.forEach((line, i) => {

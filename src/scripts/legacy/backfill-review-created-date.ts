@@ -1,9 +1,8 @@
 import { db } from "@/server/db/client";
 
-// One-time backfill: every review currently in the DB came from the legacy
-// mysql migration, which gave Review.createDate a fresh "now" timestamp
-// instead of the date the movie was actually watched/reviewed — that date
-// lived on the media row's createDate instead. Copy it over once.
+// One-time backfill: the legacy migration gave Review.createDate a fresh
+// "now" timestamp instead of the actual watched date, which lived on the
+// media row's createDate instead. Copy it over once.
 async function main() {
 	const reviews = await db.review.findMany({
 		include: { media: true },

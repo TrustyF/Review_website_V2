@@ -19,12 +19,9 @@ import { cachedJson } from "@/server/lib/response-cache";
 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 
-// No hard documented per-second limit — light defensive spacing so a batch
-// run (enrich-db) can't burst unbounded, without slowing normal enrichment.
+// No hard documented per-second limit; light defensive spacing so a batch run can't burst unbounded.
 const limiter = createRateLimiter({ minIntervalMs: 100 });
 
-// Every TMDB request shares the same auth header and the same limiter — one
-// place for both instead of repeating them at each call site below.
 function tmdbFetch(url: string, signal?: AbortSignal): Promise<Response> {
 	return limiter.fetch(url, {
 		headers: new Headers({
@@ -46,10 +43,7 @@ function ConvertTypeToString(type: MediaType): string {
 	return segment;
 }
 
-// /authentication is TMDB's dedicated endpoint for validating a bearer
-// token — a wrong/missing TMDB_ACCESS_TOKEN gets a 401 here, same as it
-// would on every other endpoint, so this doubles as an env-var check without
-// needing a separate one.
+// A wrong/missing TMDB_ACCESS_TOKEN gets a 401 here, doubling as an env-var check.
 export async function isTmdbReachable(): Promise<boolean> {
 	try {
 		const res = await tmdbFetch(
@@ -104,8 +98,7 @@ export async function fetchTmdbByName(
 
 export async function fetchTvShowById(id: string): Promise<TmdbTvResponse> {
 	const json = await cachedJson("tmdb", `tv-${id}`, async () => {
-		// aggregate_credits, not credits — see TmdbTvResponseSchema's own
-		// comment on why a TV show's cast has to come from there.
+		// aggregate_credits, not credits — see TmdbTvResponseSchema for why.
 		const res = await tmdbFetch(
 			`${TMDB_BASE}/tv/${id}?&language=en-US&append_to_response=content_ratings,aggregate_credits,external_ids`,
 		);
@@ -120,9 +113,7 @@ export async function fetchTvShowById(id: string): Promise<TmdbTvResponse> {
 	return parseOrThrow(TmdbTvResponseSchema, json);
 }
 
-// include_image_language=en,null keeps posters that are either English or
-// textless — otherwise the response is dominated by posters in whatever
-// language happens to have the most uploads (usually not English).
+// include_image_language=en,null keeps English/textless posters; otherwise the most-uploaded language wins.
 export async function fetchTmdbImages(
 	id: string,
 	media_type: MediaType,
@@ -150,11 +141,8 @@ export async function fetchTmdbImages(
 
 type TmdbBackdrop = TmdbImagesResponse["backdrops"][number];
 
-// TMDB doesn't flag whether a backdrop is a plain film still or has
-// title/logo art baked in — iso_639_1: null is the closest proxy (a
-// language-tagged backdrop is conventionally one with localized text on
-// it), so a textless one is preferred whenever one exists. Within whichever
-// pool applies, highest community vote_average wins.
+// iso_639_1: null is the closest proxy for "no title/logo art baked in", so textless is preferred
+// when available; highest vote_average wins within whichever pool applies.
 export function pickBestBackdrop(backdrops: TmdbBackdrop[]): string | null {
 	if (backdrops.length === 0) return null;
 	const textless = backdrops.filter((b) => b.iso_639_1 === null);
@@ -179,8 +167,7 @@ export async function fetchTvShowByName(
 	return parseOrThrow(TmdbTvSearchResponseSchema, json).results;
 }
 
-// Only used by backfill-person-photos.ts — a single person's own profile
-// photo, without re-fetching an entire movie/show just to get it.
+// Used by backfill-person-photos.ts to get a profile photo without re-fetching a whole movie/show.
 export async function fetchTmdbPersonById(id: string): Promise<TmdbPerson> {
 	const res = await tmdbFetch(`${TMDB_BASE}/person/${id}`);
 

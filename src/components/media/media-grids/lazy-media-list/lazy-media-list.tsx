@@ -6,18 +6,11 @@ import styles from "./lazy-media-list.module.sass";
 
 type Props = {
 	items: MediaRecord[];
-	// Stable id for this list instance — when given, how far the user had
-	// scrolled into it survives a back-navigation. Same mechanism as
-	// LazyMediaGrid's own restoreKey (see useLazyReveal).
+	// Stable id for this list instance; when given, scroll depth survives a back-navigation.
 	restoreKey?: string;
 };
 
-// LazyMediaGrid's sibling for the full MediaCardShell-sized card (poster +
-// title + review body) instead of the compact mini card — a vertical list
-// of rows rather than a grid, for a page like AllReviewsListPage where the
-// review text itself is the point, not just browsing posters. Shares
-// useLazyReveal's reveal-on-scroll bookkeeping with LazyMediaGrid; only the
-// rendering (which card, grid vs. list layout) differs.
+// LazyMediaGrid's sibling for the full card (poster + title + review body) as a vertical list instead of a grid.
 export function LazyMediaList({ items, restoreKey }: Props) {
 	const { visibleCount, sentinelRef } = useLazyReveal(items, restoreKey);
 

@@ -11,17 +11,8 @@ import { capCast, filterNotableCrew } from "@/server/tmdb/ingest/credit-limits";
 
 type t_client = Prisma.TransactionClient;
 
-// Replaces a movie's genres and credits with the latest TMDB data. Safe to
-// call for a brand-new media row (nothing to delete/recreate over) or to
-// re-sync an existing one on re-enrichment.
-//
-// Batched rather than one round trip per cast/crew/company member (which is
-// what this used to be) — a movie with a large ensemble cast could rack up
-// 100+ sequential round trips, enough to blow past even a generous
-// interactive-transaction timeout against a remote DB. Every resolve* call
-// below is a single findMany + createMany for this whole movie's worth of
-// references, not one per person/role/company — see
-// batch-entity-resolver.ts.
+// Batched rather than one round trip per cast/crew/company member — a large ensemble cast could
+// rack up 100+ sequential round trips, enough to blow an interactive-transaction timeout.
 export async function syncMovieCreditsAndGenres(
 	tx: t_client,
 	mediaId: number,
@@ -41,11 +32,7 @@ export async function syncMovieCreditsAndGenres(
 	const crew = filterNotableCrew(data.credits?.crew ?? []);
 	const companies = data.production_companies ?? [];
 
-	// Every cast and crew member's own photoPath comes straight from TMDB
-	// (profile_path is requested for both — see tmdb/schema.ts). Which of
-	// these actually gets downloaded/cached is a read-time decision, not an
-	// ingest one — see person-photo-eligibility.ts, applied wherever a photo
-	// might get shown for a non-Actor credit.
+	// Which photoPath actually gets downloaded/cached is a read-time decision (person-photo-eligibility.ts), not this ingest step.
 	const personInputs = [
 		...cast.map((c) => ({
 			externalId: String(c.id),
@@ -70,18 +57,14 @@ export async function syncMovieCreditsAndGenres(
 		...(companies.length ? [{ name: "Studio", origin: MediaType.MOVIE }] : []),
 	];
 
-	// Countries have to resolve before companies — a company's countryId
-	// comes from this.
+	// Countries must resolve before companies — a company's countryId comes from this.
 	const countryInputs = companies
 		.filter((co) => co.origin_country)
 		.map((co) => ({ code2: co.origin_country! }));
 
 	// --- Resolve every reference type exactly once ---
-	// Sequential, not Promise.all — issuing concurrent queries against one
-	// interactive transaction's shared session is the same pattern that
-	// produced a real empty-result bug elsewhere in this pipeline (see
-	// entity-resolver.ts's resolveRole comment); a handful of extra awaited
-	// round trips here is a non-issue next to the hundreds this replaces.
+	// Sequential, not Promise.all — concurrent queries against one interactive transaction's shared
+	// session previously caused a real empty-result bug (see entity-resolver.ts's resolveRole).
 	const genreMap = await resolveGenresBatch(tx, genreInputs);
 	const personMap = await resolvePeopleBatch(tx, personInputs);
 	const roleMap = await resolveRolesBatch(tx, roleInputs);
@@ -100,10 +83,8 @@ export async function syncMovieCreditsAndGenres(
 	const companyMap = await resolveCompaniesBatch(tx, companyInputs);
 
 	// --- Build the final rows in memory, then insert in bulk ---
-	// Iterates the ORIGINAL (un-deduped) cast/crew/company arrays — resolve*
-	// dedupes references, but every credit itself still needs its own row
-	// even when it shares a person/role/company with another (e.g. the same
-	// actor appearing twice with different characters).
+	// Iterates the ORIGINAL (un-deduped) arrays — every credit still needs its own row even when
+	// it shares a person/role/company with another (e.g. the same actor twice with different characters).
 
 	const mediaGenreRows = genreInputs.map((g) => ({
 		mediaId,

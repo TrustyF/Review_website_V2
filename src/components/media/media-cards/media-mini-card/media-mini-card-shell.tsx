@@ -17,10 +17,7 @@ type Props = {
 	children?: ReactNode;
 };
 
-// Poster + title + rating only — for dense listings (grids) where the full
-// MediaCardShell (review body, edit button, type-specific info) is too much.
-// Per-type cards (MovieMiniCard, TvShowMiniCard, ...) supply only the bit of
-// secondary info that actually differs between media types.
+// Poster + title + rating only, for dense grid listings where full MediaCardShell is too much; per-type cards supply only the differing secondary info.
 export function MediaMiniCardShell({ media, children }: Props) {
 	const { showRating, showTitle, showReviewIcon } = useMediaCardDisplay();
 

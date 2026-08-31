@@ -1,26 +1,11 @@
 import Image from "next/image";
 import style from "./logo-image.module.sass";
 
-// The compact sibling of Logo/LogoSimple (see those files) — no ticket
-// paper of its own, just a bordered tag sitting straight on whatever
-// background it's placed on. Built for the dark navbar chrome those two
-// aren't: their white card reads as a printed ticket against any
-// background, which is the point on a page, but fighting that same white
-// card against the navbar's own dark background is what this sidesteps —
-// border and text use var(--foreground) rather than the fixed
-// --ticket-paper/--ticket-ink pair, so it belongs to the dark theme instead
-// of sitting on top of it. The mark uses the site's own var(--brand) rather
-// than --ticket-accent, so this reads as this site's mark, not a color
-// borrowed from the separate printed-ticket motif.
+// Compact sibling of Logo/LogoSimple for the dark navbar: uses var(--foreground)/var(--brand) instead of the fixed ticket-paper/ink/accent pair so it belongs to the dark theme instead of fighting it.
 export function LogoImage() {
 	return (
 		<div className={style.tag}>
-			{/* The ticket mark's own body (left of its dotted perforation) is
-			    transparent art — this sits behind it, clipped to just that
-			    blank interior, so the ticket reads as filled rather than
-			    showing the navbar background through it. Comes before .image
-			    in source order (and neither sets z-index) so .image still
-			    paints on top of it. */}
+			{/* Backs the mark's transparent interior so the navbar bg doesn't show through; ordered before .image so .image paints on top. */}
 			<div className={style.fill} aria-hidden="true" />
 			<Image
 				src="/ui/logo.webp"
@@ -29,12 +14,7 @@ export function LogoImage() {
 				height={172}
 				className={style.image}
 			/>
-			{/* Below $mobile-breakpoint the full ticket mark (plus its .fill
-			    backing and the name text) is hidden in favor of this square
-			    app-icon mark instead — there isn't room for the wide wordmark
-			    in the mobile navbar's cramped title slot. Both stay mounted;
-			    logo-image.module.sass toggles which one paints via display,
-			    so there's no layout shift or conditional render on resize. */}
+			{/* Mobile swaps to this square icon (no room for the wide wordmark); both stay mounted, CSS toggles display to avoid layout shift on resize. */}
 			<Image
 				src="/ui/icon.webp"
 				alt=""

@@ -1,11 +1,4 @@
-// Self-positioned in the same top-right corner as MediaFilterPopover (its
-// only caller, MediaFilterGrid, is already position: relative for that
-// reason) but offset left by MediaFilterPopover's own worst-case width (its
-// trigger plus its count badge, plus a bit of breathing room) so the two
-// triggers sit side by side instead of overlapping. Fixed rather than
-// measured — cheaper than a ResizeObserver for two triggers that never
-// change size at runtime, just occasionally width (the badge appearing/
-// disappearing).
+// Offset left of MediaFilterPopover by its worst-case width so the two triggers sit side by side; fixed value, cheaper than a ResizeObserver.
 .wrapper
   position: absolute
   z-index: 5
@@ -38,9 +31,7 @@
   border-radius: 50%
   background: var(--brand)
 
-// Same shape as nav-dropdown.module.sass's .panel_content — this popover and
-// a nav dropdown's are both "a short list of plain link-like rows floating
-// over the page", so they read as the same kind of menu.
+// Same shape as nav-dropdown.module.sass's .panel_content, so both read as the same kind of menu.
 .popover
   position: absolute
   z-index: 20
@@ -56,11 +47,7 @@
   border-radius: 0.5rem
   box-shadow: 0 4px 16px var(--overlay-backdrop)
 
-// Same look as nav-dropdown.module.sass's .link — a plain span (role=
-// "button", not an actual <button>; see media-sort-popover.tsx) styled the
-// same way, since a real <button> here rendered with its native chrome
-// (background, sharp-cornered border/focus box) showing through instead of
-// reading as just another link-like row in the menu.
+// Same look as nav-dropdown.module.sass's .link — a plain span (role="button"), since a real <button>'s native chrome showed through here.
 .option
   display: flex
   align-items: center

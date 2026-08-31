@@ -5,9 +5,7 @@ import { resolveCountry } from "@/server/resolvers/entity-resolver";
 import { syncTvShowCreditsAndGenres } from "@/server/tmdb/ingest/tv-show-credits";
 import { fetchTmdbImages, pickBestBackdrop } from "@/server/tmdb/client";
 
-// TMDB's own TV `status` string — anything unrecognized (including missing)
-// falls back to RELEASED rather than guessed at, same convention as IGDB's
-// STATUS_MAP in server/igdb/ingest/game.ts.
+// Anything unrecognized (including missing) falls back to RELEASED rather than guessed at.
 const TV_STATUS_MAP: Record<string, MediaStatus> = {
 	Planned: MediaStatus.ANNOUNCED,
 	Pilot: MediaStatus.ANNOUNCED,
@@ -87,9 +85,7 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 			? await resolveCountry(tx, data.origin_country[0])
 			: null;
 
-		// Only hits TMDB's images endpoint when a banner is actually still
-		// missing — bulk re-enrichment (enrich-db.ts, backfill-banners.ts)
-		// runs this over every row, most of which already have one.
+		// Only hits the images endpoint when a banner is still missing, since bulk re-enrichment runs over every row.
 		const bannerPath =
 			existing.bannerPath ??
 			pickBestBackdrop(
@@ -97,17 +93,13 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 			) ??
 			data.backdrop_path;
 
-		// Re-enrichment only fills in fields that are still empty — anything
-		// already set (whether from a prior ingest or a hand edit in the media
-		// editor) is left alone. publicRating/popularity/status are the
-		// exception: they genuinely change over time at the source, so they
-		// always refresh.
+		// Re-enrichment only fills in still-empty fields; publicRating/popularity/status genuinely
+		// change over time at the source, so those always refresh.
 		await tx.media.update({
 			where: { id: existing.id },
 			data: {
 				title: existing.title ?? data.name,
-				// TMDB's own flag can turn this on, but never off — see movie.ts's
-				// own updateMovieFromTmdb for why a manual correction wins.
+				// TMDB's adult flag can turn this on but never off, so a manual correction always wins.
 				isAdult: existing.isAdult || data.adult,
 				overview: existing.overview ?? data.overview,
 				status: resolveTvStatus(data),
@@ -127,8 +119,7 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 							existing.tvShow?.episodeCount ?? data.number_of_episodes,
 						seasonCount: existing.tvShow?.seasonCount ?? data.number_of_seasons,
 						network: existing.tvShow?.network ?? (data.networks[0]?.name ?? null),
-						// Refreshed every re-enrich, not just filled in once — see
-						// the field's own comment in media.prisma.
+						// Refreshed every re-enrich, not just filled in once (see media.prisma).
 						popularity: data.popularity,
 					},
 				},

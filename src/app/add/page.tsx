@@ -15,9 +15,7 @@ import {
 } from "@/components/media/media-management/media-add/addable-types";
 import styles from "./add-media.module.sass";
 
-// Covers every real MediaType, not just AddableType — manual entry has no
-// provider to have been left out of in the first place, so SHORT (which
-// has no dedicated provider search of its own) is creatable here too.
+// Covers every MediaType, not just AddableType, since manual entry needs no provider (e.g. SHORT).
 const TYPE_LABELS: Record<MediaType, string> = {
 	[MediaType.MOVIE]: "Movie",
 	[MediaType.SHORT]: "Short",
@@ -42,16 +40,12 @@ export default function AddMediaPage() {
 	const [results, setResults] = useState<MediaSearchResult[]>([]);
 	const [isSearching, setIsSearching] = useState(false);
 	const [searchError, setSearchError] = useState<string | null>(null);
-	// The query a search actually ran for — distinct from `query` itself so
-	// typing after a search (before hitting Enter again) doesn't make the
-	// "no results" message below claim the *new*, unsearched text got zero
-	// results.
+	// The query a search actually ran for, so the "no results" message doesn't apply to unsearched typing.
 	const [searchedQuery, setSearchedQuery] = useState<string | null>(null);
 	const [addingId, setAddingId] = useState<string | null>(null);
 	const [addError, setAddError] = useState<string | null>(null);
 
-	// Manual entry — for media no provider has (or has wrong), created
-	// straight from hand-typed fields instead of a provider search result.
+	// Manual entry, for media no provider has (or has wrong).
 	const [manualType, setManualType] = useState<MediaType>(MediaType.MOVIE);
 	const [manualTitle, setManualTitle] = useState("");
 	const [manualOverview, setManualOverview] = useState("");
@@ -60,9 +54,7 @@ export default function AddMediaPage() {
 	const [isCreating, setIsCreating] = useState(false);
 	const [createError, setCreateError] = useState<string | null>(null);
 
-	// Fires on Enter (see the input's onKeyDown below), not on every
-	// keystroke or type-tab switch — a manual trigger instead of a debounced
-	// effect.
+	// Fires on Enter, not on every keystroke — a manual trigger instead of a debounced effect.
 	function runSearch(searchType: AddableType, searchQuery: string) {
 		if (!searchQuery.trim()) return;
 		setIsSearching(true);
@@ -205,8 +197,7 @@ export default function AddMediaPage() {
 						/>
 					</label>
 					{manualPosterUrl.trim() && (
-						// Plain <img>, not next/image — see the same note in
-						// media-editor-modal.tsx for why (arbitrary pasted host).
+						// Plain <img>, not next/image, since the host is an arbitrary pasted URL.
 						// eslint-disable-next-line @next/next/no-img-element
 						<img
 							src={manualPosterUrl.trim()}

@@ -13,26 +13,16 @@ type Props = {
 	media: MediaRecord;
 };
 
-// Drop-in replacement for a plain <MediaReview> on the detail page — click
-// anywhere in the review to open the same body editor (with its AI
-// suggestion diff) the full editor modal uses. Closing it stages the edit
-// into the page-level draft (media-publish-store) instead of saving
-// immediately — same as PosterEditTrigger/BannerEditTrigger, so every
-// inline edit on this page commits together behind MediaPublishButton's
-// Publish click.
+// Drop-in replacement for <MediaReview> — click to open the same body editor (with AI diff) the
+// full editor modal uses. Closing it stages the edit into media-publish-store instead of saving
+// immediately, same as the poster/banner triggers.
 //
-// Scoped to the whole review card rather than just its body text: MediaReview
-// doesn't expose its body as a separately-targetable sub-element (nor
-// should it grow an edit-mode prop just for this — it's a shared primitive
-// used by every card and grid on the site), so clicking the rating/date
-// here opens the body editor too. A media with no review yet renders
-// nothing either way (MediaReview itself returns null), same as before —
-// creating a first review still goes through the full editor.
+// Scoped to the whole review card, not just the body text, since MediaReview (a shared primitive
+// used everywhere) doesn't expose its body as a separate targetable sub-element.
 export function ReviewBodyEditTrigger({ media }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
-	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
-	// for the same rule applied to the navbar's own admin links).
+	// Mobile admin edits are intentionally unsupported.
 	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const review = media.review;
 
@@ -48,9 +38,7 @@ export function ReviewBodyEditTrigger({ media }: Props) {
 		return <MediaReview review={review} watchedDate={media.watchedDate} />;
 	}
 
-	// Synchronous, since nothing here touches the network (see
-	// media-publish-store.ts's stageReview) — the actual save happens once
-	// MediaPublishButton's Publish is clicked.
+	// Synchronous — nothing here touches the network; the actual save happens on Publish.
 	function handleClose() {
 		setIsOpen(false);
 		stageReview(media.id, {

@@ -9,9 +9,7 @@ import { cachedJson } from "@/server/lib/response-cache";
 
 const GOOGLE_BOOKS_BASE = "https://www.googleapis.com/books/v1";
 
-// No documented per-second limit (quota is daily) — light defensive spacing
-// for consistency with the other sources rather than a response to a known
-// constraint.
+// No documented per-second limit (quota is daily); light defensive spacing for consistency with other sources.
 const limiter = createRateLimiter({ minIntervalMs: 100 });
 
 function apiKey(): string {
@@ -31,9 +29,7 @@ async function googleBooksFetch(
 	return res.json();
 }
 
-// A wrong/missing GOOGLE_BOOKS_API_KEY gets a 400 from this same endpoint,
-// so a real minimal query covers both "endpoint down" and "bad key" without
-// a separate env-var check.
+// A wrong/missing GOOGLE_BOOKS_API_KEY gets a 400 here, so this covers both "down" and "bad key".
 export async function isGoogleBooksReachable(): Promise<boolean> {
 	try {
 		const url = new URL(`${GOOGLE_BOOKS_BASE}/volumes`);

@@ -12,15 +12,9 @@ type Props = {
 	onChange: (id: string | null) => void;
 };
 
-// "Recommend to" picker for ListForm — a row of avatar tiles (one per
-// registered user, plus a leading "Public" tile for null) rather than a
-// plain <select>, so an admin picking a recipient recognizes them by face
-// rather than having to read every name/email in a dropdown.
+// "Recommend to" picker: avatar tiles instead of a <select>, so an admin recognizes a recipient by face.
 export function UserPicker({ options, value, onChange }: Props) {
-	// Per-user failed-load tracking (a stale/broken User.image — same class
-	// of issue AvatarPicker's own imageFailed guards against) — a Set rather
-	// than one boolean since any number of the tiles here could fail
-	// independently.
+	// Set, not one boolean, since multiple tiles' images can fail to load independently.
 	const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
 
 	function markFailed(id: string) {

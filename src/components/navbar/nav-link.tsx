@@ -6,28 +6,21 @@ import style from "./nav-bar.module.sass";
 type NavLinkProps = {
 	href: string;
 	icon?: LucideIcon | NavIcon;
-	// CSS module class lookups are typed as possibly-undefined (an unknown
-	// key would silently produce `undefined`), so this matches that rather
-	// than requiring callers to non-null-assert every style.xxx they pass.
+	// Matches CSS module class lookups' possibly-undefined typing, so callers
+	// don't have to non-null-assert every style.xxx they pass.
 	className: string | undefined;
 	pathname: string;
 	children: React.ReactNode;
-	// Label stays hidden on desktop with `children` moved to aria-label/title
-	// instead, so the link's name is still exposed to screen readers and as
-	// a hover tooltip. Still a real element in the DOM (not omitted) so the
-	// mobile drawer can bring the label back.
+	// Label hidden on desktop, moved to aria-label/title; stays a real DOM
+	// element (not omitted) so the mobile drawer can bring it back.
 	iconOnly?: boolean;
-	// Defaults to false (same as Link's own default) — leave unset for
-	// anything dynamic/session-scoped (e.g. /account). Pass true only for a
-	// destination that's cheap to prefetch (static/ISR, no per-user data at
-	// the top level), since this is a single always-visible nav item, not a
-	// grid of many links.
+	// Leave unset for anything dynamic/session-scoped (e.g. /account); pass
+	// true only for a cheap-to-prefetch static/ISR destination.
 	prefetch?: boolean;
 };
 
-// Every plain top-level item (as opposed to a NavDropdown) goes through
-// here so an icon stays optional without repeating the same "icon &&
-// <Icon />" line at every one of these call sites.
+// Every plain top-level item (vs. a NavDropdown) goes through here so the
+// icon stays optional without repeating "icon && <Icon />" everywhere.
 export function NavLink({
 	href,
 	icon: Icon,
@@ -47,9 +40,7 @@ export function NavLink({
 			aria-current={isActive ? "page" : undefined}
 			aria-label={iconOnly ? label : undefined}
 			title={iconOnly ? label : undefined}>
-			{/* Lucide ships outline-only icons — no separate filled set — so
-			"filled" here is just handing the same icon a fill color instead
-			of "none" on top of its existing stroke. */}
+			{/* Lucide ships outline-only icons, so "filled" is just a fill color. */}
 			{Icon && (
 				<Icon
 					size={14}

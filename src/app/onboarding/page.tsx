@@ -8,9 +8,7 @@ export default async function OnboardingPage() {
 	const session = await auth();
 	if (!session?.user?.id) redirect("/login");
 
-	// Read straight from the DB, not the session — see account/page.tsx's own
-	// comment on why (updateAvatar/onboarding-actions write here without
-	// refreshing the JWT).
+	// Read from DB, not session, since avatar/onboarding actions write DB directly without refreshing the JWT.
 	const user = await db.user.findUnique({
 		where: { id: session.user.id },
 		select: {

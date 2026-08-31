@@ -16,15 +16,7 @@ type Props = {
 	children?: ReactNode;
 };
 
-// Mobile-width counterpart to MediaCardShell — same poster/title/date/
-// review/edit-button pieces (kept in sync by hand, same as that file), just
-// laid out so the review sits on its own full-width row under the poster +
-// title row instead of squeezed into the ~130px-narrower column beside a
-// fixed-width poster that works fine at desktop widths but leaves barely any
-// room for review text on a phone. MediaCardResolver's per-type cards still
-// only ever render MediaCardShell directly — see that file's own comment on
-// how the two swap in via CSS instead of either component picking its own
-// counterpart.
+// Mobile counterpart to MediaCardShell, kept in sync by hand: puts the review on its own full-width row instead of a narrow column beside a fixed poster.
 export function MediaCardShellMobile({ media, children }: Props) {
 	return (
 		<div className={styles.wrapper}>

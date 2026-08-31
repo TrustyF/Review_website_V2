@@ -13,9 +13,8 @@ type Props = {
 	onAvatarError: () => void;
 };
 
-// Signed in shows the notification bell and avatar/account link; signed out
-// just links to /login. Sign-out lives on the account page (SignOutButton),
-// not here. Hidden in the mobile drawer (NavMobileControls covers it there).
+// Signed in: bell + avatar link; signed out: link to /login. Sign-out lives
+// on the account page. Hidden in the mobile drawer (NavMobileControls covers it).
 export function NavAccountMenu({
 	signedIn,
 	pathname,

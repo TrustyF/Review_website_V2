@@ -17,23 +17,18 @@ import { Hitbox } from "@/components/ui/hitbox";
 import styles from "./media-filter-popover.module.sass";
 
 type Props = {
-	// The full, *un*filtered media this grid is showing — used to derive
-	// which genres and which filter fields (see FILTERABLE_FIELDS_BY_TYPE)
-	// are actually worth offering, so e.g. a Runtime slider doesn't show up
-	// on a page of nothing but games.
+	// The full, unfiltered media, used to derive which genres/fields are worth offering (e.g. no Runtime slider for a page of only games).
 	media: MediaRecord[];
 	filter: MediaFilterState;
 	onChange: (next: MediaFilterState) => void;
 };
 
-// Rating scale matches the review editor's own rating input (media-editor-
-// modal.tsx) — 0-10, half-point steps.
+// Rating scale matches the review editor's rating input — 0-10, half-point steps.
 const RATING_MIN = 0;
 const RATING_MAX = 10;
 const RATING_STEP = 0.5;
 
-// 210 rounds up past the longest runtime actually in the collection (206m)
-// with a little headroom, rather than some arbitrary/unreachable ceiling.
+// 210 rounds up past the longest runtime in the collection (206m) with a little headroom.
 const RUNTIME_MIN = 0;
 const RUNTIME_MAX = 210;
 const RUNTIME_STEP = 5;
@@ -42,18 +37,12 @@ function formatRating(value: number): string {
 	return value.toFixed(1);
 }
 
-// formatRuntime (primitives/runtime.tsx) returns null for a falsy runtime —
-// 0 is a legitimate slider position (the bottom of the range), not "no
-// runtime to show", so that case is filled in here rather than in the
-// shared helper itself.
+// formatRuntime returns null for a falsy runtime, but 0 is a legitimate slider position here, so fill it in.
 function formatRuntimeLabel(value: number): string {
 	return formatRuntime(value) ?? "0m";
 }
 
-// Generic filter trigger + popover, meant to drop onto any media grid
-// (MediaFilterGrid, RankedList, ...) — the caller owns the filter state
-// and is responsible for actually applying matchesMediaFilter to whatever
-// it's rendering; this component only edits that state.
+// Generic filter trigger + popover for any media grid; the caller owns filter state and applies matchesMediaFilter itself.
 export function MediaFilterPopover({ media, filter, onChange }: Props) {
 	const [isOpen, setIsOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);

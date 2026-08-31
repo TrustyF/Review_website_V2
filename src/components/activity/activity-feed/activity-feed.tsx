@@ -24,10 +24,7 @@ const DateFormatter = new Intl.DateTimeFormat("en-GB", {
 	minute: "2-digit",
 });
 
-// Same timeline-gap-divider treatment as change-log-list.tsx — a gap at
-// least this long between two consecutive entries (within the same month
-// group; the sticky month header already marks a break across groups) gets
-// a divider instead of the list just running the two together.
+// A gap at least this long between consecutive entries in the same month group gets a divider.
 const TIMELINE_GAP_DAYS = 3;
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -35,7 +32,6 @@ function daysBetween(a: Date, b: Date): number {
 	return Math.abs(a.getTime() - b.getTime()) / MS_PER_DAY;
 }
 
-// Same unit-stepping as change-log-list.tsx's own formatGap.
 function formatGap(days: number): string {
 	const rounded = Math.round(days);
 	if (rounded < 30) {
@@ -49,10 +45,7 @@ function formatGap(days: number): string {
 	return `${years} year${years === 1 ? "" : "s"} later`;
 }
 
-// One icon per ActivityType — RATING_CHANGED reuses the same star the
-// rating value itself renders with elsewhere (change-log-list.tsx), so a
-// glance at the icon column already hints at what kind of row it is before
-// reading the text.
+// One icon per ActivityType — RATING_CHANGED reuses the star rating value's own icon.
 const TYPE_ICON = {
 	RATED: StarIcon,
 	RATING_CHANGED: StarIcon,
@@ -60,19 +53,12 @@ const TYPE_ICON = {
 	REWATCHED: RotateCcw,
 	WATCHLIST_ADDED: WatchlistIcon,
 	LIST_CREATED: ListPlus,
-	// Never actually rendered — LIST_ITEM_ADDED always carries a media row
-	// (see addMediaToList), so ActivityRow's poster branch wins instead —
-	// still needs an entry so the Record below stays exhaustive.
+	// Never actually rendered — LIST_ITEM_ADDED always carries media, so the poster wins.
 	LIST_ITEM_ADDED: ListPlus,
 } as const;
 
-// Same value + star pairing as change-log-list.tsx's own ChangeValue
-// "rating" branch — kept a local copy rather than importing that function
-// since it's the one field this feed renders a value for at all (every
-// other type is self-describing from its label alone). `old` mirrors that
-// same file's .old_value/.new_value split (accent + strikethrough vs. plain)
-// — only ever passed for RATING_CHANGED's oldValue side, RATED/REVIEWED's
-// single value is always "current" and never struck through.
+// `old` (accent + strikethrough vs. plain) is only ever passed for RATING_CHANGED's
+// oldValue side — RATED/REVIEWED's single value is always current, never struck through.
 function RatingValue({
 	value,
 	old = false,
@@ -90,9 +76,7 @@ function RatingValue({
 	);
 }
 
-// Which way the arrow should read, for RATING_CHANGED's own arrow color —
-// null (equal, or either side unparseable) leaves it at its neutral default
-// rather than guessing a direction that isn't real.
+// null (equal, or either side unparseable) leaves the arrow at its neutral default.
 function ratingDirection(
 	oldValue: string | null,
 	newValue: string | null,
@@ -103,9 +87,8 @@ function ratingDirection(
 	return to > from ? "up" : "down";
 }
 
-// The one bit of each row that actually goes somewhere — styled apart from
-// the surrounding action text (see .action) so it reads as the clickable
-// part, same idea as a normal sentence-with-a-link.
+// The one bit of each row that actually goes somewhere — styled apart from the
+// surrounding action text so it reads as the clickable part.
 function MediaLink({
 	media,
 }: {
@@ -126,13 +109,8 @@ function ListLink({ list }: { list: NonNullable<ActivityFeedEntry["list"]> }) {
 	);
 }
 
-// Every ActivityType boils down to the same "verb + target(s) [+ value]"
-// shape — RATED/REVIEWED/RATING_CHANGED/WATCHLIST_ADDED target a media,
-// LIST_CREATED a list, LIST_ITEM_ADDED both at once. Returning that shape
-// as three separate pieces (rather than one pre-joined ReactNode) is what
-// lets ActivityRow lay them out on two separate lines next to the poster
-// (title+date, then action+value below it — see .content/.title_row/.meta)
-// instead of one flowing sentence.
+// Returns "verb + target(s) [+ value]" as three separate pieces (not one joined
+// ReactNode) so ActivityRow can lay them out on two lines next to the poster.
 function activityLabel(entry: ActivityFeedEntry): {
 	action: string | null;
 	target: React.ReactNode;
@@ -155,11 +133,8 @@ function activityLabel(entry: ActivityFeedEntry): {
 			return {
 				action: "Rewatched",
 				target: entry.media && <MediaLink media={entry.media} />,
-				// REWATCHED always carries a media (see logRewatch), so
-				// ActivityRow's poster branch always wins over TYPE_ICON's
-				// RotateCcw — same reason LIST_ITEM_ADDED's own icon is unreachable
-				// (see that entry's comment). Shown in the value spot instead,
-				// same pattern as WATCHLIST_ADDED's own icon.
+				// REWATCHED always carries media, so the poster wins over TYPE_ICON's
+				// RotateCcw — shown in the value spot instead, like WATCHLIST_ADDED's icon.
 				value: <IterationCw size={14} className={styles.value_icon} />,
 			};
 		case "RATING_CHANGED": {
@@ -200,11 +175,8 @@ function activityLabel(entry: ActivityFeedEntry): {
 	}
 }
 
-// index is this row's position within its own month group (not a global
-// index across every group) — passed straight through to --stagger-index
-// for .entry's own animation-delay (see activity-feed.module.sass), capped
-// there rather than here so a long group's later rows just settle at the
-// same fixed delay instead of the whole stagger growing unbounded.
+// index is this row's position within its own month group (not global), passed
+// through to --stagger-index for .entry's animation-delay.
 function ActivityRow({
 	entry,
 	index,
@@ -224,11 +196,8 @@ function ActivityRow({
 					className={styles.poster}
 					src={entry.media.posterSrc}
 					alt=""
-					// Matches resolveChangelogPosterThumb's actual on-disk size
-					// (THUMB_MAX_HEIGHT=140, ~93 wide) rather than an approximate
-					// 2:3 — .poster's own height:100%/width:auto/object-fit:contain
-					// governs the rendered size regardless, this just keeps Next's
-					// intrinsic aspect ratio true to the cached file.
+					// Matches the cached thumbnail's actual on-disk size; .poster's own
+					// sizing governs the rendered size regardless.
 					width={93}
 					height={140}
 				/>
@@ -251,20 +220,13 @@ function ActivityRow({
 	);
 }
 
-// How many entries ActivityFeed starts (and grows) by — dialed separately
-// from useLazyReveal's own 24-item default since a row here (poster + two
-// lines of text) is a different shape/weight than a grid card or a full
-// review card.
+// Dialed separately from useLazyReveal's own 24-item default — a row here is a
+// different shape/weight than a grid card or review card.
 const ACTIVITY_BATCH_SIZE = 10;
 
 export function ActivityFeed({ entries }: { entries: ActivityFeedEntry[] }) {
-	// Same reveal-more-on-scroll bookkeeping LazyMediaGrid/LazyMediaList use —
-	// getActivityFeed can hand this up to ~700 entries (100 per source, 7
-	// sources), and mounting every row (each with its own poster Image) up
-	// front is exactly the kind of hydration cost that pattern exists to
-	// avoid. Sliced before grouping so a month never renders partially — the
-	// sentinel only ever grows visibleCount in whole ACTIVITY_BATCH_SIZE
-	// steps, but slicing pre-group keeps the boundary honest either way.
+	// Same reveal-more-on-scroll pattern as LazyMediaGrid/LazyMediaList — avoids
+	// mounting up to ~700 rows (each with its own poster Image) up front.
 	const { visibleCount, sentinelRef } = useLazyReveal(
 		entries,
 		"activity",
@@ -308,11 +270,7 @@ export function ActivityFeed({ entries }: { entries: ActivityFeedEntry[] }) {
 						</ul>
 					);
 
-					// The first group is always "this month" (or whichever month the
-					// newest entry falls in) — self-evident from context, so it skips
-					// the label (and the <details>/<summary> pair that only exists to
-					// carry one) and only earlier groups get one marking where they
-					// start. Same treatment as GroupedMediaList's own first group.
+					// The first group ("this month") is self-evident, so it skips the label.
 					if (groupIndex === 0) {
 						return <Fragment key={group.key}>{list}</Fragment>;
 					}

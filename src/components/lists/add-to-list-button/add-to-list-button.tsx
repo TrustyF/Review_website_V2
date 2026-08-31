@@ -24,12 +24,7 @@ type Props = {
 	className?: string | undefined;
 };
 
-// Small popover, admin-gated same as every other detail-page edit affordance
-// — toggles this media's membership in any existing list. Local state is
-// optimistic: flips immediately on click, calls the server action in the
-// background, and rolls back on failure rather than waiting on a round trip
-// (and the revalidatePath inside addMediaToList/removeMediaFromList still
-// keeps /lists/[id] itself in sync for when the user navigates there).
+// Toggles list membership optimistically, rolling back on failure rather than waiting on the round trip.
 export function AddToListButton({
 	mediaId,
 	allLists,
@@ -38,8 +33,7 @@ export function AddToListButton({
 }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
-	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
-	// for the same rule applied to the navbar's own admin links).
+	// Mobile admin edits are intentionally unsupported.
 	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const [isOpen, setIsOpen] = useState(false);
 	const [memberIds, setMemberIds] = useState(new Set(memberListIds));

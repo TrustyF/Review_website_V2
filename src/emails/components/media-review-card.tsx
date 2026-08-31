@@ -12,12 +12,9 @@ type Props = {
 	body: string | null;
 };
 
-// Email counterpart to MediaCardShell + MediaReview (poster, title/release
-// date, rating, "Watched on", review body) — Row/Column instead of
-// flexbox for the poster/body split, since flexbox support across mail
-// clients (Outlook especially) isn't reliable, and Row/Column render as a
-// plain HTML table under the hood, which is. No edit button — that's a
-// site-only affordance.
+// Email counterpart to MediaCardShell + MediaReview. Uses Row/Column
+// (renders as an HTML table) instead of flexbox, since mail clients like
+// Outlook don't support flexbox reliably.
 export function MediaReviewCard({
 	title,
 	mediaUrl,

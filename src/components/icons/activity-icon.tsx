@@ -1,16 +1,11 @@
 type Props = {
 	size?: number | undefined;
 	className?: string | undefined;
-	// Matches the fill prop lucide icons take, so this drops into NavLink's
-	// existing `fill={isActive ? "currentColor" : "none"}` call site unchanged.
+	// Matches lucide icons' fill prop for drop-in use at NavLink's call site.
 	fill?: string | undefined;
 };
 
-// Extracted from lucide-react's Zap icon so the filled variant below can be
-// hand-edited independently of the outline — lucide only ships outline
-// artwork, no separate filled set. Starts as the same bolt path filled solid
-// rather than stroked, since Zap (unlike e.g. WatchlistIcon's arcs) is
-// already a single closed shape.
+// Extracted from lucide-react's Zap; filled just fills the same path since it's already a closed shape.
 export function ActivityIcon({ size = 24, className, fill = "none" }: Props) {
 	const filled = fill !== "none";
 	return (

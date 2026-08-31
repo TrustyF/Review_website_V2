@@ -1,13 +1,7 @@
 import { create } from "zustand";
 
-// What PosterEditTrigger/BannerEditTrigger have staged but not yet written
-// to the DB — see each field's own comment on MediaPublishButton for why
-// nothing here hits the server until that button is clicked. previewSrc is
-// the picker option's own proxied thumb/full src (safe for next/image with
-// no download needed); it's null for a pasted URL, which has no safe
-// preview until it's actually been through resolvePoster/resolveBanner on
-// publish — same "no preview yet" gap that already existed pre-publish, not
-// a new one.
+// Staged but not yet written to the DB, until MediaPublishButton is clicked. previewSrc is null
+// for a pasted URL, which has no safe preview until resolvePoster/resolveBanner runs on publish.
 export type PendingReview = {
 	rating: number | null;
 	liked: boolean;
@@ -22,10 +16,8 @@ export type MediaEditDraft = {
 	bannerPath: string | null;
 	bannerPreviewSrc: string | null;
 	bannerFocusY: number | null;
-	// rating/liked/difficulty are carried along unchanged from the review
-	// ReviewBodyEditTrigger was seeded with — only body is actually editable
-	// there — so MediaPublishButton has a complete object to hand saveReview
-	// without needing its own copy of the review.
+	// rating/liked/difficulty carried unchanged (only body is editable) so MediaPublishButton
+	// has a complete object to hand saveReview.
 	pendingReview: PendingReview | null;
 };
 
@@ -41,10 +33,8 @@ function emptyDraft(mediaId: number): MediaEditDraft {
 	};
 }
 
-// Keyed by mediaId (all fields live in one draft, not one store per field) so
-// switching to a different media's detail page can't leave a stale staged
-// poster/banner behind — starting a draft for a new mediaId always replaces
-// whatever was there, rather than merging onto a different item's edits.
+// Keyed by mediaId so navigating to a different media's page can't leave a stale staged edit
+// behind — a new mediaId always replaces the draft rather than merging onto it.
 export const useMediaPublishStore = create<{
 	draft: MediaEditDraft | null;
 	stagePoster: (

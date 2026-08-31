@@ -16,11 +16,7 @@ import { fontVariables } from "./fonts";
 
 export const metadata: Metadata = {
 	title: "Arthur's corner",
-	// Needed for Next to resolve a relative openGraph.images URL (see
-	// media/[id]/metadata.ts) into the absolute one link-preview crawlers
-	// (Discord, Slack, ...) require — they fetch server-side with no page
-	// context to resolve a relative URL against. Override via SITE_URL once
-	// this is actually deployed somewhere other than localhost.
+	// Needed to resolve relative openGraph.images URLs into absolute ones for link-preview crawlers. Override via SITE_URL once deployed.
 	metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
 };
 

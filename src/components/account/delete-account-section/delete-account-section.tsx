@@ -10,10 +10,7 @@ import styles from "./delete-account-section.module.sass";
 const CONFIRM_PHRASE = "DELETE";
 
 type Props = {
-	// Whether this account has a password to check the confirmation against
-	// — OAuth-only accounts (Google, no passwordHash) have nothing to check,
-	// so they skip straight to the confirmation-phrase gate. See
-	// deleteAccount's own comment.
+	// OAuth-only accounts have no password, so they skip straight to the confirmation-phrase gate.
 	hasPassword: boolean;
 };
 

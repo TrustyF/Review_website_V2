@@ -55,9 +55,7 @@ export const MangaDexStatisticsResponseSchema = type({
 export type MangaDexStatisticsEntry =
 	typeof MangaDexStatisticsEntrySchema.infer;
 
-// Lighter than MangaDexMangaResponseSchema — /manga (title search) returns a
-// list, and search results only need enough to render a picker (title,
-// year, cover), not the full detail payload a single /manga/{id} fetch has.
+// Lighter than MangaDexMangaResponseSchema — search results only need enough to render a picker.
 const MangaDexMangaSearchResultSchema = type({
 	id: "string",
 	attributes: {

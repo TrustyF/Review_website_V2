@@ -1,9 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
-// Widened past lucide's own LucideIcon type so local icon components (e.g.
-// HomeIcon, MovieIcon, AccountIcon) — which only accept the size/className/
-// fill subset the navbar actually passes — satisfy it too. Shared between
-// nav-link.tsx and nav-dropdown.tsx rather than each declaring its own copy.
+// Widened past LucideIcon so local icon components (HomeIcon, etc.), which
+// only accept size/className/fill, satisfy it too.
 export type NavIcon = React.ComponentType<{
 	size?: number | undefined;
 	className?: string | undefined;

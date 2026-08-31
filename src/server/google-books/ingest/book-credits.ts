@@ -9,16 +9,7 @@ import {
 
 type t_client = Prisma.TransactionClient;
 
-// Replaces a book's genres and credits with the latest Google Books data.
-// Authors have no per-person id at all in this API (just plain name
-// strings), unlike TMDB/ComicVine's numeric person ids — so a book's authors
-// are deduped by name within Source.GOOGLE_BOOKS rather than a real external
-// id, same tradeoff MangaDex credits made for its own nameless contributors.
-// Same for the publisher's externalId.
-//
-// Batched — see movie-credits.ts's own comment and batch-entity-resolver.ts
-// for why this collapses the whole item's references into a handful of
-// findMany/createMany calls instead of one round trip per author.
+// Authors/publisher have no per-person id in this API, so they're deduped by name within Source.GOOGLE_BOOKS.
 export async function syncBookCreditsAndGenres(
 	tx: t_client,
 	mediaId: number,

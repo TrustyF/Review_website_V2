@@ -27,8 +27,7 @@ export async function saveCroppedImageAction(formData: FormData): Promise<string
 		throw new Error("Invalid crop rect");
 	}
 
-	// Absent on any caller predating this field — defaults to 0 (no vignette)
-	// rather than rejecting, same as an absent checkbox field would.
+	// Absent on older callers — defaults to 0 (no vignette) rather than rejecting
 	const rawVignette = formData.get("vignette");
 	const vignette =
 		typeof rawVignette === "string" && rawVignette !== "" ? Number(rawVignette) : 0;
@@ -40,13 +39,9 @@ export async function saveCroppedImageAction(formData: FormData): Promise<string
 	return saveCroppedImage(bytes, shapeId as CropShapeId, crop, vignette);
 }
 
-// Loads a source image from an arbitrary URL instead of a local file pick —
-// has to happen server-side (same as compression-actions.ts's
-// compressPreview/getOriginalSize) since an arbitrary host won't reliably
-// send the CORS headers a browser fetch would need. Returned as a data URL
-// rather than raw bytes so the client can turn it straight into a File
-// (`fetch(dataUrl)` is same-origin, no CORS concern) and feed it through the
-// exact same path a locally-picked file already takes.
+// Server-side fetch since an arbitrary host won't reliably send CORS headers a
+// browser fetch needs. Returned as a data URL so the client can turn it
+// straight into a File with no CORS concern.
 export async function fetchImportedImage(url: string): Promise<string> {
 	await requireAdmin();
 
@@ -61,33 +56,24 @@ export async function fetchImportedImage(url: string): Promise<string> {
 export type BannerSearchResult = {
 	id: number;
 	title: string;
-	// Small recognizable thumbnail for the results list, not the crop source
-	// itself — bannerSrc below is what actually gets fed into
-	// fetchImportedImage once picked.
+	// Thumbnail for the results list only — bannerSrc is the actual crop source
 	posterSrc: string;
-	// The banner's real TMDB/IGDB source URL (via bannerUrlFor), not this
-	// app's own /api/banner route — fetchImportedImage does a raw
-	// server-side fetch(), and a relative /api/banner/... path wouldn't
-	// resolve there the way an absolute source URL does.
+	// Absolute TMDB/IGDB URL, not this app's /api/banner route — fetchImportedImage's
+	// raw server-side fetch() can't resolve a relative path
 	bannerSrc: string;
 };
 
 const BANNER_SEARCH_LIMIT = 20;
 
-// Same typo tolerance as list-actions.ts's searchMediaForList — see that
-// file's own comment on threshold/ignoreLocation.
+// Same typo tolerance as list-actions.ts's searchMediaForList
 const BANNER_FUSE_OPTIONS = {
 	keys: ["title"],
 	threshold: 0.35,
 	ignoreLocation: true,
 };
 
-// Backs the crop tool's "search a movie/show for its banner" flow — lets an
-// admin load an existing title's banner as the crop source instead of only
-// a local file or a pasted URL. bannerPath: { not: null } excludes most of
-// the catalog up front (see asset-paths.ts's bannerUrlFor comment: only
-// TMDB/IGDB-sourced media ever has one), same "load every eligible
-// candidate, rank in memory" tradeoff searchMediaForList makes.
+// Backs "search a movie/show for its banner" — loads every eligible
+// candidate and ranks in memory, same tradeoff as searchMediaForList.
 export async function searchMediaForBanner(
 	query: string,
 ): Promise<BannerSearchResult[]> {
@@ -106,9 +92,7 @@ export async function searchMediaForBanner(
 			id: m.id,
 			title: m.title,
 			posterSrc: toPosterSrc(m.id, m.posterPath),
-			// bannerPath can't actually be null here — the where clause above
-			// guarantees it — but Prisma's generated select type doesn't narrow
-			// on that, so bannerUrlFor's non-nullable param still needs telling.
+			// Non-null guaranteed by the where clause; Prisma's select type just doesn't narrow it
 			bannerSrc: bannerUrlFor(m.type, m.bannerPath!),
 		}),
 	);

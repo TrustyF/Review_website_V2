@@ -10,12 +10,8 @@ type Props = {
 	className?: string | undefined;
 };
 
-// Quick-add toggle for media cards in a grid (mini cards) — signed-out
-// visitors never see this, same gate as AddToWatchlistButton on the detail
-// page, since there's no watchlist to add to without an account. Reads and
-// writes through WatchlistProvider rather than its own local state, so every
-// card for the same media (this grid, another grid, the detail page) stays
-// in sync when one of them is toggled.
+// Quick-add toggle for media cards in a grid; signed-out visitors never see this.
+// Reads/writes through WatchlistProvider so every card for the same media stays in sync.
 export function AddToWatchlistHoverButton({ mediaId, className }: Props) {
 	const { data: session } = useSession();
 	const { isInWatchlist, toggle } = useWatchlist();

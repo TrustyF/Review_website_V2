@@ -1,9 +1,7 @@
 import { Text } from "@react-email/components";
 
-// Same gold as star-icon.tsx's DEFAULT_STYLE — but a plain Unicode glyph
-// instead of that component's inline SVG, since Outlook's Word-based
-// renderer strips <svg> entirely; a text star is the one rating treatment
-// that's actually safe across every mail client.
+// Plain Unicode glyph, not inline SVG like star-icon.tsx — Outlook's
+// Word-based renderer strips <svg> entirely.
 const STAR_COLOR = "#FCCA00";
 
 export function RatingStars({

@@ -10,12 +10,8 @@ import styles from "./invocations-dev.module.sass";
 
 const POLL_INTERVAL_MS = 1500;
 
-// Polls rather than pushing (SSE/websocket) — this is a throwaway dev tool
-// for eyeballing counts while you click around in another tab, not
-// something that needs sub-second accuracy.
-// Date.now() is impure, so the elapsed-seconds figure is computed once per
-// poll tick (inside the effect, not render) and carried alongside the
-// snapshot rather than derived fresh on every render.
+// Polls (no SSE/websocket needed for a throwaway dev tool). Elapsed seconds
+// computed once per poll tick, not on render, since Date.now() is impure.
 type Displayed = InvocationSnapshot & { elapsedSeconds: number };
 
 function withElapsed(snapshot: InvocationSnapshot): Displayed {

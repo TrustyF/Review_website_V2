@@ -6,9 +6,7 @@
   &::-webkit-details-marker
     display: none
 
-// Shares nav-bar.module.sass's .link/.sign_out_button look via
-// nav-item-look so a dropdown trigger reads as just another nav item rather
-// than a visually distinct control — see that mixin for why.
+// nav-item-look makes a dropdown trigger read as just another nav item.
 .trigger
   display: flex
   align-items: center
@@ -17,19 +15,11 @@
   cursor: pointer
   @include nav-item-look
 
-// Wraps the icon + label (everything but the chevron) in an actual <a> so a
-// mouse click there navigates to the group's first item — see the comment
-// above this in nav-dropdown.tsx. Inherits .trigger's color (including its
-// :hover/[aria-current] states) rather than picking up the browser's default
-// link styling.
-//
-// nav-item-look's own ::before (on .trigger) enlarges the *visual*/hover hit
-// box, but a click landing in that enlarged margin is still a click on
-// .trigger itself — the <summary> — not on this nested <a>, so it fell
-// through to <summary>'s native open/close toggle instead of this Link's
-// navigate-and-preventDefault handling (see nav-dropdown.tsx). Repeating the
-// same inset-0.8rem trick here, scoped to just this element, is what makes
-// clicking that padding actually navigate like clicking the label text does.
+// Wraps icon + label (not the chevron) in an <a> so a click navigates to
+// the group's first item (see nav-dropdown.tsx); inherits .trigger's color
+// instead of default link styling. Repeats nav-item-look's ::before hit-box
+// trick scoped to this element — otherwise a click in that enlarged margin
+// lands on <summary> (native toggle) rather than this Link.
 .trigger_link
   position: relative
   display: flex
@@ -49,32 +39,22 @@
   //.wrapper[open] &
   //  transform: rotate(180deg)
 
-// All label variants (group label + each item's) sit in the same grid
-// cell, overlapping — the grid's implicit track sizes to the widest one,
-// so this box's width is fixed the moment it mounts and doesn't change as
-// the active variant switches. Only .active's opacity/transform move,
-// which is what makes the switch read as a slide rather than a jump.
+// All label variants overlap in the same grid cell (sized to the widest),
+// so the box's width never changes as the active one switches via a slide.
 .label_stack
   position: relative
   display: grid
   overflow: hidden
-  // globals.sass sets body { line-height: 1 }, tighter than most fonts' real
-  // ascent+descent — fine for text that isn't clipped, but this box's own
-  // overflow: hidden (needed for the slide animation below) then crops
-  // whatever doesn't fit, cutting off descenders like the "g" in "Reading".
-  // Scoped to just this stack rather than raised globally.
+  // Global line-height:1 clips descenders (e.g. "g") given this box's
+  // overflow: hidden; loosened locally rather than raised globally.
   line-height: 1.3
 
-// Mirrors nav-bar.module.sass's own .nav_icon_always — NavDropdown adds this
-// alongside .nav_icon for an iconOnly trigger.
+// Mirrors nav-bar.module.sass's .nav_icon_always, for an iconOnly trigger.
 .nav_icon.nav_icon_always
   @include nav-icon-brighten
 
-// Default (unset) state sits a full line below, waiting — so a variant
-// that becomes active always slides up into place from the bottom. The
-// variant that just lost active status gets .exiting instead, which sits
-// a full line above, so leaving is always an upward exit rather than the
-// reverse of however the incoming one arrived.
+// Inactive variants wait a line below (slide up when activated); .exiting
+// sits a line above so leaving is always an upward exit.
 .label
   grid-area: 1 / 1
   white-space: nowrap
@@ -94,15 +74,10 @@
     transition: opacity 0.2s ease
     transform: none
 
-// Flush against the trigger (no top offset) and the visual gap moved into
-// padding-top instead — a position: absolute panel doesn't extend .wrapper's
-// own hoverable box (see NavDropdown's CLOSE_DELAY_MS comment), so a real
-// top offset here would leave a dead zone the pointer visibly exits and
-// re-enters crossing. Padding keeps that same space, just inside this
-// element's own box instead of between it and the trigger, so hovering
-// through it never leaves .panel at all. The visible chrome (background,
-// border, ...) moves to .panel_content so this padding stays invisible
-// rather than reading as a see-through band above the menu.
+// Flush against the trigger with the gap as padding-top (not a top offset),
+// so hovering through that gap never actually leaves .panel — a real offset
+// would open a dead zone the pointer visibly exits and re-enters. Visible
+// chrome moves to .panel_content so the padding itself stays invisible.
 .panel
   position: absolute
   top: 100%
@@ -110,27 +85,17 @@
   z-index: 20
   padding-top: 0.5rem
 
-  // Inside the mobile drawer (nav-bar.module.sass), the hover-gap reasoning
-  // above doesn't apply — there's no pointer to lose, just a tap — and
-  // floating this over whatever comes after it in the drawer (the next
-  // nav_group's own links) hides them behind it instead of making room, the
-  // one thing a drawer's own scrollable column is supposed to do. Static
-  // instead lets it fall into normal flow inside its <details>, pushing
-  // everything below it down the same way opening it pushes the rest of an
-  // accordion down.
+  // In the mobile drawer there's no pointer to lose, and floating the panel
+  // would hide the links after it instead of pushing them down like an
+  // accordion — static keeps it in normal flow.
   [data-mobile-open="true"] &
     position: static
     padding-top: 0
     margin-top: 0.5rem
 
-// Modifier for a dropdown whose own trigger sits flush against the navbar's
-// right edge (see nav-bar.tsx's own Account NavDropdown) — anchoring the
-// panel from `left` there would grow it off the right edge of the viewport
-// instead of back over the trigger, same as any left-anchored dropdown
-// would if it were the rightmost thing on the page. Anchoring from `right`
-// instead grows the panel leftward, staying under the trigger regardless of
-// how close to the edge it sits. Moot once .panel itself goes static in the
-// mobile drawer (see above) — there's nothing left to anchor.
+// For a trigger flush against the navbar's right edge: anchoring from
+// `right` grows the panel leftward instead of off-viewport. Moot once
+// .panel goes static in the mobile drawer.
 .panel_right
   left: auto
   right: 0

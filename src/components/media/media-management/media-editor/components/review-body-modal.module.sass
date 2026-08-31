@@ -26,10 +26,7 @@
   flex-flow: column
   gap: 1.5rem
 
-// Grows to fill whatever height .panel has available (up to the viewport,
-// via .wrapper/.panel) rather than a fixed height — both columns still
-// stretch to match each other (.column height: 100%), they just match
-// against however tall that ends up being.
+// Grows to fill .panel's available height rather than a fixed value; both columns stretch to match.
 .columns
   display: grid
   grid-template-columns: 1fr 1fr
@@ -46,9 +43,7 @@
   color: var(--accent1)
   font-size: 0.8rem
 
-// Both header rows (this and .suggestion_header) share the same min-height
-// so the textarea and the diff view below them start at the same Y too,
-// not just end at the same Y.
+// Shares min-height with .suggestion_header so the textarea and diff view start at the same Y.
 .body_header
   display: flex
   flex-flow: row

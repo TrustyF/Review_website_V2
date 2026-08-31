@@ -8,34 +8,23 @@ import styles from "./recent-media-list-page.module.sass";
 type Props = {
 	title: string;
 	type: MediaType;
-	// The type-specific relation to load (e.g. { movie: true }) — same
-	// requirement as MediaTypeListPage's include, toMediaRecord throws
-	// without it.
+	// The type-specific relation to load (e.g. { movie: true }); toMediaRecord throws without it.
 	include: Prisma.MediaInclude;
-	// Where this page's own per-type list lives, so "By rating" can link
-	// straight back to it.
+	// Where this page's per-type list lives, so "By rating" can link back to it.
 	backHref: string;
 };
 
-// Sibling to MediaTypeListPage: same DONE-only, one-type query, but flat
-// (no RatedTierGrid tiers, no MediaFilterGrid popover) and sorted by
-// releaseDate instead of rating — for browsing what's new rather than what's
-// best. LazyMediaGrid alone is exactly the flat grid this needs.
+// Sibling to MediaTypeListPage: same query, but flat and sorted by releaseDate instead of rating — for browsing what's new rather than what's best.
 export async function RecentMediaListPage({
 	title,
 	type,
 	include,
 	backHref,
 }: Props) {
-	// dbPublic (not db) — soft-deleted media is excluded automatically, see
-	// src/server/db/client.ts.
+	// dbPublic (not db) — soft-deleted media is excluded automatically.
 	const rawList = await dbPublic.media.findMany({
 		where: { enrichmentStatus: EnrichmentStatus.DONE, type },
-		// mediaGenres isn't used on this page (no filter popover here — see
-		// its own top comment) — included anyway because the generic
-		// `include` prop's wide Prisma.MediaInclude type otherwise makes
-		// TypeScript infer mediaGenres in its bare (no nested genre) shape,
-		// which toMediaRecord's now-stricter RawMediaRecord type rejects.
+		// mediaGenres isn't used on this page, but is included so TypeScript infers it with the nested genre shape RawMediaRecord requires.
 		include: {
 			...include,
 			review: true,

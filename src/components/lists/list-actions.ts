@@ -18,22 +18,11 @@ type ListInput = {
 	description: string | null;
 	thumbnailUrl: string | null;
 	sortMode: ListSortMode;
-	// null = a normal, publicly-listed list. A user id makes this a
-	// recommendation list deposited into that one account — see
-	// List.targetUserId's own comment in list.prisma.
+	// null = normal public list; a user id makes this a recommendation list for that account.
 	targetUserId: string | null;
 };
 
-// The Thumbnail URL field accepts a path copied out of /dev/image-crop, a
-// direct link to some other site's image, or an already-permanent
-// list-thumbnails URL from a prior save. Every case ends up self-hosted: an
-// already-/list-thumbnails/... value (an untouched edit) passes through
-// unchanged rather than re-fetching itself, a /cropped/ temp file is
-// promoted via a direct storage read (readCroppedFile/saveListThumbnail —
-// otherwise the list's thumbnail would stop resolving the moment
-// cleanup-cropped-images.ts's maintenance sweep removes the temp file it
-// still pointed at), and literally anything else gets downloaded and saved
-// the same way, so a list is never left hotlinking some other host.
+// Normalizes any thumbnail input (existing URL, /cropped/ temp file, or external link) into a self-hosted list-thumbnails URL, so nothing hotlinks another host or breaks when temp files get cleaned up.
 async function resolveThumbnailUrl(raw: string | null | undefined): Promise<string | null> {
 	const trimmed = raw?.trim();
 	if (!trimmed) return null;
@@ -67,9 +56,7 @@ export async function createList(input: ListInput): Promise<number> {
 
 	revalidatePath("/lists");
 	revalidatePath("/activity");
-	// /account is already rendered dynamically (it reads the session via
-	// auth()), so this is belt-and-suspenders rather than load-bearing, but
-	// costs nothing to keep in step with every other list mutation here.
+	// Belt-and-suspenders; /account already renders dynamically.
 	revalidatePath("/account");
 	return list.id;
 }
@@ -99,17 +86,11 @@ export type RecommendationTargetOption = {
 	username: string | null;
 	name: string | null;
 	email: string | null;
-	// Whatever's currently saved on User.image — a preset avatar path (see
-	// src/lib/avatars.ts) or an OAuth provider's picture URL. UserPicker
-	// falls back to a placeholder icon when this is null (or fails to load).
+	// Preset avatar path or OAuth picture URL; UserPicker falls back to a placeholder when null.
 	image: string | null;
 };
 
-// Populates ListForm's "recommend to" picker (see UserPicker) — every
-// non-admin registered user, since this is a small trusted-circle site (see
-// AGENTS.md) with no expectation of paging through a large user table.
-// Admins excluded — a recommendation list is for a regular member's account,
-// not a fellow curator's.
+// Populates ListForm's "recommend to" picker: every non-admin user (small trusted-circle site, no pagination needed).
 export async function listRecommendationTargets(): Promise<
 	RecommendationTargetOption[]
 > {
@@ -130,11 +111,7 @@ export type UserListSummary = {
 	itemCount: number;
 };
 
-// Powers the admin "User lists" browser (see /admin/user-lists) — every
-// recommendation list deposited into one specific account, i.e. the same
-// query AccountPage runs for the signed-in user's own recommendations
-// (see account/page.tsx), just parametrized to an admin-selected user
-// instead of session.user.id.
+// Powers the admin "User lists" browser: same query as AccountPage's own recommendations, parametrized to an admin-selected user.
 export async function getListsForUser(
 	targetUserId: string,
 ): Promise<UserListSummary[]> {
@@ -155,10 +132,7 @@ export async function getListsForUser(
 	}));
 }
 
-// Alternative to pasting a URL (see ListForm) — a locally-picked file,
-// resized/re-encoded and written under public/list-thumbnails via
-// saveListThumbnail, returning a URL that slots into the same thumbnailUrl
-// field a pasted URL would.
+// Alternative to pasting a URL: saves a locally-picked file and returns a URL for the same thumbnailUrl field.
 export async function uploadListThumbnail(formData: FormData): Promise<string> {
 	await requireAdmin();
 	const file = formData.get("file");
@@ -179,8 +153,7 @@ export async function addMediaToList(
 	mediaId: number,
 ): Promise<void> {
 	await requireAdmin();
-	// New items always append to the bottom of the ranking, never jump ahead
-	// of what's already there — same idea as appending to an array.
+	// New items always append to the bottom of the ranking.
 	const { _max } = await db.listItem.aggregate({
 		where: { listId },
 		_max: { rank: true },
@@ -191,9 +164,7 @@ export async function addMediaToList(
 		skipDuplicates: true,
 	});
 
-	// Only a recommendation list has anyone to notify — a normal, publicly-
-	// listed list's items showing up in /activity already covers it (see
-	// activity-actions.ts).
+	// Only a recommendation list has anyone to notify; a public list's items already show up in /activity.
 	const list = await db.list.findUnique({
 		where: { id: listId },
 		select: { targetUserId: true },
@@ -228,15 +199,7 @@ export async function removeMediaFromList(
 	revalidatePath("/activity");
 }
 
-// Persists a drag-and-drop reorder (see ranked-list.tsx) — orderedMediaIds
-// is the full new top-to-bottom order, rewriting every item's rank to match
-// its index. Simple 0..n-1 renumbering rather than fractional/gap-based
-// positions: always correct, and cheap at this app's scale (a personal
-// collection's lists run to tens of items). Any ListItem row not present in
-// orderedMediaIds (a filtered-out or deleted-media row — see ranked-list.tsx's
-// own note on why reordering is disabled while filtered) simply keeps its
-// prior rank untouched, which is harmless since a row that's never rendered
-// can't have its position observed anyway.
+// Persists a drag-and-drop reorder: rewrites every item's rank to its index in the new order. Simple 0..n-1 renumbering rather than fractional positions — cheap at this app's scale. Rows missing from orderedMediaIds keep their prior rank untouched.
 export async function reorderListItems(
 	listId: number,
 	orderedMediaIds: number[],
@@ -263,21 +226,14 @@ export type ListMediaSearchResult = {
 
 const SEARCH_LIMIT = 20;
 
-// Same typo tolerance as search-actions.ts's FUSE_OPTIONS — see that file's
-// comment on what threshold/ignoreLocation are doing.
+// Same typo tolerance as search-actions.ts's FUSE_OPTIONS.
 const FUSE_OPTIONS = {
 	keys: ["title"],
 	threshold: 0.35,
 	ignoreLocation: true,
 };
 
-// Fuzzy title match, scoped away from whatever's already in the list — the
-// add-search on a list's own page is meant to find something new, not
-// re-surface a member it already has. Unlike a Prisma `contains` filter,
-// fuzzy ranking can't happen in the query itself, so this pulls every
-// eligible candidate's title and ranks them in memory — fine at this app's
-// scale (a personal collection, not a public catalog), but it's the one
-// place this trades a bit of DB efficiency for typo tolerance.
+// Fuzzy title match scoped away from existing list items; ranks all eligible candidates in memory since Prisma can't do fuzzy matching in-query (fine at this app's scale).
 export async function searchMediaForList(
 	listId: number,
 	query: string,

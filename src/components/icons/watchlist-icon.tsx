@@ -1,16 +1,11 @@
 type Props = {
 	size?: number | undefined;
 	className?: string | undefined;
-	// Matches the fill prop lucide icons take, so this drops into NavLink's
-	// existing `fill={isActive ? "currentColor" : "none"}` call site unchanged.
+	// Matches lucide icons' fill prop for drop-in use at NavLink's call site.
 	fill?: string | undefined;
 };
 
-// Extracted from lucide-react's ClockFading icon so a real filled variant can
-// be hand-edited below. The icon is all thin stroked arcs with no enclosed
-// area, so the filled branch traces the stroke outline into a solid shape
-// (via svg-outline-stroke, https://github.com/elrumordelaluz/outline-stroke)
-// instead of just faking a fill color on top of the stroke paths.
+// Extracted from lucide-react's ClockFading; since it's all open arcs, filled traces the stroke into a solid shape (via svg-outline-stroke) instead of faking fill on the strokes.
 export function WatchlistIcon({ size = 24, className, fill = "none" }: Props) {
 	const filled = fill !== "none";
 	return (

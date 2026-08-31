@@ -2,9 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { db, dbPublic } from "@/server/db/client";
 import { EnrichmentStatus } from "@prisma/client";
-// asset-paths.ts directly (not poster-resolver.ts) so this action's
-// cold-start bundle skips sharp's native binary — see asset-paths.ts's own
-// comment.
+// asset-paths.ts directly (not poster-resolver.ts) so this action's cold-start bundle skips sharp's native binary.
 import { toPosterSrc } from "@/server/resolvers/asset-paths";
 import { fuzzySearch } from "@/lib/fuzzy-search";
 import { requireAdmin } from "@/lib/auth/require-admin";
@@ -16,19 +14,13 @@ export type FeaturedReviewSummary = {
 	posterSrc: string;
 };
 
-// Same reviewDate/createDate ordering as the homepage's own featured query
-// (see app/page.tsx's REVIEWED_ORDER_BY) — the modal's "currently featured"
-// list reads in the same order they'd actually appear in the hero.
+// Same ordering as the homepage's featured query, so this list reads in the order they'd appear in the hero.
 const FEATURED_ORDER_BY = [
 	{ review: { reviewDate: { sort: "desc" as const, nulls: "last" as const } } },
 	{ review: { createDate: "desc" as const } },
 ];
 
-// No enrichmentStatus/body filter here on purpose, unlike the homepage
-// query — this is the admin's ground truth of what's currently marked
-// featured, including anything that's since lost its body or enrichment
-// (so it can still be found and un-featured), not just what the hero would
-// actually render.
+// No enrichmentStatus/body filter, unlike the homepage query — this must show anything marked featured, even if it later lost its body/enrichment, so it can still be un-featured.
 export async function getFeaturedReviews(): Promise<FeaturedReviewSummary[]> {
 	await requireAdmin();
 	const media = await dbPublic.media.findMany({
@@ -46,18 +38,14 @@ export async function getFeaturedReviews(): Promise<FeaturedReviewSummary[]> {
 
 const SEARCH_LIMIT = 20;
 
-// Same typo tolerance as list-actions.ts's searchMediaForList/search-actions.ts's
-// searchAllMedia.
+// Same typo tolerance as the other search actions.
 const FUSE_OPTIONS = {
 	keys: ["title"],
 	threshold: 0.35,
 	ignoreLocation: true,
 };
 
-// Fuzzy title search, scoped to media that could actually be featured next —
-// reviewed (a non-empty body, same requirement the hero itself has) and not
-// already featured, so a result here is always something the "Add" button
-// can act on without the two lists ever showing the same item twice.
+// Scoped to reviewed, not-yet-featured media, so results never overlap the "currently featured" list.
 export async function searchUnfeaturedReviews(
 	query: string,
 ): Promise<FeaturedReviewSummary[]> {
@@ -87,17 +75,13 @@ export async function searchUnfeaturedReviews(
 	);
 }
 
-// The one place featured actually gets toggled — Review.mediaId is @unique,
-// same as saveReview's own upsert, so this is a plain update (never a
-// create: a review has to already exist with a body to be searchable/
-// featurable in the first place, see searchUnfeaturedReviews above).
+// A plain update, never a create — a review must already exist with a body to be featurable at all.
 export async function setReviewFeatured(
 	mediaId: number,
 	featured: boolean,
 ): Promise<void> {
 	await requireAdmin();
 	await db.review.update({ where: { mediaId }, data: { featured } });
-	// Only the homepage hero reads Review.featured — no catalog/type page
-	// shows it, so no need for a site-wide revalidation here.
+	// Only the homepage hero reads Review.featured, so no site-wide revalidation needed.
 	revalidatePath("/");
 }

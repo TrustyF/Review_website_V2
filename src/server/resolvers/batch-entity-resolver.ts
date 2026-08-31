@@ -2,15 +2,7 @@ import { MediaType, Prisma, Source } from "@prisma/client";
 
 type t_client = Prisma.TransactionClient;
 
-// Collapses duplicate keys before a findMany/createMany pair — required, not
-// optional: unlike a sequence of upsert() calls (each its own round trip,
-// naturally idempotent against the ones before it), a single createMany
-// call doesn't dedupe within its own `data` array, so two inputs sharing a
-// unique key (e.g. two crew members both credited as "Producer") would
-// violate that key's unique constraint in the same INSERT. First occurrence
-// wins, same as a sequential upsert loop would resolve to whichever call
-// ran last (rarely matters in practice — these are almost always identical
-// values for a shared key within one item's own data).
+// Required, not optional: a single createMany call doesn't dedupe within its own `data` array, so two inputs sharing a unique key would violate the constraint in one INSERT. First occurrence wins.
 function dedupeByKey<T>(items: T[], keyFn: (item: T) => string): T[] {
 	const seen = new Map<string, T>();
 	for (const item of items) {
@@ -20,38 +12,19 @@ function dedupeByKey<T>(items: T[], keyFn: (item: T) => string): T[] {
 	return [...seen.values()];
 }
 
-// Batch counterparts to entity-resolver.ts's single-item resolvers — same
-// find-or-create semantics, but one findMany + one createManyAndReturn for
-// an entire item's worth of references instead of one round trip per
-// reference. Deliberately never uses upsert(): entity-resolver.ts's
-// resolveRole/resolveCountry/resolveGenre had to be patched away from an
-// empty-update upsert() because Prisma translates that into `ON CONFLICT DO
-// NOTHING`, and when the conflict actually fires, RETURNING comes back
-// empty instead of the existing row (https://github.com/prisma/prisma/issues/21853).
-// A plain findMany-then-createMany-for-what's-missing structurally can't hit
-// that bug at all — there's no upsert/conflict path here to mishandle.
-//
-// Each returns a Map keyed by the row's own unique fields (not by input
-// array index) — the `missing` array being inserted is a filtered subset of
-// the deduped input, so index-based zipping would be wrong here, unlike
-// mysql-migration.ts's simpler 1:1 createManyAndReturn usage.
+// Batch counterparts to entity-resolver.ts's single-item resolvers: one findMany + one createManyAndReturn per item instead of one round trip per reference.
+// Never uses upsert() — entity-resolver.ts's resolveRole/resolveCountry/resolveGenre hit a Prisma bug where an empty-update upsert's ON CONFLICT DO NOTHING
+// returns nothing on conflict instead of the existing row (prisma#21853); findMany-then-createMany can't hit that.
+// Each returns a Map keyed by unique fields, not input array index, since `missing` is a filtered subset of the deduped input.
 
-// Unlike resolveCompaniesBatch's logoPath (only ever set on create), an
-// existing person missing a photo gets backfilled here — see the loop below.
-// A person who already has one is never overwritten (TMDB's photo for a
-// given person doesn't change credit to credit, so there's nothing to
-// refresh once it's there).
+// Unlike resolveCompaniesBatch's logoPath (create-only), an existing person missing a photo gets backfilled here; one that already has one is never overwritten.
 export async function resolvePeopleBatch(
 	tx: t_client,
 	inputs: {
 		externalId: string;
 		source: Source;
 		name: string;
-		// Set from TMDB's profile_path for both cast and crew entries (see
-		// Person.photoPath's own comment) — which photos actually get
-		// downloaded/cached is a read-time decision (see
-		// person-photo-eligibility.ts), not something this ingest-side resolve
-		// step needs to know about.
+		// Which photos actually get downloaded/cached is a read-time decision (person-photo-eligibility.ts), not this resolve step's concern.
 		photoPath?: string | null | undefined;
 	}[],
 ): Promise<Map<string, number>> {

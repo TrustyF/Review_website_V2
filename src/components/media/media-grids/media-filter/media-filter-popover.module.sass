@@ -1,7 +1,4 @@
-// Floats over its caller's own wrapper instead of taking a row in normal
-// flow — every caller (MediaFilterGrid, RankedList, ListMediaView) is
-// responsible for being position: relative itself so this actually anchors
-// to its own top-right corner rather than some unrelated ancestor's.
+// Floats over its caller's wrapper; every caller must itself be position: relative for this to anchor correctly.
 .wrapper
   position: absolute
   z-index: 5
@@ -64,9 +61,7 @@
   color: var(--accent1)
   text-transform: uppercase
 
-// Shared by the Genres and Difficulty sections — a plain vertical checkbox
-// list, not genre-specific despite Genres being the section that needed it
-// first.
+// Shared by Genres and Difficulty sections; not genre-specific.
 .checkbox_list
   display: flex
   flex-flow: column

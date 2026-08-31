@@ -5,9 +5,7 @@ import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// "3 days ago" rather than a full date/relative-time library — the only
-// thing anyone actually wants from this at a glance is roughly how stale
-// this row's enrichment is, not a precise timestamp.
+// "3 days ago" rather than a full date/relative-time library — a rough staleness signal, not a precise timestamp.
 function formatDaysAgo(date: Date): string {
 	const days = Math.floor((Date.now() - date.getTime()) / DAY_MS);
 	if (days <= 0) return "today";
@@ -15,10 +13,7 @@ function formatDaysAgo(date: Date): string {
 	return `${days} days ago`;
 }
 
-// Admin-only — everyone else has no reason to care how fresh a row's
-// TMDB/MangaDex/IGDB/ComicVine/Google Books data is. Same client-side
-// useIsAdmin gate as MediaEditButton, since this sits inside the server-
-// rendered media detail page rather than behind its own route.
+// Admin-only. Same client-side useIsAdmin gate as MediaEditButton, since this sits inside a server-rendered page rather than behind its own route.
 export function EnrichedAgo({
 	lastEnrichedAt,
 	className,
@@ -28,8 +23,7 @@ export function EnrichedAgo({
 }) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
-	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
-	// for the same rule applied to the navbar's own admin links).
+	// Mobile admin edits are intentionally unsupported (same rule as nav-admin-links.tsx).
 	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	if (!isAdmin) return null;
 

@@ -14,8 +14,7 @@ export type ListFormValues = {
 	description: string;
 	thumbnailUrl: string;
 	sortMode: ListSortMode;
-	// null = a normal, publicly-listed list. See ListInput's own comment in
-	// list-actions.ts.
+	// null = a normal, publicly-listed list.
 	targetUserId: string | null;
 };
 
@@ -29,19 +28,11 @@ type Props = {
 	initial: ListFormValues;
 	submitLabel: string;
 	onSubmit: (values: ListFormValues) => Promise<void>;
-	// Edit page's "Delete list" button — rendered below the submit button,
-	// kept out of this form's own submit handler since it's a separate
-	// destructive action with its own confirmation, not a form field.
+	// Edit page's "Delete list" button — a separate destructive action, not a form field.
 	extra?: ReactNode;
 };
 
-// Shared by /lists/new and /lists/[id]/edit — same three fields (title,
-// description, thumbnail) either way, only what onSubmit does with them
-// differs. Mirrors add/page.tsx's manual-entry form: a plain controlled
-// form, a live <img> preview, no provider picker (a list has no provider to
-// search against). Thumbnail can be set two ways — a pasted URL, or a local
-// file uploaded via uploadListThumbnail — both just end up setting the same
-// thumbnailUrl state, so onSubmit never needs to know which one happened.
+// Shared by /lists/new and /lists/[id]/edit; only onSubmit differs. Thumbnail can be a pasted URL or an uploaded file — both just set the same thumbnailUrl state.
 export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 	const [title, setTitle] = useState(initial.title);
 	const [description, setDescription] = useState(initial.description);
@@ -53,10 +44,7 @@ export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 	const [isUploading, setIsUploading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	// Fetched once on mount rather than passed in as a prop — both call sites
-	// (NewListPage, EditListForm) are already thin wrappers that would
-	// otherwise need their own requireAdmin-gated query just to hand this
-	// list down, for a picker that's cheap and rarely opened.
+	// Fetched on mount rather than passed as a prop, to keep both call sites as thin wrappers.
 	useEffect(() => {
 		listRecommendationTargets().then(setTargets);
 	}, []);
@@ -76,7 +64,7 @@ export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 
 	async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
 		const file = e.target.files?.[0];
-		e.target.value = ""; // lets the same file be re-picked later
+		e.target.value = ""; // lets the same file be re-picked
 		if (!file) return;
 
 		setIsUploading(true);
@@ -135,8 +123,7 @@ export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 			</label>
 			{isUploading && <div className={styles.uploading}>Uploading…</div>}
 			{thumbnailUrl.trim() && (
-				// Plain <img>, not next/image — arbitrary pasted host, same as
-				// add/page.tsx's manual poster preview.
+				// Plain <img>, not next/image — arbitrary pasted host.
 				// eslint-disable-next-line @next/next/no-img-element
 				<img
 					src={thumbnailUrl.trim()}

@@ -4,10 +4,8 @@ import { signOut } from "next-auth/react";
 import { Clickable } from "@/components/ui/clickable";
 import styles from "./sign-out-button.module.sass";
 
-// Moved off the navbar's own account row (see nav-account-menu.tsx) — it
-// isn't reached often enough to earn permanent space on every page, so it
-// lives here instead, beside the rest of this account's own controls (see
-// account/page.tsx's header, next to the settings gear).
+// Moved off the navbar's account row — not reached often enough to earn
+// permanent space on every page — to sit beside this account's own controls.
 export function SignOutButton() {
 	return (
 		<Clickable

@@ -29,10 +29,7 @@ import { invalidateSearchIndex } from "@/components/search/search-actions";
 import { Media, MediaType } from "@prisma/client";
 import { appendJobSummary, formatSummaryList } from "./job-summary";
 
-// One reachability check per underlying source (TMDB backs both MOVIE/SHORT
-// and TVSHOW, so they share a check) rather than per MediaType — run once up
-// front so a source that's down gets skipped as a whole queue instead of
-// burning through hundreds of doomed per-item requests against it.
+// One reachability check per underlying source (not per MediaType) so a down source is skipped as a whole queue instead of burning through doomed per-item requests.
 const SOURCE_HEALTH_CHECKS: Record<string, () => Promise<boolean>> = {
 	tmdb: isTmdbReachable,
 	mangadex: isMangaDexReachable,
@@ -82,8 +79,7 @@ async function reachableMediaTypes(
 }
 
 async function enrichOne(media: Media) {
-	// Guaranteed non-null by main()'s where filter below — narrowed here just
-	// to satisfy the type, not a real runtime possibility.
+	// Guaranteed non-null by main()'s where filter; narrowed here just for the type.
 	if (!media.externalId) return;
 	const externalId = media.externalId;
 
@@ -115,11 +111,7 @@ async function enrichOne(media: Media) {
 	}
 }
 
-// Each media item's enrichOne() call is its own independent Prisma
-// transaction with no shared mutable state across items, and most of its
-// wall-clock time is spent waiting on network I/O (external API fetch + DB
-// round trips) rather than CPU — so items within a queue can safely run
-// concurrently up to a per-type limit, not just one at a time.
+// Each item's enrichOne() is an independent transaction spending most of its time on network I/O, so items can safely run concurrently up to a per-type limit.
 async function runWithConcurrency<T>(
 	items: T[],
 	limit: number,
@@ -138,8 +130,7 @@ async function runWithConcurrency<T>(
 	);
 }
 
-// A simple counting semaphore — acquire() resolves immediately while under
-// the limit, otherwise waits for a release().
+// A simple counting semaphore — acquire() resolves immediately while under the limit, otherwise waits for a release().
 function createSemaphore(limit: number) {
 	let active = 0;
 	const waiters: (() => void)[] = [];
@@ -159,58 +150,15 @@ function createSemaphore(limit: number) {
 	return { acquire, release };
 }
 
-// Every type's queue runs concurrently (see runQueue below) and each item's
-// enrichOne() opens its own interactive Prisma transaction (see e.g.
-// tv-show.ts's db.$transaction) — summed across every type's own
-// QUEUE_CONCURRENCY below, that's far more transactions wanting a connection
-// at once than the connection pool (db/client.ts's PrismaPg adapter, sized
-// to 30 — see its own comment) actually has. Without a cap here, most of
-// those requests just queue for a pool slot until Prisma's own maxWait
-// elapses and they fail with P2028 ("Unable to start a transaction in the
-// given time") instead of ever running. This gates entry to enrichOne itself
-// (fetch + write together, not just the transaction) so the number of
-// connections requested at once never exceeds what the pool can actually
-// hand out, regardless of how many types happen to be active in a given run.
-//
-// Higher than you'd expect for pure throughput's sake — against a remote DB
-// (Neon) the wait per transaction is mostly network round-trip latency, not
-// local CPU/DB load, so more items in flight at once hides that latency
-// almost for free instead of just queuing behind it. There is a real cost to
-// pushing this up: batch-entity-resolver.ts's resolve*Batch calls are
-// findMany-then-createMany, not upserts, so two concurrent transactions that
-// both find the same genre/company/person "missing" (a real occurrence —
-// genres/companies especially are shared across many items) both try to
-// create it, and one blocks on the other's row lock until it commits or
-// rolls back — enough of that contention chained together can blow past
-// db/client.ts's 60s interactive-transaction timeout (seen in practice at
-// 24: a transaction that should've taken ~1s took 78s and hit P2028). That's
-// treated as an acceptable, self-healing failure mode, not a bug to design
-// around: runQueue below already just logs a lock/timeout failure and moves
-// on, leaving the row PENDING (lastEnrichedAt untouched) for the next run to
-// pick up — nothing partial-commits. So this is set high, trading a small,
-// naturally-retried failure rate for real throughput, rather than kept low
-// to avoid contention entirely.
+// Caps how many enrichOne() calls (each its own transaction) can be in flight across all type queues at once, since summed concurrency would otherwise exceed the DB pool size and hit P2028 timeouts.
+// Set high rather than conservative: against a remote DB the wait is mostly network latency (more in-flight items hide it for free), and occasional lock contention from concurrent resolve*Batch
+// upsert races just fails and retries next run (row stays PENDING) rather than corrupting anything — an acceptable tradeoff for real throughput.
 const GLOBAL_DB_CONCURRENCY = 40;
 const dbSemaphore = createSemaphore(GLOBAL_DB_CONCURRENCY);
 
-// Real rate limiting lives at the client layer (each source's own client.ts
-// has a rate-limited-fetch.ts throttle + single-retry-on-429 — see e.g.
-// igdb/client.ts's limiter), so this only bounds how many of a given type's
-// items can be in flight (fetching + writing) at once, letting each queue's
-// own worker pool size reflect that source's own pacing/rate-limit
-// character — it does NOT bound how many Prisma transactions are open
-// system-wide, since queues for every type run concurrently. That's what
-// dbSemaphore above is for.
-//
-// This does NOT need to stay under each source's real request rate — actual
-// network fetches are already paced by that source's own rate limiter (e.g.
-// tmdb/client.ts's/igdb/client.ts's createRateLimiter), so a higher number
-// here just means more items *waiting* on that limiter (or, when
-// CACHE_RESPONSES=1, replaying a cached fixture — which doesn't touch the
-// limiter at all) rather than more requests actually leaving the process.
-// It's set equal to GLOBAL_DB_CONCURRENCY so a single-type run (e.g. `--
-// movie`) can use the whole DB concurrency budget instead of being capped
-// well below it by its own queue.
+// Bounds in-flight items per type only; real rate limiting lives in each source's client (rate-limited-fetch.ts), and dbSemaphore above bounds transactions system-wide.
+// Doesn't need to stay under each source's real request rate — a higher number just means more items waiting on that source's own limiter. Set equal to
+// GLOBAL_DB_CONCURRENCY so a single-type run can use the whole DB budget instead of being capped below it.
 const QUEUE_CONCURRENCY: Record<MediaType, number> = {
 	[MediaType.MOVIE]: GLOBAL_DB_CONCURRENCY,
 	[MediaType.SHORT]: GLOBAL_DB_CONCURRENCY,
@@ -221,14 +169,7 @@ const QUEUE_CONCURRENCY: Record<MediaType, number> = {
 	[MediaType.BOOK]: GLOBAL_DB_CONCURRENCY,
 };
 
-// Each media type talks to its own independent (and independently
-// rate-limited) API — TMDB, MangaDex, IGDB, ComicVine. Processing every
-// PENDING row as one big sequential queue meant the other three sources sat
-// idle whenever one of them was slow or backing off. Splitting into one
-// queue per type and running those queues concurrently keeps each type's
-// own pacing intact while letting all sources make progress at once instead
-// of taking turns — and within a single type's queue, items now also run up
-// to QUEUE_CONCURRENCY[type] at a time instead of strictly one by one.
+// One queue per media type, run concurrently, so a slow/backing-off source doesn't idle the others; within a queue, items also run up to QUEUE_CONCURRENCY[type] at a time.
 type QueueResult = {
 	succeeded: number;
 	failures: { id: number; title: string }[];
@@ -250,9 +191,7 @@ async function runQueue(
 				);
 				const cacheTag = cacheUsage ? ` [${cacheUsage}]` : "";
 				if (error) {
-					// One title missing/renamed at the source (or otherwise broken)
-					// shouldn't stop the rest of its queue from enriching — log it and
-					// move on, leaving that row PENDING for a later look.
+					// One broken title shouldn't stop the rest of its queue — log and move on, leaving the row PENDING.
 					console.error(
 						`[${type}]${cacheTag} Failed enriching media ${media.id} (${media.title})`,
 						error,
@@ -301,17 +240,10 @@ const ENRICH_INTERVAL_DAYS = 3;
 
 const ALL_MEDIA_TYPES = Object.values(MediaType);
 
-// Opt-in dev flag, e.g. `npm run enrich_db -- movie ignore-enrich-cutoff` —
-// re-enriches every matching row regardless of lastEnrichedAt instead of
-// only the ones stale enough per ENRICH_INTERVAL_DAYS. Handy for testing
-// ingest changes against titles that were already enriched recently.
+// Opt-in dev flag (`... -- movie ignore-enrich-cutoff`) to re-enrich every matching row regardless of lastEnrichedAt, for testing ingest changes.
 const IGNORE_CUTOFF_FLAG = "ignore-enrich-cutoff";
 
-// Space- and/or comma-separated MediaType names (case-insensitive), e.g.
-// `npm run enrich_db -- movie tvshow` or `npm run enrich_db -- movie,tvshow`
-// — no args at all (the normal cron invocation, see enrich-db.yml) still
-// enriches every type, same as before this existed. IGNORE_CUTOFF_FLAG is
-// stripped out here, not a MediaType, so it's filtered before validation.
+// Space/comma-separated MediaType names, case-insensitive; no args enriches every type. IGNORE_CUTOFF_FLAG is filtered out before validation.
 function parseRequestedTypes(argv: string[]): MediaType[] {
 	const raw = argv
 		.flatMap((arg) => arg.split(","))
@@ -386,11 +318,7 @@ async function main() {
 
 	await writeJobSummary(results, skipped);
 
-	// Runs as a separate process from anything that would normally trigger
-	// this (see saveMediaDetails/setMediaDeleted/etc. in the admin actions) —
-	// without it, search-actions.ts's own module-scope and durable caches
-	// would keep serving whatever title/poster/photoPath was true before this
-	// run, for up to their own 1-hour TTL, even though the DB just changed.
+	// Runs as a separate process from the admin actions that normally trigger this, so search-actions.ts's caches wouldn't otherwise pick up the change until their own TTL.
 	if (mediaList.length > 0) await invalidateSearchIndex();
 }
 

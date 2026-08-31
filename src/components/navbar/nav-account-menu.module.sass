@@ -1,10 +1,6 @@
 @use "@/app/styles/variables" as *
 
-// Groups the notification bell and avatar link within the desktop
-// .nav_group_end cluster (see nav-bar.tsx) — gap matches nav-bar.module
-// .sass's own .nav_group gap (1.5rem, not the mobile-narrowed 0.75rem) since
-// this is only ever visible at that width — see the mobile override below,
-// which hides this whole group rather than narrowing it.
+// Desktop-only cluster; hidden entirely (not narrowed) on mobile below.
 .account_identity
   display: flex
   align-items: center
@@ -13,11 +9,8 @@
   @media (max-width: $mobile-breakpoint)
     display: none
 
-// Same "plain nav item" look as nav-bar.module.sass's own .link (both
-// include the shared nav-item-look mixin), plus a real <button> reset on
-// top — despite the name, this styles the signed-out "Sign in" link, not a
-// sign-out control; sign-out itself lives on the account page now (see
-// SignOutButton), not here.
+// Despite the name, styles the signed-out "Sign in" link; sign-out lives
+// on the account page (SignOutButton), not here.
 .sign_out_button
   display: flex
   align-items: center

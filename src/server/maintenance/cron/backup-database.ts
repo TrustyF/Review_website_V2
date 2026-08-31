@@ -7,17 +7,8 @@ import {
 } from "@aws-sdk/client-s3";
 import { appendJobSummary } from "./job-summary";
 
-// Uploads a pre-made pg_dump (see backup-database.yml, which invokes this
-// after running `pg_dump | gzip` itself — no Postgres client library here,
-// this script only ever touches R2) and prunes old ones down to a
-// grandfather-father-son rotation:
-//   - the 5 most recent dumps (short-term, ~5 days at the daily cron
-//     cadence), plus
-//   - the newest dump of each of the 3 most recent distinct months, plus
-//   - the newest dump of every distinct year, kept forever.
-// A dump can satisfy more than one tier at once (the newest dump is always
-// also that month's and that year's representative) — the three sets just
-// get unioned before deleting anything not in the union.
+// Uploads a pre-made pg_dump (piped in from backup-database.yml) and prunes old ones to a grandfather-father-son rotation:
+// 5 most recent, newest of each of the 3 most recent months, and newest of every year (kept forever). Sets are unioned before deleting.
 const SHORT_TERM_KEEP = 5;
 const MONTHLY_KEEP = 3;
 
@@ -40,10 +31,7 @@ function getClient(): S3Client {
 	});
 }
 
-// Filenames are the dump's own creation timestamp (colons swapped for dashes
-// so the key stays trivially safe across every S3-compatible tool), which
-// both gives every run a unique key and is all the retention logic below
-// needs to sort/group by.
+// Filenames are the dump's creation timestamp (colons swapped for dashes for S3-safety), giving a unique key that the retention logic can sort/group by.
 function timestampedKey(now: Date): string {
 	return `${KEY_PREFIX}${now.toISOString().replace(/:/g, "-")}.sql.gz`;
 }
@@ -63,8 +51,7 @@ async function listBackups(bucket: string) {
 		for (const object of page.Contents ?? []) {
 			if (!object.Key) continue;
 			const iso = object.Key.slice(KEY_PREFIX.length).replace(/\.sql\.gz$/, "");
-			// Reverse the ":" -> "-" swap from timestampedKey just for the two
-			// colons inside the time-of-day portion, so Date can parse it back.
+			// Reverse the ":" -> "-" swap from timestampedKey so Date can parse it back.
 			const date = new Date(iso.replace(/T(\d\d)-(\d\d)-(\d\d)/, "T$1:$2:$3"));
 			if (!Number.isNaN(date.getTime()))
 				objects.push({ key: object.Key, date });

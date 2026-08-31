@@ -57,11 +57,8 @@ async function main() {
 		"SELECT * FROM Medias",
 	);
 
-	// Transform old rows into a flat intermediate shape rather than Prisma's
-	// nested MediaCreateInput — createManyAndReturn (used below to batch the
-	// actual inserts) can't express a nested `movie: { create: {} }`/
-	// `review: { create: {...} }` the way media.create() could, so the child-
-	// table row and review are tracked alongside instead of nested inside.
+	// Flat intermediate shape, not Prisma's nested MediaCreateInput —
+	// createManyAndReturn (used below to batch inserts) can't express nested creates.
 	type TransformedItem = {
 		title: string;
 		type: MediaType;
@@ -91,31 +88,20 @@ async function main() {
 				u.user_rating != null
 					? {
 							rating: u.user_rating ?? 0,
-							// Old schema's scale is one higher than the new one (see
-							// Review.difficulty in prisma/schema/rating.prisma) — shift
+							// Old schema's scale is one higher than the new one — shift
 							// down so it lands on the same none/medium/hard meaning.
 							difficulty: u.difficulty != null ? u.difficulty - 1 : null,
-							// Otherwise defaults to now() (see Review.createDate in
-							// rating.prisma) — "Watched on" would read as the moment
-							// this migration ran instead of the actual old date. The
-							// old schema never split "added to the catalog" from
-							// "watched/rated" into two dates the way Media.createDate/
-							// Review.createDate do now, so this reuses the same
-							// created_at the Media row above it does.
+							// Reuse created_at, else this would default to now() and
+							// "Watched on" would read as the migration run time.
 							createDate: u.created_at,
 						}
 					: null,
 		});
 	}
 
-	// Media has no unique constraint (see prisma/schema/media.prisma) beyond
-	// its own id, so inserting a row here never rejects a duplicate on its
-	// own — re-running this script (e.g. after fixing a mediaTypeMap gap)
-	// would otherwise insert a second copy of every row already migrated in
-	// a prior run. One upfront query for every (type, externalId) pair
-	// already in Neon, instead of one findFirst() per old row (1721 round
-	// trips became 1) — makes the whole script safe to re-run any number of
-	// times, same guarantee as before, just batched.
+	// Media has no unique constraint beyond id, so re-running this script
+	// would insert duplicates without this check. One upfront query for
+	// every existing (type, externalId) pair instead of 1721 findFirst() calls.
 	const existing = await db.media.findMany({
 		select: { type: true, externalId: true },
 	});
@@ -134,10 +120,8 @@ async function main() {
 		return;
 	}
 
-	// Every type-specific child table (Movie/TvShow/Manga/Game/Comic) is
-	// created empty — enrich_db fills in the real fields later, this
-	// migration only needs the row to exist — so batching it is just a
-	// grouped createMany per table keyed on the freshly-created mediaID.
+	// Child tables are created empty — enrich_db fills real fields later,
+	// this migration only needs the row to exist.
 	const CHILD_TABLE_BY_TYPE = {
 		[MediaType.MOVIE]: "movie",
 		[MediaType.TVSHOW]: "tvShow",
@@ -147,25 +131,14 @@ async function main() {
 	} as const;
 	type ChildTable = (typeof CHILD_TABLE_BY_TYPE)[keyof typeof CHILD_TABLE_BY_TYPE];
 
-	// One transaction for the whole batch — a Media row created without its
-	// child row (if a later step in this same batch failed) would be an
-	// orphan the idempotency check above can't detect on a re-run, since it
-	// only verifies the Media row exists, not its child/review rows. Wrapping
-	// everything together means a failure rolls the whole batch back instead
-	// of leaving that half-written state. Each createMany runs sequentially
-	// against the shared transaction client rather than concurrently
-	// (Promise.all) — issuing concurrent queries against one interactive
-	// transaction's session is exactly the pattern that produced the empty-
-	// upsert-result bug resolveRole hit earlier; sequential avoids that
-	// class of problem entirely, and six extra round trips is negligible
-	// next to the 1721 this replaced.
+	// One transaction for the whole batch — a Media row without its child
+	// row would be an orphan the idempotency check can't detect on a re-run.
+	// Sequential createMany calls, not Promise.all: concurrent queries on
+	// one interactive transaction session caused a bug before (empty upsert
+	// results); the extra round trips are negligible here.
 	const created = await db.$transaction(async (tx) => {
-		// createManyAndReturn (rather than createMany, which returns only a
-		// count) hands back every inserted row in the same order as `data`
-		// was given — Prisma guarantees this ordering — so `rows[i]` is
-		// newItems[i]'s row without needing a second query or a (type,
-		// externalId) re-match, which the one old row with a null externalId
-		// would otherwise make ambiguous.
+		// createManyAndReturn preserves `data` order (Prisma guarantee), so
+		// rows[i] is newItems[i] without a re-match, which a null externalId would otherwise make ambiguous.
 		const rows = await tx.media.createManyAndReturn({
 			data: newItems.map((item) => ({
 				title: item.title,

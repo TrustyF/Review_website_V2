@@ -59,16 +59,11 @@
   border-radius: 0.5rem
   font-size: 0.9rem
   height: 3rem
-  // Nothing (a tall poster thumbnail, a body preview that wraps) gets to
-  // push the row taller or spill past it — clipped to height above instead.
+  // Clips tall content (poster thumbnail, wrapped body preview) to the fixed row height.
   overflow: hidden
 
-// Applied via JS (ChangeLogEntryRow's alt prop / ChangeLogList's own index),
-// not :nth-child — timeline gap dividers are interleaved <li>s between
-// entries too, which would throw off a purely structural odd/even count.
-// Mixed against --foreground rather than a fixed color so the stripe stays
-// the same faint weight in both light and dark themes instead of needing its
-// own light/dark value.
+// Applied via JS index, not :nth-child, since interleaved timeline dividers break odd/even.
+// Mixed against --foreground so the stripe works in both themes without a separate value.
 .entry_alt
   //background: color-mix(in srgb, var(--foreground) 1.5%, transparent)
 
@@ -130,10 +125,7 @@
   font-family: $font-mono
   font-size: 0.8rem
 
-// Inserted between two entries at least TIMELINE_GAP_DAYS apart (see
-// change-log-list.tsx) — a short vertical tick rather than a horizontal
-// rule, reading as a break in the timeline's spine at that point instead of
-// a divider spanning the row's full width.
+// Inserted between entries at least TIMELINE_GAP_DAYS apart, as a short vertical tick.
 .timeline_gap
   display: flex
   flex-flow: row

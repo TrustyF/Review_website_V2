@@ -16,12 +16,8 @@ type Props = {
 export function AvatarPicker({ initialSrc, groups }: Props) {
 	const { setAvatarSrc } = useAvatar();
 	const [currentSrc, setCurrentSrc] = useState(initialSrc);
-	// A saved image src that 404s (stale — e.g. pointing at a file since
-	// deleted/renamed out from under it) would otherwise render as a plain
-	// broken <img> with nothing visible, since alt is empty — this falls
-	// back to the same placeholder a null src gets instead. Reset whenever
-	// currentSrc itself changes, so switching to a different (working) image
-	// doesn't stay stuck on a previous failure.
+	// Falls back to the placeholder if a saved src 404s (e.g. stale/deleted file);
+	// reset on currentSrc change so a new pick isn't stuck on a prior failure.
 	const [imageFailed, setImageFailed] = useState(false);
 	const [savingSrc, setSavingSrc] = useState<string | null>(null);
 	const [isOpen, setIsOpen] = useState(false);
@@ -40,8 +36,7 @@ export function AvatarPicker({ initialSrc, groups }: Props) {
 			setCurrentSrc(src);
 			setImageFailed(false);
 			setIsOpen(false);
-			// Pushes straight into the navbar's shared copy (avatar-context.tsx)
-			// instead of it having to refetch — this already knows the new value.
+			// Pushes into the navbar's shared copy directly instead of a refetch.
 			setAvatarSrc(src);
 		} finally {
 			setSavingSrc(null);
@@ -50,9 +45,7 @@ export function AvatarPicker({ initialSrc, groups }: Props) {
 
 	return (
 		<div className={styles.wrapper}>
-			{/* Same no-photo stand-in as PersonPhoto (person-photo.tsx) uses for
-			cast/crew — this account has no picture yet, so the same "here's
-			where a photo would go" signal applies. */}
+			{/* Same no-photo stand-in PersonPhoto uses for cast/crew. */}
 			<Clickable
 				className={styles.current}
 				aria-label="Change profile picture"

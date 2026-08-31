@@ -4,41 +4,20 @@ import "dotenv/config";
 
 const adapter = new PrismaPg({
 	connectionString: process.env.DATABASE_URL!,
-	// Default pg.Pool max is 10 — fine for normal app traffic, but enrich-db's
-	// GLOBAL_DB_CONCURRENCY (maintenance/cron/enrich-db.ts) needs enough slots
-	// to actually run that many transactions at once instead of queuing for a
-	// pool connection. Local Postgres has no pooler in front of it (unlike
-	// Neon, which this used to run against), so every one of these is a real
-	// direct connection — kept well under the server's own max_connections
-	// (100, the postgres:17 image's default; see docker-compose.yml's `db`
-	// service) to leave room for the `maintenance` service's own jobs, Prisma
-	// Studio, etc. connecting to the same DB at the same time.
+	// Default pg.Pool max of 10 can't keep up with enrich-db's GLOBAL_DB_CONCURRENCY; kept under Postgres's max_connections (100) to leave room for other services.
 	max: 60,
 });
 
 export const db = new PrismaClient({
 	adapter,
-	// Prisma's 5s/2s defaults assume near-zero round-trip latency — true
-	// enough against local Postgres, but every ingest module (movie.ts,
-	// tv-show.ts, comic.ts, game.ts, manga.ts, book.ts) runs one sequential
-	// query per cast/crew/genre/company inside a single interactive
-	// transaction (see entity-resolver.ts's resolve* upserts), and a big
-	// ensemble cast times out against a remote DB like Neon where each round
-	// trip costs real network latency. Applies globally rather than patching
-	// all 14 $transaction call sites individually.
+	// Prisma's 5s/2s defaults are too tight for ingest transactions doing many sequential per-cast/crew round trips; set globally rather than patching every $transaction call site.
 	transactionOptions: {
-		timeout: 60_000, // default: 5_000ms — the transaction body itself; a movie with a large cast/crew (100+ sequential round trips) can still take tens of seconds over the network
-		maxWait: 10_000, // default: 2_000ms — time to acquire a connection/transaction slot, generous enough to ride out a Neon cold-start
+		timeout: 60_000, // default 5_000ms — large casts can take tens of seconds of sequential round trips
+		maxWait: 10_000, // default 2_000ms — time to acquire a connection slot
 	},
 });
 
-// Merges isDeleted: false into a Media `where`, but only when the caller
-// hasn't already said anything about that field — an explicit isDeleted
-// (true or false, e.g. a maintenance query that wants both) always wins, so
-// this never fights a query that means to see soft-deleted rows too. Typed
-// loosely on purpose (every findMany/findFirst/findUnique/count `where`
-// shape is structurally close enough) — callers cast the result back to
-// whatever Prisma's generated arg type actually wants.
+// Merges isDeleted: false in unless the caller already filters on it explicitly. Typed loosely; callers cast back to Prisma's generated arg type.
 function excludeDeleted(
 	where: Record<string, unknown> | undefined,
 ): Record<string, unknown> {
@@ -48,13 +27,7 @@ function excludeDeleted(
 	return { ...where, isDeleted: false };
 }
 
-// Same "merge in unless the caller already said something about this field"
-// pattern as excludeDeleted above — a caller that explicitly filters on
-// `status` (e.g. the home page's "Anticipated releases" section, which wants
-// exactly the ANNOUNCED/UPCOMING rows this would otherwise hide) always wins.
-// Everywhere else, unreleased media (announced or upcoming, i.e. not yet out)
-// stays out of public listings/search by default so it doesn't show up
-// looking like a normal released title with just a future date.
+// Same merge-unless-explicit pattern as excludeDeleted: hides unreleased (announced/upcoming) media from public listings by default.
 const UNRELEASED_STATUSES: MediaStatus[] = [
 	MediaStatus.ANNOUNCED,
 	MediaStatus.UPCOMING,
@@ -68,20 +41,8 @@ function excludeUnreleased(
 	return { ...where, status: { notIn: UNRELEASED_STATUSES } };
 }
 
-// For public-facing reads only — every page a visitor can actually browse to
-// (home, per-type lists, ...) should query through this instead of the raw
-// `db`, so a newly added list page can't forget to hide soft-deleted media
-// the way every one of them originally did (see the isDeleted field on
-// Media in schema/media.prisma).
-//
-// Only covers *top-level* Media queries. Prisma extensions don't run for
-// nested reads pulled in through include/select on another model (e.g.
-// credit-media-list-page.tsx's `db.credit.findMany({ include: { media:
-// {...} } })`) — those still need `isDeleted: false` written out by hand;
-// see https://github.com/prisma/prisma/issues/24525. Anything that
-// legitimately needs to see soft-deleted rows (the editor's own actions,
-// the detail page so it can offer a restore, maintenance scripts) should
-// keep using `db` directly, not this.
+// Public-facing reads should query through this instead of raw `db` so new list pages can't forget to hide soft-deleted media.
+// Only covers top-level Media queries — nested reads via include/select need `isDeleted: false` written by hand (Prisma extensions don't run there; prisma#24525).
 export const dbPublic = db.$extends({
 	name: "excludeSoftDeletedMedia",
 	query: {

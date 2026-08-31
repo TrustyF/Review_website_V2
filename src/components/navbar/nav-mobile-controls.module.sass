@@ -1,19 +1,9 @@
 @use "@/app/styles/variables" as *
 
-// Groups .mobile_account_link and .mobile_toggle so exactly one margin-left:
-// auto pushes the *pair* of them to the mobile bar's right edge —
-// nav-bar.module.sass's .nav_content (this element's only preceding
-// sibling within <nav>) is display: none at this width unless the drawer's
-// open, so with nothing ahead of it taking up space, this is what stands in
-// for it. Putting margin-left: auto on each of the two icons individually
-// (rather than once, here) would split whatever free space the bar has
-// between *both* of their auto margins per the flex spec, shoving the icons
-// apart from each other too, not just away from .nav_content's spot — gap
-// below is what actually spaces the icons from each other instead, same as
-// nav-bar.module.sass's own .wrapper 3rem gap is scaled way down for this
-// width (see its own comment) rather than reused as-is here.
-// Hidden entirely above $mobile-breakpoint, where .nav_content's normal row
-// layout has the room these exist to replace.
+// Groups the two icons under one margin-left: auto so they push together to
+// the bar's right edge — putting auto-margin on each individually would
+// split the free space between them per the flex spec, spacing them apart
+// too; gap below handles their own spacing instead.
 .mobile_controls
   display: none
   align-items: center
@@ -23,11 +13,8 @@
   @media (max-width: $mobile-breakpoint)
     display: flex
 
-// The account link already lives inside the drawer too (see NavAccountMenu),
-// but this keeps the avatar visible/tappable without opening it, the same
-// way the hamburger itself stays visible. Only ever rendered inside
-// .mobile_controls (conditionally on session — see nav-mobile-controls.tsx),
-// so no display/breakpoint rules of its own are needed here.
+// Keeps the avatar visible/tappable without opening the drawer, same as the
+// hamburger; already inside .mobile_controls so needs no rules of its own.
 .mobile_account_link
   display: flex
   align-items: center
@@ -35,16 +22,11 @@
   width: $mobile-icon-size
   height: $mobile-icon-size
   color: var(--foreground)
-  // .mobile_controls's own gap (0.5rem) is deliberately tight for this
-  // width (see its own comment) — margin-left tops just this one side up to
-  // nav-account-menu.module.sass's .account_identity's 1.5rem desktop gap
-  // instead, so the bell reads at its usual distance from the avatar
-  // without also pushing the hamburger toggle further away than it needs
-  // to be.
+  // Tops up the tight 0.5rem .mobile_controls gap to the desktop 1.5rem gap
+  // for just this side, without pushing the hamburger further away too.
   margin-left: 1rem
 
-// Hamburger trigger for the mobile drawer below. Also only ever rendered
-// inside .mobile_controls — see that rule's own comment.
+// Hamburger trigger for the mobile drawer below.
 .mobile_toggle
   display: flex
   align-items: center

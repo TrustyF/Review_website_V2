@@ -1,8 +1,6 @@
 import { type } from "arktype";
 
-// ComicVine's image object always carries every named size for a volume's
-// cover — no per-field omission the way TMDB/IGDB sometimes leave a field
-// out entirely.
+// ComicVine's image object always carries every named size, unlike TMDB/IGDB which may omit fields.
 const ComicVineImageSchema = type({
 	"icon_url?": "string | null",
 	"medium_url?": "string | null",
@@ -15,9 +13,7 @@ const ComicVineImageSchema = type({
 	"original_url?": "string | null",
 });
 
-// A volume's "people" list is flat — ComicVine only breaks credits down by
-// role (writer, artist, ...) at the issue level, not the volume level, so
-// there's no role field to read here.
+// Flat — ComicVine only breaks credits down by role at the issue level, not the volume level.
 const ComicVinePersonRefSchema = type({
 	id: "number",
 	name: "string",
@@ -38,9 +34,7 @@ export const ComicVineVolumeSchema = type({
 	"image?": ComicVineImageSchema,
 	"publisher?": ComicVinePublisherSchema,
 	"people?": ComicVinePersonRefSchema.array(),
-	// Only present on the single-volume detail fetch, not the field_list-
-	// limited search results — those don't need it, since it's only read
-	// during actual ingest (add/update), never for a search picker.
+	// Only present on the single-volume detail fetch, not the field_list-limited search results.
 	"site_detail_url?": "string | null",
 });
 
@@ -58,11 +52,7 @@ export const ComicVineVolumeSearchResponseSchema = type({
 	results: ComicVineVolumeSchema.array(),
 });
 
-// Used as this app's stand-in for "alternate posters": ComicVine has no
-// alternate-cover-art concept at the volume level (unlike TMDB/MangaDex),
-// but each issue within a volume has its own cover — issue 1's is usually
-// the same image the volume itself reports, so browsing issues doubles as
-// browsing that volume's available covers.
+// Stand-in for "alternate posters": ComicVine has no volume-level cover-art concept, so issue covers are used instead.
 export const ComicVineIssueSchema = type({
 	id: "number",
 	"name?": "string | null",

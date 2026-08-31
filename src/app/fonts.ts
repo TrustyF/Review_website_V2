@@ -26,7 +26,5 @@ const ibmPlexSans = IBM_Plex_Sans({
 	weight: ["400", "500", "600", "700"],
 });
 
-// Applied to <html> so every font's CSS variable is available everywhere;
-// which one actually gets used per element is up to $font-sans/$font-mono/
-// $font-serif/$font-body in variables.sass.
+// Applied to <html> so every variable is available; actual usage is picked per-element via variables.sass.
 export const fontVariables = `${geistSans.variable} ${geistMono.variable} ${geistSerif.variable} ${ibmPlexSans.variable}`;

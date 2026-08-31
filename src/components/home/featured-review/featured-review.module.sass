@@ -1,33 +1,18 @@
 @use "@/app/styles/variables" as *
 @use "./featured-review-breakpoint" as *
 
-// $card-transition-duration governs the slide (both cards' transform) and
-// the outgoing card's fade-out — featured-review.tsx keeps its own
-// setTimeout in step with it (see the comment there, since JS can't read a
-// sass variable at runtime) so the outgoing card isn't unmounted before its
-// own fade finishes. $card-enter-opacity-duration only governs the incoming
-// card's fade-in, kept separate (and shorter) so it doesn't have to match
-// the exit's pace.
+// $card-transition-duration governs the slide and outgoing fade-out — featured-review.tsx mirrors it in a setTimeout since JS can't read a sass variable. $card-enter-opacity-duration is separate (shorter) and only governs the incoming fade-in.
 $card-transition-duration: 0.35s
 $card-enter-opacity-duration: 0.2s
 $card-transition-easing: ease-out
 
-// Matches content-wrapper's own hardcoded padding-inline (variables.sass) —
-// same hand-kept copy as featured-review-card-mobile.module.sass's own
-// $page-padding, used the same way: .banner below cancels it out so the
-// banner ignores the page wrapper's own side padding instead of shrinking
-// with it.
+// Matches content-wrapper's hardcoded padding-inline (variables.sass) — .banner below cancels it out so the banner ignores the page's side padding.
 $page-padding: 1.25rem
 
 .wrapper
   position: relative
 
-// Admin-only "manage featured reviews" trigger — same corner-of-the-card
-// convention MediaEditButton uses elsewhere (media-card-shell.module.sass/
-// media-mini-card-shell.module.sass), positioned against .wrapper (not
-// FeaturedReviewCard's own <Link>, which this deliberately sits outside of
-// — see featured-review.tsx's own comment). z-index above the hero card's
-// own content so it's never painted over by the banner/gradient.
+// Admin-only "manage featured reviews" trigger, same corner convention as MediaEditButton. Positioned against .wrapper, not the card's own <Link>, which it deliberately sits outside of. z-index above hero content so the banner/gradient never paints over it.
 .manage_featured_button
   position: absolute
   top: 1rem
@@ -49,43 +34,17 @@ $page-padding: 1.25rem
   &:hover
     opacity: 1
 
-// The outgoing and incoming FeaturedReviewCards are both rendered here at
-// once during a transition (see featured-review.tsx) — this stacks them
-// into the same grid cell instead of one appearing after the other in
-// document flow, so they crossfade in place. Auto-sized to the taller of
-// the two, so the picker/rest of the page below doesn't jump as they swap.
-// overflow: hidden clips .card_link's own translateX slide (up to 2rem
-// either side, see its --enter-offset) to this box instead of letting it
-// bleed sideways past the content column — scoped here rather than on
-// body/html (globals.sass deliberately keeps overflow-x off html, since
-// setting it on both breaks position: sticky for other descendants; see its
-// own comment), since this slide is the only thing on the page that ever
-// needs it.
+// Outgoing and incoming cards are both rendered here during a transition, stacked into the same grid cell so they crossfade in place instead of stacking in document flow. Auto-sized to the taller of the two so the page below doesn't jump. overflow: hidden clips .card_link's translateX slide here rather than on body/html, since globals.sass deliberately keeps overflow-x off html (breaks position: sticky elsewhere).
 .card_stack
   position: relative
   display: grid
   overflow: hidden
 
-  // Below $content-width, FeaturedReviewCard's own .banner (max-width, this
-  // component's desktop card, still showing above $featured-review-mobile-
-  // breakpoint) and FeaturedReviewCardMobile's own .banner (below it)
-  // deliberately bleed past this box's edges to reach the screen edges (see
-  // .banner's and FeaturedReviewCardMobile's own comments) — hidden here
-  // would clip either right back off. Each card's own translateX slide is
-  // clipped locally instead (on .content, desktop; on .content_clip,
-  // mobile), since globals.sass's body { overflow-x: hidden } safety net
-  // isn't actually reliable for this (see media-detail.module.sass's own
-  // .page comment on why it needs its own local clip too).
+  // Below $content-width, both cards' .banner deliberately bleed past this box's edges to the screen edges — hidden here would clip that off. Each card's translateX slide is clipped locally instead, since the body-level overflow-x safety net isn't reliable for this.
   @media (max-width: $content-width)
     overflow: visible
 
-// Starts transparent, then FeaturedReviewCard adds .settled a frame after
-// mount to fade back to resting. The outgoing card runs this in reverse —
-// starts .settled and drops it a frame after mount — which is what plays
-// its fade-out instead of it just disappearing outright; see that component
-// for why it's a frame later rather than immediate either way. The slide
-// itself (--enter-offset) lives on .content below, not here — see that
-// rule's own comment for why.
+// Starts transparent; FeaturedReviewCard adds .settled a frame after mount to fade in. The outgoing card runs this in reverse (starts .settled, drops it) to play a fade-out instead of vanishing. The slide (--enter-offset) lives on .content below, not here.
 .card_link
   grid-area: 1 / 1
   display: block
@@ -97,18 +56,11 @@ $page-padding: 1.25rem
   opacity: 0
   transition: opacity $card-enter-opacity-duration $card-transition-easing
 
-  // Below this, FeaturedReviewCardMobile's own .card_link is the one that's
-  // visible instead — see featured-review-card-mobile.module.sass's own
-  // comment.
+  // Below this, FeaturedReviewCardMobile's own .card_link shows instead.
   @media (max-width: $featured-review-mobile-breakpoint)
     display: none
 
-  // Between $featured-review-mobile-breakpoint and $content-width, this
-  // card is still the one showing but the page wrapper has already picked
-  // up its own side padding (content-wrapper, variables.sass) — dropped
-  // here (rather than just on .banner) so .banner's own bleed below isn't
-  // clipped back off by this box's rounding, same trade-off
-  // FeaturedReviewCardMobile's own .card_link makes permanently.
+  // Between the mobile breakpoint and $content-width, this card still shows but the page has picked up side padding — dropped here so .banner's bleed isn't clipped by this box's rounding.
   @media (max-width: $content-width) and (min-width: $featured-review-mobile-breakpoint + 1px)
     border-radius: 0
     overflow: visible
@@ -122,21 +74,13 @@ $page-padding: 1.25rem
   @media (prefers-reduced-motion: reduce)
     transition: opacity $card-enter-opacity-duration $card-transition-easing
 
-// The outgoing card while it fades out — sits behind the incoming one and
-// ignores clicks so it doesn't intercept them while it's on its way out.
-// Overrides .card_link's opacity duration back to the slower, shared
-// $card-transition-duration — only the incoming card's fade-in gets the
-// faster one.
+// The outgoing card while it fades out — sits behind the incoming one and ignores clicks. Overrides .card_link's opacity duration back to the slower shared duration; only the incoming fade-in gets the faster one.
 .exiting
   z-index: 0
   pointer-events: none
   transition: opacity $card-transition-duration $card-transition-easing
 
-// width/margin-inline bleed matches FeaturedReviewCardMobile's own .banner
-// — cancels content-wrapper's own page-padding so this reaches the screen
-// edges instead of shrinking with it, active only where that padding
-// actually applies (see .card_link's own override, needed so it isn't
-// clipped back off).
+// Bleed matches FeaturedReviewCardMobile's own .banner — cancels page-padding so this reaches screen edges, active only where that padding applies.
 .banner
   position: relative
   width: 100%
@@ -157,14 +101,7 @@ $page-padding: 1.25rem
   //mix-blend-mode: soft-light
   background-image: linear-gradient(to top, var(--background) 0%, color-mix(in srgb, var(--background) 60%, transparent) 15%, transparent 50%)
 
-// Carries the enter/exit slide that used to live on .card_link itself
-// (--enter-offset, set inline per-card by FeaturedReviewCard) — .banner is
-// this element's sibling inside .card_link, not its descendant, so keeping
-// the slide scoped here instead of on the shared parent is what lets the
-// banner fade in place while this, the poster/title/excerpt column, still
-// slides in from the side. transform (not the custom property lookup
-// itself) is what prefers-reduced-motion below turns off, so the property
-// stays defined either way and only the actual motion is skipped.
+// Carries the enter/exit slide (--enter-offset) — .banner is this element's sibling, not descendant, so scoping the slide here lets the banner fade in place while this column slides. prefers-reduced-motion below only disables the transform, not the property itself.
 .content
   position: relative
   display: flex
@@ -180,9 +117,7 @@ $page-padding: 1.25rem
   @media (prefers-reduced-motion: reduce)
     transform: none
 
-// Pulled up over the banner's gradient fade so the poster/title read as
-// sitting on top of the backdrop rather than in a separate block below it —
-// same visual idea as media-detail.module.sass's banner/header overlap.
+// Pulled up over the banner's gradient fade so the poster/title read as sitting on top of the backdrop.
 .content_overlap
   margin-top: -6rem
 
@@ -192,20 +127,9 @@ $page-padding: 1.25rem
   @media (max-width: $mobile-breakpoint)
     width: clamp(80px, 20vw, 150px)
 
-// padding-top, not margin-top — .info is stretched (align-items' default)
-// to the poster's full height and its content is bottom-anchored (below),
-// so a margin above the box just eats into empty slack space above the
-// already-bottom-anchored content without actually moving it. Padding
-// reserves space inside the content box itself, which flex-end positions
-// against — that's what actually pushes the visible content down.
+// padding-top, not margin-top — .info stretches to the poster's full height with bottom-anchored content, so padding (not margin) is what actually pushes the visible content down.
 //
-// TODO: fix body overflowing past poster height, check other media types —
-// a 2-line title and/or an excerpt that hits .excerpt's own max-height can
-// together make .info's natural content taller than the poster next to it
-// (which varies by type — 2/3 for most, 3/4 for comics/games, see
-// poster-ratio.ts), growing .card_stack and shoving the picker strip below
-// it down. Worth checking across types (a shorter 3/4 poster has less
-// headroom before this trips) before landing a fix.
+// TODO: fix body overflowing past poster height — a 2-line title plus a maxed-out excerpt can make .info taller than the poster, growing .card_stack and shoving the picker down. Check across media types (poster-ratio.ts).
 .info
   display: flex
   flex-flow: column
@@ -215,9 +139,7 @@ $page-padding: 1.25rem
   justify-content: flex-start
   align-items: flex-start
 
-// Row layout is here unconditionally (not just when a variant actually has
-// an icon) so a future icon-less-to-icon-bearing label change never needs
-// a layout tweak alongside it — see featured-review.tsx's eyebrowFor.
+// Row layout is unconditional (not gated on an icon existing) so a future icon-bearing label needs no layout tweak.
 .eyebrow
   display: flex
   flex-flow: row
@@ -253,12 +175,7 @@ $page-padding: 1.25rem
   font-weight: bold
   color: var(--body)
 
-// A row of <p> per paragraph (see featured-review.tsx), not a single text
-// node — -webkit-line-clamp only clamps one box's own inline content, not
-// several block-level children, so the cutoff here is a max-height instead,
-// same "more than the old 3-line clamp, but still capped" intent. No fade
-// of its own — see .read_more's own ::before, which only exists (and so
-// only fades anything) when .read_more itself is actually rendered.
+// A row of <p> per paragraph, not one text node — -webkit-line-clamp can't clamp several block children, so max-height caps it instead. No fade of its own; that's .read_more's ::before, rendered only when .read_more is.
 .excerpt
   display: flex
   flex-flow: column
@@ -273,11 +190,7 @@ $page-padding: 1.25rem
 .excerpt_line
   white-space: pre-wrap
 
-// margin-top: auto — .info is a top-anchored (justify-content: flex-start)
-// flex column stretched to the poster's full height, so this is what pins
-// the link to the bottom of that box instead of sitting wherever .excerpt
-// happens to end. Full-width (not fit-content) so its own ::before fade
-// below spans the whole info column, not just the width of its own text.
+// margin-top: auto pins this to the bottom of .info's stretched flex column instead of wherever .excerpt ends. Full-width so ::before's fade below spans the whole column, not just the text.
 .read_more
   position: relative
   display: block
@@ -289,11 +202,7 @@ $page-padding: 1.25rem
   transition: text-decoration-color 0.15s ease
   margin-top: auto
 
-  // Sits directly above the link's own text, fading .excerpt's last visible
-  // line into the card's background — a background gradient owned by this
-  // element (only rendered when the excerpt actually overflows, see
-  // featured-review.tsx) rather than an unconditional mask on .excerpt
-  // itself, so a review that fits with room to spare never fades anything.
+  // Fades .excerpt's last visible line into the background — only rendered when the excerpt overflows, so a review that fits never fades anything.
   &::before
     content: ""
     position: absolute

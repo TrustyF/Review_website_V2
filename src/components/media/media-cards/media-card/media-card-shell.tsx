@@ -15,17 +15,8 @@ type Props = {
 	children?: ReactNode;
 };
 
-// Shared layout for every card type: poster, title, release date, review,
-// edit button. Per-type cards (MovieCard, TvShowCard, ...) supply only the
-// bit of secondary info that actually differs between media types.
-// MediaEditButton decides for itself whether it's allowed to render.
-//
-// Renders both this layout and MediaCardShellMobile's, swapping which one's
-// visible via CSS ($mobile-breakpoint, mirrored in each module's own
-// .wrapper) rather than a client-side matchMedia check — this stays a
-// server component that way, and there's no first-paint flash/mismatch to
-// worry about. Both mount the same poster src, so the only real cost is a
-// second (browser-cache-deduped) image request, not a second download.
+// Shared layout for every card type; per-type cards supply only the differing secondary info.
+// Renders both this and the mobile layout, swapping visibility via CSS breakpoint instead of matchMedia so this stays a server component with no first-paint mismatch.
 export function MediaCardShell({ media, children }: Props) {
 	return (
 		<>

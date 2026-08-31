@@ -7,15 +7,10 @@ import { updateTvShowFromTmdb } from "@/server/tmdb/ingest/tv-show";
 import { fetchIgdbGameById } from "@/server/igdb/client";
 import { updateGameFromIgdb } from "@/server/igdb/ingest/game";
 
-// One-time catch-up: bannerPath only started being ingested once TMDB
-// backdrop_path / IGDB artworks support was added — every row enriched
-// before that has it null. MangaDex/ComicVine never have a banner at all
-// (see poster-resolver.ts's bannerUrlFor), so MANGA/COMIC are skipped
-// entirely — nothing to backfill there. Reuses the regular update*From*
-// ingest functions, which already only fill fields that are still empty
-// (see movie.ts/tv-show.ts/game.ts), so this can't clobber anything a hand
-// edit already set; it also refreshes publicRating/budget/revenue/status
-// for these rows as a side effect of going through that same path.
+// One-time catch-up: bannerPath was null for rows enriched before backdrop
+// support was added. MANGA/COMIC skipped since those sources never have a
+// banner. Reuses regular update*From* ingest, which only fills empty
+// fields, so nothing gets clobbered.
 type BannerType =
 	| typeof MediaType.MOVIE
 	| typeof MediaType.SHORT
@@ -56,9 +51,7 @@ async function backfillType(type: BannerType) {
 }
 
 async function main() {
-	// Each type talks to its own independently rate-limited API — run
-	// concurrently rather than making one wait on the other, same reasoning
-	// as enrich-db.ts's per-type queues.
+	// Each type talks to its own independently rate-limited API — run concurrently.
 	await Promise.all([
 		backfillType(MediaType.MOVIE),
 		backfillType(MediaType.SHORT),

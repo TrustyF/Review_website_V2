@@ -4,10 +4,7 @@ import { useIsAdmin } from "@/lib/use-is-admin";
 import styles from "./change-log-list.module.sass";
 
 type Props = {
-	// Every entry, vs. only the ones a non-admin actually gets to see (see
-	// change-log-entry-row.tsx) — an admin can have a non-empty log that's
-	// entirely soft-deleted, which would otherwise render as a silently
-	// empty <ul> for everyone else.
+	// Admin sees totalCount so a fully soft-deleted log doesn't render as empty for them too.
 	totalCount: number;
 	visibleCount: number;
 	children: ReactNode;

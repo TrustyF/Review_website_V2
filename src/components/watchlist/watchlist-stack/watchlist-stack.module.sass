@@ -1,8 +1,5 @@
-// container-type: size establishes this as the reference box for .card's
-// cqw/cqh below (its own height/width, not the viewport's) — needed so the
-// overlap math in watchlist-stack.tsx can express both a card's
-// height-derived width (in cqh) and the container's own width (in cqw) in
-// the same calc().
+// container-type: size makes .stack the reference box for .card's cqw/cqh,
+// so watchlist-stack.tsx's overlap calc() can mix both units.
 .stack
   height: 100%
   width: 100%
@@ -10,21 +7,10 @@
   cursor: pointer
   container-type: size
 
-// height: 100% + aspect-ratio (matching MediaPoster's own default ratio
-// prop — see poster.tsx, not overridden here) makes every card exactly as
-// tall as .stack and auto-computes its width from that height, instead of
-// the other way around (a flex-grown width with height following from it,
-// which is what let a card's height drift from the container's). Since
-// MediaPoster's own .poster_frame (primitives.module.sass) is width: 100%
-// + aspect-ratio itself, and its width here is this card's own
-// aspect-ratio-derived width, the frame's resulting height works out to
-// exactly this card's height too — no cropping/fill trick needed, the
-// poster just naturally fills the box at its native shape.
-// flex: 0 0 auto — sized to that aspect-ratio content, not grown/shrunk by
-// flex. z-index and margin-left are both set inline (watchlist-stack.tsx):
-// z-index depends on which card is frontmost, and margin-left is a calc()
-// solved from the container's own size (via cqw/cqh) so the deck spans its
-// full width exactly regardless of how many cards there are.
+// height: 100% + aspect-ratio derives each card's width from its height
+// (matching MediaPoster's own ratio) instead of letting a flex-grown width
+// make the height drift from the container's. z-index/margin-left are set
+// inline in watchlist-stack.tsx since they depend on card count and position.
 .card
   height: 100%
   aspect-ratio: 2 / 3

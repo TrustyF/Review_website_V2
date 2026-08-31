@@ -5,9 +5,7 @@ import { resolveCountry } from "@/server/resolvers/entity-resolver";
 import { syncMovieCreditsAndGenres } from "@/server/tmdb/ingest/movie-credits";
 import { fetchTmdbImages, pickBestBackdrop } from "@/server/tmdb/client";
 
-// TMDB's own movie `status` string — anything unrecognized (including
-// missing) falls back to RELEASED rather than guessed at, same convention as
-// IGDB's STATUS_MAP in server/igdb/ingest/game.ts.
+// Anything unrecognized (including missing) falls back to RELEASED rather than guessed at.
 const MOVIE_STATUS_MAP: Record<string, MediaStatus> = {
 	Rumored: MediaStatus.ANNOUNCED,
 	Planned: MediaStatus.ANNOUNCED,
@@ -20,12 +18,8 @@ function resolveMovieStatus(data: TmdbMovieResponse): MediaStatus {
 	return MOVIE_STATUS_MAP[data.status] ?? MediaStatus.RELEASED;
 }
 
-// A movie's externalId is looked up against both MOVIE and SHORT — TMDB
-// has no separate id space for shorts, they're plain movie entries, and
-// some rows get reclassified to SHORT after creation. Matching MOVIE only
-// would miss an existing SHORT row entirely: add would create a duplicate,
-// and update (called for SHORT rows too, see enrich-db.ts) would 404 on a
-// row that actually exists.
+// TMDB has no separate id space for shorts (plain movie entries), and rows can get reclassified to
+// SHORT after creation, so lookups must match both types or risk duplicate creates / false 404s.
 const MOVIE_OR_SHORT = [MediaType.MOVIE, MediaType.SHORT];
 
 export async function addMovieFromTmdb(data: TmdbMovieResponse) {
@@ -97,9 +91,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 			? await resolveCountry(tx, data.origin_country[0])
 			: null;
 
-		// Only hits TMDB's images endpoint when a banner is actually still
-		// missing — bulk re-enrichment (enrich-db.ts, backfill-banners.ts)
-		// runs this over every row, most of which already have one.
+		// Only hits the images endpoint when a banner is still missing, since bulk re-enrichment runs over every row.
 		const bannerPath =
 			existing.bannerPath ??
 			pickBestBackdrop(
@@ -107,20 +99,14 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 			) ??
 			data.backdrop_path;
 
-		// Re-enrichment only fills in fields that are still empty — anything
-		// already set (whether from a prior ingest or a hand edit in the media
-		// editor) is left alone. budget/revenue/publicRating/popularity/status are
-		// the exception: those genuinely change over time at the source, so they
-		// always refresh.
+		// Re-enrichment only fills in still-empty fields; budget/revenue/publicRating/popularity/status
+		// genuinely change over time at the source, so those always refresh.
 		await tx.media.update({
 			where: { id: existing.id },
 			data: {
 				title: existing.title ?? data.title,
-				// TMDB's own flag can turn this on, but never off — its adult flag
-				// is unreliable in practice (only ever true for hardcore listings,
-				// false even for plenty of softcore/erotic titles — see media 1433,
-				// "The Voyeur"), so a manual correction in the editor (see
-				// media-editor-modal.tsx) always wins over what TMDB re-reports.
+				// TMDB's adult flag can turn this on but never off — it's unreliable in practice (only
+				// true for hardcore listings), so a manual correction in the editor always wins.
 				isAdult: existing.isAdult || data.adult,
 				overview: existing.overview ?? data.overview,
 				status: resolveMovieStatus(data),
@@ -143,8 +129,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 						imdbID: existing.movie?.imdbID ?? data.imdb_id,
 						originalLanguage:
 							existing.movie?.originalLanguage ?? data.original_language,
-						// Refreshed every re-enrich, not just filled in once — see
-						// the field's own comment in media.prisma.
+						// Refreshed every re-enrich, not just filled in once (see media.prisma).
 						popularity: data.popularity,
 					},
 				},

@@ -1,17 +1,11 @@
 type Props = {
 	size?: number | undefined;
 	className?: string | undefined;
-	// Matches the fill prop lucide icons take, so this drops into NavLink's/
-	// NavDropdown's existing `fill={isActive ? "currentColor" : "none"}` call
-	// sites unchanged.
+	// Matches lucide icons' fill prop for drop-in use at NavLink/NavDropdown call sites.
 	fill?: string | undefined;
 };
 
-// Extracted from lucide-react's Clapperboard icon so the filled variant below
-// can be hand-edited independently of the outline — lucide only ships
-// outline artwork, no separate filled set. The diagonal stripe subpaths
-// overlap the body and rely on fillRule="evenodd" to punch through it as
-// cutouts rather than filling solid.
+// Extracted from lucide-react's Clapperboard; diagonal stripes rely on fillRule="evenodd" to cut through the body rather than fill solid.
 export function MovieIcon({ size = 24, className, fill = "none" }: Props) {
 	const filled = fill !== "none";
 	return (

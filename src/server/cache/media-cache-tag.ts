@@ -1,8 +1,4 @@
-// Shared by get-media.ts (tags its unstable_cache entries) and every action
-// that needs to invalidate them (revalidateMediaPaths, plus the two mutation
-// paths that touch cached media data without going through it — see
-// updateMediaBannerFocus and deleteChangeLogEntry) — keeps the tag string
-// itself in one place so the two sides can't drift.
+// Single source of truth for the tag string, shared by cache writers and invalidators so they can't drift.
 export function mediaCacheTag(mediaId: number) {
 	return `media:${mediaId}`;
 }

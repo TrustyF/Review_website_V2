@@ -1,15 +1,7 @@
 import { notFound } from "next/navigation";
 import { CreditMediaListPage } from "@/components/media/media-pages/credit-media-list-page/credit-media-list-page";
 
-// No generateStaticParams, so each id is rendered on first visit and then
-// cached indefinitely by default (same on-demand-ISR behavior as /movies
-// etc) — but nothing ever calls revalidatePath for this route: credits get
-// recreated both when an admin adds media (a Server Action, which could
-// revalidate) and when enrich-db.ts re-syncs an existing item's credits (a
-// separate GitHub Actions cron process, which can't). This time-based
-// revalidate is what keeps a person's filmography from going stale forever
-// after their first visit, covering both paths at once — same reasoning as
-// get-media.ts's own 1-hour revalidate.
+// Nothing calls revalidatePath for this route (credits also get resynced by the out-of-process enrich-db.ts cron), so a time-based revalidate keeps filmographies from going stale forever.
 export const revalidate = 3600;
 
 export default async function PersonCreditsPage({

@@ -7,8 +7,7 @@ import styles from "./new-list-link.module.sass";
 export function NewListLink() {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
-	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
-	// for the same rule applied to the navbar's own admin links).
+	// Mobile admin edits are intentionally unsupported.
 	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	if (!isAdmin) return null;
 

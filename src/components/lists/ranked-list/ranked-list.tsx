@@ -28,31 +28,17 @@ type Props = {
 	media: MediaRecord[];
 };
 
-// Single-column, top-to-bottom ranked list (drag to reorder) — a wrapping
-// grid has no unambiguous "drop it between these two" target once items
-// wrap across columns, so ranking only works as a single column. Reordering
-// only makes sense against the *complete* list, so it's disabled — via
-// useSortable's own `disabled` option on each row (see ranked-list-row.tsx),
-// not by unmounting the DnD context — whenever a filter is narrowing what's
-// currently visible, or the viewer isn't an admin.
+// Single-column, top-to-bottom (drag to reorder) — a wrapping grid has no unambiguous drop target once items wrap across columns. Reordering is disabled via each row's useSortable `disabled` option (not by unmounting DnD) whenever a filter is active or the viewer isn't an admin.
 export function RankedList({ listId, media }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
-	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
-	// for the same rule applied to the navbar's own admin links).
+	// Mobile admin edits are intentionally unsupported.
 	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const { removingId, handleRemove } = useListItemRemoval(listId);
 	const [reorderError, setReorderError] = useState<string | null>(null);
 	const { filter, setFilter, filteredMedia } = useMediaFilter(media);
 
-	// Local order, so a drag reflects immediately rather than waiting on the
-	// server round trip — resynced whenever the server's own order changes
-	// underneath it (a fresh load, a successful reorder's revalidatePath, or
-	// the filter narrowing/widening what's shown). Compared directly in the
-	// render body against the last-seen filteredMedia, not in an effect —
-	// same "storing info from previous renders" pattern already used by
-	// banner-edit-trigger.tsx's loadedSrc, avoiding an extra effect-triggered
-	// re-render for what's really just a prop-change response.
+	// Local order for immediate drag feedback, resynced when server order changes underneath it. Compared in the render body (not an effect) to avoid an extra re-render for what's just a prop-change response.
 	const [orderedMedia, setOrderedMedia] = useState(filteredMedia);
 	const [syncedFilteredMedia, setSyncedFilteredMedia] = useState(filteredMedia);
 	if (filteredMedia !== syncedFilteredMedia) {
@@ -60,18 +46,14 @@ export function RankedList({ listId, media }: Props) {
 		setOrderedMedia(filteredMedia);
 	}
 
-	// Reordering (drag or the sort-by-rating button below) only makes sense
-	// against the *complete* list — a filtered subset's positions don't map
-	// cleanly back onto the full list's.
+	// Reordering only makes sense against the complete list, not a filtered subset.
 	const reorderDisabled = !isAdmin || isFilterActive(filter);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
 	);
 
-	// Shared by drag-end and sort-by-rating — optimistically applies a new
-	// order, persists it, and rolls back with an error message if the save
-	// fails.
+	// Shared by drag-end and sort-by-rating: optimistic update, rolled back on failure.
 	async function persistOrder(reordered: MediaRecord[]) {
 		const previous = orderedMedia;
 		setOrderedMedia(reordered);
@@ -98,11 +80,7 @@ export function RankedList({ listId, media }: Props) {
 		await persistOrder(arrayMove(orderedMedia, oldIndex, newIndex));
 	}
 
-	// Same rating sort RatedTierGrid uses (highest first, unrated last) —
-	// consistent with what "sorted by rating" already means elsewhere in
-	// this app. Confirmed first since it overwrites whatever manual order
-	// was there, the same way EditListForm's handleDelete confirms before
-	// its own irreversible action.
+	// Same rating sort RatedTierGrid uses (highest first, unrated last). Confirmed first since it overwrites the manual order.
 	function handleSortByRating() {
 		if (
 			!confirm(

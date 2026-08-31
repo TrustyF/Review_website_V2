@@ -1,16 +1,6 @@
-// Shared style for the small icon toggles that live over a mini card's
-// poster on hover (watchlist, seen, ...). No background/shape of their own —
-// the pill background they sit on belongs to the group container (see
-// .status_buttons in media-mini-card-shell.module.sass), same one contrast
-// surface behind all of them rather than one circle each. Kept as its own
-// module (not folded into media-mini-card-shell.module.sass) since it's the
-// buttons' own look, not the shell's — the shell only owns where the group
-// of them sits.
+// Shared style for the small icon toggles over a mini card's poster on hover. No background of their own — the shared pill surface belongs to .status_buttons in media-mini-card-shell.module.sass.
 .badge
-  // The group container is what's absolutely positioned over the poster;
-  // each badge here is just a flex child of that group in normal flow, so it
-  // needs its own position to be a positioning context for the svg's
-  // absolute centering below.
+  // Positioning context for the svg's absolute centering below (the group itself is what's positioned over the poster).
   position: relative
   width: 1.5rem
   height: 1.5rem
@@ -18,14 +8,7 @@
   cursor: pointer
 
   svg
-    // Each badge sits at a different absolute pixel offset (nested many
-    // levels down a grid whose own track widths are fractional), so
-    // flex/grid centering rounds the icon's box to the nearest device pixel
-    // independently per card — some come out centered, others off by a
-    // pixel, depending on that card's particular fractional offset. A
-    // single transform: translate(-50%, -50%), computed relative to the
-    // icon's own box in one compositor pass instead of two layout boxes
-    // agreeing on a rounded value, doesn't have that same failure mode.
+    // transform-based centering avoids per-card rounding drift that flex/grid centering gets from fractional grid track widths.
     position: absolute
     top: 50%
     left: 50%

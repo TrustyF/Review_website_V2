@@ -37,11 +37,7 @@
   text-transform: uppercase
   letter-spacing: 0.03em
 
-// Groups the settings gear and SignOutButton into one cluster, pinned to
-// the header row's top edge (the row itself centers vertically against the
-// taller .identity block, which these two shouldn't stretch to match) —
-// .settings_link/.sign_out no longer need their own align-self now that
-// this wrapper carries it for both at once.
+// Pins actions to the header's top edge; .identity is taller and centers on its own.
 .header_actions
   display: flex
   align-items: center
@@ -67,14 +63,7 @@
   @media (max-width: 640px)
     grid-template-columns: 1fr
 
-// Both panels capped to the same total height regardless of content —
-// watchlist-stack.module.sass's .stack and .lists_stack below both flex: 1
-// + min-height: 0 to fill whatever's left after the header, instead of
-// dictating the panel's height themselves.
-//
-// Both are Links (see page.tsx) so the whole card is the click area, not
-// just the poster strip / list grid inside it — same treatment, same
-// selector group.
+// Both capped to the same height; children flex to fill rather than sizing the panel. Both are Links so the whole card is clickable.
 .watchlist,
 .lists
   display: flex
@@ -101,14 +90,7 @@
 .section_icon
   color: var(--accent1)
 
-// Fixed 2x2 layout, sized by flex: 1 (fills whatever .lists's own fixed
-// height leaves after the header) rather than a height of its own — keeps
-// this from growing past .watchlist's matching cap. Both dimensions are
-// capped (2 columns, 2 rows) since page.tsx already slices to at most 4
-// lists, so every card gets an equal share of the panel's height instead of
-// sizing itself off its own content (list-preview-card.module.sass's
-// .wrapper/.thumbnail_frame stretch to fill whatever row height that
-// leaves).
+// Fixed 2x2 grid (page.tsx caps to 4 lists) so cards share the panel height equally.
 .lists_stack
   display: grid
   grid-template-columns: 1fr 1fr

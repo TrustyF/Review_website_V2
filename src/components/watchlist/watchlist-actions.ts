@@ -9,9 +9,8 @@ async function requireUserId(): Promise<string> {
 	return session.user.id;
 }
 
-// Signed-out reads just get an empty watchlist rather than throwing — unlike
-// requireUserId's callers, this one is meant to be called unconditionally
-// (see WatchlistProvider), not only from an already-gated signed-in path.
+// Signed-out reads get an empty watchlist rather than throwing, since this is
+// called unconditionally (see WatchlistProvider), not from a gated path.
 export async function getMyWatchlistMediaIds(): Promise<number[]> {
 	const session = await auth();
 	if (!session?.user?.id) return [];

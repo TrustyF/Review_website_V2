@@ -5,10 +5,8 @@ import { toMediaRecord } from "@/components/media/types";
 import { WatchlistGrid } from "@/components/watchlist/watchlist-grid/watchlist-grid";
 import styles from "./watchlist-page.module.sass";
 
-// Server Component for /watchlist — same shape as ListDetailPage, but the
-// membership query is scoped to the signed-in user instead of a listId, and
-// there's no sortMode/RankedList branch since a watchlist is always newest-
-// first (see WatchlistItem.addedAt in prisma/schema/watchlist.prisma).
+// Same shape as ListDetailPage, but scoped to the signed-in user and always
+// newest-first, so no sortMode/RankedList branch is needed.
 export async function WatchlistPage() {
 	const session = await auth();
 	if (!session?.user) redirect("/login");

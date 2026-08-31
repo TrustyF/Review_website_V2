@@ -1,9 +1,6 @@
-// Client-safe shape metadata (label + aspect ratio only) — kept separate
-// from image-crop-resolver.ts's server-only settings (output dir, quality,
-// format) for the same reason posterRatioFor lives apart from
-// poster-resolver.ts: a "use client" module can't import anything from a
-// module that pulls in fs/sharp, even a plain function or constant, since
-// Next treats every export from a client-imported module as client-bundled.
+// Client-safe shape metadata, kept separate from image-crop-resolver.ts's
+// server-only settings — a "use client" module can't import from a module
+// pulling in fs/sharp, even a plain constant.
 export type CropShapeId =
 	| "poster-2-3"
 	| "poster-3-4"
@@ -16,12 +13,8 @@ export const CROP_SHAPES: Record<
 	{
 		label: string;
 		ratio: number;
-		// Cropper's own overlay guide only — "round" just draws a circular mask
-		// over the crop rect so it's obvious the corners get cropped away by
-		// the consuming UI's own border-radius (AvatarPicker's .option_image).
-		// The saved file itself always stays a plain rectangular image, same
-		// as every other shape here — never one with actual transparent
-		// corners.
+		// UI guide only — draws a circular mask hinting at the consumer's own
+		// border-radius crop; the saved file always stays a plain rectangle.
 		cropShape?: "rect" | "round";
 	}
 > = {

@@ -5,10 +5,8 @@ import {
 	useMobileViewportStore,
 } from "@/lib/mobile-viewport-store";
 
-// Single app-wide matchMedia subscription, mounted once in layout.tsx next
-// to DevMenu/MediaEditorModal/FeaturedManagerModal — every admin-gated
-// component reads the result via useIsMobileViewport() instead of each
-// setting up its own listener. Renders nothing.
+// Single app-wide matchMedia subscription, mounted once in layout.tsx;
+// components read it via useIsMobileViewport() instead of listening themselves.
 export function MobileViewportListener() {
 	const setIsMobile = useMobileViewportStore((s) => s.setIsMobile);
 

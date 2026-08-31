@@ -1,20 +1,13 @@
 @use "@/app/styles/variables" as *
 
-// position: relative — anchors MediaFilterPopover's own absolutely-
-// positioned .wrapper to this box's top-right corner (see that component's
-// own note).
+// Anchors MediaFilterPopover's absolutely-positioned .wrapper to this box's top-right corner.
 .wrapper
   position: relative
 
 .empty
   @include empty-text
 
-// Positioned against LazyMediaGrid's own .item wrapper (position: relative,
-// no other layout of its own) — same corner-badge treatment the old,
-// now-deleted list-media-grid.module.sass used. The hover-to-reveal itself
-// is driven by LazyMediaGrid's own [data-reveal-on-hover] rule (see that
-// component's own note) rather than a rule here, since .item's hover state
-// lives in a different .module.sass file this one can't reach into.
+// Corner badge positioned against LazyMediaGrid's .item wrapper; hover-to-reveal comes from its [data-reveal-on-hover] rule, not this file.
 .remove_button
   position: absolute
   top: 0.25rem

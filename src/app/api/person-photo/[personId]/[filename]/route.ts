@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
 import { resolvePersonPhoto } from "@/server/resolvers/poster-resolver";
 
-// Same lazy resolve-or-download-on-request shape as /api/poster — see that
-// route's own comment. [filename] itself isn't read here either, only
-// existing so the URL is content-addressed by photoPath (see
-// toPersonPhotoSrc), which is what makes the long-lived immutable
-// Cache-Control below safe.
+// Same lazy resolve-or-download shape as /api/poster. [filename] is unused, only content-addressing the URL so the immutable Cache-Control below is safe.
 export async function GET(
 	_req: Request,
 	{ params }: { params: Promise<{ personId: string }> },
@@ -27,14 +23,11 @@ export async function GET(
 
 	const resolved = await resolvePersonPhoto(id, person.photoPath);
 
-	// Same TS 5.9 + @types/node v20 BodyInit friction as /api/poster's own
-	// cast — see that route's comment.
+	// Same TS 5.9 + @types/node v20 BodyInit cast friction as /api/poster.
 	return new NextResponse(resolved.bytes as BodyInit, {
 		headers: {
 			"Content-Type": resolved.contentType,
-			// Same reasoning as /api/poster and /api/banner — a `fresh` response
-			// is the raw source, not yet re-encoded (see resolvePersonPhoto's own
-			// comment), so it must not be cached as immutable.
+			// `fresh` means raw, not-yet-re-encoded source, so it must not be cached as immutable.
 			"Cache-Control": resolved.fresh
 				? "no-store"
 				: "public, max-age=31536000, immutable",

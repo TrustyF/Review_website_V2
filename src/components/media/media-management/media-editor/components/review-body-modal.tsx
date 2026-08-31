@@ -10,9 +10,8 @@ type Props = {
 	onClose: () => void;
 };
 
-// Its own modal, layered on top of the main editor, rather than inline —
-// the main modal's fixed-width column layout didn't have room to show the
-// body textarea and the AI suggestion side by side.
+// Its own modal, not inline, since the main modal's fixed-width columns had no room to show
+// the body textarea and AI suggestion side by side.
 export function ReviewBodyModal({ body, onChange, onClose }: Props) {
 	const [suggestion, setSuggestion] = useState<string | null>(null);
 	const [isSuggesting, setIsSuggesting] = useState(false);
@@ -32,10 +31,7 @@ export function ReviewBodyModal({ body, onChange, onClose }: Props) {
 		}
 	}
 
-	// Wraps the current selection in before/after (or, with nothing selected,
-	// inserts a placeholder between them) — used for both toolbar buttons
-	// below. See review-body.tsx for how ||...|| and [text](url) get
-	// rendered back out.
+	// Wraps the current selection in before/after, or inserts a placeholder if nothing's selected.
 	function wrapSelection(before: string, after: string, placeholder: string) {
 		const textarea = textareaRef.current;
 		if (!textarea) return;
@@ -49,8 +45,7 @@ export function ReviewBodyModal({ body, onChange, onClose }: Props) {
 			body.slice(selectionEnd);
 		onChange(newBody);
 
-		// The re-render from onChange hasn't landed yet — wait a frame before
-		// touching the textarea's own selection again.
+		// The re-render from onChange hasn't landed yet — wait a frame before touching selection.
 		requestAnimationFrame(() => {
 			textarea.focus();
 			const start = selectionStart + before.length;

@@ -3,15 +3,11 @@
 .empty
   @include empty-text
 
-// Invisible marker the IntersectionObserver watches — same convention as
-// lazy-media-list.module.sass's own .sentinel.
+// Invisible marker the IntersectionObserver watches.
 .sentinel
   height: 1px
 
-// Same sticky-header treatment as grouped-media-list.module.sass's own
-// .group_header/.groups (the Reviews page's month grouping) — reused here
-// so the two "grouped by month" list pages read as the same pattern rather
-// than each having invented their own.
+// Same sticky-header treatment as the Reviews page's own month grouping.
 .groups
   display: flex
   flex-flow: column
@@ -26,9 +22,7 @@
   flex-flow: column
   list-style: none
 
-// Mount-only fade+slide for each row — .entry below runs this once per key
-// (entry.id), never re-triggered afterward, so a row already on screen when
-// the next lazy-loaded batch mounts stays put instead of replaying it.
+// Mount-only fade+slide, keyed by entry.id so it never replays on a later batch.
 @keyframes entry-enter
   0%
     opacity: 0
@@ -37,11 +31,8 @@
     opacity: 1
     transform: translateY(0)
 
-// Two columns: a taller poster, and a content block beside it that's
-// itself two stacked lines (title+date, then action+value) — a small
-// "card" per row rather than one flat table row. Poster height (5.5rem)
-// drives the row height; .content centers its two lines within it via
-// justify-content rather than the row stretching them apart.
+// Two columns: poster, and a content block of two stacked lines (title+date,
+// action+value) — poster height drives the row height, .content centers within it.
 .entry
   display: grid
   grid-template-columns: 4rem 1fr
@@ -49,28 +40,19 @@
   column-gap: 0.75rem
   padding: 0.5rem 0
   height: 6rem
-  // --stagger-index (activity-feed.tsx, this row's position within its own
-  // month group) staggers the entrance instead of every row fading in at
-  // once — capped via min() so a long group's later rows all just settle at
-  // the same 300ms delay rather than the wait growing unbounded.
+  // --stagger-index staggers entrance; min() caps a long group's delay at 300ms.
   animation: entry-enter 300ms ease both
   animation-delay: min(calc(var(--stagger-index, 0) * 70ms),1000ms)
 
   @media (prefers-reduced-motion: reduce)
     animation: none
 
-// Same sizing/fit as change-log-list.module.sass's own .poster_value — a
-// media row here should look like one lifted straight out of that list.
-// justify-self centers it within the fixed 4rem icon/poster column, since
-// its own rendered width (icon: 16px fixed; poster: aspect-ratio-derived,
-// narrower than the column) varies between the two.
+// Same sizing/fit as change-log-list.module.sass's own .poster_value.
+// justify-self centers it since icon (16px) and poster width vary.
 .poster
-  // A grid item's default min-width/min-height is auto, which for a
-  // replaced element like <img> resolves to its *intrinsic* size (93x140
-  // here, from the width/height props — see the Image call site's own
-  // comment) rather than the height:100%/width:auto below — without this
-  // override the fixed column can't actually shrink it and it spills out
-  // of the row.
+  // Grid items default min-width/height to auto, which for <img> resolves to its
+  // intrinsic size (93x140) rather than height:100%/width:auto below, without
+  // this override the fixed column can't shrink it and it spills out.
   min-width: 0
   min-height: 0
   justify-self: center
@@ -83,8 +65,7 @@
   justify-self: center
   color: var(--accent1)
 
-// The two-line text block next to the poster — vertically centered inside
-// the row (poster is what actually sets the row's height now, not this).
+// Two-line text block next to the poster, vertically centered (poster sets row height).
 .content
   min-width: 0
   height: 100%
@@ -93,8 +74,7 @@
   justify-content: center
   gap: 0.3rem
 
-// Title line: the target, with the date pushed to the far right of the
-// same line rather than its own column.
+// Title line: target, date pushed to the far right of the same line.
 .title_row
   display: flex
   flex-flow: row
@@ -103,10 +83,7 @@
   gap: 0.75rem
   min-width: 0
 
-// Subtitle line: the action verb ("Rated", "Watchlisted", ...) followed by
-// its value, reading like a caption under the title rather than a table
-// cell — left-aligned, no fixed width needed now that it isn't sharing a
-// row with the title.
+// Subtitle line: action verb + value, reading like a caption under the title.
 .meta
   display: flex
   flex-flow: row
@@ -118,9 +95,7 @@
   font-size: 0.85rem
   white-space: nowrap
 
-// The target — a title_link (or, for LIST_ITEM_ADDED, the media) — clipped
-// to one line rather than left to wrap, since wrapping would grow that
-// row taller than every other row's fixed height.
+// Clipped to one line — wrapping would grow the row past its fixed height.
 .target
   min-width: 0
   overflow: hidden
@@ -137,17 +112,13 @@
   &:hover
     text-decoration: underline
 
-// The value (a RatingValue, a RATING_CHANGED old→new pair, WATCHLIST_ADDED's
-// own icon, or LIST_ITEM_ADDED's list link) — empty for types with nothing
-// to show there.
+// The value (rating, old→new pair, icon, or list link) — empty for types with none.
 .value
   display: flex
   flex-flow: row
   align-items: center
 
-// Same accent as the icon column's own .type_icon, so a bare icon sitting
-// in the value spot reads consistently with one sitting in the poster
-// column.
+// Same accent as .type_icon, so an icon in the value spot reads consistently.
 .value_icon
   color: var(--accent3)
   stroke-width: 0.15rem
@@ -162,16 +133,11 @@
   font-size: 0.85rem
 
 
-// The "before" side of a RATING_CHANGED pair — same accent as
-// change-log-list.module.sass's own .old_value, so a glance at color alone
-// (not just position) says which side is which.
+// "Before" side of a RATING_CHANGED pair — color alone (not just position) says which side is which.
 .rating_value_old
   color: var(--accent2)
 
-// Just the number, not the star next to it — a diagonal ::after bar rather
-// than plain text-decoration: line-through (which can only draw a
-// horizontal line), scoped to this inner span so the strike doesn't run
-// through the star icon too.
+// A diagonal ::after bar, not plain line-through, scoped so the strike skips the star icon.
 .value_old
   position: relative
 
@@ -190,9 +156,7 @@
   color: var(--accent1)
   stroke-width: 0.2rem
 
-// Direction the rating moved — set on .arrow_icon alongside it (see
-// ratingDirection in activity-feed.tsx), overriding its own neutral
-// --accent1 default only when the two values actually differ.
+// Direction the rating moved (see ratingDirection) — overrides the neutral default.
 .arrow_up
   color: var(--success)
 
@@ -204,9 +168,7 @@
   font-family: $font-mono
   font-size: 0.8rem
 
-// Same treatment as change-log-list.module.sass's own .timeline_gap — a
-// short vertical tick between two entries at least TIMELINE_GAP_DAYS apart,
-// reading as a break in the timeline's spine rather than a full-width rule.
+// A short vertical tick between entries at least TIMELINE_GAP_DAYS apart.
 .timeline_gap
   display: flex
   flex-flow: row
@@ -215,10 +177,7 @@
   height: 2rem
   // 2rem centers it under .entry's 4rem icon/poster column.
   margin: 0.5rem 0 0.2rem 2rem
-  // Same stagger as .entry above (this divider shares the following row's
-  // own --stagger-index, see activity-feed.tsx) so it animates in step with
-  // the row it introduces instead of sitting there static while everything
-  // else cascades in around it.
+  // Shares the following row's --stagger-index so it animates in step with it.
   animation: entry-enter 300ms ease both
   animation-delay: min(calc(var(--stagger-index, 0) * 70ms), 1000ms)
 

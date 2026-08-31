@@ -1,10 +1,6 @@
 @use "@/app/styles/variables" as *
 
-// height: 100% + min-height: 0 so this fills whatever row height its parent
-// grid cell gives it (used on /account's 2x2 recommendations grid — see
-// account.module.sass's .lists_stack) instead of sizing off its own content;
-// on /lists this parent is just an auto-height grid cell, so it's a no-op
-// there.
+// Fills the parent grid cell's row height (used by /account's recommendations grid); a no-op on /lists' auto-height cells.
 .wrapper
   display: flex
   flex-flow: column
@@ -14,11 +10,7 @@
   color: inherit
   text-decoration: none
 
-// flex: 1 + min-height: 0 lets this fill whatever space .title/.description
-// leave within .wrapper's fixed height, rather than the aspect-ratio driving
-// the wrapper's height (which is what /lists's own auto-height cells still
-// want — aspect-ratio stays as the intrinsic size that flex-basis falls
-// back to there).
+// Fills leftover space within .wrapper's fixed height rather than letting aspect-ratio drive it; aspect-ratio still applies as the flex-basis fallback on /lists' auto-height cells.
 .thumbnail_frame
   position: relative
   width: 100%

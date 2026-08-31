@@ -11,18 +11,14 @@ import styles from "./ranked-list.module.sass";
 type Props = {
 	media: MediaRecord;
 	rank: number;
-	// Reordering only makes sense against the complete list (see
-	// ranked-list.tsx) — disabled via useSortable's own option rather than
-	// this row not being wrapped in a sortable context at all, since a
-	// non-admin/filtered view still needs to render, just without the handle.
+	// Disabled via useSortable's own option (not by skipping the sortable context) so a non-admin/filtered view still renders, just without the handle.
 	dragDisabled: boolean;
 	canRemove: boolean;
 	isRemoving: boolean;
 	onRemove: () => void;
 };
 
-// Horizontal row, unlike MediaMiniCardShell's vertical poster-on-top layout
-// — a dense numbered list reads top to bottom, not as tiles.
+// Horizontal row, unlike MediaMiniCardShell's vertical layout — a numbered list reads top to bottom, not as tiles.
 export function RankedListRow({
 	media,
 	rank,
@@ -41,9 +37,7 @@ export function RankedListRow({
 			style={{ transform: CSS.Transform.toString(transform), transition }}>
 			<div className={styles.rank}>{rank}</div>
 			{!dragDisabled && (
-				// Drag listeners live only on this handle, not the whole row —
-				// the poster below stays a plain click-through to /media/[id]
-				// with no click-vs-drag disambiguation needed.
+				// Listeners live only on this handle so the poster stays a plain click-through to /media/[id].
 				<button
 					type="button"
 					className={styles.drag_handle}

@@ -9,25 +9,18 @@ type Props = {
 	id: number;
 	initialDeletedAt: Date | null;
 	children: ReactNode;
-	// Alternating-row background — driven by ChangeLogList's own index into
-	// the entry list (not CSS :nth-child) since timeline gap dividers are
-	// interleaved <li>s too, and would throw off a purely structural
-	// odd/even count.
+	// Driven by ChangeLogList's index (not CSS :nth-child) since interleaved timeline dividers would throw off odd/even.
 	alt: boolean;
 };
 
-// The row itself stays server-rendered (children come pre-built from
-// ChangeLogList, including the posterPath thumbnail — that needs
-// Buffer-based helpers that only run server-side) — this wrapper just owns
-// the delete button and the greyed-out state, so clicking it doesn't need a
-// full page refetch to show.
+// Row content stays server-rendered (children pre-built by ChangeLogList); this wrapper just owns
+// the delete button and greyed-out state so a click doesn't need a full page refetch.
 export function ChangeLogEntryRow({ id, initialDeletedAt, children, alt }: Props) {
 	const [deletedAt, setDeletedAt] = useState(initialDeletedAt);
 	const [isPending, startTransition] = useTransition();
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
-	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
-	// for the same rule applied to the navbar's own admin links).
+	// Mobile admin edits are intentionally unsupported.
 	const isAdmin = sessionIsAdmin && !isMobileViewport;
 
 	function handleDelete() {
@@ -37,9 +30,7 @@ export function ChangeLogEntryRow({ id, initialDeletedAt, children, alt }: Props
 		});
 	}
 
-	// Soft-deleted entries stick around (see change-log-actions.ts) only so
-	// an admin can see what was removed before the maintenance purge — to
-	// everyone else the log should read as if they were never there.
+	// Soft-deleted entries stick around only so an admin can see what was removed before purge.
 	if (deletedAt && !isAdmin) return null;
 
 	return (

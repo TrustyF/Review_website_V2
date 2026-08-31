@@ -3,21 +3,12 @@ import "dotenv/config";
 import { db } from "@/server/db/client";
 import { MediaType } from "@prisma/client";
 
-// One-time backfill: the old DB had a video_link field the original
-// mysql-migration never carried over (Media.directLink has sat unused ever
-// since). Only movie/tv rows are handled here — the other 273 old rows with
-// a video_link are all media_type "youtube", a category the original
-// migration also never mapped, so those rows don't exist in the new DB at
-// all and are left alone rather than guessed at.
-//
-// Deliberately not reusing mysql-migration.ts's toMediaType: that module
-// runs its own main() unconditionally at load time, so importing anything
-// from it would silently re-run the entire original migration.
-//
-// The old schema has no SHORT distinction (only "movie"/"tv"/...), but the
-// new one does — some old media_type:"movie" rows now live as SHORT here,
-// reclassified sometime after the original migration. Try MOVIE first, then
-// SHORT, rather than only ever matching the old type literally.
+// One-time backfill: the old DB's video_link field was never carried over
+// by the original migration. Only movie/tv rows are handled — "youtube"
+// type rows never made it into the new DB and are left alone.
+// Doesn't reuse mysql-migration.ts's toMediaType since importing that
+// module re-runs its own main() unconditionally at load time.
+// Old "movie" rows may now be reclassified as SHORT, so try both.
 const CANDIDATE_TYPES: Record<string, MediaType[]> = {
 	movie: [MediaType.MOVIE, MediaType.SHORT],
 	tv: [MediaType.TVSHOW],

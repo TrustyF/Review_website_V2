@@ -13,27 +13,17 @@
   gap: 0.5rem
   max-height: 20rem
   overflow-y: auto
-  // Without this, wheel-scrolling past either end of this container "chains"
-  // to the modal/page behind it instead of just stopping — e.g. reaching the
-  // bottom while scrolling down keeps scrolling the page underneath.
+  // Without this, wheel-scrolling past either end "chains" to the modal/page behind it.
   overscroll-behavior: contain
 
 .option
   height: 10rem
-  // Reserves width up front (typical poster ratio) instead of leaving it to
-  // the image's own natural size, which the browser can't know until it's
-  // loaded — without this, .options collapses too short on first render and
-  // the sentinel below sits inside the visible area immediately, firing the
-  // IntersectionObserver before any option has actually loaded (see
-  // image-picker.tsx's own note on why root is .options). Overridden by the
-  // inline aspectRatio style when the caller passes optionAspectRatio (e.g.
-  // banners' 16/9).
+  // Reserves width up front so .options doesn't collapse too short on first render, which would
+  // otherwise fire the sentinel's IntersectionObserver before any option has loaded. Overridden
+  // by the inline aspectRatio style when optionAspectRatio is passed (e.g. banners' 16/9).
   aspect-ratio: 2 / 3
   max-width: 100%
-  // Placeholder color, same idea as MediaPoster's .poster_frame — shows
-  // through while opacity is 0 below, so each option is a calm, correctly-
-  // sized box the instant the grid mounts instead of a blank gap until its
-  // image request finishes.
+  // Placeholder color shown while opacity is 0, so each option is a calm box instead of a blank gap.
   background-color: var(--accent1-tint)
   object-fit: cover
   object-position: center
@@ -45,9 +35,7 @@
 .option_loaded
   opacity: 1
 
-// Invisible marker the IntersectionObserver watches (root: .options — see
-// image-picker.tsx) — a full-width flex item of its own so it always sits on
-// its own row, below the last option, rather than trailing one mid-row.
+// Invisible marker the IntersectionObserver watches — full-width so it always sits on its own row.
 .sentinel
   flex: 0 0 100%
   height: 1px

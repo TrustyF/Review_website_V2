@@ -7,10 +7,7 @@ import {
 } from "@/components/media/media-grids/grouped-media-grid/grouped-media-grid";
 import { StarIcon } from "@/components/media/icons/star-icon";
 
-// Buckets media into whole-point rating tiers (9 covers a 9.0-9.5 rating,
-// etc.) — halfway steps would mean twenty collapsible sections, too many to
-// be useful as a grid overview. Unrated media get their own tier at the end
-// rather than being silently dropped.
+// Whole-point tiers, not half-point, to avoid twenty collapsible sections. Unrated media get their own tier at the end.
 function ratingTierOf(media: MediaRecord): number | null {
 	const rating = media.review?.rating;
 	if (rating == null) return null;
@@ -25,22 +22,11 @@ function tierLabel(tier: number | null): string {
 
 type Props = {
 	media: MediaRecord[];
-	// Forwarded straight through to each tier's own LazyMediaGrid — see that
-	// component's own note on why this exists.
+	// Forwarded straight through to each tier's own LazyMediaGrid.
 	renderOverlay?: ((item: MediaRecord) => ReactNode) | undefined;
 };
 
-// Groups media into rating tiers, highest first (Unrated last), each
-// rendered as a collapsible, lazily-revealed grid of mini cards via
-// GroupedMediaGrid. Its only caller (MediaFilterGrid) already memoizes the
-// `media` it passes down (use-media-filter.ts's filteredMedia), but that
-// only helps if this component actually skips re-rendering when that
-// reference is unchanged — without memo() below, React still calls this
-// function on every parent re-render regardless, which used to mean redoing
-// the full sort/bucket pass on every tick of a filter slider drag even
-// though the list hadn't changed. memo() + useMemo() together make an
-// unrelated parent re-render (dragging a slider before the debounced filter
-// settles) genuinely free.
+// Groups media into rating tiers, highest first (Unrated last), via GroupedMediaGrid. memo() + useMemo() keep a slider-drag re-render (before the debounced filter settles) from redoing the sort/bucket pass.
 export const RatedTierGrid = memo(function RatedTierGrid({
 	media,
 	renderOverlay,

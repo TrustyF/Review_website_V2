@@ -11,10 +11,7 @@ import {
 	Review,
 	TvShow,
 } from "@prisma/client";
-// asset-paths.ts directly (not poster-resolver.ts) — this type module is
-// imported from many server actions' hot paths, so keeping sharp's native
-// binary out of its dependency graph matters broadly, not just here. See
-// asset-paths.ts's own comment.
+// asset-paths.ts directly (not poster-resolver.ts) — this type module is imported from many server actions' hot paths, so keeping sharp's native binary out of its dependency graph matters broadly.
 import {
 	BANNER_FORMAT,
 	mediaAssetFilename,
@@ -38,20 +35,12 @@ export type RawMediaRecord = Media & {
 type BaseRecord = Omit<Media, "type"> & {
 	review?: Review | null;
 	credits?: Credit[];
-	// Empty when a caller's query didn't bother including mediaGenres (dev
-	// fixture pages, the manual-add flow, ...) — same "just absent" handling
-	// as credits above, not an error case.
+	// Empty when a caller's query didn't include mediaGenres — same "just absent" handling as credits above, not an error case.
 	genres: string[];
 	posterSrc: string;
-	// Unlike posterSrc, no placeholder fallback — most media has no banner
-	// at all (only TMDB/IGDB have one), so absent just means "don't render
-	// a banner section" rather than "show a stand-in image".
+	// Unlike posterSrc, no placeholder fallback — absent just means "don't render a banner section", not "show a stand-in image".
 	bannerSrc: string | null;
-	// "Watched on", shown on MediaReview — Review.createDate itself, not a
-	// separate column (see saveReview): saveReview now requires a rating to
-	// save at all, so createDate can never predate one — gated on rating
-	// being present anyway as a defensive fallback for rows that existed
-	// before that requirement did.
+	// "Watched on" — Review.createDate itself, not a separate column, since saveReview now requires a rating to save at all. Still gated on rating as a defensive fallback for older rows.
 	watchedDate: Date | null;
 };
 
@@ -65,15 +54,7 @@ export type MediaRecord =
 	| (BaseRecord & { type: "GAME"; game: Game })
 	| (BaseRecord & { type: "BOOK"; book: Book });
 
-// Synchronous and I/O-free: posterSrc/bannerSrc point at the /api/poster and
-// /api/banner routes rather than a pre-resolved local file, so reshaping a
-// whole list of media never blocks on downloading (or even stat-ing) a
-// single image. Each route does the actual resolve-or-download-and-cache
-// lazily, the moment a browser actually requests that image — which for an
-// off-screen card (thanks to next/image's default lazy loading) may be
-// never. The filename segment is content-addressed by posterPath/bannerPath
-// (see mediaAssetFilename), so the URL itself changes whenever the image
-// does, making a long-lived immutable Cache-Control on those routes safe.
+// Synchronous and I/O-free: posterSrc/bannerSrc point at /api/poster and /api/banner routes rather than a pre-resolved file, so reshaping a media list never blocks on downloading a single image. Each route resolves/caches lazily on actual request. Filename is content-addressed by posterPath/bannerPath, so the URL changes whenever the image does, making a long-lived immutable Cache-Control safe.
 export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 	const posterSrc = toPosterSrc(raw.id, raw.posterPath);
 	const bannerSrc = raw.bannerPath

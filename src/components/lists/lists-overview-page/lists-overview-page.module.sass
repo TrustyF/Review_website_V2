@@ -18,18 +18,13 @@
   margin-top: 1rem
 
 .grid
-  // Matches GroupedMediaList/ActivityFeed's own .groups margin-top (Reviews,
-  // Activity) — same 1rem gap below the shared page-header on every one of
-  // the three pages, on top of its own margin-bottom.
+  // Matches GroupedMediaList/ActivityFeed's own .groups margin-top below the shared page-header.
   margin-top: 1rem
   display: grid
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))
   gap: 1.5rem
 
-// Same mount-only fade+slide-up, staggered by --stagger-index (set inline in
-// the tsx, this card's position in the grid), as activity-feed.module.sass's
-// own .entry / grouped-media-list.module.sass's own .item — kept as a
-// separate hand-copy rather than a shared import, same as those two.
+// Same mount-only fade+slide-up as activity-feed/grouped-media-list, staggered by --stagger-index; hand-copied rather than shared.
 @keyframes item-enter
   0%
     opacity: 0

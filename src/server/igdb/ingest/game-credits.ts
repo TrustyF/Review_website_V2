@@ -8,14 +8,8 @@ import {
 
 type t_client = Prisma.TransactionClient;
 
-// Replaces a game's genres and credits with the latest IGDB data. IGDB has
-// no per-person credit data (no cast/crew), only companies — a studio can
-// be both developer and publisher, which naturally becomes two Credit rows,
-// same as an author who's also the artist for a manga.
-//
-// Batched — see movie-credits.ts's own comment and batch-entity-resolver.ts
-// for why this collapses the whole item's references into a handful of
-// findMany/createMany calls instead of one round trip per company.
+// IGDB has no per-person credit data, only companies — a studio that's both developer and publisher
+// naturally becomes two Credit rows.
 export async function syncGameCreditsAndGenres(
 	tx: t_client,
 	mediaId: number,

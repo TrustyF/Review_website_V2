@@ -10,14 +10,9 @@ import {
 } from "@/server/resolvers/poster-resolver";
 import { getImageStorage } from "@/server/storage/image-storage";
 
-// Only the re-derivable *_DIR caches from poster-resolver.ts — every file in
-// here is just a resize/quality/format re-encode of a source the app can
-// always re-fetch (TMDB/IGDB/etc) or re-derive from, keyed by content hash
-// (see mediaAssetFilename), so deleting them is never lossy: the next
-// request just re-runs cacheOrDownload and writes a fresh file. Deliberately
-// excludes CROPPED_DIR (image-crop-resolver.ts) and LIST_THUMBNAIL_DIR
-// (list-thumbnail-resolver.ts) — those hold actual user-generated crops/
-// thumbnails with no source to regenerate from, not caches.
+// Only the re-derivable *_DIR caches — deleting is never lossy since the
+// next request just re-fetches/re-encodes. Excludes CROPPED_DIR and
+// LIST_THUMBNAIL_DIR, which hold user-generated content with no source to regenerate from.
 const CACHE_DIRS = [
 	POSTER_DIR,
 	CHANGELOG_THUMB_DIR,
@@ -27,11 +22,9 @@ const CACHE_DIRS = [
 	LINK_EMBED_DIR,
 ];
 
-// Dev-only: for trying out a new resize/quality/format setting in poster-
-// resolver.ts and actually seeing it take effect, rather than the old
-// cached file (content-addressed by source URL, not by the settings used to
-// encode it — a quality/format change alone doesn't change the filename, so
-// the stale file would otherwise keep being served forever).
+// Dev-only: lets a resize/quality/format change in poster-resolver.ts
+// actually take effect — cache files are keyed by source URL, not encode
+// settings, so a stale file would otherwise be served forever.
 async function main() {
 	const storage = getImageStorage();
 
@@ -44,10 +37,8 @@ async function main() {
 		console.log(`${dir}: removed ${files.length} file(s)`);
 	}
 
-	// Next's own optimizer cache — images.unoptimized in next.config.ts keeps
-	// this empty now, but clearing it is harmless if that ever changes.
-	// turbopackIgnore: process.cwd()-relative, never request-derived, same as
-	// LocalImageStorage.absDir above.
+	// Next's optimizer cache — currently kept empty by images.unoptimized, but harmless to clear.
+	// turbopackIgnore: process.cwd()-relative, never request-derived.
 	const nextImageCache = path.join(
 		/* turbopackIgnore: true */ process.cwd(),
 		".next/cache/images",

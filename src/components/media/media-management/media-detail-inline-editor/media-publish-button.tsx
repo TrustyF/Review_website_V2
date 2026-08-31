@@ -18,21 +18,13 @@ type Props = {
 	mediaId: number;
 };
 
-// PosterEditTrigger/BannerEditTrigger/ReviewBodyEditTrigger stage every
-// poster/banner pick, focus-slider drag, and review body edit into
-// media-publish-store instead of writing to the DB (see their own
-// onStage/stageBannerFocus/stageReview comments) — so an admin can try a few
-// options against the live preview without any of it being real yet. This is
-// the one button that actually commits the staged draft: the DB writes it
-// was deferring, and one revalidation for all of them together — instead of
-// every single pick hitting the DB and wiping the ISR cache on its own (see
-// media-editor-actions.ts's own comment on the ISR write quota this was
-// blowing through).
+// Edits are staged into media-publish-store instead of hitting the DB immediately, so an admin
+// can preview options live. This button commits the staged draft with one shared revalidation,
+// instead of every pick hitting the DB and wiping the ISR cache on its own.
 export function MediaPublishButton({ mediaId }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
-	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
-	// for the same rule applied to the navbar's own admin links).
+	// Mobile admin edits are intentionally unsupported.
 	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const draft = useMediaPublishStore((s) => s.draft);
 	const clear = useMediaPublishStore((s) => s.clear);
@@ -43,9 +35,7 @@ export function MediaPublishButton({ mediaId }: Props) {
 	if (!isAdmin) return null;
 	if (!draft || draft.mediaId !== mediaId) return null;
 
-	// Just drops the staged draft — every trigger reads straight off it
-	// (falling back to the last-published value once it's null), so clearing
-	// it is all reverting the live preview needs.
+	// Just drops the staged draft — triggers fall back to the last-published value once it's null.
 	function handleCancel() {
 		clear();
 		setError(null);
@@ -56,9 +46,7 @@ export function MediaPublishButton({ mediaId }: Props) {
 		setIsPublishing(true);
 		setError(null);
 		try {
-			// Each write skips its own revalidation (revalidate: false) — a
-			// single publishMediaEdits below covers all three at once, rather
-			// than each one separately wiping the same paths.
+			// Each write skips its own revalidation — publishMediaEdits below covers all at once.
 			await Promise.all([
 				draft.posterPath
 					? updateMediaPoster(mediaId, draft.posterPath, { revalidate: false })
@@ -79,9 +67,7 @@ export function MediaPublishButton({ mediaId }: Props) {
 				includeActivity: draft.pendingReview != null,
 			});
 			clear();
-			// Cheap now that the server-side cache is already fresh — just gets
-			// this admin's own tab to reflect it immediately too, rather than
-			// waiting on the next full navigation.
+			// Cheap now that the server-side cache is fresh — just syncs this tab immediately.
 			router.refresh();
 		} catch {
 			setError("Failed to publish. Try again.");

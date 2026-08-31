@@ -8,14 +8,7 @@ import {
 	MediaFilterState,
 } from "@/components/media/media-grids/media-filter/media-filter";
 
-// Shared by every grid that hangs a MediaFilterPopover off a list of media
-// (MediaFilterGrid, RankedList) — owns the filter state and the popover's
-// live/debounced split: the popover always reflects `filter` immediately so
-// a dragged slider handle tracks the pointer with no lag, while
-// `filteredMedia` lags behind by FILTER_DEBOUNCE_MS so a drag doesn't
-// re-filter the whole list on every tick. Genres/available-fields are
-// MediaFilterPopover's own concern (it derives them straight from the
-// `media` it's handed), not this hook's.
+// Owns filter state and the live/debounced split: `filter` updates immediately so the slider tracks the pointer, `filteredMedia` lags by FILTER_DEBOUNCE_MS to avoid re-filtering on every tick.
 export function useMediaFilter(media: MediaRecord[]) {
 	const [filter, setFilter] = useState<MediaFilterState>(EMPTY_MEDIA_FILTER);
 

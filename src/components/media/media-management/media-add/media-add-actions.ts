@@ -43,10 +43,8 @@ function yearOf(dateString: string | null): number | null {
 	return Number.isFinite(year) ? year : null;
 }
 
-// Google Books' publishedDate is often a bare year ("1997") rather than a
-// full date — new Date("1997").getFullYear() misparses that (off by one in
-// UTC-negative timezones), so the year is read directly off the string
-// instead of round-tripping through Date.
+// Google Books' publishedDate is often a bare year ("1997"); new Date("1997").getFullYear()
+// misparses that (off by one in UTC-negative timezones), so the year is read off the string directly.
 function bookYearOf(publishedDate: string | null | undefined): number | null {
 	const match = publishedDate?.match(/^\d{4}/);
 	return match ? Number(match[0]) : null;

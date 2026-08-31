@@ -23,11 +23,8 @@ const WatchlistContext = createContext<WatchlistContextValue | undefined>(
 	undefined,
 );
 
-// Lets every media card across the app (grids, related-media strips, ...)
-// share one hover "add to watchlist" toggle and stay in sync with each
-// other, without each card fetching its own membership row — same shape as
-// AvatarProvider: fetched once per page load via a server action, kept in
-// client state, mutated optimistically.
+// Lets every media card share one "add to watchlist" toggle and stay in sync,
+// without each fetching its own membership row. Fetched once, mutated optimistically.
 export function WatchlistProvider({ children }: { children: ReactNode }) {
 	const { data: session } = useSession();
 	const [mediaIds, setMediaIds] = useState<Set<number>>(new Set());

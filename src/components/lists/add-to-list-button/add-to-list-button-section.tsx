@@ -7,14 +7,7 @@ type Props = {
 	className?: string | undefined;
 };
 
-// Split out of media/[id]/page.tsx so this query doesn't gate the rest of
-// the page's own render — wrapped in its own <Suspense> boundary there, it
-// only ever blocks this one small popover trigger, not the banner/title/
-// credits/change-log content that only needs getMedia's own result. Also
-// skips the query entirely for non-admins: AddToListButton only ever renders
-// for an admin (its own client-side useIsAdmin gate), and that gate reads
-// the same next-auth session this server-side auth() does, so a signed-out
-// or non-admin visitor never pays for a query whose result they'd never see.
+// Split out with its own <Suspense> boundary so this query doesn't gate the rest of the page; skipped entirely for non-admins.
 export async function AddToListButtonSection({ mediaId, className }: Props) {
 	const session = await auth();
 	if (session?.user?.role !== "ADMIN") {
@@ -28,9 +21,7 @@ export async function AddToListButtonSection({ mediaId, className }: Props) {
 		);
 	}
 
-	// Every list, plus which ones (if any) already have this media, so the
-	// popover can render pre-checked checkboxes without a second round trip
-	// once it opens.
+	// Every list plus current membership, so the popover renders pre-checked without a second round trip.
 	const allLists = await db.list.findMany({
 		select: {
 			id: true,

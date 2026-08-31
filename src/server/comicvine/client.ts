@@ -11,18 +11,13 @@ import { cachedJson } from "@/server/lib/response-cache";
 
 const COMICVINE_BASE = "https://comicvine.gamespot.com/api";
 
-// ComicVine rejects requests with no User-Agent outright, and requires a
-// stable one to keep from being rate-limited as a bot.
+// ComicVine requires a User-Agent, and a stable one to avoid bot rate-limiting.
 const USER_AGENT = "review-website-nextjs/1.0 (personal media tracker)";
 
 // ComicVine's own guidance is ~1 request/second.
 const limiter = createRateLimiter({ minIntervalMs: 1000 });
 
-// Every "volume" (what this app tracks a comic as — a full series/run, not
-// a single issue) is addressed by a resource-typed id: the 4050- prefix
-// marks it as a volume specifically, distinct from e.g. 4040- for a person
-// or 4010- for a publisher. Our stored externalId is only the bare numeric
-// part, so the prefix is reconstructed on every request.
+// Volume resource ids need the 4050- type prefix reconstructed; our stored externalId is the bare numeric part.
 function volumeResourceId(id: string): string {
 	return `4050-${id}`;
 }
@@ -47,10 +42,7 @@ async function comicVineFetch(
 	return res.json();
 }
 
-// ComicVine returns HTTP 200 even for a bad API key — the failure only shows
-// up as status_code !== 1 in the body — so a plain res.ok check would miss a
-// wrong/missing COMIC_VINE_KEY. This runs a real minimal query and checks
-// that field directly.
+// ComicVine returns HTTP 200 even for a bad API key; only status_code !== 1 reveals it.
 export async function isComicVineReachable(): Promise<boolean> {
 	try {
 		const url = new URL(`${COMICVINE_BASE}/types/`);
@@ -103,8 +95,7 @@ export async function searchComicVine(
 	return parsed.results;
 }
 
-// filter=volume:<id> takes the bare numeric id, unlike the /volume/{id}/
-// detail endpoint which needs the 4050- resource prefix.
+// filter=volume:<id> takes the bare numeric id, unlike /volume/{id}/ which needs the 4050- prefix.
 export async function fetchComicVineIssuesForVolume(
 	volumeId: string,
 ): Promise<ComicVineIssue[]> {

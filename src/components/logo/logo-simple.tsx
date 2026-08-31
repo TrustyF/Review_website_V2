@@ -1,11 +1,6 @@
 import style from "./logo-simple.module.sass";
 
-// A pared-back sibling of Logo (see logo.tsx) — same ticket-stub premise
-// (paper card, admit-one header, "arthur's corner" wordmark, red stub
-// panel) but without the perforated margin, the seat/showing/host line, or
-// the "a" stub mark — just a stacked ticket number instead. Kept as its own
-// component rather than a variant of Logo since the two no longer share
-// much markup once the perforation/meta row drop out.
+// Pared-back sibling of Logo: same ticket-stub premise minus the perforation, meta row, and stub mark. Its own component since little markup remains shared once those drop out.
 export function LogoSimple() {
 	return (
 		<div className={style.ticket}>

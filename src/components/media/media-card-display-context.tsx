@@ -23,11 +23,7 @@ type ProviderProps = {
 	children: ReactNode;
 };
 
-// Lets a page opt a whole grid out of rendering the rating/title/review icon
-// on its mini cards (e.g. a page whose own heading already states the
-// title, or a grid where every item is already known to have a review) —
-// without threading these as props through every grid layer between here
-// and MediaMiniCardShell, none of which have any other use for them.
+// Lets a page opt a grid out of rating/title/review icon on mini cards without threading props through every grid layer down to MediaMiniCardShell.
 export function MediaCardDisplayProvider({
 	showRating = defaultOptions.showRating,
 	showTitle = defaultOptions.showTitle,

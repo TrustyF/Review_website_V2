@@ -11,15 +11,8 @@ import { capCast, filterNotableCrew } from "@/server/tmdb/ingest/credit-limits";
 
 type t_client = Prisma.TransactionClient;
 
-// Replaces a TV show's genres and credits with the latest TMDB data. Safe to
-// call for a brand-new media row (nothing to delete/recreate over) or to
-// re-sync an existing one on re-enrichment.
-//
-// Batched rather than one round trip per cast/crew/company member — see
-// movie-credits.ts's own comment (this is the same shape, just
-// MediaType.TVSHOW) and batch-entity-resolver.ts for how each resolve*
-// below collapses a whole show's worth of references into one findMany +
-// createMany instead of one round trip per person/role/company.
+// Batched like movie-credits.ts (same shape, MediaType.TVSHOW) — each resolve* collapses the show's
+// references into one findMany + createMany instead of one round trip per person/role/company.
 export async function syncTvShowCreditsAndGenres(
 	tx: t_client,
 	mediaId: number,
@@ -35,16 +28,9 @@ export async function syncTvShowCreditsAndGenres(
 		origin: MediaType.TVSHOW,
 	}));
 
-	// aggregate_credits' cast entries carry one row per *person*, with their
-	// role(s) nested inside (a person can rack up more than one across a
-	// show's run — recast into a different part — where a movie credit never
-	// does). Flattened back to the same {id, name, character, order, ...}
-	// shape credits.cast used to have, but order is reassigned by rank here
-	// rather than trusted from TMDB — see TmdbTvResponseSchema's own comment
-	// on why aggregate_credits' own order field doesn't reflect billing
-	// prominence at all. total_episode_count does: sorted descending, so
-	// capCast below actually keeps the show's real regulars, not whoever
-	// happened to get a low order for unrelated reasons.
+	// aggregate_credits' cast has one row per person with role(s) nested inside; flattened to
+	// {id, name, character, order}, with order reassigned by descending total_episode_count since
+	// TMDB's own order field doesn't reflect billing prominence (see TmdbTvResponseSchema).
 	const rawCast = [...data.aggregate_credits.cast]
 		.sort((a, b) => b.total_episode_count - a.total_episode_count)
 		.map((c, i) => ({
@@ -54,14 +40,8 @@ export async function syncTvShowCreditsAndGenres(
 			order: i,
 			profile_path: c.profile_path,
 		}));
-	// created_by is a separate top-level field, not a crew job — TMDB tracks
-	// a show's actual creator(s) independently of any per-episode crew credit
-	// (there's no equivalent "who created this" job title in aggregate_
-	// credits.crew at all). Folded in here as a synthetic "Creator" crew
-	// entry anyway, since NOTABLE_CREW_JOBS already expects that role name —
-	// this is the only path that ever actually populates it now. department
-	// is never read back out of a credit row downstream, so its value here
-	// doesn't matter beyond satisfying the shared shape.
+	// created_by is a separate top-level field (no "creator" job exists in aggregate_credits.crew),
+	// folded in here as a synthetic "Creator" crew entry to match NOTABLE_CREW_JOBS.
 	const rawCreators = (data.created_by ?? []).map((c) => ({
 		id: c.id,
 		name: c.name,
@@ -85,8 +65,7 @@ export async function syncTvShowCreditsAndGenres(
 	const crew = filterNotableCrew(rawCrew);
 	const companies = data.production_companies ?? [];
 
-	// See movie-credits.ts's own comment on where the photo-eligibility
-	// decision actually lives now — not here.
+	// Photo-eligibility decision lives in person-photo-eligibility.ts, not here (see movie-credits.ts).
 	const personInputs = [
 		...cast.map((c) => ({
 			externalId: String(c.id),
@@ -111,8 +90,7 @@ export async function syncTvShowCreditsAndGenres(
 		...(companies.length ? [{ name: "Studio", origin: MediaType.TVSHOW }] : []),
 	];
 
-	// Countries have to resolve before companies — a company's countryId
-	// comes from this.
+	// Countries must resolve before companies — a company's countryId comes from this.
 	const countryInputs = companies
 		.filter((co) => co.origin_country)
 		.map((co) => ({ code2: co.origin_country! }));
@@ -137,9 +115,8 @@ export async function syncTvShowCreditsAndGenres(
 	const companyMap = await resolveCompaniesBatch(tx, companyInputs);
 
 	// --- Build the final rows in memory, then insert in bulk ---
-	// Iterates the ORIGINAL (un-deduped) cast/crew/company arrays — resolve*
-	// dedupes references, but every credit itself still needs its own row
-	// even when it shares a person/role/company with another.
+	// Iterates the ORIGINAL (un-deduped) arrays — every credit still needs its own row even when
+	// it shares a person/role/company with another.
 
 	const mediaGenreRows = genreInputs.map((g) => ({
 		mediaId,

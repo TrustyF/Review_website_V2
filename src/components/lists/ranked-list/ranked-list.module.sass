@@ -1,8 +1,6 @@
 @use "@/app/styles/variables" as *
 
-// position: relative — anchors MediaFilterPopover's own absolutely-
-// positioned .wrapper to this box's top-right corner (see that component's
-// own note).
+// Anchors MediaFilterPopover's absolutely-positioned .wrapper to this box's top-right corner.
 .wrapper
   position: relative
 
@@ -61,9 +59,7 @@
   font-family: $font-mono
   color: var(--accent1)
 
-// A grip icon would need its own asset — a monospace glyph does the job
-// with zero extra weight, same reasoning as this app's other small
-// text-as-icon affordances.
+// A monospace glyph stands in for a grip icon, avoiding a separate asset.
 .drag_handle
   flex-shrink: 0
   width: 1.5rem
@@ -74,16 +70,13 @@
   font-size: 1.1rem
   line-height: 1
   cursor: grab
-  // Without this, a touch-drag on the handle also scrolls the page — the
-  // pointer stream is meant for dnd-kit alone.
+  // Without this, a touch-drag on the handle also scrolls the page.
   touch-action: none
 
   &:active
     cursor: grabbing
 
-// Fixed small width, unlike MediaPoster's other callers which size it via
-// their own full-width flex/grid item — a ranked row's poster is
-// deliberately thumbnail-scale, not the card-scale MediaMiniCardShell uses.
+// Fixed small width — a ranked row's poster is deliberately thumbnail-scale, not card-scale.
 .poster_slot
   width: 46px
   flex-shrink: 0

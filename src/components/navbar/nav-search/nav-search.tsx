@@ -22,19 +22,12 @@ const TYPE_LABELS: Record<MediaType, string> = {
 	[MediaType.BOOK]: "Book",
 };
 
-// How long to wait after the last keystroke before actually querying the
-// server — the input stays instantly responsive (it's just local state),
-// same idea as every other debounced search in this app.
+// Wait after the last keystroke before querying, so the input stays responsive.
 const DEBOUNCE_MS = 500;
 
-// Media-agnostic search reachable from every page via the navbar — replaces
-// the old per-page search that used to live inside MediaSearchGrid (now
-// MediaFilterGrid, filter-only). Collapsed to a trigger icon by default (see
-// nav-bar.tsx's own comment on why) — clicking it grows the input inline to
-// its left, in the navbar's own row (see nav-search.module.sass's .overlay),
-// with an animated width rather than an instant show/hide. Type, see live
-// results in a popout below the input, click one to jump straight to its
-// detail page.
+// Media-agnostic search reachable from every page via the navbar. Collapsed
+// to a trigger icon by default; clicking it expands the input inline with
+// an animated width, showing live results in a popout below.
 export function NavSearch() {
 	const [input, setInput] = useState("");
 	const [results, setResults] = useState<GlobalSearchResult[]>([]);
@@ -47,9 +40,7 @@ export function NavSearch() {
 
 	useOutsideClick(containerRef, collapseSearch, { enabled: isExpanded });
 
-	// Autofocus the input the moment it expands — there's no other cue (no
-	// click landed directly on the input itself, unlike a plain always-
-	// visible box) to tell the browser this is where typing should go.
+	// Autofocus on expand, since no click landed on the input itself.
 	useEffect(() => {
 		if (isExpanded) inputRef.current?.focus();
 	}, [isExpanded]);
@@ -79,8 +70,7 @@ export function NavSearch() {
 		}
 	}
 
-	// Collapses back to just the trigger icon — on an outside click, or after
-	// a result Link has already handled navigation.
+	// Collapses back to just the trigger icon.
 	function collapseSearch() {
 		setInput("");
 		setResults([]);
@@ -90,11 +80,8 @@ export function NavSearch() {
 
 	return (
 		<div className={styles.wrapper} ref={containerRef}>
-			{/* Always mounted (rather than only once expanded) so toggling
-			.expanded below animates a real width change instead of an instant
-			mount/unmount — tabIndex/aria-hidden keep it out of tab order and
-			off-screen readers while collapsed, since overflow: hidden alone
-			doesn't stop keyboard focus from reaching a width: 0 input. */}
+			{/* Always mounted so .expanded animates width instead of mount/unmount;
+			tabIndex/aria-hidden keep the width:0 input out of tab order while collapsed. */}
 			<div
 				className={`${styles.overlay} ${isExpanded ? styles.expanded : ""}`}>
 				<input

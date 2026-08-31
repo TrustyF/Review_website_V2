@@ -7,20 +7,13 @@ import styles from "./lazy-media-grid.module.sass";
 
 type Props = {
 	items: MediaRecord[];
-	// Stable id for this grid instance (e.g. a rating tier) — when given,
-	// how far the user had scrolled into it survives a back-navigation.
+	// Stable id for this grid instance; when given, scroll depth survives a back-navigation.
 	restoreKey?: string;
-	// Per-item action overlay (e.g. a list's admin-only "remove" button) —
-	// optional and unused by every caller except list-media-view.tsx; neither
-	// MediaFilterGrid nor RecentMediaListPage's items have anything list-
-	// specific to render here.
+	// Per-item action overlay (e.g. a list's "remove" button); only list-media-view.tsx uses it.
 	renderOverlay?: ((item: MediaRecord) => ReactNode) | undefined;
 };
 
-// A grid that reveals more cards as the sentinel scrolls into view, instead
-// of mounting every item up front. Shared by RatedTierGrid (one instance per
-// tier) and RecentMediaListPage (one flat instance) — both hand it a list
-// that can run into the hundreds.
+// Reveals more cards as the sentinel scrolls into view instead of mounting everything up front.
 export function LazyMediaGrid({ items, restoreKey, renderOverlay }: Props) {
 	const { visibleCount, sentinelRef } = useLazyReveal(items, restoreKey);
 

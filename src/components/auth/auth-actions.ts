@@ -8,12 +8,9 @@ export type SignUpInput = {
 	password: string;
 };
 
-// Only creates the row — deliberately doesn't also sign the browser in.
-// Auth.js's signIn() sets its session cookie via the server action's
-// response, but useSession() (see Navbar) keeps its own client-side copy of
-// the session that a cookie change alone doesn't invalidate — only a client-
-// side signIn() call updates it. SignupPage calls next-auth/react's signIn
-// itself right after this resolves, the same way LoginPage already does.
+// Only creates the row — doesn't sign the browser in. useSession()'s client-side
+// session copy only updates via a client-side signIn() call, not a cookie change
+// alone, so SignupPage calls next-auth/react's signIn itself right after this resolves.
 export async function signUp(input: SignUpInput): Promise<void> {
 	const email = input.email.trim().toLowerCase();
 	if (!email) throw new Error("Email is required");

@@ -1,13 +1,6 @@
 @use "@/app/styles/variables" as *
 
-// Grid, not flex (unlike MediaCardShell's own row) — .review needs its own
-// full-width row below .poster/.top instead of sitting beside them, which a
-// grid's named areas give for free: "review" spans both columns in its own
-// row below, while .poster/.top share the row above it same as a flex row
-// would.
-// 90px, not MediaCardShell's own 130px — leaves more of a phone's much
-// narrower width for .top/.review's actual text instead of giving the
-// poster the same fixed size regardless of screen size.
+// Grid so .review can span both columns in its own row below .poster/.top; poster is narrower (90px vs 130px) to leave more room for text on phones.
 .wrapper
   position: relative
   padding: 20px
@@ -17,18 +10,14 @@
   column-gap: 1.25rem
   row-gap: 0.75rem
 
-  // Above this, MediaCardShell's own .wrapper is the one that's visible
-  // instead — see its own comment. +1px avoids both being hidden (or both
-  // shown) for the one pixel width exactly at $mobile-breakpoint.
+  // +1px avoids both this and MediaCardShell's wrapper being shown/hidden at exactly $mobile-breakpoint.
   @media (min-width: $mobile-breakpoint + 1px)
     display: none
 
 .poster
   grid-area: poster
 
-// align-self: center — title/date/rating are almost always shorter than the
-// poster's own height, so this centers that shorter block vertically within
-// the row instead of it sitting flush against the top like the poster does.
+// align-self: center — vertically centers this shorter block against the taller poster.
 .top
   grid-area: top
   align-self: center
@@ -37,10 +26,7 @@
   gap: 0.5rem
   min-width: 0
 
-// Stacked, not MediaCardShell's own baseline row — .top is already a narrow
-// column squeezed beside a poster, so a long title sharing a row with the
-// date wraps awkwardly (or crowds the date against it); full width of that
-// column to itself reads better here.
+// Stacked (not a row) since .top is a narrow column where a long title would wrap awkwardly next to the date.
 .header_info
   display: flex
   flex-flow: column

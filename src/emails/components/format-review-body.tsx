@@ -2,11 +2,8 @@ import { Link, Text } from "@react-email/components";
 import { Fragment, ReactNode } from "react";
 import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/review-body-syntax";
 
-// Mirrors review-body.tsx's ||spoiler||/[text](url) parsing, reusing the
-// same regex the site itself uses (see that file's own note on why the
-// regex lives in a plain, non-"use client" module) — but spoilers can't be
-// click-to-reveal here since no JS runs in a mail client, so spoiler text
-// is redacted instead of shown plainly.
+// Mirrors review-body.tsx's ||spoiler||/[text](url) parsing, but redacts
+// spoilers since no JS runs in a mail client for click-to-reveal.
 function formatReviewLine(line: string, lineKey: string): ReactNode {
 	const parts: ReactNode[] = [];
 	let lastIndex = 0;
@@ -54,7 +51,7 @@ function formatReviewLine(line: string, lineKey: string): ReactNode {
 	return parts;
 }
 
-// Same paragraph split as review.tsx's SplitLineBody (body.split("\n\n")).
+// Same paragraph split as review.tsx's SplitLineBody.
 export function formatReviewBody(body: string): ReactNode {
 	return body.split("\n\n").map((line, index) => (
 		<Text

@@ -2,13 +2,7 @@ import { CROPPED_DIR } from "@/server/resolvers/image-crop-resolver";
 import { getImageStorage } from "@/server/storage/image-storage";
 import { appendJobSummary, formatSummaryList } from "./job-summary";
 
-// Unlike cleanup-posters.ts/purge-deleted-change-log.ts, nothing in the DB
-// ever references a /cropped/... path directly — a promoted file has
-// already been copied into its real destination (see list-actions.ts's
-// resolveThumbnailUrl) by the time anything durable points at it, so
-// there's no "orphan" check to make here, only age. 24h is a generous
-// grace period: long enough to crop something, step away, and come back
-// later the same day to paste it in.
+// Nothing in the DB ever references a /cropped/... path directly, so age is the only check needed (no orphan check). 24h gives a generous grace period to paste a crop in later.
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 // Safe to re-run any time / on a schedule.

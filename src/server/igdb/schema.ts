@@ -1,7 +1,6 @@
 import { type } from "arktype";
 
-// IGDB's /games endpoint returns a bare JSON array (no {data: ...} wrapper),
-// one entry per matched id.
+// IGDB's /games endpoint returns a bare JSON array (no {data: ...} wrapper).
 export const IgdbGameSchema = type({
 	id: "number",
 	name: "string",
@@ -24,14 +23,8 @@ export const IgdbGameSchema = type({
 		id: "number",
 		name: "string",
 	}).array(),
-	// Promotional artwork — wide/landscape, unlike cover — used as this
-	// app's banner image for games. Not every game has any. width/height are
-	// only used to pick the closest-to-16:9 option (see pickBestArtwork) —
-	// IGDB has no per-image relevance/vote signal the way TMDB does. Optional
-	// rather than required: IGDB sometimes returns an artwork with no
-	// width/height yet (still processing on their CDN) — pickBestArtwork
-	// filters those out rather than this schema rejecting the whole game over
-	// one un-scoreable image.
+	// Landscape promo art used as the banner image; width/height are optional since IGDB sometimes
+	// returns an artwork still processing on its CDN (filtered out by pickBestArtwork, not rejected here).
 	"artworks?": type({
 		image_id: "string",
 		"width?": "number",
@@ -43,9 +36,7 @@ export type IgdbGame = typeof IgdbGameSchema.infer;
 
 export const IgdbGamesResponseSchema = IgdbGameSchema.array();
 
-// Lighter than IgdbGameSchema — used for the "search" query, which only
-// needs enough to render a picker (name, year, cover), not the full detail
-// fields a where-by-id fetch pulls.
+// Lighter than IgdbGameSchema — the search query only needs enough to render a picker.
 const IgdbGameSearchResultSchema = type({
 	id: "number",
 	name: "string",
@@ -57,9 +48,7 @@ export type IgdbGameSearchResult = typeof IgdbGameSearchResultSchema.infer;
 
 export const IgdbGameSearchResponseSchema = IgdbGameSearchResultSchema.array();
 
-// /covers is a 1:1 relation to a game (one default cover) — used alongside
-// game_localizations below to build the full set of cover options a game
-// actually has, since neither endpoint alone has the complete picture.
+// /covers is 1:1 per game; combined with game_localizations below since neither alone is complete.
 const IgdbCoverSchema = type({
 	id: "number",
 	image_id: "string",
@@ -67,10 +56,7 @@ const IgdbCoverSchema = type({
 
 export const IgdbCoverListSchema = IgdbCoverSchema.array();
 
-// Region-specific release info — most entries are just a localized name
-// with no art of their own, so cover is optional and filtered for by the
-// caller (cover != null in the query itself already does this, but the
-// type still has to allow for a localization with no cover).
+// Most localizations have no art of their own, so cover is optional (the caller filters cover != null).
 const IgdbGameLocalizationSchema = type({
 	id: "number",
 	"cover?": { image_id: "string" },

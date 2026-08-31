@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getMediaCore } from "./get-media";
 import { toLinkEmbedImageSrc } from "@/server/resolvers/poster-resolver";
+import { buildLinkEmbedDescription } from "./link-embed-meta";
 
 // Kept out of page.tsx (already a long file) — Next only needs a
 // `generateMetadata` export from that file, it doesn't care whether the
@@ -32,16 +33,7 @@ export async function generateMediaMetadata({
 		media.bannerPath,
 	);
 
-	// Prefer the personal review rating over the source's publicRating — it's
-	// what the site itself is about — falling back to publicRating for
-	// unrated titles so the preview still carries a score when one exists.
-	const rating = media.review?.rating ?? media.publicRating;
-	const description = [
-		rating != null ? `★ ${rating.toFixed(1)}` : null,
-		media.overview,
-	]
-		.filter(Boolean)
-		.join(" — ") || undefined;
+	const description = buildLinkEmbedDescription(media);
 
 	return {
 		title: media.title,

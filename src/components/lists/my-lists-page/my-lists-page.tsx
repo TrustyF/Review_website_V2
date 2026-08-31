@@ -4,10 +4,7 @@ import { db } from "@/server/db/client";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import styles from "./my-lists-page.module.sass";
 
-// Server Component for /account/lists: every admin-curated recommendation
-// list targeting the signed-in user, newest first — the click-through
-// destination for account/page.tsx's recommendations panel, mirroring how
-// /watchlist is the click-through for its watchlist panel.
+// Server Component for /account/lists: every recommendation list targeting the signed-in user; the click-through for account/page.tsx's recommendations panel.
 export async function MyListsPage() {
 	const session = await auth();
 	if (!session?.user?.id) redirect("/login");

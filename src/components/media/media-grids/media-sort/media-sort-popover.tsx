@@ -15,10 +15,7 @@ type Props = {
 	onChange: (next: MediaSortOption) => void;
 };
 
-// Sibling to MediaFilterPopover — same Hitbox-trigger-plus-popover shape,
-// but single-select (a sort order, not a set of narrowing conditions) so
-// there's no "clear" affordance and no count badge, just a dot marking
-// "not the default" the way an active toggle would.
+// Sibling to MediaFilterPopover, but single-select: no clear affordance or count badge, just a dot marking "not the default".
 export function MediaSortPopover({ sort, onChange }: Props) {
 	const [isOpen, setIsOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);

@@ -5,21 +5,14 @@ import styles from "./featured-review-picker.module.sass";
 type Props = {
 	items: MediaRecord[];
 	activeIndex: number;
-	// Hides the countdown ring and stops it re-arming — see FeaturedReview's
-	// own `paused` state for why (auto-advance pauses on interaction).
+	// Hides the countdown ring and stops it re-arming while auto-advance is paused.
 	paused: boolean;
-	// How long the countdown ring takes to fill, in ms — must match
-	// FeaturedReview's own AUTO_ADVANCE_MS, the interval its auto-advance
-	// timer actually runs on.
+	// How long the countdown ring takes to fill, in ms — must match FeaturedReview's own AUTO_ADVANCE_MS.
 	autoAdvanceMs: number;
 	onSelect: (index: number) => void;
 };
 
-// Row of dots standing in for the other recent reviews shown in
-// FeaturedReview's hero — replaces the old prev/next arrows (and, before
-// that, a strip of poster thumbnails). Clicking one swaps that review into
-// the hero; the dot one ahead of the active one carries a countdown ring
-// showing how long until auto-advance moves on to it.
+// Row of dots for the other recent reviews shown in FeaturedReview's hero. Clicking one swaps it into the hero; the dot one ahead of active carries a countdown ring to auto-advance.
 export function FeaturedReviewPicker({
 	items,
 	activeIndex,
@@ -29,8 +22,7 @@ export function FeaturedReviewPicker({
 }: Props) {
 	if (items.length <= 1) return null;
 
-	// The dot auto-advance will land on next, i.e. the one whose countdown
-	// ring should be filling right now.
+	// The dot auto-advance will land on next — its countdown ring should be filling now.
 	const nextIndex = (activeIndex + 1) % items.length;
 
 	return (

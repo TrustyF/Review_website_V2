@@ -17,12 +17,7 @@ type Props = {
 	sort: MediaSortOption;
 };
 
-// Picks the grid that matches MediaSortPopover's current selection —
-// RatedTierGrid's own tier view for the default "rating", otherwise this
-// groups the same media by year (via groupMediaByYear) and hands it to the
-// same GroupedMediaGrid RatedTierGrid itself renders through, so a
-// release-/watch-date sort reads as "the same kind of grid, bucketed by
-// year instead of rating" rather than a different layout entirely.
+// Picks the grid matching the current sort: RatedTierGrid for the default "rating", otherwise groups by year through the same GroupedMediaGrid.
 export function MediaSortedGrid({ media, sort }: Props) {
 	const groups = useMemo((): MediaGroup[] => {
 		if (sort === "rating") return [];

@@ -19,11 +19,7 @@ type Purgeable = {
 	newValue: string | null;
 };
 
-// Removes dir's cached thumbnail for every {mediaId, value} this batch could
-// have one for (posterPath -> CHANGELOG_THUMB_DIR, bannerPath ->
-// CHANGELOG_BANNER_THUMB_DIR), skipping any pair a surviving (non-purged)
-// row still references — the same pair can appear in more than one row,
-// e.g. one edit's newValue is the next edit's oldValue.
+// Removes dir's cached thumbnail for every {mediaId, value} this batch could have one for, skipping any pair a surviving row still references.
 async function purgeThumbnails(
 	toPurge: Purgeable[],
 	field: string,
@@ -43,9 +39,7 @@ async function purgeThumbnails(
 
 	if (candidates.size === 0) return 0;
 
-	// One query for every surviving row that could reference any candidate,
-	// instead of one findFirst per candidate — same "is this still
-	// referenced" check, just batched instead of N sequential round trips.
+	// Batched "is this still referenced" check instead of one findFirst per candidate.
 	const mediaIds = [...new Set([...candidates.values()].map((c) => c.mediaId))];
 	const survivors = await db.mediaChangeLog.findMany({
 		where: { field, mediaId: { in: mediaIds } },
@@ -62,9 +56,7 @@ async function purgeThumbnails(
 	for (const [key, { mediaId, value }] of candidates) {
 		if (stillReferenced.has(key)) continue;
 
-		// remove() itself reports whether a file was actually there — already
-		// gone, or never got cached in the first place, is just as fine as a
-		// successful removal here.
+		// remove() reports whether a file was actually there; already-gone counts fine too.
 		const removed = await storage.remove(
 			dir,
 			mediaAssetFilename(mediaId, value),
@@ -74,10 +66,7 @@ async function purgeThumbnails(
 	return filesRemoved;
 }
 
-// Permanently removes change log entries that were soft-deleted more than
-// RETENTION_DAYS ago, plus any cached poster/banner thumbnail (see
-// resolveChangelogPosterThumb / resolveChangelogBannerThumb) nothing else
-// still references. Safe to re-run any time / on a schedule.
+// Permanently removes change log entries soft-deleted more than RETENTION_DAYS ago, plus any cached thumbnail nothing else still references.
 async function main() {
 	const cutoff = new Date(Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000);
 
@@ -104,9 +93,7 @@ async function main() {
 		return;
 	}
 
-	// oldValue/newValue only exist on these rows while they're still here —
-	// purgeThumbnails' "is this still referenced" check needs them gone from
-	// the table first to correctly see only survivors.
+	// Must delete first: purgeThumbnails' "still referenced" check needs these rows gone to correctly see only survivors.
 	await db.mediaChangeLog.deleteMany({
 		where: { id: { in: toPurge.map((entry) => entry.id) } },
 	});

@@ -1,8 +1,6 @@
 import { type } from "arktype";
 
-// Google Books never guarantees any volumeInfo field is present — a
-// self-published or sparsely-cataloged entry can come back with just a
-// title, so every field below except id/title is optional.
+// Google Books never guarantees any volumeInfo field is present, so everything but id/title is optional.
 const GoogleBooksImageLinksSchema = type({
 	"smallThumbnail?": "string | null",
 	"thumbnail?": "string | null",
@@ -36,7 +34,6 @@ export type GoogleBooksVolume = typeof GoogleBooksVolumeSchema.infer;
 
 export const GoogleBooksSearchResponseSchema = type({
 	"totalItems?": "number",
-	// Google Books omits `items` entirely (rather than returning `[]`) when a
-	// search matches nothing.
+	// Omitted entirely (not `[]`) when a search matches nothing.
 	"items?": GoogleBooksVolumeSchema.array(),
 });

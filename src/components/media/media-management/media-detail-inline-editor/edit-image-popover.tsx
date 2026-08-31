@@ -19,24 +19,18 @@ type Props = {
 	onPick: (image: PickableImage) => void;
 	altText: string;
 	errorText: string;
-	// Not `?:` — every caller passes this explicitly (undefined for posters),
-	// same convention as bannerClassName etc. in banner-edit-trigger.tsx;
-	// exactOptionalPropertyTypes rejects forwarding a possibly-undefined
-	// value through a truly optional prop.
+	// Not `?:` — exactOptionalPropertyTypes rejects forwarding a possibly-undefined value
+	// through a truly optional prop, so every caller passes this explicitly.
 	optionAspectRatio: string | undefined;
 	urlInput: string;
 	onUrlInputChange: (value: string) => void;
-	// Stages the pasted URL into the page-level draft and closes — same as
-	// picking a grid option (see use-image-edit-popover.ts's submitUrl).
+	// Stages the pasted URL into the page-level draft and closes, same as picking a grid option.
 	onSubmitUrl: () => void;
 	onClose: () => void;
 };
 
-// The part of PosterEditTrigger/BannerEditTrigger that's actually identical
-// between the two — a picker grid plus a paste-a-URL fallback, for feature
-// parity with the same two options the full editor modal already offers.
-// Only what image is being edited (and how it gets fetched/saved) differs
-// between the two callers.
+// The part shared between PosterEditTrigger/BannerEditTrigger — a picker grid plus a
+// paste-a-URL fallback; only what's being edited differs between the two callers.
 export function EditImagePopover({
 	title,
 	draft,
@@ -89,9 +83,8 @@ export function EditImagePopover({
 			</div>
 
 			{trimmedUrl && (
-				// Plain <img>, deliberately not next/image — same reasoning as the
-				// full editor modal's own url_preview: a pasted URL can be any
-				// host, and only gets proxied/cached once it's actually published.
+				// Plain <img>, deliberately not next/image — a pasted URL can be any host,
+				// and only gets proxied/cached once actually published.
 				// eslint-disable-next-line @next/next/no-img-element
 				<img src={trimmedUrl} alt="" className={styles.url_preview} />
 			)}

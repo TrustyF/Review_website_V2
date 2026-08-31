@@ -32,9 +32,7 @@ const GAME_FIELDS = [
 	"artworks.height",
 ].join(", ");
 
-// IGDB sits behind Twitch's OAuth2 app-token flow rather than a static key —
-// the token is short-lived (~60 days) but reused across calls within this
-// process instead of being fetched per-request.
+// IGDB uses Twitch's OAuth2 app-token flow; the token (~60 days) is reused across calls in this process.
 let cachedToken: { value: string; expiresAt: number } | null = null;
 
 async function getAccessToken(): Promise<string> {
@@ -60,12 +58,7 @@ async function getAccessToken(): Promise<string> {
 	return cachedToken.value;
 }
 
-// IGDB enforces ~4 requests/second per app; a batch run (enrich-db) that
-// fires requests back-to-back can trip that even though each individual
-// call is well-formed. The limiter paces requests to stay under that, and
-// retries a 429 exactly once (see rate-limited-fetch.ts) rather than
-// failing the row outright — everything else (4xx/5xx) still fails
-// immediately since retrying won't fix those.
+// IGDB enforces ~4 req/s per app; paced here, and a 429 gets one retry (see rate-limited-fetch.ts).
 const limiter = createRateLimiter({ minIntervalMs: 250 });
 
 async function igdbFetch(
@@ -93,9 +86,7 @@ async function igdbFetch(
 	return res.json();
 }
 
-// Exercises the full pipeline — Twitch OAuth (catches a wrong/missing
-// IGDB_CLIENT_ID/SECRET) followed by an actual IGDB query — so any failure
-// here (bad credentials, endpoint down, network error) resolves to false.
+// Exercises the full pipeline (Twitch OAuth + an IGDB query) so any failure mode resolves to false.
 export async function isIgdbReachable(): Promise<boolean> {
 	try {
 		await igdbFetch("games", "fields id; limit 1;", AbortSignal.timeout(5000));
@@ -119,10 +110,8 @@ export async function fetchIgdbGameById(id: string): Promise<IgdbGame> {
 	return game;
 }
 
-// The Apicalypse body is plain text, not JSON — the search term gets
-// embedded directly inside a quoted string in the query, so quotes/
-// backslashes in it need escaping to keep it from breaking out of that
-// string (or worse, injecting query clauses of its own).
+// Apicalypse bodies are plain text; the search term is embedded in a quoted string, so quotes/backslashes
+// must be escaped to prevent breaking out of it or injecting query clauses.
 function escapeApicalypseString(value: string): string {
 	return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
@@ -137,25 +126,15 @@ export async function searchIgdbGames(
 	return parseOrThrow(IgdbGameSearchResponseSchema, json);
 }
 
-// Matches the banner's fixed 16:9 display box (see media-detail.module
-// .sass's .banner) — the target isn't really "1280x720" as a resolution,
-// just the aspect ratio it implies.
+// Matches the banner's fixed 16:9 display box (media-detail.module.sass's .banner); the ratio matters, not the resolution.
 const TARGET_ASPECT_RATIO = 16 / 9;
 
-// A narrower-than-16:9 (or square, or portrait) source loses a lot to
-// object-fit: cover — the box is wider than the image, so cover scales up
-// to fill the height and slices off both sides. A wider-than-16:9 source
-// loses much less: cover only needs to trim a bit off the sides to match
-// the box's narrower shape, so the full height is usually preserved either
-// way. Same distance from the target ratio isn't the same amount of actual
-// cropping, so narrower misses are penalized more heavily than wider ones.
+// object-fit: cover crops narrower-than-16:9 sources much harder than wider ones, so narrow misses
+// are penalized more heavily — equal distance from the target ratio isn't equal actual cropping.
 const NARROW_PENALTY_MULTIPLIER = 3;
 
-// IGDB has no per-image relevance/vote signal the way TMDB's vote_average
-// is for backdrops — closest-to-16:9 (favoring wide over narrow misses) is
-// the best available proxy. Exported alongside pickBestArtwork so the
-// manual picker (getAlternativeBanners) can sort by the same metric instead
-// of just picking the one best.
+// IGDB has no relevance/vote signal like TMDB's vote_average, so closest-to-16:9 is the best proxy.
+// Exported so the manual picker (getAlternativeBanners) can sort by the same metric.
 export function artworkAspectRatioDiff(artwork: {
 	width: number;
 	height: number;
@@ -164,9 +143,7 @@ export function artworkAspectRatioDiff(artwork: {
 	return diff < 0 ? Math.abs(diff) * NARROW_PENALTY_MULTIPLIER : diff;
 }
 
-// An artwork missing width/height (IGDB sometimes still processing it on
-// their CDN — see schema.ts) can't be scored against the target aspect
-// ratio, so it's excluded here rather than passed to artworkAspectRatioDiff.
+// Artwork missing width/height (IGDB still processing it) can't be scored, so it's excluded here.
 export function artworksWithDimensions(
 	artworks: NonNullable<IgdbGame["artworks"]>,
 ): { image_id: string; width: number; height: number }[] {
@@ -190,11 +167,8 @@ export function pickBestArtwork(
 
 export type IgdbCoverOption = { imageId: string; label: string };
 
-// IGDB models exactly one Cover per Game — no alternate-cover-art gallery
-// the way MangaDex/ComicVine have. What IGDB.com's own "cover" gallery
-// actually shows is region-specific box art via game_localizations (e.g.
-// Japan/Korea/Europe releases), which isn't reachable from the game object
-// itself — has to be queried separately and combined with the default cover.
+// IGDB models one Cover per Game; region-specific box art (IGDB.com's "cover" gallery) lives in
+// game_localizations instead, unreachable from the game object, so it's queried separately and merged in.
 export async function fetchIgdbGameCoverOptions(
 	gameId: string,
 ): Promise<IgdbCoverOption[]> {

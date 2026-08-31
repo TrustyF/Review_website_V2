@@ -14,10 +14,8 @@ import { cachedJson } from "@/server/lib/response-cache";
 
 const MANGADEX_BASE = "https://api.mangadex.org";
 
-// MangaDex documents a ~5 request/second per-IP limit. Also directly caps
-// enrich-db.ts's per-item fetchMangaDexById + fetchMangaDexStatistics pair
-// (issued together via Promise.all) — both share this one limiter, so real
-// request rate stays capped regardless of how many items enrich concurrently.
+// MangaDex documents a ~5 req/s per-IP limit; shared by fetchMangaDexById + fetchMangaDexStatistics
+// (issued together via Promise.all) so real rate stays capped regardless of enrichment concurrency.
 const limiter = createRateLimiter({ minIntervalMs: 200 });
 
 function mangaDexFetch(url: string, signal?: AbortSignal): Promise<Response> {
@@ -27,9 +25,7 @@ function mangaDexFetch(url: string, signal?: AbortSignal): Promise<Response> {
 	});
 }
 
-// MangaDex publishes /ping specifically for reachability checks. No API key
-// is involved for this source, so a non-ok response here only ever means
-// the endpoint itself is down.
+// MangaDex publishes /ping for reachability checks; no API key involved for this source.
 export async function isMangaDexReachable(): Promise<boolean> {
 	try {
 		const res = await mangaDexFetch(
@@ -61,9 +57,7 @@ export async function fetchMangaDexById(
 	return parseOrThrow(MangaDexMangaResponseSchema, json);
 }
 
-// Ratings live on a separate endpoint from the manga entity itself. Returns
-// null rather than throwing when a manga has no statistics yet (new/obscure
-// entries) so a missing rating never blocks enrichment of the rest.
+// Returns null (not throwing) when a manga has no statistics yet, so a missing rating never blocks enrichment.
 export async function fetchMangaDexStatistics(
 	id: string,
 ): Promise<MangaDexStatisticsEntry | null> {
@@ -104,9 +98,7 @@ export async function searchMangaDex(
 	return parseOrThrow(MangaDexMangaSearchResponseSchema, json).data;
 }
 
-// Unlike TMDB (one poster per movie/show plus alternates), MangaDex tracks a
-// separate cover per volume/locale — a manga easily has 50+. All of them are
-// legitimate "pick a cover" options, so nothing here filters by locale/volume.
+// MangaDex tracks a separate cover per volume/locale (easily 50+ per manga); all are valid picker options.
 export async function fetchMangaDexCovers(
 	mangaId: string,
 ): Promise<MangaDexCover[]> {

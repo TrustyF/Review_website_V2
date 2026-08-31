@@ -20,10 +20,7 @@ import {
 
 type t_client = Prisma.TransactionClient;
 
-// MangaDex only exposes original language (not a country), so origin
-// country is a best-effort guess from it — covers the languages manga on
-// the site is actually published in. Anything else is left unset rather
-// than guessed at.
+// MangaDex only exposes original language, not country, so this is a best-effort guess from it.
 const LANGUAGE_TO_COUNTRY: Record<string, string> = {
 	ja: "JP",
 	ko: "KR",
@@ -39,8 +36,7 @@ const STATUS_MAP: Record<string, MediaStatus> = {
 	cancelled: MediaStatus.COMPLETED,
 };
 
-// MangaDex's own four-tier content rating — the two most explicit tiers map
-// to isAdult, same as TMDB's adult flag (see tmdb/ingest/movie.ts).
+// The two most explicit tiers of MangaDex's four-tier content rating map to isAdult.
 const ADULT_CONTENT_RATINGS = new Set(["erotica", "pornographic"]);
 
 function extractCoverFileName(manga: MangaDexManga): string | null {
@@ -48,18 +44,14 @@ function extractCoverFileName(manga: MangaDexManga): string | null {
 	return cover?.attributes?.fileName ?? null;
 }
 
-// MangaDex represents "unknown" as an empty string rather than omitting the
-// field, and volume/chapter counts aren't always whole numbers ("10.5").
+// MangaDex represents "unknown" as an empty string, and counts aren't always whole numbers ("10.5").
 function parseCount(value: string | null): number | null {
 	if (!value) return null;
 	const n = Math.floor(Number(value));
 	return Number.isFinite(n) ? n : null;
 }
 
-// existing is only passed by updateMangaFromMangaDex (undefined on create) —
-// every field below except status/publicRating only fills in if existing
-// doesn't already have a value, whether that's a prior ingest or a hand edit
-// in the media editor.
+// Fields other than status/publicRating only fill in if existing has no value, preserving prior ingests/hand edits.
 async function buildMediaFields(
 	tx: t_client,
 	manga: MangaDexManga,
@@ -92,8 +84,7 @@ async function buildMediaFields(
 			existing?.releaseDate ??
 			(manga.attributes.year ? new Date(manga.attributes.year, 0, 1) : null),
 		status: STATUS_MAP[manga.attributes.status] ?? MediaStatus.RELEASED,
-		// MangaDex's own rating can turn this on, but never off — see movie.ts's
-		// updateMovieFromTmdb for why a manual correction in the editor wins.
+		// Source rating can turn this on but never off, so a manual correction always wins.
 		isAdult:
 			(existing?.isAdult ?? false) ||
 			ADULT_CONTENT_RATINGS.has(manga.attributes.contentRating ?? ""),

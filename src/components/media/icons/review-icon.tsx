@@ -9,9 +9,7 @@ const DEFAULT_STYLE: CSSProperties = {
 
 type Props = SVGProps<SVGSVGElement> & {
 	size?: number;
-	// Rendered as an SVG <title> child rather than an aria-label override —
-	// browsers show that as a native hover tooltip (e.g. a review body
-	// preview), which aria-label alone doesn't do.
+	// SVG <title> child, not aria-label override — browsers show it as a native hover tooltip.
 	title?: string;
 };
 

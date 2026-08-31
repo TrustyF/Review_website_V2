@@ -8,9 +8,7 @@ import {
 import { getImageStorage } from "@/server/storage/image-storage";
 import { appendJobSummary, formatSummaryList } from "./job-summary";
 
-// Deletes cached files under dir that no longer match any of validFilenames
-// — leftovers from switching a poster/banner (stale hash) or from media rows
-// that got deleted outright.
+// Deletes cached files under dir not in validFilenames — leftovers from switching a poster/banner or from deleted media rows.
 async function cleanupOrphans(
 	dir: string,
 	validFilenames: Set<string>,

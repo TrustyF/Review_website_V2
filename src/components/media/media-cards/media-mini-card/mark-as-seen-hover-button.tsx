@@ -10,11 +10,7 @@ type Props = {
 	className?: string | undefined;
 };
 
-// TODO: stub only — toggles its own local state rather than reading/writing
-// an "already seen" field anywhere, since that field/action doesn't exist
-// yet. Same signed-out gate as AddToWatchlistHoverButton (mediaId is already
-// threaded through so wiring in the real mutation later is a one-line
-// change, same shape as toggle() in watchlist-context.tsx).
+// TODO: stub only — toggles local state, no "already seen" field/mutation exists yet.
 export function MarkAsSeenHoverButton({ mediaId, className }: Props) {
 	const { data: session } = useSession();
 	const [seen, setSeen] = useState(false);

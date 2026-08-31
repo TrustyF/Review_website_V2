@@ -2,16 +2,10 @@ import { UserRole } from "@prisma/client";
 import { db } from "@/server/db/client";
 import { createNotification } from "@/components/notifications/notification-actions";
 
-// Invoked by run-and-notify.sh on any non-zero exit from a cron job — not
-// just an uncaught exception in the job's own .ts file, since that wrapper
-// wraps the whole command (docker build/run failures included). One
-// Notification per ADMIN user, same "there could be more than one" stance
-// as the rest of the codebase's role: "ADMIN" lookups.
+// Invoked by run-and-notify.sh on any non-zero exit from a cron job (docker build/run failures included, not just an uncaught exception). One Notification per ADMIN user.
 async function main() {
 	const jobName = process.argv[2];
-	// base64 — tsx silently truncates a multi-line CLI argument to its first
-	// line, and this log tail is almost always multi-line; see
-	// run-and-notify.sh's own comment on the same fix for notify_cron_success.
+	// base64: tsx truncates a multi-line CLI argument to its first line, and this log tail is usually multi-line.
 	const messageB64 = process.argv[3];
 	if (!jobName || !messageB64) {
 		console.error(

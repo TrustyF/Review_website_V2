@@ -12,15 +12,12 @@ const MONTH_LABEL = new Intl.DateTimeFormat("en-US", {
 	year: "numeric",
 });
 
-// Same glyph + label format as group-by-review-month.tsx's own month
-// grouping on the Reviews page — kept as a separate copy rather than a
-// shared helper since the two group different shapes (MediaRecord there,
-// ActivityFeedEntry here) off a different date field.
+// Separate copy of group-by-review-month.tsx's grouping since the two group
+// different shapes off a different date field.
 const MONTH_ICON_SIZE = 17;
 
-// Buckets entries into one group per calendar month — assumes `entries`
-// already arrives newest-first (true for getActivityFeed's query), same
-// walk-once-noticing-boundaries approach as group-by-review-month.tsx.
+// Buckets entries into one group per calendar month — assumes `entries` already
+// arrives newest-first (true for getActivityFeed's query).
 export function groupByActivityMonth(
 	entries: ActivityFeedEntry[],
 ): ActivityGroup[] {

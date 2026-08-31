@@ -3,10 +3,8 @@ import { GoogleBooksVolume } from "@/server/google-books/schema";
 import { db } from "@/server/db/client";
 import { syncBookCreditsAndGenres } from "@/server/google-books/ingest/book-credits";
 
-// publishedDate ranges from a bare year ("1997") to a full ISO date
-// ("1997-06-01") depending on how well-cataloged the volume is — `new
-// Date(...)` parses both fine, but a bare year needs an explicit day-of-month
-// or it's treated as a full ISO date-time string in some engines.
+// publishedDate can be a bare year or a full ISO date; a bare year needs an explicit day-of-month
+// or some engines treat it as a UTC date-time string, shifting the local date by a day.
 function parsePublishedDate(
 	publishedDate: string | null | undefined,
 ): Date | null {
@@ -17,17 +15,8 @@ function parsePublishedDate(
 	return Number.isNaN(date.getTime()) ? null : date;
 }
 
-// Google Books hands back imageLinks.thumbnail as http:// even when queried
-// over https — browsers block that as mixed content on an https page, so it
-// gets upgraded here before being stored as Media.posterPath. Exported for
-// media-add-actions.ts's search-result thumbnails, which hit the same issue
-// before a volume is ever imported.
-//
-// The API also defaults these URLs to zoom=1 — a ~128px-wide crop, visibly
-// blurry rendered at the search grid's 200px or a media page's full-size
-// poster. zoom=3 is the largest Google Books actually serves (bumping it
-// further just clamps back down); no dedicated field for a larger image
-// exists in the API response to use instead.
+// Upgrades http (blocked as mixed content) to https, and bumps the default zoom=1 (blurry ~128px)
+// to zoom=3, the largest size Google Books serves. Exported for search-result thumbnails too.
 export function upgradeToHttps(url: string): string {
 	return url.replace(/^http:\/\//, "https://").replace(/([?&]zoom=)\d+/, "$13");
 }
@@ -36,10 +25,7 @@ function buildOverview(volume: GoogleBooksVolume): string | null {
 	return volume.volumeInfo.description ?? null;
 }
 
-// existing is only passed by updateBookFromGoogleBooks (undefined on create)
-// — every field below except status/publicRating only fills in if existing
-// doesn't already have a value, whether that's a prior ingest or a hand edit
-// in the media editor.
+// Fields other than status/publicRating only fill in if existing has no value, preserving prior ingests/hand edits.
 function buildMediaFields(
 	volume: GoogleBooksVolume,
 	existing?: {
@@ -57,11 +43,9 @@ function buildMediaFields(
 		releaseDate:
 			existing?.releaseDate ??
 			parsePublishedDate(volume.volumeInfo.publishedDate),
-		// Google Books has no ongoing/completed/cancelled signal — every
-		// tracked volume is treated as a released, standalone book.
+		// No ongoing/completed/cancelled signal — every tracked volume is treated as released.
 		status: MediaStatus.RELEASED,
-		// Google Books' own rating can turn this on, but never off — see
-		// movie.ts's updateMovieFromTmdb for why a manual correction wins.
+		// Source rating can turn this on but never off, so a manual correction always wins.
 		isAdult:
 			(existing?.isAdult ?? false) ||
 			volume.volumeInfo.maturityRating === "MATURE",

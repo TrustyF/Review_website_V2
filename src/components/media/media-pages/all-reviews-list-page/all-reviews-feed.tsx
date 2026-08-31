@@ -11,13 +11,7 @@ type Props = {
 	initialHasMore: boolean;
 };
 
-// Drives the actual pagination: AllReviewsListPage only ever fetches the
-// first page server-side (see all-reviews-actions.ts's own comment on why),
-// so this is what fetches each subsequent one as the sentinel scrolls into
-// view, appending it to what's already loaded and re-grouping the whole
-// accumulated list by month. Unlike LazyMediaGrid/LazyMediaList's
-// useLazyReveal, there's no hidden tail to reveal here — every item this
-// renders was fetched because it's about to be shown.
+// Fetches each page after the first as the sentinel scrolls into view, appending and re-grouping by month. Unlike useLazyReveal, there's no hidden tail — every item here was fetched because it's about to show.
 export function AllReviewsFeed({ initialMedia, initialHasMore }: Props) {
 	const [media, setMedia] = useState(initialMedia);
 	const [hasMore, setHasMore] = useState(initialHasMore);
@@ -31,9 +25,7 @@ export function AllReviewsFeed({ initialMedia, initialHasMore }: Props) {
 		const sentinel = sentinelRef.current;
 		if (!sentinel) return;
 
-		// rootMargin gives it a head start — the next page starts fetching
-		// while the sentinel is still a bit below the viewport, not exactly
-		// at its edge. Same convention as useLazyReveal's own observer.
+		// rootMargin starts the fetch a bit before the sentinel reaches the viewport edge.
 		const observer = new IntersectionObserver(
 			(entries) => {
 				if (!entries.some((entry) => entry.isIntersecting)) return;

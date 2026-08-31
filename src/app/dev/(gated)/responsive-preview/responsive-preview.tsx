@@ -3,19 +3,15 @@
 import { useState } from "react";
 import styles from "./responsive-preview-dev.module.sass";
 
-// Real iframes at real pixel widths, not a scaled-down mockup — the whole
-// point is to see the actual rendering (fonts, scrollbars, media queries)
-// at each size, side by side, instead of resizing one window three times.
-// Same-origin src (relative path) so this works regardless of which port
-// the dev server actually landed on.
+// Real iframes at real pixel widths so rendering (fonts, media queries) is
+// actually true to size, not a scaled mockup. Relative src stays same-origin
+// regardless of which port the dev server landed on.
 const DEFAULT_WIDTHS = [375, 800, 1400];
 
 export function ResponsivePreview() {
 	const [path, setPath] = useState("/");
 	const [widths, setWidths] = useState<number[]>(DEFAULT_WIDTHS);
-	// Bumped to force every iframe to remount — editing path already
-	// reloads them via a src change, but this covers "I changed some code,
-	// reload without navigating anywhere."
+	// Bumped to force every iframe to remount without changing the path
 	const [reloadKey, setReloadKey] = useState(0);
 
 	function setWidth(index: number, value: number) {

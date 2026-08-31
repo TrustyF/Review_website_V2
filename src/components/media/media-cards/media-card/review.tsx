@@ -14,19 +14,11 @@ const DateFormatter = new Intl.DateTimeFormat("en-GB", {
 
 type Props = {
 	review: Review | null | undefined;
-	// Not a Review column — derived from the "watched" MediaChangeLog
-	// milestone (see saveReview/toMediaRecord), since that's the single
-	// source of truth "Reviewed on"/"Rewatched on" also read from in the
-	// changelog itself, instead of duplicating a date on the review row too.
+	// Not a Review column — derived from the "watched" MediaChangeLog milestone, the single source of truth for this date.
 	watchedDate?: Date | null | undefined;
 };
 
-// The rating + "Watched on" pair, with no wrapper of its own — split out so
-// MediaCardShellMobile (see that file's own comment) can place this beside
-// the poster while MediaReviewBody below sits in a separate full-width row,
-// instead of the two only ever coming as one fixed block. MediaReview
-// (below) still renders both together for MediaCardShell's own desktop
-// layout, unchanged from before this split.
+// The rating + "Watched on" pair, split out (no wrapper) so MediaCardShellMobile can place it separately from MediaReviewBody's full-width row.
 export function MediaReviewMeta({ review, watchedDate }: Props) {
 	if (!review) return null;
 
@@ -37,9 +29,7 @@ export function MediaReviewMeta({ review, watchedDate }: Props) {
 				<StarIcon />
 			</div>
 
-			{/* "Reviewed on" isn't shown here — see saveReview's comment: it's
-			    changelog-only, alongside "watched" itself, rather than
-			    duplicated on the card too. */}
+			{/* "Reviewed on" isn't shown here — it's changelog-only, not duplicated on the card. */}
 			{watchedDate && (
 				<div className={styles.review_date}>
 					Watched on {DateFormatter.format(watchedDate)}
@@ -49,12 +39,7 @@ export function MediaReviewMeta({ review, watchedDate }: Props) {
 	);
 }
 
-// Just the review text itself, including its own .body styling (color/font/
-// line-height/spacing) — see MediaReviewMeta's own comment on why this is
-// separate. Carries that styling itself, rather than leaving it to a
-// wrapper only MediaReview's own desktop composition below provides, so it
-// still looks like review text wherever else it's placed (see
-// MediaCardShellMobile's own full-width row for it).
+// The review text with its own .body styling, so it still looks right wherever placed (not just inside MediaReview's own wrapper).
 export function MediaReviewBody({
 	review,
 }: {
@@ -62,9 +47,7 @@ export function MediaReviewBody({
 }) {
 	if (!review?.body) return null;
 
-	// One provider per review — clicking any spoiler reveals every spoiler
-	// in this review, but never bleeds into another media item's review
-	// rendered elsewhere on the same page (e.g. a grid of cards).
+	// One provider per review so a revealed spoiler doesn't bleed into another review's card.
 	return (
 		<div className={styles.body}>
 			<ReviewSpoilerProvider>

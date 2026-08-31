@@ -8,19 +8,13 @@ type Props = {
 	avatarSrc: string | null;
 	showAvatar: boolean;
 	onAvatarError: () => void;
-	// CSS module class lookup, same reasoning as NavLink's own className prop
-	// (nav-link.tsx) — desktop (NavAccountMenu) and mobile (NavMobileControls)
-	// each wrap this in their own layout class.
+	// Desktop and mobile pass their own wrapping layout class.
 	className: string | undefined;
-	// 18px on mobile vs 14px everywhere else — the fallback AccountIcon has to
-	// fill the same bigger tap target mobile's other nav icons use there.
+	// 18px on mobile to match the bigger tap target there, 14px elsewhere.
 	iconSize: number;
 };
 
-// The /account link with its avatar-or-fallback-icon content — identical
-// between NavAccountMenu's desktop row and NavMobileControls's own, aside
-// from the wrapping class and icon size (see their own callers), so it's
-// shared here rather than hand-copied in both.
+// Shared /account link (avatar-or-fallback-icon) between desktop and mobile.
 export function NavAccountAvatar({
 	pathname,
 	avatarSrc,
@@ -45,10 +39,7 @@ export function NavAccountAvatar({
 					onError={onAvatarError}
 				/>
 			) : (
-				// Always icon-only — there's no label this link could ever pair
-				// the icon with — so it stays at full brightness unconditionally,
-				// same as NavLink's own iconOnly icons (nav-bar.module.sass's own
-				// .nav_icon_always).
+				// Always icon-only (no label to pair with), so full brightness.
 				<AccountIcon
 					size={iconSize}
 					className={`${style.nav_icon} ${style.nav_icon_always}`}

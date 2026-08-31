@@ -8,16 +8,8 @@ import {
 
 type t_client = Prisma.TransactionClient;
 
-// Replaces a comic's credits with the latest ComicVine data. ComicVine has
-// no genre data on a volume (unlike TMDB/MangaDex/Google Books), so this
-// only handles credits — no mediaGenre delete/insert here at all. The
-// people list is flat with no per-person role breakdown at the volume level
-// (that only exists per-issue), so every person gets a single generic
-// "Creator" role rather than a guessed-at Writer/Artist split.
-//
-// Batched — see movie-credits.ts's own comment and batch-entity-resolver.ts
-// for why this collapses the whole item's references into a handful of
-// findMany/createMany calls instead of one round trip per person.
+// ComicVine has no volume-level genre data, so only credits are synced here.
+// The people list is flat (no per-person role until issue level), so everyone gets a generic "Creator" role.
 export async function syncComicCreditsAndGenres(
 	tx: t_client,
 	mediaId: number,

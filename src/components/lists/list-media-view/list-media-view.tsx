@@ -15,17 +15,11 @@ type Props = {
 	sortMode: "RATED" | "UNSORTED";
 };
 
-// RANKED lists get RankedList's own drag-to-reorder view — this handles the
-// other two modes, which share everything except which existing grid does
-// the actual layout: RATED reuses RatedTierGrid (the same tiered view
-// /movies etc. already show), UNSORTED reuses LazyMediaGrid directly with
-// no tiering. Neither one has any built-in notion of "remove from list", so
-// that's supplied here via renderOverlay (see LazyMediaGrid's own note).
+// Handles the two non-RANKED sort modes (RankedList covers RANKED); RATED reuses RatedTierGrid, UNSORTED reuses LazyMediaGrid directly. Neither grid has a built-in "remove from list", so it's supplied via renderOverlay.
 export function ListMediaView({ listId, media, sortMode }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
-	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
-	// for the same rule applied to the navbar's own admin links).
+	// Mobile admin edits are intentionally unsupported.
 	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const { removingId, handleRemove } = useListItemRemoval(listId);
 	const { filter, setFilter, filteredMedia } = useMediaFilter(media);

@@ -10,12 +10,7 @@ type Props = {
 	formatValue?: (value: number) => string;
 };
 
-// Two overlapping native <input type="range"> elements sharing one track —
-// each renders its own thumb only (the track itself is hidden via CSS, see
-// dual-range-slider.module.sass), so both stay independently draggable
-// without a pointer-tracking implementation of our own. Whichever handle is
-// dragged past the other pushes it along rather than crossing it, so lo/hi
-// can't invert.
+// Two overlapping native range inputs sharing one visual track, so both stay independently draggable without custom pointer tracking. Dragging one past the other pushes it along rather than crossing, so lo/hi can't invert.
 export function DualRangeSlider({
 	min,
 	max,

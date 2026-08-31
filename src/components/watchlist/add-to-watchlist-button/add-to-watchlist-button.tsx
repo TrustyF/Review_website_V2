@@ -11,11 +11,8 @@ type Props = {
 	className?: string | undefined;
 };
 
-// Signed-out visitors never see this — media/[id]/page.tsx only renders it
-// when there's a session, same as AddToListButton's own isAdmin gate.
-// Single boolean toggle rather than a popover, since there's only ever one
-// destination (this account's own watchlist), not a set of lists to pick
-// from.
+// Signed-out visitors never see this; only rendered when there's a session.
+// Single boolean toggle rather than a popover, since there's only one destination.
 export function AddToWatchlistButton({
 	mediaId,
 	initialIsInWatchlist,

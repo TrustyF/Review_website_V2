@@ -1,14 +1,11 @@
 type Props = {
 	size?: number | undefined;
 	className?: string | undefined;
-	// Matches the fill prop lucide icons take, so this drops into NavLink's
-	// existing `fill={isActive ? "currentColor" : "none"}` call site unchanged.
+	// Matches lucide icons' fill prop for drop-in use at NavLink's call site.
 	fill?: string | undefined;
 };
 
-// Extracted from lucide-react's House icon so the filled variant below can be
-// hand-edited independently of the outline — lucide only ships outline
-// artwork, no separate filled set.
+// Extracted from lucide-react's House so the filled variant can be hand-edited; lucide has no filled set.
 export function HomeIcon({ size = 24, className, fill = "none" }: Props) {
 	const filled = fill !== "none";
 	return (

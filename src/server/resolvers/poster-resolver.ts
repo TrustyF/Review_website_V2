@@ -25,65 +25,42 @@ import {
 	type CacheFormat,
 } from "@/server/resolvers/asset-paths";
 
-// Re-exported so existing callers that only need the pure URL/filename
-// helpers (no `sharp` dependency) can keep importing from this file — new
-// perf-sensitive callers (server actions on a hot path, like search) should
-// import straight from asset-paths.ts instead, so their bundle doesn't pull
-// in sharp's native binary just to build a URL. See asset-paths.ts's own
-// comment for the full story.
+// Re-exported for callers that only need the URL/filename helpers — new
+// perf-sensitive callers should import asset-paths.ts directly instead, so
+// their bundle skips sharp's native binary.
 export * from "@/server/resolvers/asset-paths";
 
-// The change log thumbnail only ever displays at 46x69 CSS px (~138px tall
-// at 2x DPI) — smallSourceUrlFor already asks each source for its smallest
-// templated size, but ComicVine and manually-entered posters have no
-// smaller variant to request (see sourceUrlFor) and can come back at full
-// poster resolution. Re-encoding to this height regardless of source
-// guarantees a small cached file either way, instead of only when the
-// source happens to cooperate.
+// Change log thumbnails only ever display at 46x69 CSS px — re-encoding to
+// this height regardless of source guarantees a small cached file even for
+// sources (ComicVine, manual entries) with no smaller variant to request.
 const THUMB_MAX_HEIGHT = 140;
-// Change log rows show a small landscape thumbnail for a bannerPath change,
-// the same idea as THUMB_MAX_HEIGHT for posterPath — sized down from
-// BANNER_MAX_WIDTH the same way THUMB_MAX_HEIGHT is sized down from the full
-// poster. See resolveChangelogBannerThumb.
+// Same idea as THUMB_MAX_HEIGHT, sized down from BANNER_MAX_WIDTH instead —
+// see resolveChangelogBannerThumb.
 const BANNER_THUMB_MAX_WIDTH = 120;
-// The change log thumbnail cache re-encodes to WebP at its own lower
-// quality — see resolveChangelogPosterThumb.
 
-// 1200x630 (~1.91:1) is the de facto standard og:image shape — the one
-// dimension both Discord and WhatsApp render consistently as a clean
-// rectangle. A poster's own 2:3 (or 3:4) crop doesn't fit that box, and
-// WhatsApp's link-preview UI force-crops non-matching shapes into a square
-// no matter what metadata says (client-side behavior, not something a
-// publisher can override) — see resolveLinkEmbedImage for how this actually
-// gets composited into that box instead of just resized into it.
+// 1200x630 (~1.91:1) is the standard og:image shape Discord/WhatsApp render
+// as a clean rectangle — a poster's 2:3 crop doesn't fit it, and WhatsApp
+// force-crops non-matching shapes into a square client-side regardless of
+// metadata, hence compositing (resolveLinkEmbedImage) rather than resizing.
 const LINK_EMBED_WIDTH = 1200;
 const LINK_EMBED_HEIGHT = 630;
-// Height of the poster "card" composited on top of the backdrop, border
-// included — leaves a little backdrop visible above/below on the 630-tall
-// canvas. Width follows whatever a given poster's own ratio produces at
-// this height (2:3 for most types, 3:4 for comic/game) rather than a second
-// fixed number.
-const LINK_EMBED_POSTER_HEIGHT = 540;
-const LINK_EMBED_POSTER_BORDER = 6;
-// Not measured in the compression dev tool the way POSTER_QUALITY/
-// BANNER_QUALITY were — JPEG generally needs a higher quality number than
-// WebP/AVIF for comparable visual fidelity, so this is deliberately well
-// above POSTER_QUALITY's 50 rather than reused from it.
+// Height of the poster "card" on the backdrop, border included — width
+// follows the poster's own ratio at this height.
+const LINK_EMBED_POSTER_HEIGHT = 630;
+// JPEG needs a higher quality number than WebP/AVIF for similar fidelity —
+// deliberately above POSTER_QUALITY's 50 rather than reused from it.
 const LINK_EMBED_QUALITY = 60;
 
-// Keyed by "dir/filename", so a resize/encode that's already running for a
-// given cache miss is reused instead of redone. Without this, several
-// concurrent requests for the same not-yet-cached asset (e.g. a handful of
-// tabs open on a title right after it's added, before anyone's request has
-// finished writing the cache) would each independently download, sharp-
-// encode, and storage.write the identical bytes — real duplicated Active CPU
-// for work whose result only ever needs computing once. Module-scope, so it
-// only dedupes concurrent requests landing on the same warm instance — which
-// is exactly the case Fluid's higher per-instance concurrency makes more
-// likely, not less.
+// Keyed by "dir/filename" so a resize/encode already running for a cache
+// miss is reused instead of redone by concurrent requests for the same
+// not-yet-cached asset. Module-scope, so it only dedupes within one warm
+// instance — exactly what Fluid's higher per-instance concurrency needs.
 const inFlightEncodes = new Map<string, Promise<Buffer>>();
 
-function dedupeEncode(key: string, run: () => Promise<Buffer>): Promise<Buffer> {
+function dedupeEncode(
+	key: string,
+	run: () => Promise<Buffer>,
+): Promise<Buffer> {
 	const existing = inFlightEncodes.get(key);
 	if (existing) return existing;
 	const promise = run().finally(() => inFlightEncodes.delete(key));
@@ -91,15 +68,10 @@ function dedupeEncode(key: string, run: () => Promise<Buffer>): Promise<Buffer> 
 	return promise;
 }
 
-// Shared by resolvePoster, resolveChangelogPosterThumb, and resolveBanner:
-// content-addressed cache-or-download, differing only in directory, which
-// size URL to fetch, and whether/how the downloaded bytes get resized down
-// before being written — all three re-encode to WebP.
-//
-// Goes through ImageStorage (see src/server/storage/image-storage.ts)
-// rather than fs directly, so this works unchanged against local disk today
-// or a remote object store in production — the only thing that differs
-// between backends is where read/write actually land.
+// Shared content-addressed cache-or-download logic for resolvePoster,
+// resolveChangelogPosterThumb, and resolveBanner-adjacent thumbs — differs
+// only in directory, source size, and resize. Goes through ImageStorage so
+// it works unchanged against local disk or a remote object store.
 async function cacheOrDownload(
 	dir: string,
 	filename: string,
@@ -134,10 +106,8 @@ async function cacheOrDownload(
 	return { bytes };
 }
 
-// bytes typed as the plain Uint8Array rather than Node's own generic
-// Buffer<ArrayBufferLike> — the two are structurally the same at runtime
-// (Buffer extends Uint8Array), but NextResponse's BodyInit type doesn't
-// resolve against the generic Buffer type cleanly, only the plain one.
+// Plain Uint8Array, not Node's Buffer<ArrayBufferLike> — NextResponse's
+// BodyInit type only resolves cleanly against the plain one.
 export type ResolvedAsset = { bytes: Uint8Array; contentType: string };
 
 const PLACEHOLDER_POSTER_PATH = path.join(
@@ -147,14 +117,10 @@ const PLACEHOLDER_POSTER_PATH = path.join(
 	"placeholder.jpg",
 );
 
-// Returns the actual bytes (not a URL) — the /api/poster route hands these
-// straight back as the response body. Same fresh-miss shape as resolveBanner
-// (see that function's own comment): on a cache miss, the raw downloaded
-// source is returned immediately and the resize/encode/storage write happens
-// in `after()`, off the response's critical path, so the browser (or a
-// Server Action caller, e.g. updateMediaPoster in media-editor-actions.ts —
-// see its own comment on why blocking on the encode there is a problem
-// without Fluid Compute) isn't blocked on sharp.
+// Returns the actual bytes — /api/poster hands these straight back as the
+// response body. Same fresh-miss shape as resolveBanner: on a cache miss the
+// raw source returns immediately, and resize/encode/write happens in
+// `after()`, off the critical path.
 export async function resolvePoster(
 	mediaId: number,
 	type: MediaType,
@@ -183,11 +149,12 @@ export async function resolvePoster(
 	const source = Buffer.from(await res.arrayBuffer());
 	const sourceContentType = res.headers.get("content-type") || "image/jpeg";
 
-	// Posters are deliberately never resized down (see POSTER_QUALITY's own
-	// comment) — just re-encoded to WebP, unlike person photos/banners.
+	// Posters are deliberately never resized down — just re-encoded to WebP.
 	const encode = () =>
 		dedupeEncode(`${POSTER_DIR}/${filename}`, async () => {
-			const encoded = await sharp(source).webp({ quality: POSTER_QUALITY }).toBuffer();
+			const encoded = await sharp(source)
+				.webp({ quality: POSTER_QUALITY })
+				.toBuffer();
 			await storage.write(POSTER_DIR, filename, encoded);
 			return encoded;
 		});
@@ -205,15 +172,11 @@ async function fetchImageBytes(url: string): Promise<Buffer> {
 	return Buffer.from(await res.arrayBuffer());
 }
 
-// Composites a standard-shaped (1200x630) link-preview image instead of
-// just resizing the poster into that box — see LINK_EMBED_WIDTH's own
-// comment on why a plain resize/crop doesn't work here. A real banner
-// (TMDB backdrop / IGDB artwork) makes a much better backdrop than a
-// blurred-up poster when one exists; manga/comic never have one (see
-// bannerUrlFor's own note on that), and even TMDB/IGDB titles sometimes
-// lack one, so this falls back to blurring the poster itself either way.
-// Doesn't share cacheOrDownload's shape — that helper assumes one source
-// image and one resize, this needs up to two sources and a composite.
+// Composites a standard-shaped (1200x630) link-preview image rather than
+// resizing the poster into that box (see LINK_EMBED_WIDTH). Prefers a real
+// banner as the backdrop when one exists, falling back to a blurred poster
+// otherwise. Doesn't share cacheOrDownload's shape — needs two sources and a
+// composite, not one resize.
 export async function resolveLinkEmbedImage(
 	mediaId: number,
 	type: MediaType,
@@ -233,70 +196,65 @@ export async function resolveLinkEmbedImage(
 	const cached = await storage.read(LINK_EMBED_DIR, filename);
 	if (cached) return { bytes: cached, contentType: "image/jpeg" };
 
-	const bytes = await dedupeEncode(`${LINK_EMBED_DIR}/${filename}`, async () => {
-		const posterBytes = await fetchImageBytes(
-			posterUrlFor(type, externalId, posterPath, "full"),
-		);
+	const bytes = await dedupeEncode(
+		`${LINK_EMBED_DIR}/${filename}`,
+		async () => {
+			const posterBytes = await fetchImageBytes(
+				posterUrlFor(type, externalId, posterPath, "full"),
+			);
 
-		let backgroundBytes = posterBytes;
-		if (bannerPath) {
-			try {
-				backgroundBytes = await fetchImageBytes(bannerUrlFor(type, bannerPath));
-			} catch {
-				// Falls back to the poster itself (still assigned above) — a
-				// broken/unreachable banner shouldn't block the whole embed image.
+			let backgroundBytes = posterBytes;
+			if (bannerPath) {
+				try {
+					backgroundBytes = await fetchImageBytes(
+						bannerUrlFor(type, bannerPath),
+					);
+				} catch {
+					// Falls back to the poster itself (still assigned above) — a
+					// broken/unreachable banner shouldn't block the whole embed image.
+				}
 			}
-		}
-		const isBlurredPosterBackdrop = backgroundBytes === posterBytes;
+			const isBlurredPosterBackdrop = backgroundBytes === posterBytes;
 
-		let background = sharp(backgroundBytes).resize({
-			width: LINK_EMBED_WIDTH,
-			height: LINK_EMBED_HEIGHT,
-			fit: "cover",
-		});
-		if (isBlurredPosterBackdrop) {
-			background = background.blur(24);
-		}
+			let background = sharp(backgroundBytes).resize({
+				width: LINK_EMBED_WIDTH,
+				height: LINK_EMBED_HEIGHT,
+				fit: "cover",
+			});
+			if (isBlurredPosterBackdrop) {
+				background = background.blur(50);
+			}
 
-		// Darkens the backdrop either way — keeps the poster card readable
-		// against a bright banner/poster, same idea as the detail page's own
-		// banner gradient (see media-detail.module.sass's .banner_backdrop).
-		const scrim = Buffer.from(
-			`<svg width="${LINK_EMBED_WIDTH}" height="${LINK_EMBED_HEIGHT}"><rect width="100%" height="100%" fill="black" fill-opacity="0.35"/></svg>`,
-		);
+			// Darkens the backdrop so the poster card stays readable against it.
+			const scrim = Buffer.from(
+				`<svg width="${LINK_EMBED_WIDTH}" height="${LINK_EMBED_HEIGHT}"><rect width="100%" height="100%" fill="black" fill-opacity="0.35"/></svg>`,
+			);
 
-		// A thin solid border gives the poster a "card" edge against the
-		// backdrop instead of just floating with nothing to define it.
-		const posterCard = await sharp(posterBytes)
-			.resize({
-				height: LINK_EMBED_POSTER_HEIGHT - LINK_EMBED_POSTER_BORDER * 2,
-				withoutEnlargement: true,
-			})
-			.extend({
-				top: LINK_EMBED_POSTER_BORDER,
-				bottom: LINK_EMBED_POSTER_BORDER,
-				left: LINK_EMBED_POSTER_BORDER,
-				right: LINK_EMBED_POSTER_BORDER,
-				background: "#ffffff",
-			})
-			.png()
-			.toBuffer();
+			// A thin solid border gives the poster a "card" edge against the
+			// backdrop instead of just floating with nothing to define it.
+			const posterCard = await sharp(posterBytes)
+				.resize({
+					height: LINK_EMBED_POSTER_HEIGHT,
+					withoutEnlargement: true,
+				})
+				.png()
+				.toBuffer();
 
-		const bytes = await background
-			.composite([{ input: scrim }, { input: posterCard, gravity: "center" }])
-			.jpeg({ quality: LINK_EMBED_QUALITY })
-			.toBuffer();
+			const bytes = await background
+				.composite([{ input: scrim }, { input: posterCard, gravity: "west" }])
+				.jpeg({ quality: LINK_EMBED_QUALITY })
+				.toBuffer();
 
-		await storage.write(LINK_EMBED_DIR, filename, bytes);
-		return bytes;
-	});
+			await storage.write(LINK_EMBED_DIR, filename, bytes);
+			return bytes;
+		},
+	);
 	return { bytes, contentType: "image/jpeg" };
 }
 
 // Same content-addressable caching as resolvePoster, but for a change log
-// entry's old/new posterPath — mediaId + posterPath alone is enough to
-// address it, so a poster that's since been replaced (or a media that's
-// since been deleted) still resolves to its own stable historical file.
+// entry's old/new posterPath — stays resolvable even after the poster's
+// since been replaced or the media deleted.
 export async function resolveChangelogPosterThumb(
 	mediaId: number,
 	type: MediaType,
@@ -315,16 +273,11 @@ export async function resolveChangelogPosterThumb(
 	return getImageStorage().urlFor(CHANGELOG_THUMB_DIR, filename);
 }
 
-// Doesn't share cacheOrDownload's shape — a banner source (TMDB w1280
-// backdrop / IGDB t_1080p artwork) is large enough that the resize + AVIF
-// re-encode is the slow part of a cache miss, not the download. Blocking the
-// very first viewer of a given banner on that encode (plus the storage
-// write, itself a network round trip on the Blob backend) is what made a
-// first-time banner load noticeably slow on Vercel. Instead, a miss returns
-// the raw source bytes immediately and does the resize/encode/write in
-// `after()`, off the request's critical path — the next request for this
-// banner finds it cached (see the `fresh` flag below) and gets the small,
-// long-lived-cacheable AVIF.
+// Doesn't share cacheOrDownload's shape — a banner source is large enough
+// that resize + AVIF re-encode is the slow part of a cache miss, not the
+// download, which made a first-time banner load noticeably slow on Vercel.
+// A miss returns the raw source immediately and resizes/encodes/writes in
+// `after()`, off the critical path — the next request finds it cached.
 export async function resolveBanner(
 	mediaId: number,
 	type: MediaType,
@@ -347,15 +300,12 @@ export async function resolveBanner(
 	const res = await fetch(bannerUrlFor(type, bannerPath));
 	if (!res.ok) throw new Error("Banner download failed");
 	const source = Buffer.from(await res.arrayBuffer());
-	// TMDB backdrops and IGDB artworks are both plain JPEGs, but reading it
-	// off the response rather than hardcoding "image/jpeg" costs nothing and
-	// stays correct if either source ever changes format.
+	// Read off the response rather than hardcoded, so it stays correct if a
+	// source ever changes format.
 	const sourceContentType = res.headers.get("content-type") || "image/jpeg";
 
-	// Deduped for the same reason as cacheOrDownload/resolveLinkEmbedImage:
-	// several concurrent misses on this banner (e.g. `after()`-deferred
-	// encodes from more than one first-time viewer) would otherwise each
-	// redo the resize/encode/write.
+	// Deduped so concurrent misses on this banner don't each redo the
+	// resize/encode/write.
 	const encode = () =>
 		dedupeEncode(`${BANNER_DIR}/${filename}`, async () => {
 			const encoded = await sharp(source)
@@ -373,11 +323,9 @@ export async function resolveBanner(
 	return { bytes: source, contentType: sourceContentType, fresh: true };
 }
 
-// Same fresh-miss/deferred-encode shape as resolvePoster/resolveBanner — see
-// resolvePoster's own comment — just a smaller resize target (see
-// PERSON_PHOTO_MAX_WIDTH) and no placeholder fallback, since callers only
-// ever reach this once toPersonPhotoSrc has already confirmed there's a
-// photoPath to resolve.
+// Same fresh-miss/deferred-encode shape as resolvePoster/resolveBanner, just
+// a smaller resize target and no placeholder fallback — callers only reach
+// this once a photoPath is already confirmed to exist.
 export async function resolvePersonPhoto(
 	personId: number,
 	photoPath: string,

@@ -1,9 +1,6 @@
 @use "@/app/styles/variables" as *
 
-// A slight counter-clockwise tilt plus the same solid offset shadow Logo
-// uses (see logo.module.sass) — reads as a ticket tossed down rather than
-// pinned flat, which is what the reference leans on since this version has
-// none of Logo's other texture (perforation, meta row) to give it life.
+// Slight tilt plus Logo's solid offset shadow reads as a ticket tossed down, compensating for lacking Logo's other texture.
 .ticket
   position: relative
   display: flex
@@ -40,9 +37,7 @@
   line-height: 1.05
   letter-spacing: -0.01em
 
-// Dashed tear line sits on the boundary itself (border-left), rather than
-// as a separate strip the way Logo's .perforation is — this version has no
-// margin column to hold it in.
+// Tear line is a border-left on the boundary itself, not a separate strip like Logo's .perforation, since there's no margin column here.
 .stub
   flex: 0 0 3.25rem
   display: flex

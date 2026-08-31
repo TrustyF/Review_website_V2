@@ -3,13 +3,9 @@ import { db } from "@/server/db/client";
 import { resolveChangelogPosterThumb } from "@/server/resolvers/poster-resolver";
 import type { MediaType } from "@prisma/client";
 
-// No dedicated ActivityLog table — every one of these is already recorded
-// somewhere with its own timestamp (Review.createDate, MediaChangeLog's
-// "rating" rows, List.createDate, ListItem/WatchlistItem.addedAt), and a
-// row disappearing from its source (removed from a list/watchlist, a
-// change-log entry hidden via deleteChangeLogEntry) is exactly the same
-// thing as it disappearing from this feed — no separate log to keep in
-// sync, no backfill needed when a new kind of event is added later.
+// No dedicated ActivityLog table — every event is read live off its own source
+// (Review, MediaChangeLog, List, ListItem/WatchlistItem), so removing a row
+// there removes it from this feed too, with nothing to keep in sync.
 export type ActivityType =
 	| "RATED"
 	| "RATING_CHANGED"
@@ -36,15 +32,10 @@ export type ActivityFeedEntry = {
 
 const PAGE_SIZE = 100;
 
-// Same fallback asset-paths.ts's toPosterSrc uses for a posterPath-less
-// media row — kept local since this is the one place that ternary needed
-// duplicating rather than importing the whole helper just for this constant.
+// Same fallback as asset-paths.ts's toPosterSrc for a posterPath-less media row.
 const PLACEHOLDER_POSTER_SRC = "/posters/placeholder.jpg";
 
-// Same "skip if it lands the same calendar day as the rating" rule
-// change-log-list.tsx's synthesized "Reviewed on" entry uses against
-// "Watched on" — the two reading as one combined moment (rate and review in
-// the same sitting) rather than two separate feed rows for it.
+// Rate-and-review on the same day should read as one combined moment, not two rows.
 function isSameCalendarDay(a: Date, b: Date): boolean {
 	return a.toDateString() === b.toDateString();
 }
@@ -65,16 +56,9 @@ type MediaSelection = {
 	externalId: string | null;
 } | null;
 
-// Same content-addressed change-log thumbnail every media editor's own
-// changelog uses (see change-log-list.tsx's ChangeValue) rather than
-// /api/poster's full-size lazy resolve — a small, pre-cached image is the
-// right weight for a dense feed row, and it's the one poster source that
-// keeps resolving correctly even for media that's since been deleted.
-// posterSrcCache dedupes resolveChangelogPosterThumb calls by media id — the
-// same title routinely shows up under several entries in one feed (e.g. a
-// RATED row and a WATCHLIST_ADDED row for the same media), and without this
-// each one would independently pay resolveChangelogPosterThumb's own
-// storage.read() round trip for what's always the identical result.
+// Same small pre-cached thumbnail change-log rows use, not /api/poster's full-size
+// resolve — stays resolvable even for deleted media. posterSrcCache dedupes by media
+// id since the same media often shows up under several entries in one feed.
 async function toMediaEntry(
 	media: MediaSelection,
 	posterSrcCache: Map<number, Promise<string>>,
@@ -101,32 +85,16 @@ async function toMediaEntry(
 	};
 }
 
-// Most-recent-first, capped rather than paginated — a personal site's
-// activity volume never gets deep enough for pagination to earn its keep
-// (see list-actions.ts's own searchMediaForList comment on the same
-// small-scale tradeoff). Public — no requireAdmin() here — but scoped to
-// admin-authored rows only: reviews/ratings/lists have no per-user owner at
-// all (only an admin can ever write them), but WATCHLIST_ADDED needs an
-// explicit `user.role: ADMIN` filter since watchlist is genuinely per-user
-// — this is meant to read as "my activity", not a public log of what every
-// visitor's account has been doing. Every media-referencing query also
-// excludes adult/soft-deleted media directly on its own `where`, rather
-// than going through dbPublic — that extension (src/server/db/client.ts)
-// only patches top-level `db.media.*` calls, not a nested `media: {...}`
-// select off another model the way every query below does, so it wouldn't
-// actually filter anything here even if used. isAdult isn't wired into it
-// at all yet either (see that field's own comment in media.prisma).
+// Most-recent-first, capped rather than paginated — activity volume never gets deep
+// enough to need it. Public (no requireAdmin), but scoped to admin-authored rows:
+// reviews/ratings/lists have no per-user owner, and WATCHLIST_ADDED is explicitly
+// filtered to `user.role: ADMIN` so this reads as "my activity", not every visitor's.
+// Media-referencing queries filter adult/soft-deleted directly on their own `where`
+// since dbPublic only patches top-level `db.media.*`, not a nested `media: {...}` select.
 //
-// Each source query takes its own PAGE_SIZE, capped and sorted by that
-// source's own date column — deliberately NOT re-capped to PAGE_SIZE again
-// after merging. RATED fires on every review save (1400+ of them) while
-// REVIEWED only fires the rare times a body actually got written (a few
-// dozen, ever) — a single global top-PAGE_SIZE slice across every type
-// combined would let the high-frequency type permanently crowd the sparse
-// one out the moment more than PAGE_SIZE ratings happened since the last
-// review was written up, however recent that review still is. Each type
-// keeping its own independently-capped window avoids that regardless of how
-// unevenly the types fire.
+// Each source query is capped and sorted independently, NOT re-capped globally after
+// merging — RATED fires far more often than REVIEWED, and a single global cap would let
+// it crowd sparse types out even when they're recent.
 export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 	const [
 		ratedReviews,
@@ -137,10 +105,7 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 		listItems,
 		watchlistItems,
 	] = await Promise.all([
-			// RATED — every review has this, since a rating is required to save
-			// one at all (see saveReview). Excludes adult/soft-deleted media —
-			// this feed is public (see the comment below), unlike the review/
-			// media editor itself.
+			// RATED — every review has this, since a rating is required to save one.
 			db.review.findMany({
 				where: { media: { isAdult: false, isDeleted: false } },
 				orderBy: { createDate: "desc" },
@@ -153,13 +118,8 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 					media: { select: MEDIA_SELECT },
 				},
 			}),
-			// REVIEWED — a separate, later moment reviewDate marks (set once,
-			// the first time body actually goes from unset to set — see
-			// saveReview's own comment), not every review has one. Ranked and
-			// capped by its own date rather than reused from ratedReviews above,
-			// same reasoning as RATING_CHANGED's own separate query: a review
-			// rated long ago but only just written up needs to rank by when it
-			// was reviewed, not when it was rated.
+			// REVIEWED — reviewDate marks a separate, later moment (first time a body
+			// gets written), so it's ranked/capped by its own date, not ratedReviews'.
 			db.review.findMany({
 				where: {
 					reviewDate: { not: null },
@@ -193,9 +153,7 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 					media: { select: MEDIA_SELECT },
 				},
 			}),
-			// REWATCHED — a real MediaChangeLog row, unlike RATED/REVIEWED's
-			// synthetic ones (see logRewatch), so it's filtered/capped the same
-			// way RATING_CHANGED's own query above is.
+			// REWATCHED — a real MediaChangeLog row, unlike RATED/REVIEWED's synthetic ones.
 			db.mediaChangeLog.findMany({
 				where: {
 					field: "rewatched",
@@ -211,10 +169,8 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 					media: { select: MEDIA_SELECT },
 				},
 			}),
-			// targetUserId: null on both — a recommendation list (see
-			// list.prisma's own comment) is private to whoever it's for, and
-			// this feed is public, so neither its creation nor anything added to
-			// it should surface here regardless of who's viewing.
+			// targetUserId: null — a recommendation list is private to whoever it's for,
+			// so it (and anything added to it) shouldn't surface on this public feed.
 			db.list.findMany({
 				where: { targetUserId: null },
 				orderBy: { createDate: "desc" },
@@ -251,11 +207,7 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 			}),
 		]);
 
-	// When both land the same calendar day (rate and review in one sitting),
-	// REVIEWED wins and RATED is dropped rather than the other way around —
-	// "reviewed" is the more specific, more informative event of the two, so
-	// it's the one that should represent that day, not just whichever of the
-	// two happened to be checked first.
+	// Same-day tiebreak: REVIEWED (more specific) wins and RATED is dropped.
 	const sameDayReviewedMediaIds = new Set(
 		reviewedReviews
 			.filter((review) => isSameCalendarDay(review.reviewDate!, review.createDate))
@@ -266,10 +218,8 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 		...ratedReviews
 			.filter((review) => !sameDayReviewedMediaIds.has(review.mediaId))
 			.map((review) => {
-				// initialRating is what was actually given at the time (see its
-				// own comment in rating.prisma) — falls back to the live `rating`
-				// only for the unreachable-post-backfill case of a row that
-				// somehow never got one.
+				// initialRating is what was actually given at the time; falls back to the
+				// live `rating` only for a pre-backfill row that never got one.
 				const rating = review.initialRating ?? review.rating;
 				return {
 					id: `rated-${review.mediaId}`,
@@ -282,10 +232,8 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 				};
 			}),
 		...reviewedReviews.map((review) => {
-			// Same originally-given-rating value RATED shows (see its own
-			// comment above) — REVIEWED winning the same-day tiebreak
-			// shouldn't mean the rating itself goes unshown, just that it's
-			// folded into this one entry instead of a separate RATED row.
+			// Same rating value RATED shows, just folded into this entry instead of a
+			// separate RATED row when the same-day tiebreak drops it.
 			const rating = review.initialRating ?? review.rating;
 			return {
 				id: `reviewed-${review.mediaId}`,

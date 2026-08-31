@@ -8,11 +8,7 @@ type Props = {
 	groups: MediaGroup[];
 };
 
-// Renders every group's every item directly, no reveal-on-scroll of its
-// own — AllReviewsFeed (this component's only caller) already only ever
-// hands it however many reviews have actually been fetched from the server
-// so far (see all-reviews-actions.ts's loadMoreReviews), so there's nothing
-// left here to hide.
+// No reveal-on-scroll of its own — the only caller already hands it only whatever's been fetched so far.
 export function GroupedMediaList({ groups }: Props) {
 	return (
 		<div className={styles.groups}>
@@ -30,11 +26,7 @@ export function GroupedMediaList({ groups }: Props) {
 					</div>
 				);
 
-				// The first group is always "this month" (or whichever month the
-				// newest item falls in) — self-evident from context, so it skips
-				// the label (and the <details>/<summary> pair that only exists to
-				// carry one) and only earlier groups get one marking where they
-				// start.
+				// First group ("this month") is self-evident, so it skips the label/details wrapper; only earlier groups get one.
 				if (groupIndex === 0) {
 					return <Fragment key={group.key}>{list}</Fragment>;
 				}

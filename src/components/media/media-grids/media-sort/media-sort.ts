@@ -1,13 +1,9 @@
 import { MediaRecord } from "@/components/media/types";
 
-// "rating" isn't a real sort here — it means "use RatedTierGrid's own
-// grouped-by-tier view" (MediaFilterGrid's default), not a flat sort. The
-// other two group by year, ordered newest-first, through
-// MediaSortedGrid/groupMediaByYear below.
+// "rating" isn't a real sort — it means "use RatedTierGrid's grouped-by-tier view". The other two group by year, newest-first.
 export type MediaSortOption = "rating" | "releaseDate" | "watchedDate";
 
-// The two options that actually have a date to group by — excludes
-// "rating", which groupMediaByYear has no meaningful year for.
+// Excludes "rating", which groupMediaByYear has no meaningful year for.
 export type MediaDateSortOption = Exclude<MediaSortOption, "rating">;
 
 export const SORT_OPTIONS: { value: MediaSortOption; label: string }[] = [
@@ -21,9 +17,7 @@ function dateFor(media: MediaRecord, option: MediaDateSortOption): Date | null {
 	return media.watchedDate;
 }
 
-// Newest first; media with no value for the chosen date (e.g. unwatched, for
-// "watchedDate") sorts last rather than being dropped — same "missing value
-// loses" convention RatedTierGrid uses for unrated media.
+// Newest first; media missing the chosen date sorts last rather than being dropped.
 function sortMediaByDate(
 	media: MediaRecord[],
 	option: MediaDateSortOption,
@@ -43,10 +37,7 @@ export type MediaYearGroup = {
 	items: MediaRecord[];
 };
 
-// Buckets media by the chosen date's calendar year, newest year first —
-// media with no value for that date (same cases sortMediaByDate sends last)
-// get their own group at the very end rather than being silently dropped,
-// same convention RatedTierGrid uses for its own "Unrated" tier.
+// Buckets media by calendar year, newest first; media missing that date gets its own group at the end rather than being dropped.
 export function groupMediaByYear(
 	media: MediaRecord[],
 	option: MediaDateSortOption,

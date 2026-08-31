@@ -17,14 +17,12 @@ export function MediaEditButton({ media, className }: Props) {
 	const editingMediaId = useReviewEditorStore((s) => s.media?.id ?? null);
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
-	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
-	// for the same rule applied to the navbar's own admin links).
+	// Mobile admin edits are intentionally unsupported (same rule as nav-admin-links.tsx).
 	const isAdmin = sessionIsAdmin && !isMobileViewport;
 
 	if (!media.id) return null;
 	if (!isAdmin) return null;
-	// This card is the editor's own preview of the media it's already
-	// editing — showing an edit button there would just reopen itself.
+	// This card is the editor's own preview of the media it's already editing — an edit button here would just reopen itself.
 	if (editingMediaId === media.id) return null;
 
 	return (

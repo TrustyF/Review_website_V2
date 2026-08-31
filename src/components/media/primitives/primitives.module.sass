@@ -4,41 +4,19 @@
   display: flex
 
 
-// Carries the reserved aspect-ratio, so there's a correctly-sized box on
-// screen the instant a card mounts — before the image has even started
-// loading, let alone finished. No overflow: hidden — that clipped anything
-// touching this box's own edges (the difficulty notch, a drop-shadow
-// filter, ...), not just .poster below; .poster rounds its own corners
-// instead (same radius, kept in sync by hand — it's sized to exactly fill
-// this frame either way), so nothing here needs to clip anything.
+// Reserves the aspect-ratio so the box is correctly sized before the image loads. No overflow: hidden — that clipped the difficulty notch/drop-shadow too; .poster rounds its own corners instead.
 .poster_frame
   width: 100%
   border-radius: 0.25rem
   box-shadow: 0 2px 6px var(--overlay-backdrop)
-  // Covers the placeholder color's own entrance below — without this, a
-  // grid revealing a whole batch of cards at once (see LazyMediaGrid) has
-  // most of their loads clear the 100ms mark at roughly the same time, so
-  // the color would otherwise pop in for all of them in the same frame
-  // instead of easing in individually.
+  // Without this, a grid revealing a batch of cards at once (LazyMediaGrid) pops the placeholder color in for all of them in the same frame instead of easing in individually.
   transition: background-color 0.25s ease
 
-// The placeholder color itself — only applied once poster.tsx decides the
-// load is actually slow enough to need one (see its own comment), instead
-// of unconditionally from mount, so a poster the browser already has
-// cached never flashes it at all.
+// Only applied once poster.tsx decides the load is slow enough to need one, so a cached poster never flashes it.
 .poster_frame_placeholder
   background-color: var(--accent1-tint)
 
-// position: absolute + inset: 0, *and* explicit width/height: 100% — for a
-// replaced element (img) specifically, inset: 0 alone only positions it
-// against .poster_frame (position: relative by default — see globals.sass's
-// `*` rule); without an explicit width/height a replaced element still
-// falls back to its own intrinsic size instead of stretching to fill. The
-// width/height: 100% here resolve against the *containing block for
-// absolute positioning* (.poster_frame's padding box), which is a much
-// more robustly-supported percentage-resolution path across browsers than
-// a statically-positioned element's height: 100% resolving through
-// .poster_frame's aspect-ratio-derived height.
+// inset: 0 alone only positions a replaced element against .poster_frame; explicit width/height: 100% is needed to stretch it, and resolves more robustly against the containing block than height: 100% would through .poster_frame's aspect-ratio-derived height.
 .poster
   position: absolute
   inset: 0
@@ -52,22 +30,7 @@
 .poster_loaded
   opacity: 1
 
-// Corner flag, not a badge — an inline SVG path (see poster.tsx) rather
-// than a clip-path div: the rounded outer tip and the straight edges are
-// one continuous path instead of two separate CSS mechanisms (border-radius
-// + clip-path) layered on the same box, and the stroke below pads the
-// path's edge with solid color instead of leaving bare anti-aliased pixels
-// to blend against the poster. A sibling of .poster_frame (see poster.tsx),
-// positioned against .poster_wrapper/.poster_link instead (position:
-// relative by default, see globals.sass's `*` rule) — both size exactly to
-// .poster_frame's own box (same width: 100%, same aspect-ratio-driven
-// height), so bottom: 0/right: 0 still lands on the poster's true corner.
-// Predates .poster_frame dropping overflow: hidden (see that comment) —
-// staying a sibling instead of moving back inside doesn't cost anything,
-// so there's no reason to undo it now that it's no longer required.
-// Applied to the Tooltip wrapper (see poster.tsx), not the <svg> directly —
-// Tooltip's own wrapper div sits between this and the svg now, so this is
-// what needs the explicit size/position; the svg just fills it below.
+// Corner flag as an inline SVG path rather than a clip-path div — one continuous path for the rounded tip and straight edges, stroke pads the edge with solid color. A sibling of .poster_frame, positioned against .poster_wrapper/.poster_link which size identically, so bottom:0/right:0 still lands on the true corner. Applied to Tooltip's wrapper, not the <svg> directly.
 .difficulty_notch
   position: absolute
   bottom: 0
@@ -80,28 +43,19 @@
   width: 100%
   height: 100%
 
-// fill is inherited by the nested <path> (no fill of its own) regardless of
-// the plain <div> in between — fill/stroke inherit through the DOM tree the
-// same as color does, not just through other SVG elements.
+// fill inherits to the nested <path> through the DOM tree (same as color), regardless of the plain <div> in between.
 .difficulty_notch_1
   fill: var(--warning)
 
 .difficulty_notch_2
   fill: var(--danger)
 
-// Explicit width, not just display:block — without it, this is a flex item
-// in some parents (mini-card's align-items: flex-start column) that
-// shrinks-to-fit instead of filling the space, leaving .poster_frame's own
-// width: 100% resolving against an unstable size on first paint. That's
-// what caused the 0-height-then-pop: aspect-ratio computing off a width
-// that hadn't settled yet.
+// Explicit width, not just display:block — without it, as a flex item in some parents (mini-card's flex-start column) this shrinks-to-fit, leaving .poster_frame's width:100% resolving unstably and causing a 0-height-then-pop.
 .poster_link
   display: block
   width: 100%
 
-// Same box model as .poster_link, for the mediaId == null case that skips
-// the <Link> wrapper — still needs something sized to .poster_frame's own
-// box for .difficulty_notch to position against.
+// Same box model as .poster_link, for the mediaId == null case that skips the <Link> wrapper — still needs sizing for .difficulty_notch to position against.
 .poster_wrapper
   display: block
   width: 100%
@@ -116,7 +70,6 @@
   font-family: $font-mono
   color: var(--accent1)
 
-// Shared by every one-line type-specific fact (runtime, episode count,
-// volume count, platform) — one class since they're never shown together.
+// Shared by every one-line type-specific fact — one class since they're never shown together.
 .info_line
   font-size: 1rem

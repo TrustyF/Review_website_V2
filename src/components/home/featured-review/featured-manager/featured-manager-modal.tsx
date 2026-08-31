@@ -10,8 +10,7 @@ import {
 } from "./featured-manager-actions";
 import styles from "./featured-manager-modal.module.sass";
 
-// How long to wait after the last keystroke before actually querying the
-// server — same idea (and value) as nav-search.tsx's own debounce.
+// How long to wait after the last keystroke before querying the server.
 const DEBOUNCE_MS = 200;
 
 function ResultRow({
@@ -46,13 +45,7 @@ function ResultRow({
 	);
 }
 
-// Global admin tool for curating the homepage hero's featured set — see
-// featured-review.tsx's own trigger button (a Settings icon, admin-only)
-// and app/page.tsx's getFeaturedReviewItems, which gives whatever's
-// featured here priority over plain recency. Mounted once, unconditionally,
-// in layout.tsx next to MediaEditorModal — same "always mounted, renders
-// null while closed" shape, so this component's own state survives between
-// opens instead of resetting on remount.
+// Global admin tool for curating the homepage hero's featured set. Mounted once, unconditionally, in layout.tsx (like MediaEditorModal) so state survives between opens instead of resetting on remount.
 export function FeaturedManagerModal() {
 	const isOpen = useFeaturedManagerStore((s) => s.isOpen);
 	const close = useFeaturedManagerStore((s) => s.close);
@@ -64,8 +57,7 @@ export function FeaturedManagerModal() {
 	const [results, setResults] = useState<FeaturedReviewSummary[]>([]);
 	const [isSearching, setIsSearching] = useState(false);
 
-	// mediaId currently mid-request (either list) — disables just that row's
-	// own button rather than the whole modal while a toggle is in flight.
+	// mediaId currently mid-request — disables just that row's button, not the whole modal.
 	const [pendingId, setPendingId] = useState<number | null>(null);
 
 	function refetchFeatured() {
@@ -75,14 +67,8 @@ export function FeaturedManagerModal() {
 			.finally(() => setIsLoadingFeatured(false));
 	}
 
-	// Reloads the featured list fresh every time the modal opens — cheap,
-	// and guards against it having gone stale from an edit made somewhere
-	// else (e.g. a previous open in another tab) while this one was closed.
-	// Every setState here runs inside the setTimeout callback (a 0ms delay
-	// is imperceptible) rather than directly in the effect body — same
-	// "setState from a callback, not synchronously in the effect itself"
-	// shape as the debounced search effect below, and as nav-search.tsx's
-	// own debounce.
+	// Reloads the featured list fresh on every open, guarding against it going stale elsewhere while closed.
+	// setState runs inside setTimeout (imperceptible 0ms) rather than directly in the effect body, same as the debounced search effect below.
 	useEffect(() => {
 		if (!isOpen) return;
 		const timeout = setTimeout(() => {
@@ -104,9 +90,7 @@ export function FeaturedManagerModal() {
 		return () => clearTimeout(timeout);
 	}, [query]);
 
-	// Same lock reasoning as media-editor-modal.tsx's own effect — this
-	// app's <body> uses min-height rather than height, so <html> is the
-	// actual scrolling element and both need locking.
+	// <body> uses min-height not height, so <html> is the actual scrolling element and both need locking.
 	useEffect(() => {
 		if (!isOpen) return;
 		const html = document.documentElement;
@@ -122,12 +106,7 @@ export function FeaturedManagerModal() {
 
 	if (!isOpen) return null;
 
-	// Optimistic either direction: flips both lists immediately, calls the
-	// server in the background, and re-syncs the featured list from the
-	// server once it settles (success or failure) rather than trying to
-	// hand-roll a rollback — a full refetch is cheap here (one query,
-	// admin-only, opened rarely) and guarantees the list can never drift
-	// from the truth the way a hand-maintained rollback could.
+	// Optimistic either direction: flips both lists immediately, then re-syncs from the server once the call settles rather than hand-rolling a rollback.
 	function toggle(item: FeaturedReviewSummary, nextFeatured: boolean) {
 		setPendingId(item.id);
 		if (nextFeatured) {

@@ -1,16 +1,6 @@
 @use "@/app/styles/variables" as *
 
-// content-visibility skips layout/paint/style work for this card entirely
-// while it's off-screen — the actual "don't render what's out of view"
-// mechanism (native, no JS). contain-intrinsic-height is the estimated
-// height the browser reserves for a skipped card so the scrollbar/page
-// height stay stable instead of collapsing to 0 until each card is
-// measured for real; it only needs to be roughly right; a mismatch just
-// means a small size correction as a card scrolls into view, not the
-// whole-batch pop-in a JS-driven mount/unmount approach would cause.
-// Derived from $mini-card-min-width (poster's tallest ratio, 2/3, is
-// height = width * 1.5) plus ~60px for the subtitle row and gaps below
-// the poster, so it can't drift out of sync when that width changes.
+// content-visibility skips render work while off-screen (native, no JS); contain-intrinsic-height reserves an estimated size so page height stays stable, derived from $mini-card-min-width so it can't drift out of sync.
 .wrapper
   content-visibility: auto
   contain-intrinsic-height: $mini-card-min-width * 1.5 + 60px
@@ -48,9 +38,7 @@
   font-weight: bold
   font-size: 0.8rem
 
-// Type-specific secondary info (runtime, episode count) passed as children —
-// sized to match .rating rather than the larger primitives.module.sass
-// .runtime used on full-size cards.
+// Type-specific secondary info, sized to match .rating rather than the larger full-size-card .runtime.
 .info
   font-size: 0.8rem
   color: var(--accent1)
@@ -59,11 +47,7 @@
 .status_buttons
   opacity: 0
   visibility: hidden
-  // visibility's own transition is delayed to the end of the opacity fade
-  // when going hidden, so it stays "visible" (just transparent) throughout —
-  // switching it immediately would make the fade pointless, it'd un-hoverable
-  // itself mid-fade. Delay drops to 0 on the hover rule below, so it becomes
-  // visible instantly on the way in.
+  // Delays visibility:hidden until the opacity fade finishes, so it stays hoverable throughout the fade-out.
   transition: opacity 0.3s ease, visibility 0s linear 0.3s
 
 .edit_button
@@ -71,12 +55,7 @@
   top: 0.25rem
   left: 0.25rem
 
-// Groups the watchlist/seen toggles into one pill, positioned as a unit —
-// the individual badges (see media-hover-badge.module.sass) carry no
-// background of their own, just flex children stacked in this one shared
-// surface. border-radius bigger than half the (fixed) width rounds the top
-// and bottom all the way into a stadium/pill shape regardless of how tall
-// the column grows as more toggles are added later.
+// Groups the watchlist/seen toggles into one pill surface; border-radius keeps a full stadium shape regardless of how tall the column grows as toggles are added.
 .status_buttons
   position: absolute
   top: 0.15rem

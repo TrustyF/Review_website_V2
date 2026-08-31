@@ -2,19 +2,8 @@ import { UserRole } from "@prisma/client";
 import { db } from "@/server/db/client";
 import { createNotification } from "@/components/notifications/notification-actions";
 
-// Invoked by run-and-notify.sh on a successful (zero-exit) cron job run —
-// mirrors notify-admin-failure.ts, but created already-read (see
-// createNotification's markAsRead) so a routine success doesn't bump the
-// unread badge the way an actual failure should; it's still visible in the
-// notification list for anyone who wants a paper trail of what ran.
-//
-// `summary` is whatever the job's own appendJobSummary calls produced (see
-// job-summary.ts's SUMMARY_START/END markers and run-and-notify.sh's own
-// extraction of them) — optional since not every job necessarily calls
-// appendJobSummary, or a run could produce an empty summary. base64 — tsx
-// silently truncates a multi-line CLI argument to its first line, and a
-// job summary is almost always multi-line; see run-and-notify.sh's own
-// comment on this.
+// Invoked on a successful cron run; mirrors notify-admin-failure.ts but created already-read so routine success doesn't bump the unread badge.
+// `summary` comes from the job's appendJobSummary output, base64-encoded since tsx truncates multi-line CLI args to their first line.
 async function main() {
 	const jobName = process.argv[2];
 	const summaryB64 = process.argv[3];

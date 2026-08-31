@@ -1,10 +1,4 @@
-// Dev-only in-memory tally of how many times a given key was hit during this
-// dev server process's lifetime — lets you check e.g. "how many
-// /api/image-proxy calls did editing one poster actually trigger" without
-// digging through Vercel's dashboard. No-ops in production: a real
-// deployment spreads invocations across many isolated instances, so this
-// process-local Map wouldn't see most of them anyway, and there's no reason
-// to pay for the bookkeeping there.
+// Dev-only in-memory tally of hits per key, for spotting e.g. redundant image-proxy calls. No-ops in production since a process-local Map can't see across instances.
 const counts = new Map<string, number>();
 let windowStartedAt = Date.now();
 

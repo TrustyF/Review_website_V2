@@ -4,8 +4,7 @@ import { db } from "@/server/db/client";
 import { syncGameCreditsAndGenres } from "@/server/igdb/ingest/game-credits";
 import { pickBestArtwork } from "@/server/igdb/client";
 
-// IGDB's GameStatus enum — only the values we're confident about; anything
-// else (including missing) is treated as RELEASED rather than guessed at.
+// IGDB's GameStatus enum — only values we're confident about; anything else defaults to RELEASED.
 const STATUS_MAP: Record<number, MediaStatus> = {
 	0: MediaStatus.RELEASED, // Released
 	2: MediaStatus.ONGOING, // Alpha
@@ -15,11 +14,8 @@ const STATUS_MAP: Record<number, MediaStatus> = {
 	6: MediaStatus.COMPLETED, // Cancelled
 };
 
-// existing is only passed by updateGameFromIgdb (undefined on create) — every
-// field below except status/publicRating only fills in if existing doesn't
-// already have a value, whether that's a prior ingest or a hand edit in the
-// media editor. status/publicRating genuinely change over time at the
-// source, so those always refresh.
+// Fields other than status/publicRating only fill in if existing has no value; those two genuinely
+// change over time at the source, so they always refresh.
 function buildMediaFields(
 	game: IgdbGame,
 	existing?: {
@@ -44,8 +40,7 @@ function buildMediaFields(
 				: MediaStatus.RELEASED,
 		publicRating: game.total_rating != null ? game.total_rating / 10 : null,
 		posterPath: existing?.posterPath ?? (game.cover?.image_id ?? null),
-		// IGDB doesn't rank artworks by relevance — closest-to-16:9 stands in
-		// for a banner instead (see pickBestArtwork).
+		// IGDB doesn't rank artworks by relevance; closest-to-16:9 stands in (see pickBestArtwork).
 		bannerPath:
 			existing?.bannerPath ?? pickBestArtwork(game.artworks ?? []),
 		sourceUrl: game.url,

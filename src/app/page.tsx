@@ -13,27 +13,19 @@ import {
 } from "@prisma/client";
 import styles from "./page.module.sass";
 
-// How many extra reviewed items ride along in FeaturedReview's own picker
-// strip, beyond the featured one itself.
+// Extra reviewed items in FeaturedReview's picker strip, beyond the featured one itself.
 const RECENT_REVIEWS_COUNT = 6;
 const RECENT_MOVIES_COUNT = 14;
 const RECENTLY_WATCHED_COUNT = 14;
 const ANTICIPATED_RELEASES_COUNT = 14;
-// "Recent movies" is scoped to genuinely recent releases, not just
-// whatever's newest on the site — see getRecentMovies.
+// How far back "recent" reaches for getRecentMovies.
 const RECENT_MOVIES_MONTHS = 5;
-// How far out an UPCOMING release can be and still count as "soon" for
-// getAnticipatedReleases — keeps that section limited to imminent releases
-// rather than anything announced with a distant or unconfirmed date.
+// How far out an UPCOMING release can be and still count as "soon" for getAnticipatedReleases.
 const ANTICIPATED_SOON_MONTHS = 2;
-// Floor so the section never looks sparse right after a quiet stretch —
-// if fewer than this many releases fall inside the window, the date
-// filter is dropped entirely (see getRecentMovies).
+// Floor below which the date filter is dropped, so the section doesn't look sparse after a quiet stretch.
 const MIN_RECENT_MOVIES = 7;
 
-// Every type-specific relation toMediaRecord might need — the reviewed feed
-// spans every media type, unlike RecentMoviesSection's own query below
-// which only ever needs `movie`/`tvShow`.
+// Every type-specific relation toMediaRecord might need — the reviewed feed spans all media types.
 const EVERY_TYPE_RELATION = {
 	movie: true,
 	tvShow: true,
@@ -43,21 +35,14 @@ const EVERY_TYPE_RELATION = {
 	book: true,
 } as const;
 
-// Screen releases only — the "Recent releases" and "Recently watched" home
-// sections cover movies, shorts, and TV shows, not the full catalog.
+// Screen releases only — these home sections cover movies/shorts/TV, not the full catalog.
 const SCREEN_MEDIA_TYPES: MediaType[] = [
 	MediaType.MOVIE,
 	MediaType.SHORT,
 	MediaType.TVSHOW,
 ];
 
-// Recent releases *you've rated* — not just "what's new on the site"
-// (that's RecentMediaListPage's job). A movie/short/show only shows up here
-// once it has a rating, same rating: { not: null } condition
-// getRecentlyWatchedMovies uses. Scoped to the last RECENT_MOVIES_MONTHS so a
-// quiet stretch doesn't dredge up an old release, but never below
-// MIN_RECENT_MOVIES — if the window doesn't have enough, the date filter is
-// dropped entirely rather than showing a half-empty section.
+// Recent releases *you've rated* — not just "what's new" (that's RecentMediaListPage's job). Scoped to RECENT_MOVIES_MONTHS, but the date filter drops entirely below MIN_RECENT_MOVIES rather than showing a half-empty section.
 async function getRecentMovies() {
 	const cutoff = new Date();
 	cutoff.setMonth(cutoff.getMonth() - RECENT_MOVIES_MONTHS);
@@ -89,26 +74,8 @@ async function getRecentMovies() {
 	});
 }
 
-// What's on *the site owner's* watchlist that's actually worth anticipating —
-// narrowed to media that's either UPCOMING with a confirmed release date
-// within ANTICIPATED_SOON_MONTHS (ANNOUNCED titles with no firm date are
-// excluded — they aren't "soon") or was released within the same
-// RECENT_MOVIES_MONTHS window getRecentMovies uses (i.e. still "in theaters"),
-// and that hasn't already been rated (once rated, it belongs in "Recent
-// releases" or "Recently watched" instead, not here). Deliberately excludes
-// the rest of the watchlist — an old title still waiting to be gotten to
-// isn't "anticipated," it's just backlog.
-//
-// This site is fundamentally one person's library shared publicly — regular
-// visitors can sign up (see /signup) to keep their own personal watchlist
-// (see /account), but that's a separate, unrelated feature from this
-// section: this reads only the ADMIN account's own watchlist, the one used to
-// curate the site itself, not an aggregate of every visitor's bookmarks.
-//
-// Queried from WatchlistItem rather than through dbPublic, so isDeleted has
-// to be spelled out by hand here (same as credit-media-list-page.tsx) — and
-// since this reads unreleased media on purpose, `status` is filtered
-// explicitly rather than going through dbPublic's default exclusion.
+// What's on the ADMIN account's watchlist (not an aggregate of visitor watchlists) that's worth anticipating: UPCOMING with a confirmed date within ANTICIPATED_SOON_MONTHS, or released within RECENT_MOVIES_MONTHS ("in theaters"), and not yet rated. Excludes older backlog.
+// Queried from WatchlistItem, not dbPublic, so isDeleted/status are filtered explicitly here since this deliberately includes unreleased media.
 async function getAnticipatedReleases() {
 	const cutoff = new Date();
 	cutoff.setMonth(cutoff.getMonth() - RECENT_MOVIES_MONTHS);
@@ -141,13 +108,7 @@ async function getAnticipatedReleases() {
 	return items.map((item) => item.media);
 }
 
-// Movies/shorts/shows that have been watched (a rating exists) but haven't
-// been written up yet — the mirror image of getFeaturedReviewItems'
-// REVIEWED_WHERE. Ordered by watchedDate (Review.createDate) since there's
-// no reviewDate to sort by yet. excludeIds drops anything already surfaced
-// in "Recent releases" (see getRecentMovies) — the two sections' filters
-// otherwise overlap freely (both are just "screen media with a rating"),
-// so without this a just-watched new release would show up twice.
+// Watched (rated) but not yet written up — mirror of getFeaturedReviewItems' REVIEWED_WHERE. excludeIds prevents overlap with "Recent releases", since both are otherwise just "screen media with a rating".
 async function getRecentlyWatchedMovies(excludeIds: number[]) {
 	const recentlyWatched = await dbPublic.media.findMany({
 		where: {
@@ -167,10 +128,7 @@ async function getRecentlyWatchedMovies(excludeIds: number[]) {
 	return recentlyWatched;
 }
 
-// Same reviewed-body/DONE filter and reviewDate/createDate ordering as
-// before, shared by both queries below so a featured item and a plain
-// recent one are only ever distinguished by the `featured` condition, never
-// by drifting out of sync on anything else.
+// Shared by both queries below so featured vs. recent are only ever distinguished by the `featured` condition.
 const REVIEWED_REVIEW_WHERE: Prisma.ReviewWhereInput = {
 	AND: [{ body: { not: null } }, { body: { not: "" } }],
 };
@@ -184,9 +142,7 @@ const REVIEWED_ORDER_BY: Prisma.MediaOrderByWithRelationInput[] = [
 	{ review: { createDate: "desc" } },
 ];
 
-// Deterministic PRNG (mulberry32) seeded from a string — same seed always
-// produces the same sequence, which is what lets the shuffle below be
-// "random" yet stable for every request within the same day.
+// Deterministic PRNG (mulberry32) — same seed always produces the same sequence, so the shuffle below is stable within a day.
 function mulberry32(seed: number) {
 	return function random() {
 		seed |= 0;
@@ -205,8 +161,7 @@ function hashString(str: string): number {
 	return hash;
 }
 
-// Fisher-Yates, seeded so the result only changes once the seed itself does
-// (see the date-string seed below) rather than on every render.
+// Fisher-Yates, seeded so the result only changes when the seed does, not on every render.
 function seededShuffle<T>(items: T[], seed: string): T[] {
 	const random = mulberry32(hashString(seed));
 	const shuffled = [...items];

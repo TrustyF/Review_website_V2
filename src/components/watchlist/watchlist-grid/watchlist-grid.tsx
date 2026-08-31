@@ -9,9 +9,7 @@ type Props = {
 	media: MediaRecord[];
 };
 
-// Every item here belongs to the signed-in visitor's own watchlist, so
-// unlike ListMediaView's remove button this has no isAdmin gate — being
-// signed in and viewing /watchlist is itself the permission.
+// No isAdmin gate needed — being signed in and viewing /watchlist is itself the permission.
 export function WatchlistGrid({ media }: Props) {
 	const [removingId, setRemovingId] = useState<number | null>(null);
 

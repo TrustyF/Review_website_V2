@@ -16,28 +16,12 @@ export function MediaPoster({
 	title: string;
 	mediaId?: number | undefined;
 	ratio?: string;
-	// Corner notch on the poster (mini-cards only — see MediaMiniCardShell,
-	// the only caller that passes this). Omitted entirely by every other
-	// caller (MediaCardShell, PosterEditTrigger), which just renders no notch.
+	// Corner notch on the poster (mini-cards only, via MediaMiniCardShell) — other callers omit it and render no notch.
 	difficulty?: number | null | undefined;
 }) {
-	// Space is already reserved via aspect-ratio on the frame (no true CLS),
-	// but an image snapping straight from blank to fully loaded still reads
-	// as a jarring "pop" — especially now that whole batches of cards mount
-	// at once as you scroll (see LazyTierGrid). Fading the image in over a
-	// placeholder-colored frame makes that transition calm instead of abrupt.
+	// aspect-ratio already reserves the space (no CLS), but a blank-to-loaded snap still reads as a jarring pop, especially with whole batches mounting at once (LazyTierGrid). Fade in over a placeholder frame instead.
 	const [isLoaded, setIsLoaded] = useState(false);
-	// The placeholder itself only shows up after a short delay, rather than
-	// unconditionally from mount — a src the browser already has cached
-	// (e.g. FeaturedReview remounting a fresh MediaPoster for a src that was
-	// just showing in its own picker strip) still resolves asynchronously on
-	// a brand-new <img> node, so checking img.complete right at/just-after
-	// mount is racy and can still let the placeholder paint for a frame
-	// before flipping. Gating the placeholder's *visibility* on a delay
-	// instead sidesteps that race entirely: a load that finishes within the
-	// delay (cached or otherwise fast) never shows any placeholder at all,
-	// while a genuinely slow load still gets one after the delay elapses —
-	// same as today, just not instant.
+	// Placeholder only shows after a delay, not unconditionally from mount — even a cached src resolves asynchronously on a fresh <img>, so checking img.complete right at mount is racy. Gating visibility on a delay sidesteps that: fast/cached loads never flash a placeholder at all.
 	const [showPlaceholder, setShowPlaceholder] = useState(false);
 	useEffect(() => {
 		if (isLoaded) return;
@@ -45,11 +29,7 @@ export function MediaPoster({
 		return () => clearTimeout(timeout);
 	}, [isLoaded]);
 
-	// next/image's own width/height are kept proportional to whatever ratio
-	// is passed in (not just hardcoded to 2/3's 500x750) — object-fit:cover
-	// means the CSS aspectRatio below is what actually controls the visible
-	// shape either way, but a mismatched intrinsic ratio still trips next/
-	// image's own dev-mode warning.
+	// width/height kept proportional to the passed ratio, not hardcoded to 2/3 — object-fit:cover means CSS aspectRatio controls the visible shape either way, but a mismatched intrinsic ratio still trips next/image's dev-mode warning.
 	const [ratioW, ratioH] = ratio.split("/").map(Number);
 	const width = 500;
 	const height = ratioW && ratioH ? Math.round((width * ratioH) / ratioW) : 750;
@@ -69,13 +49,7 @@ export function MediaPoster({
 		</div>
 	);
 
-	// 0/null means "not rated for difficulty" — same as a review with no
-	// rating just showing nothing rather than a 0-star. The Tooltip's own
-	// wrapper (not the <svg>) carries .difficulty_notch's position/size —
-	// it's a sibling of .poster_frame, not a child of it (see .poster_frame's
-	// own comment in primitives.module.sass: it used to have overflow: hidden,
-	// which seamed against whatever sat inside it, unrelated to the notch's
-	// own positioning — dropped now, but staying a sibling still costs nothing).
+	// 0/null means "not rated for difficulty", shown as nothing. Tooltip's wrapper (not the <svg>) carries .difficulty_notch's position/size, as a sibling of .poster_frame rather than a child.
 	const notch =
 		difficulty === 1 || difficulty === 2 ? (
 			<Tooltip

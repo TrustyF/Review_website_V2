@@ -8,39 +8,29 @@ import styles from "./media-type-list-page.module.sass";
 type Props = {
 	title: string;
 	type: MediaType;
-	// The type-specific relation to load (e.g. { movie: true }) — review is
-	// always included, every list page needs it for RatedTierGrid's tiers.
+	// The type-specific relation to load (e.g. { movie: true }); review is always included for RatedTierGrid's tiers.
 	include: Prisma.MediaInclude;
-	// Link to this type's flat, recency-sorted sibling (see
-	// RecentMediaListPage) — omitted for types that don't have one yet.
+	// Link to this type's flat, recency-sorted sibling (RecentMediaListPage) — omitted for types that don't have one yet.
 	recentHref?: string;
 };
 
-// Shared by every per-type page (movies, shorts, tv, manga, games, ...):
-// fetch every DONE media row of one type, rate-tier them, done. Pages only
-// differ in title/type/include, so they're thin callers of this.
+// Shared by every per-type page: fetch every DONE media row of one type, rate-tier them. Pages only differ in title/type/include.
 export async function MediaTypeListPage({
 	title,
 	type,
 	include,
 	recentHref,
 }: Props) {
-	// dbPublic (not db) — soft-deleted media is excluded automatically, see
-	// src/server/db/client.ts.
+	// dbPublic (not db) — soft-deleted media is excluded automatically.
 	const rawList = await dbPublic.media.findMany({
 		where: { enrichmentStatus: EnrichmentStatus.DONE, type },
 		include: {
 			...include,
 			review: true,
-			// For MediaFilterPopover's genre filter (see media-filter-grid.tsx).
+			// For MediaFilterPopover's genre filter.
 			mediaGenres: { include: { genre: true } },
 		},
-		// Without this, Postgres doesn't guarantee row order at all — it's
-		// free to change between requests, and an UPDATE (e.g. saving a
-		// poster) can shift a row's physical position enough to change it.
-		// RatedTierGrid's sort-by-rating is a *stable* sort, so within a tier
-		// it just preserves whatever order rows arrived in — pinning that
-		// order here is what keeps ties from reshuffling on unrelated edits.
+		// Without this, Postgres row order can shift between requests (e.g. an UPDATE moving a row). RatedTierGrid's stable sort-by-rating preserves arrival order within a tier, so pinning it here keeps ties from reshuffling.
 		orderBy: { id: "asc" },
 	});
 	const media = rawList.map(toMediaRecord);

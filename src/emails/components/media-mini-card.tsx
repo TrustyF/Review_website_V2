@@ -7,11 +7,8 @@ type Props = {
 	rating: number | null;
 };
 
-// Email counterpart to MediaMiniCardShell (poster, title, rating) — no
-// review-has-body indicator or edit button, both site-only affordances.
-// Renders as a <Column> directly so a row of these can sit side by side
-// inside a single parent <Row> (see the caller's "Recently watched"
-// section) — the same Row/Column-over-flexbox reasoning as MediaReviewCard.
+// Email counterpart to MediaMiniCardShell, minus site-only affordances.
+// Renders as a bare <Column> so several can sit in one parent <Row>.
 export function MediaMiniCard({ title, mediaUrl, posterSrc, rating }: Props) {
 	return (
 		<Column style={{ width: "110px", verticalAlign: "top", paddingRight: "12px" }}>

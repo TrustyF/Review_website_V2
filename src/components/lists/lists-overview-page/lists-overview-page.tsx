@@ -5,13 +5,9 @@ import { ListPreviewCard } from "@/components/lists/list-preview-card/list-previ
 import { NewListLink } from "@/components/lists/new-list-link/new-list-link";
 import styles from "./lists-overview-page.module.sass";
 
-// Server Component for /lists: every list, newest first, grouped together on
-// one page — the "dedicated grouping-of-lists page" the feature was asked
-// for, mirroring how media-type-list-page.tsx groups media by type.
+// Server Component for /lists: every list, newest first.
 export async function ListsOverviewPage() {
-	// targetUserId: null excludes recommendation lists (see list.prisma's own
-	// comment on that field) — those are private to whoever they're for, not
-	// part of the site's public catalog.
+	// targetUserId: null excludes recommendation lists — those are private to whoever they're for.
 	const lists = await db.list.findMany({
 		where: { targetUserId: null },
 		include: { _count: { select: { items: true } } },

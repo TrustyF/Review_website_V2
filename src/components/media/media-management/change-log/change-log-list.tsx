@@ -26,21 +26,13 @@ const FIELD_LABELS: Record<string, string> = {
 	body: "Review",
 	posterPath: "Poster",
 	bannerPath: "Banner",
-	// Milestones, not values that changed — see MILESTONE_FIELDS below, which
-	// skips the old/new/arrow entirely for these. The date column (present on
-	// every row already) is what actually answers "on" — the label just reads
-	// naturally alongside it. "watched"/"reviewed" are never actually written
-	// to MediaChangeLog — see the synthetic entries built below, sourced from
-	// Review.createDate/reviewDate — only "rewatched" is a real row, from
-	// logRewatch. "watched" isn't listed here — see WATCHED_LABEL_BY_TYPE,
-	// its wording depends on the media's own type.
+	// Milestones (see MILESTONE_FIELDS) skip old/new/arrow; "watched" is omitted here since its
+	// wording depends on media type (see WATCHED_LABEL_BY_TYPE).
 	reviewed: "Reviewed on",
 	rewatched: "Rewatched on",
 };
 
-// "watched" is the one type-agnostic field MediaChangeLog/the synthetic
-// entry above actually write — the verb shown for it depends on the media's
-// own type instead of the field itself.
+// "watched"'s verb depends on the media's type rather than being fixed like other fields.
 const WATCHED_LABEL_BY_TYPE: Record<MediaType, string> = {
 	[MediaType.MOVIE]: "Watched on",
 	[MediaType.SHORT]: "Watched on",
@@ -51,30 +43,21 @@ const WATCHED_LABEL_BY_TYPE: Record<MediaType, string> = {
 	[MediaType.GAME]: "Played on",
 };
 
-// Rows for these fields are date-only markers — oldValue/newValue are just a
-// "true" placeholder, not a real before/after worth rendering.
+// Rows for these fields are date-only markers — oldValue/newValue is just a "true" placeholder.
 const MILESTONE_FIELDS = new Set(["watched", "reviewed", "rewatched"]);
 
-// Never collide with a real row — Prisma's autoincrement ids start at 1. Used
-// to recognize the synthetic entries below so they can skip the delete
-// button ChangeLogEntryRow would otherwise give every other row (see its own
-// id prop) — there's nothing in the database to delete.
+// Negative so they never collide with real (autoincrement) ids, letting synthetic entries skip
+// the delete button — nothing in the database to delete.
 const SYNTHETIC_WATCHED_ID = -1;
 const SYNTHETIC_REVIEWED_ID = -2;
 
-// Ignores time of day — only whether the calendar day matches, in local
-// time. A "Reviewed on" landing the same day as "Watched on" (the common
-// case — rate and review in one sitting) is redundant with it, so it's left
-// out rather than shown as a second entry for the same date.
+// Calendar-day only (local time) — a same-day "Reviewed on" is redundant with "Watched on".
 function isSameCalendarDay(a: Date, b: Date): boolean {
 	return a.toDateString() === b.toDateString();
 }
 
-// A gap at least this long between two consecutive entries (chronologically
-// adjacent, not necessarily adjacent in wall-clock activity elsewhere) gets
-// a divider — reads the log as a timeline of activity bursts instead of one
-// undifferentiated list, e.g. a flurry of edits right after adding it, then
-// nothing until a rewatch months later.
+// A gap at least this long between two chronologically adjacent entries gets a divider,
+// so the log reads as bursts of activity instead of one undifferentiated list.
 const TIMELINE_GAP_DAYS = 1;
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -82,10 +65,8 @@ function daysBetween(a: Date, b: Date): number {
 	return Math.abs(a.getTime() - b.getTime()) / MS_PER_DAY;
 }
 
-// "412 days later" is technically correct but nobody reads a gap that way —
-// steps up to the largest unit that still reads naturally. Average month/
-// year lengths (not calendar months) since this only has a day count to
-// work from, not the two actual dates' month/year fields.
+// Steps up to the largest unit that reads naturally, using average month/year lengths
+// since only a day count is available, not the actual calendar dates.
 function formatGap(days: number): string {
 	const rounded = Math.round(days);
 	if (rounded < 30) {
@@ -117,10 +98,7 @@ async function ChangeValue({
 	if (value === null) return null;
 
 	if (field === "posterPath") {
-		// Cached to disk at the smallest size each source offers (see
-		// resolveChangelogPosterThumb) — content-addressed by mediaId +
-		// this exact historical posterPath, so it keeps working even after
-		// the media's current poster (or the remote source) moves on.
+		// Content-addressed by mediaId + historical posterPath, so it keeps working after the current poster changes.
 		const thumbSrc = await resolveChangelogPosterThumb(
 			mediaId,
 			type,
@@ -139,9 +117,7 @@ async function ChangeValue({
 	}
 
 	if (field === "bannerPath") {
-		// Same idea as posterPath above, but landscape and via
-		// resolveChangelogBannerThumb — bannerUrlFor doesn't need externalId
-		// (unlike posterUrlFor), so this skips it.
+		// Same idea as posterPath above, but landscape; bannerUrlFor doesn't need externalId.
 		const thumbSrc = await resolveChangelogBannerThumb(mediaId, type, value);
 		return (
 			<Image
@@ -181,25 +157,18 @@ export function ChangeLogList({
 	entries: MediaChangeLog[];
 	type: MediaType;
 	externalId: string | null;
-	// "Watched on"/"Reviewed on" are never written to MediaChangeLog at all —
-	// synthesized here from Review.createDate/reviewDate instead (see
-	// toMediaRecord's watchedDate and saveReview's own comment on
-	// reviewDate), so they're just merged into the list at display time
-	// rather than being real rows saveReview has to keep in sync.
+	// "Watched on"/"Reviewed on" are never written to MediaChangeLog — synthesized from
+	// Review.createDate/reviewDate and merged in at display time instead.
 	review: Review | null | undefined;
 }) {
-	// Filters out any real "watched"/"reviewed" row before merging in the
-	// synthetic ones below — belt-and-suspenders against ever double-showing
-	// either, in case a stale row from before they moved off MediaChangeLog
-	// (or any other future writer) slips through.
+	// Belt-and-suspenders: drops any real "watched"/"reviewed" row before merging synthetic ones,
+	// in case a stale row from before they moved off MediaChangeLog slips through.
 	const realEntries = entries.filter(
 		(entry) => entry.field !== "watched" && entry.field !== "reviewed",
 	);
 
 	const synthetic: MediaChangeLog[] = [];
-	// A rating-less review can't happen going forward (saveReview requires
-	// one to save at all) — this only guards rows that predate that
-	// requirement, same as toMediaRecord's own watchedDate.
+	// Guards rows that predate saveReview's rating requirement.
 	if (review?.rating != null) {
 		synthetic.push({
 			id: SYNTHETIC_WATCHED_ID,
@@ -211,8 +180,7 @@ export function ChangeLogList({
 			deletedAt: null,
 		});
 	}
-	// Skipped when it lands the same calendar day as "Watched on" — see
-	// isSameCalendarDay's own comment.
+	// Skipped when it lands the same calendar day as "Watched on".
 	if (
 		review?.reviewDate &&
 		!isSameCalendarDay(review.reviewDate, review.createDate)
@@ -246,9 +214,7 @@ export function ChangeLogList({
 			<ul className={styles.list}>
 				{allEntries.map((entry, index) => {
 					const alt = index % 2 === 1;
-					// Index-based (allEntries is unaffected by dividers being
-					// interleaved into the actual rendered output below), unlike
-					// alternating via CSS :nth-child would be.
+					// Index-based, since allEntries excludes the dividers interleaved into the rendered output.
 					const prevEntry = allEntries[index - 1];
 					const gapDays = prevEntry
 						? daysBetween(prevEntry.createdAt, entry.createdAt)
@@ -262,9 +228,7 @@ export function ChangeLogList({
 									? WATCHED_LABEL_BY_TYPE[type]
 									: (FIELD_LABELS[entry.field] ?? entry.field)}
 							</span>
-							{/* Milestone fields skip the value diff — the empty span still
-							keeps its flex: 1 spacer role so .date stays right-aligned same
-							as every other row. */}
+							{/* Milestone fields skip the value diff, but the empty span keeps .date right-aligned. */}
 							<span className={styles.change}>
 								{!MILESTONE_FIELDS.has(entry.field) && (
 									<>
@@ -305,9 +269,7 @@ export function ChangeLogList({
 						</li>
 					);
 
-					// Not a real row (both synthetic ids are negative, real Prisma
-					// ids never are) — nothing in the database for
-					// ChangeLogEntryRow's delete button to act on.
+					// Synthetic ids are negative, real Prisma ids never are — nothing to delete.
 					if (entry.id < 0) {
 						return (
 							<Fragment key={entry.id}>

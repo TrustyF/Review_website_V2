@@ -38,23 +38,11 @@
   &:hover
     text-decoration-color: var(--foreground)
 
-// Inline (the default for a <span>) so a spoiler sits mid-sentence like any
-// other highlighted text instead of breaking onto its own line — the actual
-// redaction look comes from .spoiler_text's background below.
+// Inline so a spoiler sits mid-sentence instead of breaking onto its own line; redaction look comes from .spoiler_text below.
 .spoiler
   cursor: pointer
 
-// The real spoiler text, laid out completely normally (plain inline flow,
-// wrapping same as any other text) — color: transparent either way so the
-// actual words are never legible, revealing just swaps that back to
-// inherit with no re-render needed. background here rather than as one
-// flat fill on .spoiler: a genuinely inline element's background paints
-// once per *wrapped line box*, not once for the whole run, so a multi-line
-// spoiler shows as a stack of separate bars matching its real line breaks/
-// lengths — closer to "hidden lines of text" than a single opaque block
-// would read. box-decoration-break: clone (the non-default) is what makes
-// border-radius apply to each of those line fragments individually instead
-// of only the first/last.
+// background (not on .spoiler) paints per wrapped line box, so a multi-line spoiler reads as separate redacted bars; box-decoration-break: clone rounds each fragment.
 .spoiler_text
   color: transparent
   background: var(--accent1-tint)

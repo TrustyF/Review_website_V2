@@ -10,13 +10,9 @@ type AvatarContextValue = {
 
 const AvatarContext = createContext<AvatarContextValue | undefined>(undefined);
 
-// Lets Navbar (in RootLayout) and AvatarPicker (on /account, way lower in
-// the tree) share the current avatar without either the JWT (which only
-// refreshes at sign-in — see auth.ts's own comment) or making RootLayout
-// itself dynamic just to read it server-side. Fetched once per page load
-// via getMyAvatar() rather than derived from the session; AvatarPicker calls
-// setAvatarSrc directly right after a successful pick instead of waiting on
-// a second round trip, since it already knows the new value.
+// Lets Navbar and AvatarPicker share the current avatar without relying on
+// the JWT (only refreshes at sign-in) or making RootLayout dynamic to read it
+// server-side. AvatarPicker updates this directly after a pick.
 export function AvatarProvider({ children }: { children: ReactNode }) {
 	const { data: session } = useSession();
 	const [avatarSrc, setAvatarSrc] = useState<string | null>(null);

@@ -4,8 +4,7 @@ import styles from "./review-diff.module.sass";
 type Props = {
 	before: string;
 	after: string;
-	// Called with the full new body text when a change is accepted — the
-	// caller is expected to patch the real body field with it.
+	// Called with the full new body text when a change is accepted.
 	onApplyChange: (newBody: string) => void;
 };
 
@@ -15,10 +14,8 @@ type Props = {
 export function ReviewDiff({ before, after, onApplyChange }: Props) {
 	const parts = diffWords(before, after);
 
-	// Group consecutive added/removed parts into single click targets — a
-	// word-level diff usually pairs a removed run with an added run for a
-	// replacement (e.g. "realy" -> "really"), and accepting the addition
-	// should also drop the text it's replacing, not just insert alongside it.
+	// Groups consecutive added/removed parts into single click targets, so accepting a
+	// replacement (e.g. "realy" -> "really") also drops the text it replaces.
 	const blockOfPart: (number | null)[] = new Array(parts.length).fill(null);
 	let blockCount = 0;
 	let inBlock = false;
@@ -34,9 +31,7 @@ export function ReviewDiff({ before, after, onApplyChange }: Props) {
 		}
 	});
 
-	// Reconstructs the body with only the given block's change applied —
-	// every other pending change is left exactly as it currently is in the
-	// body (its removed text is kept, its added text is left out).
+	// Reconstructs the body with only the given block's change applied; other pending changes are left as-is.
 	function applyBlock(blockIndex: number) {
 		let result = "";
 		parts.forEach((part, i) => {

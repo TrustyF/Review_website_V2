@@ -13,11 +13,8 @@ type Props = {
 	onToggle: () => void;
 };
 
-// Hidden above $mobile-breakpoint (see .mobile_controls in
-// nav-mobile-controls.module.sass) — groups the avatar and hamburger so a
-// single margin-left: auto (on .mobile_controls itself) pushes them to the
-// bar's right edge together, rather than each icon's own auto margin
-// fighting the other for the same leftover space.
+// Groups the avatar and hamburger so a single margin-left: auto (on
+// .mobile_controls) pushes them together, rather than fighting each other.
 export function NavMobileControls({
 	signedIn,
 	pathname,
@@ -29,13 +26,9 @@ export function NavMobileControls({
 }: Props) {
 	return (
 		<div className={style.mobile_controls}>
-			{/* The full account row (bell + avatar) lives inside the drawer too
-			(see NavAccountMenu), but both stay visible in the bar even with the
-			drawer closed, same as the hamburger beside them, rather than being
-			hidden away a tap deeper than everything else — and
-			.account_identity itself is hidden at this width so they don't show
-			up twice. Skipped entirely while signed out — there's nothing to
-			show yet, and "Sign in" is one tap away in the drawer regardless. */}
+			{/* Also in the drawer (NavAccountMenu), but stays visible in the bar
+			like the hamburger — .account_identity is hidden at this width so it
+			doesn't show twice. Skipped while signed out; "Sign in" is in the drawer. */}
 			{signedIn && (
 				<>
 					<NotificationBell />
@@ -50,10 +43,8 @@ export function NavMobileControls({
 				</>
 			)}
 
-			{/* Toggles the mobile drawer via the [data-mobile-open] attribute
-			nav-bar.tsx sets on <nav> (see its own comment). data-mobile-toggle
-			marks it for useMobileDrawer's handleNavClick, which otherwise
-			closes the drawer on every "a, button" click inside <nav>. */}
+			{/* Toggles [data-mobile-open] on <nav>; data-mobile-toggle marks it so
+			useMobileDrawer's handleNavClick doesn't also close the drawer on it. */}
 			<button
 				type="button"
 				data-mobile-toggle

@@ -12,34 +12,24 @@ type AssetOption = {
 	id: number;
 	title: string;
 	sourceUrl: string;
-	// Posters only — see poster-ratio.ts. Undefined for banners, which don't
-	// have an equivalent small on-screen size (always full column width).
+	// Posters only; undefined for banners (always full column width)
 	ratio?: string;
 };
 
-// The actual CSS width each real usage renders a poster at — see
-// media-card-shell.module.sass's .poster (grid) and media-detail.module.
-// sass's .poster (detail page). Compression artifacts that are obvious
-// blown up in the big slice-compare view below can be completely invisible
-// at these sizes, which is the only place that actually matters for judging
-// whether a setting is fine to ship.
+// Actual on-screen poster widths (grid card, detail page) — artifacts obvious
+// in the big slice-compare view can be invisible at these real sizes.
 const POSTER_PRACTICAL_SIZES = [
 	{ label: "Grid card", width: 130 },
 	{ label: "Detail page", width: 220 },
 ];
 
-// CastPhotos' own .cast_photo size (media-detail.module.sass) — the only
-// place a person photo renders on site today.
+// CastPhotos' own .cast_photo size — the only place a person photo renders today
 const PERSON_PRACTICAL_SIZES = [{ label: "Cast avatar", width: 40 }];
 
 type AssetType = "banner" | "poster" | "person";
 
-// The big compare view's own box (see .compare_wrapper) is capped at a fixed
-// height but always full width — great for a banner (already wide, so
-// object-fit: cover just fills it), but a tall/narrow poster or person photo
-// under object-fit: cover in that shape gets cropped down to a thin sliver
-// blown up huge, more zoomed-in than useful for actually judging compression.
-// object-fit: contain instead shows the whole image, letterboxed.
+// cover works for wide banners, but crops tall poster/person photos to a
+// useless sliver in the fixed-height compare box; contain letterboxes instead.
 const COMPARE_OBJECT_FIT: Record<AssetType, "cover" | "contain"> = {
 	banner: "cover",
 	poster: "contain",
@@ -57,15 +47,10 @@ type Props = {
 	banners: AssetOption[];
 	posters: AssetOption[];
 	people: AssetOption[];
-	// What resolveBanner/resolvePoster/resolvePersonPhoto actually ship today
-	// — "Reset to production defaults" below re-baselines every control
-	// against whichever of these matches the current asset-type selection.
-	// Passed down from the server component rather than importing the
-	// BANNER_*/POSTER_*/PERSON_PHOTO_* constants here directly: poster-
-	// resolver.ts pulls in fs/promises and sharp, and this is a "use client"
-	// module — any value imported from it drags the whole (server-only)
-	// module into the browser bundle, which fails outright on fs/promises
-	// having no browser equivalent.
+	// Current production values, used by "Reset to production defaults" below.
+	// Passed from the server component rather than importing the resolver's
+	// constants directly — that module pulls in fs/promises and sharp, which
+	// break the browser bundle since this file is "use client".
 	bannerSettings: ProductionSettings;
 	posterSettings: ProductionSettings;
 	personSettings: ProductionSettings;
@@ -73,9 +58,7 @@ type Props = {
 
 const FORMATS: CompressionFormat[] = ["webp", "avif", "jpeg"];
 const DENOISE_METHODS: DenoiseMethod[] = ["median", "blur"];
-// Range/step/off-value differ per method: median takes an odd kernel size in
-// px (1 = off, sharp's own no-op case); blur takes a sigma (0 = off, skipped
-// entirely rather than passed to sharp, which requires sigma >= 0.3).
+// median: odd kernel px, 1 = off. blur: sigma, 0 = off (sharp requires sigma >= 0.3).
 const DENOISE_RANGE: Record<
 	DenoiseMethod,
 	{ min: number; max: number; step: number; off: number }
@@ -121,22 +104,16 @@ export function CompressionPlayground({
 	const [width, setWidth] = useState(productionSettings.width);
 	const [denoiseMethod, setDenoiseMethod] = useState<DenoiseMethod>("median");
 	const [denoiseAmount, setDenoiseAmount] = useState(DENOISE_RANGE.median.off);
-	// A CSS overlay applied only to the rendered <img>, not the compressed
-	// file itself — see .grain_overlay below. 0 = off.
+	// CSS overlay only, not baked into the compressed file (see .grain_overlay). 0 = off.
 	const [grainOpacity, setGrainOpacity] = useState(
 		productionSettings.grainOpacity,
 	);
-	// Drag position of the before/after divider, in percent from the left —
-	// 0 shows all original, 100 shows all compressed. Read directly by the
-	// clip-path below rather than being recomputed from pointer state on
-	// every render.
+	// Divider position in percent from left: 0 = all original, 100 = all compressed
 	const [comparePercent, setComparePercent] = useState(50);
 	const compareWrapperRef = useRef<HTMLDivElement>(null);
 
-	// Every control jumps to the new asset type's own production baseline —
-	// the same values "Reset to production defaults" below sets — rather
-	// than, say, carrying avif/60 over as a starting point for a poster,
-	// which was never encoded that way in production.
+	// Jumps every control to the new type's own production baseline, rather
+	// than carrying over settings from a type that was never encoded that way.
 	function selectAssetType(type: AssetType) {
 		const settings = settingsByType[type];
 		const nextOptions = optionsByType[type];
@@ -165,9 +142,7 @@ export function CompressionPlayground({
 		selectedId === "custom"
 			? customUrl.trim()
 			: (selectedOption?.sourceUrl ?? "");
-	// Falls back to 2/3 for a custom URL, which has no known media type to
-	// look a real ratio up from — same default posterRatioFor's own caller
-	// (MediaPoster) uses.
+	// 2/3 fallback for a custom URL with no known media type — same default MediaPoster uses.
 	const posterRatio = selectedOption?.ratio ?? "2/3";
 
 	const [originalSize, setOriginalSize] = useState<number | null>(null);
@@ -176,23 +151,14 @@ export function CompressionPlayground({
 	const [error, setError] = useState<string | null>(null);
 	const [isPending, startTransition] = useTransition();
 
-	// Guards against a slow request (avif in particular can take seconds)
-	// resolving after a newer one and clobbering it with a stale result —
-	// only the response matching the latest-fired request is ever applied.
-	// Two separate counters because the two effects below are independent
-	// request streams that both key off sourceUrl: sharing one counter meant
-	// the debounced custom-compress effect's tick (300ms after every source
-	// change) invalidated the still-in-flight original/baseline requestId
-	// almost every time, before that slower fetch had a chance to resolve —
-	// originalSize stayed null forever and the "% smaller" comparison never
-	// showed.
+	// Guards against a slow request clobbering a newer result; two separate
+	// counters because sharing one meant the debounced compress effect's tick
+	// kept invalidating the still-in-flight baseline request before it resolved.
 	const baselineRequestIdRef = useRef(0);
 	const resultRequestIdRef = useRef(0);
 
-	// Cleared the moment the source itself changes, during render rather than
-	// an effect — an effect that calls setState synchronously in its body
-	// (not from an async callback) trips this repo's react-compiler lint
-	// rule, and would briefly show the previous image's stale numbers anyway.
+	// Cleared during render (not an effect) to avoid tripping the react-compiler
+	// lint rule and to avoid a flash of the previous image's stale numbers.
 	const [prevSourceUrl, setPrevSourceUrl] = useState(sourceUrl);
 	if (sourceUrl !== prevSourceUrl) {
 		setPrevSourceUrl(sourceUrl);
@@ -203,9 +169,7 @@ export function CompressionPlayground({
 		setComparePercent(50);
 	}
 
-	// Refetched only when the source image itself changes, not on every
-	// slider tweak — the original's size and the production baseline don't
-	// depend on the custom controls at all.
+	// Refetched only on source change — original size and baseline don't depend on the controls
 	useEffect(() => {
 		if (!sourceUrl) return;
 		const requestId = ++baselineRequestIdRef.current;
@@ -225,8 +189,7 @@ export function CompressionPlayground({
 			.catch(() => {});
 	}, [sourceUrl, productionSettings]);
 
-	// Debounced re-compress whenever the source or any control changes —
-	// dragging a slider shouldn't fire a request per pixel.
+	// Debounced so dragging a slider doesn't fire a request per pixel
 	useEffect(() => {
 		if (!sourceUrl) return;
 		const handle = setTimeout(() => {
@@ -442,8 +405,7 @@ export function CompressionPlayground({
 							if (e.buttons !== 1) return;
 							updateComparePercent(e.clientX);
 						}}>
-						{/* Original — the base layer, sized normally. It alone determines
-						    the box's height; the compressed layer below just fills it. */}
+						{/* Base layer — determines the box's height; compressed layer below fills it */}
 						{/* eslint-disable-next-line @next/next/no-img-element */}
 						<img
 							src={sourceUrl}
@@ -453,9 +415,7 @@ export function CompressionPlayground({
 						/>
 
 						{result && (
-							// clip-path (not a width on this box) does the reveal, so the
-							// compressed <img> inside is never resized/squashed as the
-							// divider moves — only how much of its full-size box shows.
+							// clip-path (not width) does the reveal so the image is never resized as the divider moves
 							<div
 								className={styles.compare_overlay}
 								style={{ clipPath: `inset(0 ${100 - comparePercent}% 0 0)` }}>
@@ -520,9 +480,7 @@ export function CompressionPlayground({
 											width: sizeWidth,
 											aspectRatio: posterRatio,
 										}}>
-										{/* Same object-fit: fill treatment as MediaPoster's own
-										    .poster — a straight stretch to the frame, not a crop,
-										    so this matches what production actually renders. */}
+										{/* Same object-fit: fill treatment as MediaPoster's .poster */}
 										{/* eslint-disable-next-line @next/next/no-img-element */}
 										<img
 											src={result.dataUrl}
@@ -545,9 +503,7 @@ export function CompressionPlayground({
 									<div
 										className={`${styles.practical_frame} ${styles.practical_frame_circle}`}
 										style={{ width: sizeWidth, aspectRatio: 1 }}>
-										{/* Same object-fit: cover treatment as CastPhotos' own
-										    .cast_photo — a crop, not a stretch, matching what
-										    production actually renders. */}
+										{/* Same object-fit: cover treatment as CastPhotos' .cast_photo */}
 										{/* eslint-disable-next-line @next/next/no-img-element */}
 										<img
 											src={result.dataUrl}

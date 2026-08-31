@@ -17,14 +17,7 @@ export default async function AccountPage() {
 	const session = await auth();
 	if (!session?.user?.id) redirect("/login");
 
-	// role comes straight off the session (JWT) — see auth.ts's own comment,
-	// it deliberately only refreshes on sign-in. image/username read from
-	// the DB instead of the session, though: updateAvatar/
-	// updateAccountSettings write those straight to the DB without touching
-	// the JWT, so reading them from the session here would show this page
-	// disagreeing with whatever the user just picked/saved.
-	// preferredLanguage/newsletterOptIn moved to /account/settings — not
-	// needed on this page anymore.
+	// image/username read from DB (not session) since avatar/settings updates write DB directly without refreshing the JWT.
 	const user = await db.user.findUnique({
 		where: { id: session.user.id },
 		select: { image: true, username: true },
@@ -59,12 +52,7 @@ export default async function AccountPage() {
 		.filter((item) => !item.media.isDeleted)
 		.map((item) => toMediaRecord(item.media));
 
-	// Admin-curated recommendation lists deposited into this account — see
-	// List.targetUserId's own comment in list.prisma. Same shape ListsOverviewPage
-	// queries with, just scoped to this one recipient instead of the public set.
-	// Fixed at 4 (2x2) rather than however many happen to fit — matches
-	// WatchlistStack's own MAX_VISIBLE reasoning, this is a preview not an
-	// exhaustive list.
+	// Admin-curated lists targeted at this user; capped to 4 (2x2) as a preview, not the full set.
 	const MAX_VISIBLE_LISTS = 4;
 	const recommendationListsAll = await db.list.findMany({
 		where: { targetUserId: session.user.id },

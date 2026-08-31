@@ -9,13 +9,6 @@ import { pickLocalized } from "@/server/mangadex/localized";
 
 type t_client = Prisma.TransactionClient;
 
-// Replaces a manga's genres and credits with the latest MangaDex data. Safe
-// to call for a brand-new media row (nothing to delete/recreate over) or to
-// re-sync an existing one on re-enrichment.
-//
-// Batched — see movie-credits.ts's own comment and batch-entity-resolver.ts
-// for why this collapses the whole item's references into a handful of
-// findMany/createMany calls instead of one round trip per tag/relationship.
 export async function syncMangaCreditsAndGenres(
 	tx: t_client,
 	mediaId: number,
@@ -24,19 +17,14 @@ export async function syncMangaCreditsAndGenres(
 	await tx.credit.deleteMany({ where: { mediaId } });
 	await tx.mediaGenre.deleteMany({ where: { mediaId } });
 
-	// MangaDex tags are grouped into genre/theme/format/content — only
-	// "genre" maps to what this app's Genre model represents; theme/format/
-	// content tags (e.g. "Award Winning", "Gore") would clutter it with
-	// things that aren't really genres.
+	// Only the "genre" tag group maps to this app's Genre model; theme/format/content tags would clutter it.
 	const genreInputs = manga.attributes.tags
 		.filter((tag) => tag.attributes.group === "genre")
 		.map((tag) => pickLocalized(tag.attributes.name))
 		.filter((name): name is string => !!name)
 		.map((name) => ({ name, origin: MediaType.MANGA }));
 
-	// Author/artist credits — a person can be both (e.g. a mangaka drawing
-	// their own story), which naturally becomes two separate Credit rows,
-	// same as an actor who's also a movie's director.
+	// A person can be both author and artist, which naturally becomes two separate Credit rows.
 	const relationships = manga.relationships.filter(
 		(r) => (r.type === "author" || r.type === "artist") && r.attributes?.name,
 	);
@@ -52,9 +40,7 @@ export async function syncMangaCreditsAndGenres(
 	const personInputs = relationships.map((r) => ({
 		externalId: r.id,
 		source: Source.MANGADEX,
-		// Guaranteed by the filter above — r.attributes?.name was checked
-		// truthy there, but that narrowing doesn't survive into this
-		// separate .map().
+		// Guaranteed by the filter above; the narrowing just doesn't survive into this separate .map().
 		name: r.attributes!.name!,
 	}));
 

@@ -4,12 +4,8 @@ import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { mediaCacheTag } from "@/server/cache/media-cache-tag";
 
-// Soft delete — the row stays in the log (greyed out, see
-// change-log-entry-row.tsx) until purge-deleted-change-log.ts removes it
-// during maintenance, RETENTION_DAYS after this call. A "rating" row is also
-// /activity's own RATING_CHANGED source (see activity-actions.ts's
-// getActivityFeed, which filters on this same deletedAt) — hiding it here
-// hides it there too, for free, with no second write to keep in sync.
+// Soft delete — greyed out until purge-deleted-change-log.ts removes it after RETENTION_DAYS.
+// Also hides the row from /activity's RATING_CHANGED feed, which filters on the same deletedAt.
 export async function deleteChangeLogEntry(id: number) {
 	await requireAdmin();
 	const { mediaId } = await db.mediaChangeLog.update({
@@ -19,8 +15,6 @@ export async function deleteChangeLogEntry(id: number) {
 	});
 	revalidatePath("/");
 	revalidatePath("/activity");
-	// getMediaChangeLog's cached result (get-media.ts) includes soft-deleted
-	// rows too — see change-log-entry-row.tsx — so it needs its own
-	// invalidation, same reasoning as updateMediaBannerFocus.
+	// Cached result includes soft-deleted rows too, so it needs its own invalidation.
 	updateTag(mediaCacheTag(mediaId));
 }

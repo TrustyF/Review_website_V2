@@ -14,14 +14,9 @@ import {
 import { MediaReviewCard } from "./components/media-review-card";
 import { MediaMiniCard } from "./components/media-mini-card";
 
-// Sample data only — this file isn't wired to the database yet. Once a
-// real sending script exists, it'll query the latest Review by reviewDate
-// and the most recently watched movies by createDate (see rating.prisma's
-// own comments on what those fields mean) and pass them in as props
-// instead of these constants.
-// Poster paths are real values pulled from this app's own database (TMDB
-// posterPath for these titles) — worth keeping accurate rather than
-// guessed, since a wrong hash silently 404s instead of erroring.
+// Sample data only — not wired to the database yet; a real sending script
+// will query latest review/recent watches and pass them as props instead.
+// Poster paths are real TMDB hashes, kept accurate since a wrong one 404s silently.
 const SAMPLE_LATEST_REVIEW = {
 	title: "Ghostbusters",
 	mediaUrl: "https://example.com/media/5",

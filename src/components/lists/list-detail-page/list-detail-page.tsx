@@ -15,10 +15,7 @@ type Props = {
 	id: number;
 };
 
-// Server Component for /lists/[id] — mirrors credit-media-list-page.tsx's
-// shape (look up the grouping entity, notFound() if missing, render its
-// media as a list) but the media set here comes from ListItem membership
-// the user curated by hand, not a derived query.
+// Server Component for /lists/[id]; media set comes from hand-curated ListItem membership, not a derived query.
 export async function ListDetailPage({ id }: Props) {
 	const list = await db.list.findUnique({
 		where: { id },
@@ -49,13 +46,7 @@ export async function ListDetailPage({ id }: Props) {
 	const session = await auth();
 	const isAdmin = session?.user?.role === "ADMIN";
 
-	// A recommendation list (targetUserId set — see list.prisma's own
-	// comment) is only visible to the account it was deposited into and to
-	// admins; a normal (targetUserId: null) list has no restriction, same as
-	// before this check existed. Uses notFound() rather than redirecting to
-	// /login — this is the same "pretend it doesn't exist" response a
-	// missing list gets, so a probing visitor can't distinguish "no such
-	// list" from "a list, but not yours."
+	// A recommendation list is only visible to its recipient and admins; notFound() (not a login redirect) so a probing visitor can't tell "no such list" from "not yours."
 	if (list.targetUserId) {
 		const isRecipient = session?.user?.id === list.targetUserId;
 		if (!isRecipient && !isAdmin) notFound();
@@ -76,10 +67,7 @@ export async function ListDetailPage({ id }: Props) {
 					<div className={styles.title_row}>
 						<h1>{list.title}</h1>
 						<ListIdBadge listId={list.id} />
-						{/* Admin-only — the recipient already knows this is "theirs" from
-						context (it only ever showed up on their own /account page), so
-						this is purely so an admin browsing by id/link can tell at a
-						glance who a recommendation list is for. */}
+						{/* Admin-only: lets an admin browsing by id/link see at a glance who a recommendation list is for. */}
 						{isAdmin && list.targetUser && (
 							<span className={styles.recommendation_badge}>
 								For {displayName(list.targetUser)}

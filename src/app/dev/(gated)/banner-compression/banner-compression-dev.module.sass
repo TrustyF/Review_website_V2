@@ -8,8 +8,7 @@
   z-index: 10
   top: 25%
   left: 0
-  // Grows with every control row added; without a cap a long enough list
-  // would run off the bottom of the viewport with no way to reach it.
+  // Caps growth so a long control list stays reachable
   max-height: calc(100vh - 40px)
   overflow-y: auto
   display: flex
@@ -22,10 +21,7 @@
   width: 19rem
   background: var(--surface)
 
-// Label (+ value, for sliders) stacked above the control rather than beside
-// it — the row's width is then just whatever the control itself needs, so
-// .controls can go as narrow as a single select/range wants to be instead
-// of label-width + control-width side by side.
+// Label stacked above control so row width is just the control's own width
 .control_row
   display: flex
   flex-flow: column
@@ -52,9 +48,7 @@
     font-variant-numeric: tabular-nums
     font-size: 0.8rem
 
-// denoise pairs a method <select> with its amount <input type="range"> on
-// one line, under a single shared .control_head — narrower than giving each
-// its own head+value row, and the two are one setting conceptually anyway.
+// denoise method + amount share one row/head — they're one setting conceptually
 .control_body
   display: flex
   flex-flow: row
@@ -79,26 +73,18 @@
   flex-flow: column
   gap: 10px
 
-// Original and compressed <img> stacked in the same box (grid-area) rather
-// than side by side — .compare_overlay reveals the compressed one from the
-// left up to the drag position via clip-path, so the divider is a straight
-// read of "how much of the image is compressed" instead of two separate
-// images the eye has to compare across a gap.
+// Original and compressed <img> stacked in the same box; .compare_overlay
+// reveals the compressed one via clip-path up to the drag position
 .compare_wrapper
   position: relative
   overflow: hidden
   border-radius: 4px
   background: rgba(255, 255, 255, 0.05)
   cursor: ew-resize
-  // Without this, dragging the divider on a touchscreen also scrolls the
-  // page — the pointer stream is meant for us alone.
+  // Prevents divider drags from also scrolling the page on touch
   touch-action: none
   user-select: none
-  // Height used to be whatever the original image's own aspect ratio gave
-  // at the page's 1280px width (~720px for 16:9) — nothing capped it, so a
-  // tall/portrait source could push the whole comparison off-screen. Fixed
-  // height + object-fit: cover on both layers below crops instead of
-  // scaling the box to the image.
+  // Fixed height + object-fit: cover below caps a tall source from pushing off-screen
   height: min(70vh, 1000px)
 
 .compare_image
@@ -114,9 +100,7 @@
   position: absolute
   inset: 0
   overflow: hidden
-  // Scopes the grain overlay's mix-blend-mode (below) to just this box —
-  // without it the blend reaches through to whatever's painted behind,
-  // including the original image showing through the unclipped remainder.
+  // Scopes the grain overlay's mix-blend-mode to just this box
   isolation: isolate
 
 .compare_handle
@@ -169,19 +153,14 @@
   inset: 0
   pointer-events: none
   mix-blend-mode: overlay
-  // A real (non-tileable) grain photo rather than a repeating synthetic
-  // pattern — stretched to cover instead of tiled, so there's no repeat
-  // seam to hide. Downside: at sizes much larger than the source's own
-  // 1280x720 it'll be upscaled and soften slightly.
+  // Real grain photo stretched to cover (no tiling seam); softens if upscaled beyond 1280x720
   background-image: url("/ui/CT_35mm_Grain.png")
   background-repeat: no-repeat
   background-position: center
   background-size: cover
 
-// Posters only — shows the same compressed result at the actual pixel
-// widths the grid card and detail page render it at (see
-// POSTER_PRACTICAL_SIZES), since artifacts obvious in the large
-// slice-compare view above can vanish entirely at real on-screen size.
+// Shows the compressed result at real on-screen sizes, where artifacts
+// obvious in the big slice-compare view can vanish entirely
 .practical_row
   position: fixed
   top: 70px
@@ -197,9 +176,7 @@
   gap: 6px
   align-items: center
 
-// Same treatment as primitives.module.sass's .poster_frame/.poster:
-// aspect-ratio box with a placeholder background, image stretched
-// (object-fit: fill, not cover) to exactly fill it.
+// Same treatment as primitives.module.sass's .poster_frame/.poster
 .practical_frame
   background-color: var(--accent1-tint)
   border-radius: 0.5rem
@@ -211,10 +188,7 @@
   height: 100%
   object-fit: fill
 
-// Person photos render as a circle (CastPhotos' own .cast_photo) rather
-// than a stretched rectangle — border-radius: 50% on the frame, object-fit:
-// cover on the image so a non-square source still crops sensibly instead of
-// squashing into an oval.
+// Person photos render as a circle (CastPhotos' own .cast_photo), cropped not stretched
 .practical_frame_circle
   border-radius: 50%
 

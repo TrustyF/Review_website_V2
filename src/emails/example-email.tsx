@@ -11,9 +11,8 @@ import {
 	Text,
 } from "@react-email/components";
 
-// Starter template — replace with real components as they're built. Run
-// `npm run email_dev` to preview this (and anything else dropped in
-// src/emails) live in a browser at http://localhost:3001.
+// Starter template — replace with real components as they're built.
+// Preview via `npm run email_dev` at http://localhost:3001.
 export default function ExampleEmail() {
 	return (
 		<Html>

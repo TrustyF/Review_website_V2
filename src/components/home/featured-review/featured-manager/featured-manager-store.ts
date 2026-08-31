@@ -1,8 +1,6 @@
 import { create } from "zustand";
 
-// Same trivial open/close shape as review-editor-store.ts, but with no
-// record to hold — this modal manages the global featured set, not one
-// specific media, so there's nothing to seed it with on open.
+// Trivial open/close store — no record to hold, since this manages the global featured set, not one media item.
 export const useFeaturedManagerStore = create<{
 	isOpen: boolean;
 	open: () => void;

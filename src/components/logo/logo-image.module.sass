@@ -1,9 +1,6 @@
 @use "@/app/styles/variables" as *
 
-// Bigger than the old 50px — collapsing the navbar search bar into
-// nav-search.tsx's icon-only trigger freed up horizontal room this mark used
-// to have to stay compact for, so it can read as more prominent instead of
-// leaving that space empty.
+// Bigger than the old 50px — collapsing the search bar into an icon-only trigger freed up room for a more prominent mark.
 .tag
   position: relative
   display: inline-flex
@@ -20,11 +17,7 @@
   @media (max-width: $mobile-breakpoint)
     display: none
 
-// Square app-icon mark (src/app/favicon.svg, copied to public/ui so it can be
-// used as a plain Image src) swapped in for .image below $mobile-breakpoint
-// — see logo-image.tsx for why. Hidden by default and shown only inside the
-// same query that hides .image/.fill/.name, so exactly one mark is visible
-// at any width.
+// App-icon mark (src/app/favicon.svg, copied to public/ui) swapped in for .image on mobile; exactly one mark visible at any width.
 .icon
   display: none
   position: absolute
@@ -37,11 +30,7 @@
   @media (max-width: 500px)
     height: 35px
 
-// Matches .image's own box (same aspect ratio, same height) so the percentage
-// clip-path below lines up with the ticket art regardless of .tag's actual
-// rendered size. The interior bounds (4%/8% insets) were measured directly
-// off logo.webp's pixels (the transparent gap between its outline strokes),
-// not eyeballed — re-measure if that asset ever changes.
+// Matches .image's box so the clip-path lines up with the ticket art; insets measured off logo.webp's actual pixels — re-measure if that asset changes.
 .fill
   position: absolute
   height: 100%

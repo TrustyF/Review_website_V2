@@ -55,6 +55,9 @@ export function DevMenu() {
 						<Link href="/dev/responsive-preview" className={styles.link}>
 							Responsive preview
 						</Link>
+						<Link href="/dev/link-embed-preview" className={styles.link}>
+							Link embed preview
+						</Link>
 					</div>
 				)}
 				{isAdmin && (

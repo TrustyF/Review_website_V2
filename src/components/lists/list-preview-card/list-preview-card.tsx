@@ -7,16 +7,11 @@ type Props = {
 	description: string | null;
 	thumbnail: string | null;
 	itemCount: number;
-	// false renders a plain div instead of a Link — for previews nested
-	// inside another Link (account/page.tsx's recommendations panel, mirroring
-	// WatchlistStack's own non-interactive posters there), since anchors can't
-	// nest. Defaults to true for every other place this card is used.
+	// false renders a plain div instead of a Link, for use nested inside another Link (anchors can't nest).
 	linked?: boolean;
 };
 
-// Grid item on /lists — thumbnail is an arbitrary pasted URL (see
-// list-form.tsx), same reasoning as every other pasted-URL preview in this
-// app for using a plain <img> instead of next/image.
+// Grid item on /lists — thumbnail is an arbitrary pasted URL, hence plain <img> instead of next/image.
 export function ListPreviewCard({
 	id,
 	title,

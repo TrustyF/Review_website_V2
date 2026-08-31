@@ -1,9 +1,7 @@
 import { MediaRecord } from "@/components/media/types";
 import styles from "./rating-distribution.module.sass";
 
-// Same whole-point bucketing as RatedTierGrid (0–1 … 9–10, unrated last) —
-// keeps this chart's bars reading as "the same tiers you'd scroll through
-// below" rather than an unrelated binning.
+// Same whole-point bucketing as RatedTierGrid, so bars match the tiers scrolled through below.
 const TIER_COUNT = 10;
 
 function tierOf(rating: number | null): number | null {
@@ -19,9 +17,7 @@ type Props = {
 	media: MediaRecord[];
 };
 
-// Small histogram of how a person/company's credited media rated, bucketed
-// into the same whole-point tiers RatedTierGrid groups the list into below.
-// One series (counts) — a single flat hue, no legend needed.
+// Small histogram of credited media's ratings. One series (counts), so a single flat hue, no legend needed.
 export function RatingDistribution({ media }: Props) {
 	const counts = new Array<number>(TIER_COUNT).fill(0);
 	let unrated = 0;

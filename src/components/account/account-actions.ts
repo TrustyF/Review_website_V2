@@ -8,8 +8,7 @@ import { comparePassword } from "@/lib/password";
 export type AccountSettingsInput = {
 	preferredLanguage: string;
 	newsletterOptIn: boolean;
-	// null clears the override, falling back to `name` — see
-	// src/lib/display-name.ts.
+	// null clears the override, falling back to `name`.
 	username: string | null;
 };
 
@@ -34,9 +33,7 @@ export async function updateAccountSettings(
 export async function updateAvatar(avatarSrc: string): Promise<void> {
 	const session = await auth();
 	if (!session?.user?.id) throw new Error("Not signed in");
-	// Only files actually present under public/avatars are ever offered
-	// client-side — this guards against a crafted request writing an
-	// arbitrary URL into User.image.
+	// Guards against a crafted request writing an arbitrary URL into User.image.
 	if (!isValidAvatarSrc(avatarSrc)) throw new Error("Invalid avatar");
 
 	await db.user.update({
@@ -47,11 +44,8 @@ export async function updateAvatar(avatarSrc: string): Promise<void> {
 	revalidatePath("/account");
 }
 
-// The navbar's own copy of the avatar (see avatar-context.tsx) is fetched
-// through this once per page load rather than read off the session, which
-// only refreshes at sign-in (see auth.ts's own comment) — a plain read, so
-// no revalidation story needed; AvatarPicker updates the context directly
-// after a pick instead of re-calling this.
+// Fetched once per page load for the navbar's avatar copy rather than read off
+// the session, since the session only refreshes at sign-in.
 export async function getMyAvatar(): Promise<string | null> {
 	const session = await auth();
 	if (!session?.user?.id) return null;
@@ -63,16 +57,11 @@ export async function getMyAvatar(): Promise<string | null> {
 	return user?.image ?? null;
 }
 
-// Deletes the row outright rather than soft-deleting — Account/Session/
-// WatchlistItem/List.targetUser all cascade off User.id (see user.prisma),
-// so nothing is left orphaned. The caller (delete-account-section.tsx) signs
-// the browser out right after this resolves, since the JWT session cookie
-// otherwise stays "valid" (nothing here revokes it) until it naturally
-// expires or the user signs out.
-// Feature-disabled for now (see settings/page.tsx, where the UI for this is
-// commented out) — guarded here too rather than trusting that alone, since a
-// Server Action stays reachable as its own endpoint regardless of whether
-// any client component still calls it. Remove this once the UI comes back.
+// Deletes the row outright — related tables cascade off User.id, so nothing
+// is orphaned. Caller signs the browser out right after, since this doesn't
+// revoke the JWT session cookie itself.
+// Feature-disabled for now; guarded here too since a Server Action stays
+// reachable regardless of whether any client component calls it.
 const ACCOUNT_DELETION_ENABLED = false;
 
 export async function deleteAccount(password: string | null): Promise<void> {
@@ -87,8 +76,7 @@ export async function deleteAccount(password: string | null): Promise<void> {
 	});
 	if (!user) throw new Error("Not signed in");
 
-	// OAuth-only accounts (no passwordHash) have nothing to check a password
-	// against — the confirmation-phrase step in the UI is their only gate.
+	// OAuth-only accounts have no password; the confirmation phrase is their only gate.
 	if (user.passwordHash) {
 		if (!password || !(await comparePassword(password, user.passwordHash))) {
 			throw new Error("Incorrect password");

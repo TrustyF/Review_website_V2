@@ -14,16 +14,13 @@ type Props = {
 	listId: number;
 };
 
-// Debounced the same way add/page.tsx's provider search is — the input
-// stays instantly responsive, the actual DB query only fires once typing
-// pauses.
+// Debounced so the DB query only fires once typing pauses.
 const DEBOUNCE_MS = 400;
 
 export function AddMediaToList({ listId }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
-	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
-	// for the same rule applied to the navbar's own admin links).
+	// Mobile admin edits are intentionally unsupported.
 	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const [query, setQuery] = useState("");
 	const [results, setResults] = useState<ListMediaSearchResult[]>([]);
@@ -31,9 +28,7 @@ export function AddMediaToList({ listId }: Props) {
 	const [addingId, setAddingId] = useState<number | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
-	// Empty-query clearing happens in handleQueryChange below, not here — an
-	// effect body shouldn't call setState synchronously on every render just
-	// to undo what the input's own change handler already knows to do.
+	// Empty-query clearing is handled in handleQueryChange, not here.
 	useEffect(() => {
 		if (!query.trim()) return;
 
@@ -89,16 +84,7 @@ export function AddMediaToList({ listId }: Props) {
 							<Image
 								src={result.posterSrc}
 								alt={result.title}
-								// Rendered box is CSS width: 100% of a
-								// minmax(90px, 1fr) grid column — the 1fr means
-								// it can grow well past 90px on a wide popover,
-								// so this requests past that minimum rather
-								// than exactly it (see the module.sass note on
-								// .results). Still far under MediaPoster's
-								// blanket 500px: the poster route's own cache
-								// is never pre-shrunk (see poster-resolver.ts),
-								// so requesting close to the real render size
-								// here is both sharp and lighter.
+								// Sized past the grid column's 90px minimum to stay sharp without the full 500px blanket size.
 								width={180}
 								height={270}
 								className={styles.result_poster}

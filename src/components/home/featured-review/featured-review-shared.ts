@@ -1,10 +1,7 @@
 import { Sparkles, Heart, type LucideIcon } from "lucide-react";
 import { MediaRecord } from "@/components/media/types";
 
-// One entry per possible .eyebrow state — an icon is optional per variant
-// (only "Featured review" has one today), so adding a future label (e.g.
-// something for a highly-rated review) is just another branch here with
-// or without its own icon, no change needed to how either card renders it.
+// One entry per .eyebrow state — icon is optional per variant, so a future label needs no changes to how cards render it.
 type EyebrowVariant = {
 	label: string;
 	icon?: LucideIcon;

@@ -1,11 +1,8 @@
 import { db } from "@/server/db/client";
 import { MediaType, Prisma } from "@prisma/client";
 
-// Edit this by hand for whatever batch you're pulling in this time — a
-// title search, a release-year range, a specific director's credits, ...
-// the actual condition varies too much run-to-run to squeeze into a single
-// CLI arg. ANDed with the fixed type/isDeleted baseline in main() below.
-// Example: every movie released in 2025.
+// Edit by hand per run — varies too much to squeeze into a CLI arg.
+// ANDed with the fixed type/isDeleted baseline in main() below.
 const QUERY: Prisma.MediaWhereInput = {
 	releaseDate: {
 		gte: new Date("2024-01-01"),
@@ -13,13 +10,9 @@ const QUERY: Prisma.MediaWhereInput = {
 	},
 };
 
-// Bulk-adds every movie matching QUERY above to a list in one shot — the
-// site's own AddMediaToList only adds one at a time via manual
-// search-and-click, this is for "add every 2025 release to my Best Of
-// list" style batch curation instead of dozens of individual clicks.
-// New items append below whatever's already ranked (see list-actions.ts's
-// addMediaToList, same reasoning: never jump ahead of an existing ranking),
-// ordered by release date among themselves.
+// Bulk-adds every movie matching QUERY to a list, for batch curation
+// instead of the site's one-at-a-time AddMediaToList. New items append
+// below the existing ranking, ordered by release date among themselves.
 async function main() {
 	const [, , listIdArg] = process.argv;
 	if (!listIdArg) {

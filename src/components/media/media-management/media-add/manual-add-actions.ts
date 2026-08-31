@@ -10,10 +10,7 @@ type SubTableFields = Pick<
 	"movie" | "tvShow" | "manga" | "comic" | "game" | "book"
 >;
 
-// Every real MediaType is manually creatable — unlike ADDABLE_TYPES (which
-// only lists types with a working provider search), this covers SHORT too,
-// since a manual entry has no provider it could have failed to find in the
-// first place.
+// Unlike ADDABLE_TYPES, this covers SHORT too, since a manual entry has no provider to search.
 function subTableFor(type: MediaType): SubTableFields {
 	switch (type) {
 		case MediaType.MOVIE:
@@ -49,10 +46,8 @@ export async function createManualMedia(input: {
 			overview: input.overview?.trim() || null,
 			releaseDate: input.releaseDate ? new Date(input.releaseDate) : null,
 			posterPath: input.posterUrl?.trim() || null,
-			// No provider backs a manual entry — externalId is left null rather
-			// than guessed at, same as sourceUrl. enrich-db.ts filters these out
-			// (nothing to fetch), and null is exempt from the @@unique([externalId,
-			// type]) constraint, so any number of manual entries per type coexist.
+			// No provider backs a manual entry, so externalId stays null; null is exempt from the
+			// @@unique([externalId, type]) constraint, so multiple manual entries per type coexist.
 			externalId: null,
 			enrichmentStatus: EnrichmentStatus.DONE,
 			lastEnrichedAt: new Date(),

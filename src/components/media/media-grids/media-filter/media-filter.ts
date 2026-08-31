@@ -2,16 +2,13 @@ import { MediaType } from "@prisma/client";
 import { MediaRecord } from "@/components/media/types";
 
 export type MediaFilterState = {
-	// Empty = no genre filter (show everything). Non-empty = show only media
-	// that has at least one of these genres — a whitelist, not a blacklist:
-	// checking a box narrows the grid down to it, rather than hiding it.
+	// Empty = no filter. Non-empty = whitelist: show only media with at least one of these genres.
 	includedGenres: Set<string>;
 	minRating: number | null;
 	maxRating: number | null;
 	minRuntime: number | null;
 	maxRuntime: number | null;
-	// Same whitelist idea as includedGenres, over Review.difficulty's 0/1/2
-	// domain (see DIFFICULTY_LEVELS) rather than genre strings.
+	// Same whitelist idea as includedGenres, over Review.difficulty's 0/1/2 domain.
 	includedDifficulties: Set<number>;
 };
 
@@ -24,22 +21,14 @@ export const EMPTY_MEDIA_FILTER: MediaFilterState = {
 	includedDifficulties: new Set(),
 };
 
-// Review.difficulty's own 0/1/2 domain (see media-editor-modal.tsx's number
-// input) — a fixed, always-the-same-three-options list, unlike genres, so
-// there's no need for a collectDifficulties() derived from the media the
-// way collectGenres() is.
+// Fixed three-option list, unlike genres, so no collectDifficulties() derivation is needed.
 export const DIFFICULTY_LEVELS: { value: number; label: string }[] = [
 	{ value: 0, label: "Easy" },
 	{ value: 1, label: "Medium" },
 	{ value: 2, label: "Hard" },
 ];
 
-// How long a grid waits after the last filter tweak (a slider tick, a
-// checkbox click) before actually re-filtering its list — same idea as
-// nav-search.tsx's own search debounce, just shorter: dragging a slider can
-// fire onChange many times a second, and re-running matchesMediaFilter over
-// the whole list on every one of those ticks is wasted work the eye can't
-// even register between frames.
+// Debounce so a dragged slider (many onChange fires/sec) doesn't re-filter the whole list on every tick.
 export const FILTER_DEBOUNCE_MS = 150;
 
 export function isFilterActive(filter: MediaFilterState): boolean {
@@ -53,17 +42,14 @@ export function isFilterActive(filter: MediaFilterState): boolean {
 	);
 }
 
-// Only Movie/Short carry a runtime (the sub-table the two share) — everything
-// else has nothing to compare against a runtime bound.
+// Only Movie/Short carry a runtime; everything else has nothing to compare against a runtime bound.
 export function getRuntimeMinutes(media: MediaRecord): number | null {
 	if (media.type === "MOVIE" || media.type === "SHORT")
 		return media.movie.runtime;
 	return null;
 }
 
-// A rating/runtime bound excludes media with no value for that field, not
-// just media outside the range — there's nothing for "only show 7+" to
-// compare an unrated item against, so it can't pass either way.
+// A rating/runtime bound excludes media with no value for that field too, not just media outside the range.
 export function matchesMediaFilter(
 	media: MediaRecord,
 	filter: MediaFilterState,
@@ -90,11 +76,7 @@ export function matchesMediaFilter(
 	}
 
 	if (filter.includedDifficulties.size > 0) {
-		// Unset counts as Easy (0), not "excluded" — same equivalence
-		// MediaPoster's own notch already draws (see its comment: "0/null
-		// means 'not rated for difficulty'", both rendering as no notch at
-		// all), so a media item nobody's flagged Medium/Hard reads as Easy
-		// here too rather than disappearing from every difficulty filter.
+		// Unset counts as Easy (0), not "excluded", so unflagged items don't disappear from every difficulty filter.
 		const difficulty = media.review?.difficulty ?? 0;
 		if (!filter.includedDifficulties.has(difficulty)) return false;
 	}
@@ -102,9 +84,7 @@ export function matchesMediaFilter(
 	return true;
 }
 
-// Sorted, deduped genre list for a set of media — the popover's checkbox
-// options. Derived from whatever's passed in (usually the *un*filtered list,
-// so unchecking a genre doesn't make its own checkbox disappear).
+// Sorted, deduped genre list for the popover's checkbox options. Usually derived from the unfiltered list so unchecking a genre doesn't hide its own checkbox.
 export function collectGenres(media: MediaRecord[]): string[] {
 	const genres = new Set<string>();
 	for (const item of media) {
@@ -115,12 +95,7 @@ export function collectGenres(media: MediaRecord[]): string[] {
 
 export type FilterField = "genre" | "rating" | "runtime" | "difficulty";
 
-// The one place that says which filter dimensions make sense for which
-// media type — e.g. a game has no runtime to filter by, so MediaFilterPopover
-// shouldn't offer a Runtime slider on a page that's showing only games.
-// Extend this, not a scattered set of per-type `if`s elsewhere, whenever a
-// new filterable field (or a new media type) needs this decision made.
-// difficulty lives on Review, same as rating — every type gets it.
+// The one place that says which filter dimensions apply to which media type; extend this, not scattered per-type ifs.
 const FILTERABLE_FIELDS_BY_TYPE: Record<MediaType, ReadonlySet<FilterField>> = {
 	[MediaType.MOVIE]: new Set(["genre", "rating", "runtime", "difficulty"]),
 	[MediaType.SHORT]: new Set(["genre", "rating", "runtime", "difficulty"]),
@@ -131,10 +106,7 @@ const FILTERABLE_FIELDS_BY_TYPE: Record<MediaType, ReadonlySet<FilterField>> = {
 	[MediaType.BOOK]: new Set(["genre", "rating", "difficulty"]),
 };
 
-// Union of filterable fields across whatever media types are actually
-// present — a mixed-type grid (a credit page, a list) keeps a field visible
-// as long as at least one item present could use it; matchesMediaFilter
-// already excludes the items that can't (see its own comment on that).
+// Union of filterable fields across present media types; a mixed-type grid keeps a field visible if any item present could use it.
 export function availableFilterFields(media: MediaRecord[]): Set<FilterField> {
 	const fields = new Set<FilterField>();
 	for (const item of media) {

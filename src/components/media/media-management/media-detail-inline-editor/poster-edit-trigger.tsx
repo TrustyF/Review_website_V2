@@ -15,27 +15,19 @@ type Props = {
 	ratio: string;
 };
 
-// Drop-in replacement for a plain <MediaPoster> on the detail page — click
-// the poster itself to open a picker anchored right under it, same picker
-// UI the full editor modal uses. Every type has some way to browse
-// alternates (TMDB, MangaDex, ComicVine issues, IGDB regional box art — see
-// getAlternativePosters), so unlike BannerEditTrigger this never needs to
-// gate on media type.
+// Drop-in replacement for a plain <MediaPoster> — click to open a picker anchored below it.
+// Every type has some way to browse alternates, so unlike BannerEditTrigger this never gates on type.
 export function PosterEditTrigger({ media, ratio }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
-	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
-	// for the same rule applied to the navbar's own admin links).
+	// Mobile admin edits are intentionally unsupported.
 	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const draft = useMediaPublishStore((s) => s.draft);
 	const stagePoster = useMediaPublishStore((s) => s.stagePoster);
 	const draftPreviewSrc =
 		draft?.mediaId === media.id ? draft.posterPreviewSrc : null;
-	// Destructured rather than kept as one `popover` object: the react-hooks
-	// lint rule treats any object holding a ref (containerRef here) as
-	// tainted as a whole, flagging every property read off it — even
-	// unrelated ones like .src or .pick — as "accessing a ref during
-	// render". Pulling each field into its own binding sidesteps that.
+	// Destructured rather than one `popover` object: react-hooks flags any object holding a ref
+	// as tainted, treating every property read off it as "accessing a ref during render".
 	const {
 		src,
 		containerRef,
@@ -49,9 +41,7 @@ export function PosterEditTrigger({ media, ratio }: Props) {
 	} = useImageEditPopover({
 		initialSrc: media.posterSrc,
 		stagedSrc: draftPreviewSrc,
-		// No DB write here — stages into the page-level draft, which only
-		// actually saves once MediaPublishButton's Publish is clicked (see
-		// that component's own comment).
+		// No DB write here — stages into the page-level draft, only saved once Publish is clicked.
 		onStage: (path, previewSrc) => stagePoster(media.id, path, previewSrc),
 	});
 

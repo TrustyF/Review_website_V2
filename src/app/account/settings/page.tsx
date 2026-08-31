@@ -10,11 +10,7 @@ export default async function AccountSettingsPage() {
 	const session = await auth();
 	if (!session?.user?.id) redirect("/login");
 
-	// Same reasoning as /account's own user query — updateAccountSettings
-	// writes straight to the DB without touching the JWT, so this form has to
-	// read its initial values from there too, not the session. passwordHash
-	// itself never leaves this page — only whether it's set (see
-	// DeleteAccountSection's own comment on why that matters).
+	// Reads from DB, not session, since updateAccountSettings writes DB directly without refreshing the JWT.
 	const user = await db.user.findUnique({
 		where: { id: session.user.id },
 		select: {

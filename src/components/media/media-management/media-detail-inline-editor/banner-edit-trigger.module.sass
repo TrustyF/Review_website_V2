@@ -1,7 +1,4 @@
-// Fades in over .banner_visual's placeholder background (see
-// media-detail.module.sass) instead of popping in the instant it's
-// decoded — combined with the page's own .banner_image class, not instead
-// of it (see banner-edit-trigger.tsx).
+// Fades in over the placeholder background instead of popping in the instant it's decoded.
 .image
   opacity: 0
   transition: opacity 0.25s ease
@@ -9,14 +6,8 @@
 .image_loaded
   opacity: 1
 
-// Positioned (absolute) but deliberately no z-index set here — this only
-// needs to sit above .header's non-positioned, in-flow box, and per the CSS
-// stacking order a positioned element (any z-index, even auto) always
-// paints above non-positioned in-flow content regardless of DOM order. It
-// no longer has to compete with .banner_backdrop's z-index: 1 at all, since
-// that now lives one level down inside .banner_visual (see
-// banner-edit-trigger.tsx) — a stacking context this button was never part
-// of to begin with.
+// No z-index needed — a positioned element always paints above non-positioned in-flow
+// content, and .banner_backdrop's own z-index lives one stacking context down.
 .click_target
   position: absolute
   inset: 0
@@ -27,14 +18,8 @@
   background: transparent
   cursor: pointer
 
-// A horizontal <input type="range"> rotated to read vertically — no
-// standard cross-browser CSS for an actually-vertical range input, this is
-// the reliable way to get one. min (0, top-framed) ends up at the top of
-// the rotated track, max (100, bottom-framed) at the bottom. Faint until
-// interacted with so it doesn't compete with the banner itself at rest;
-// later in the DOM than click_target (both position: absolute, neither
-// sets z-index) is what lets it paint — and receive drag input — above it,
-// per normal stacking order.
+// A horizontal range rotated to read vertically — no reliable cross-browser vertical range input.
+// Later in the DOM than click_target (both absolute, no z-index) is what lets it paint/receive input above it.
 .focus_slider
   position: absolute
   top: 50%
@@ -52,11 +37,8 @@
   &:hover, &:focus-visible
     opacity: 1
 
-// Same box geometry as media-detail.module.sass's .banner_image (full
-// width) so it lines up exactly with the image underneath. z-index sits
-// between the plain (non-positioned, so always-behind) image and the
-// backdrop's z-index: 1, painting over the image but still under the
-// edge-fade gradient.
+// Matches .banner_image's geometry so it lines up with the image; z-index sits between the
+// image and the backdrop's z-index: 1, painting over the image but under the edge-fade gradient.
 .grain
   display: block
   position: absolute
@@ -67,13 +49,9 @@
   pointer-events: none
   border-radius: 0.5rem
   mix-blend-mode: soft-light
-  // Opacity itself is driven inline (grainOpacity is a number, not a fixed
-  // class) — this just makes that change fade instead of pop, in step with
-  // .image's own transition above.
+  // Opacity is driven inline (grainOpacity is a number); this fades that change instead of popping it.
   transition: opacity 0.25s ease
-  // A real (non-tileable) grain photo rather than a repeating synthetic
-  // pattern — stretched to cover instead of tiled, so there's no repeat
-  // seam. See the same swap in banner-compression-dev.module.sass.
+  // A real (non-tileable) grain photo, stretched to cover instead of tiled to avoid a repeat seam.
   background-image: url("/ui/CT_35mm_Grain.png")
   background-repeat: no-repeat
   background-position: center

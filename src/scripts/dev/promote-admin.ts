@@ -1,9 +1,8 @@
 import { db } from "@/server/db/client";
 import { UserRole } from "@prisma/client";
 
-// One-off bootstrap for the site owner's own account — signup is open/self-
-// serve with no seed data, so there's no other way to get the first ADMIN.
-// Sign up normally at /signup, then run this once against that email.
+// One-off bootstrap for the first ADMIN — signup is open/self-serve with
+// no seed data, so sign up normally, then run this once against that email.
 async function main() {
 	const [, , email] = process.argv;
 	if (!email) {
