@@ -7,12 +7,13 @@ import {
 } from "@/components/notifications/notification-content";
 import {
 	markAllNotificationsRead,
-	markNotificationRead,
+	markNotificationsRead,
 } from "@/components/notifications/notification-actions";
 import type { NotificationEntry } from "@/components/notifications/notification-actions";
 import { useLazyReveal } from "@/components/media/media-grids/lazy-media-grid/use-lazy-reveal";
 import { TimelineList } from "@/components/activity/activity-feed/timeline-list";
 import { TimelineRow } from "@/components/activity/activity-feed/timeline-row";
+import { ListAdditionsCard } from "@/components/notifications/list-additions-card";
 import { Clickable } from "@/components/ui/clickable";
 import styles from "./notification-feed.module.sass";
 
@@ -35,7 +36,7 @@ function NotificationRow({
 }: {
 	entry: NotificationEntry;
 	index: number;
-	onRead: (id: number) => void;
+	onRead: (entry: NotificationEntry) => void;
 }) {
 	const { target, action, value } = getNotificationRowContent(entry);
 	// href is null when the linked list has since been deleted (see
@@ -54,7 +55,7 @@ function NotificationRow({
 			action={action}
 			value={value}
 			href={href}
-			{...(unread ? { onClick: () => onRead(entry.id) } : {})}
+			{...(unread ? { onClick: () => onRead(entry) } : {})}
 			unread={unread}
 		/>
 	);
@@ -65,7 +66,7 @@ export function NotificationFeed({
 }: {
 	notifications: NotificationEntry[];
 }) {
-	// Optimistic local readAt overlay — markNotificationRead/markAllRead's own
+	// Optimistic local readAt overlay — markNotificationsRead/markAllRead's own
 	// revalidatePath only refreshes this page on its next server render (e.g.
 	// a fresh navigation to it), not the props this client component was
 	// already mounted with, so without this the unread dot/styling would
@@ -87,9 +88,14 @@ export function NotificationFeed({
 	);
 	const visibleEntries = entries.slice(0, visibleCount);
 
-	function markRead(id: number) {
-		setReadOverrides((prev) => new Set(prev).add(id));
-		void markNotificationRead(id);
+	function markRead(entry: NotificationEntry) {
+		const ids = [entry.id, ...(entry.groupedIds ?? [])];
+		setReadOverrides((prev) => {
+			const next = new Set(prev);
+			for (const id of ids) next.add(id);
+			return next;
+		});
+		void markNotificationsRead(ids);
 	}
 
 	function markAllRead() {
@@ -115,14 +121,23 @@ export function NotificationFeed({
 			)}
 			<TimelineList
 				entries={visibleEntries}
-				renderRow={(entry, index) => (
-					<NotificationRow
-						key={entry.id}
-						entry={entry}
-						index={index}
-						onRead={markRead}
-					/>
-				)}
+				renderRow={(entry, index) =>
+					entry.groupedMedia && entry.groupedMedia.length > 0 ? (
+						<ListAdditionsCard
+							key={entry.id}
+							entry={entry}
+							index={index}
+							onRead={markRead}
+						/>
+					) : (
+						<NotificationRow
+							key={entry.id}
+							entry={entry}
+							index={index}
+							onRead={markRead}
+						/>
+					)
+				}
 			/>
 			{visibleCount < entries.length && (
 				<div className={styles.sentinel} ref={sentinelRef} />

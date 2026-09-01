@@ -10,9 +10,16 @@ export type NotificationEntry = {
 	type: NotificationType;
 	createdAt: Date;
 	readAt: Date | null;
-	list: { id: number; title: string } | null;
+	list: { id: number; title: string; thumbnail: string | null } | null;
 	media: { id: number; title: string; posterSrc: string } | null;
 	message: string | null;
+	// Present only for a LIST_ITEM_ADDED row standing in for several same-day
+	// additions to the same list (see groupSameDayListAdditions) — id/media/
+	// createdAt above are the most recent one's.
+	groupedIds?: number[];
+	// Every item in the group (representative's own `media` included), for
+	// ListAdditionsCard's poster grid — undefined for a plain, single-item row.
+	groupedMedia?: NonNullable<NotificationEntry["media"]>[];
 };
 
 // Same fallback as asset-paths.ts's toPosterSrc for a posterPath-less media row.
@@ -23,7 +30,7 @@ const NOTIFICATION_SELECT = {
 	type: true,
 	createdAt: true,
 	readAt: true,
-	list: { select: { id: true, title: true } },
+	list: { select: { id: true, title: true, thumbnail: true } },
 	media: {
 		select: {
 			id: true,
@@ -58,6 +65,56 @@ async function toMediaEntry(
 			)
 		: PLACEHOLDER_POSTER_SRC;
 	return { id: media.id, title: media.title, posterSrc };
+}
+
+type RawNotification = {
+	id: number;
+	type: NotificationType;
+	createdAt: Date;
+	readAt: Date | null;
+	list: { id: number; title: string; thumbnail: string | null } | null;
+	media: {
+		id: number;
+		title: string;
+		type: MediaType;
+		posterPath: string | null;
+		externalId: string | null;
+	} | null;
+	message: string | null;
+};
+
+// A same-list, same-day run of LIST_ITEM_ADDED rows, newest-first — members[0]
+// is the representative NotificationEntry is built from.
+type NotificationGroup = { members: RawNotification[] };
+
+// Groups LIST_ITEM_ADDED rows for the same list on the same day, newest-first,
+// so admin batches (or several separate adds) read as one ListAdditionsCard
+// instead of a flood — same idea as activity-actions.ts's own same-day
+// RATED/REVIEWED merge, just keyed by list+day instead of media.
+function groupSameDayListAdditions(
+	entries: RawNotification[],
+): NotificationGroup[] {
+	const grouped: NotificationGroup[] = [];
+	const groupByKey = new Map<string, NotificationGroup>();
+
+	for (const entry of entries) {
+		const key =
+			entry.type === "LIST_ITEM_ADDED" && entry.list
+				? `${entry.list.id}-${entry.createdAt.toDateString()}`
+				: null;
+		const existing = key ? groupByKey.get(key) : undefined;
+
+		if (existing) {
+			existing.members.push(entry);
+			continue;
+		}
+
+		const group: NotificationGroup = { members: [entry] };
+		grouped.push(group);
+		if (key) groupByKey.set(key, group);
+	}
+
+	return grouped;
 }
 
 async function requireUserId(): Promise<string> {
@@ -103,11 +160,38 @@ export async function getNotifications(): Promise<NotificationEntry[]> {
 		take: PAGE_SIZE,
 		select: NOTIFICATION_SELECT,
 	});
+	const groups = groupSameDayListAdditions(notifications);
 	return Promise.all(
-		notifications.map(async (notification) => ({
-			...notification,
-			media: await toMediaEntry(notification.media),
-		})),
+		groups.map(async ({ members }): Promise<NotificationEntry> => {
+			// members is always non-empty (grouping always starts a group with
+			// the entry that created it).
+			const [representative, ...rest] = members as [
+				RawNotification,
+				...RawNotification[],
+			];
+			const media = await toMediaEntry(representative.media);
+			// An older member's unread state shouldn't hide behind the newest
+			// member happening to already be read.
+			const readAt = members.some((m) => m.readAt === null)
+				? null
+				: representative.readAt;
+
+			if (rest.length === 0) {
+				return { ...representative, media, readAt };
+			}
+
+			const groupedMedia = (
+				await Promise.all(members.map((m) => toMediaEntry(m.media)))
+			).filter((m) => m !== null);
+
+			return {
+				...representative,
+				media,
+				readAt,
+				groupedIds: rest.map((m) => m.id),
+				groupedMedia,
+			};
+		}),
 	);
 }
 
@@ -116,13 +200,16 @@ export async function getUnreadNotificationCount(): Promise<number> {
 	return db.notification.count({ where: { userId, readAt: null } });
 }
 
-export async function markNotificationRead(id: number): Promise<void> {
+// Takes a batch, not a single id — a single unread row is just a length-1
+// call — so a grouped LIST_ITEM_ADDED row (see groupSameDayListAdditions)
+// can mark every underlying notification it stands in for read with one click.
+export async function markNotificationsRead(ids: number[]): Promise<void> {
 	const userId = await requireUserId();
-	// where: { id, userId } rather than a plain { id } — a user can only ever
-	// mark their own notifications read, same scoping requireAdmin's
-	// server-action callers rely on elsewhere for their own row.
+	// where: { id: { in: ids }, userId } rather than a plain { id } — a user can
+	// only ever mark their own notifications read, same scoping requireAdmin's
+	// server-action callers rely on elsewhere for their own rows.
 	await db.notification.updateMany({
-		where: { id, userId, readAt: null },
+		where: { id: { in: ids }, userId, readAt: null },
 		data: { readAt: new Date() },
 	});
 	revalidatePath("/account/notifications");

@@ -25,6 +25,9 @@ export function getNotificationHref(entry: NotificationEntry): string | null {
 // one shared row layout (see timeline-row.tsx). `target` here is always plain
 // text, never a Link: NotificationFeed makes the whole row clickable (see
 // getNotificationHref), and a Link can't nest inside a Link.
+//
+// Only ever called for a plain (non-grouped) row — a LIST_ITEM_ADDED entry
+// with groupedMedia set renders through ListAdditionsCard instead.
 export function getNotificationRowContent(entry: NotificationEntry): {
 	target: string;
 	action: string | null;
