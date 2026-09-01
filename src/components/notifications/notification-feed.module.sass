@@ -3,6 +3,10 @@
 .empty
   @include empty-text
 
+// Invisible marker the IntersectionObserver watches.
+.sentinel
+  height: 1px
+
 .mark_all
   align-self: flex-end
   color: var(--accent1)
@@ -11,86 +15,3 @@
 
   &:hover
     color: var(--foreground)
-
-// Same sticky month-header grouping as activity-feed.module.sass's own
-// .groups/.group_header — reused so this reads as the same pattern.
-.groups
-  display: flex
-  flex-flow: column
-  gap: 1rem
-  margin-top: 1rem
-
-.group_header
-  @include sticky-group-header
-
-.list
-  display: flex
-  flex-flow: column
-  list-style: none
-
-.entry
-  border-radius: 0.5rem
-  transition: background 0.15s ease
-
-.entry.unread
-  background: color-mix(in srgb, var(--brand) 8%, transparent)
-
-.entry_link
-  display: grid
-  grid-template-columns: 1.2rem 1fr auto
-  align-items: start
-  column-gap: 0.75rem
-  padding: 0.75rem 1rem
-  color: inherit
-  text-decoration: none
-
-  &:hover
-    background: color-mix(in srgb, var(--foreground) 6%, transparent)
-
-.type_icon
-  margin-top: 0.15rem
-  color: var(--accent1)
-
-.content
-  min-width: 0
-  display: flex
-  flex-flow: column
-  gap: 0.2rem
-
-.title_row
-  display: flex
-  flex-flow: row
-  align-items: baseline
-  justify-content: space-between
-  gap: 0.75rem
-  min-width: 0
-
-.title
-  min-width: 0
-  overflow: hidden
-  white-space: nowrap
-  text-overflow: ellipsis
-  font-weight: 500
-
-// pre-wrap (not nowrap+ellipsis) so a multi-line body — a cron job's
-// summary (job-summary.ts) or failure log tail — renders in full instead of
-// being clipped to its first line; short bodies (a list title) are
-// unaffected since they never wrap anyway.
-.body
-  color: var(--accent3)
-  font-size: 0.85rem
-  white-space: pre-wrap
-  overflow-wrap: break-word
-
-.date
-  flex-shrink: 0
-  color: var(--accent1)
-  font-family: $font-mono
-  font-size: 0.8rem
-
-.unread_dot
-  margin-top: 0.4rem
-  width: 0.5rem
-  height: 0.5rem
-  border-radius: 50%
-  background: var(--brand)

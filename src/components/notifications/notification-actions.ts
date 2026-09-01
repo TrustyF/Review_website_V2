@@ -2,7 +2,8 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
-import type { NotificationType } from "@prisma/client";
+import { resolveChangelogPosterThumb } from "@/server/resolvers/poster-resolver";
+import type { MediaType, NotificationType } from "@prisma/client";
 
 export type NotificationEntry = {
 	id: number;
@@ -10,9 +11,12 @@ export type NotificationEntry = {
 	createdAt: Date;
 	readAt: Date | null;
 	list: { id: number; title: string } | null;
-	media: { id: number; title: string } | null;
+	media: { id: number; title: string; posterSrc: string } | null;
 	message: string | null;
 };
+
+// Same fallback as asset-paths.ts's toPosterSrc for a posterPath-less media row.
+const PLACEHOLDER_POSTER_SRC = "/posters/placeholder.jpg";
 
 const NOTIFICATION_SELECT = {
 	id: true,
@@ -20,9 +24,41 @@ const NOTIFICATION_SELECT = {
 	createdAt: true,
 	readAt: true,
 	list: { select: { id: true, title: true } },
-	media: { select: { id: true, title: true } },
+	media: {
+		select: {
+			id: true,
+			title: true,
+			type: true,
+			posterPath: true,
+			externalId: true,
+		},
+	},
 	message: true,
 } as const;
+
+// Same small pre-cached thumbnail activity-actions.ts's own toMediaEntry
+// resolves, not /api/poster's full-size resolve — stays resolvable even for
+// deleted media.
+async function toMediaEntry(
+	media: {
+		id: number;
+		title: string;
+		type: MediaType;
+		posterPath: string | null;
+		externalId: string | null;
+	} | null,
+): Promise<NotificationEntry["media"]> {
+	if (!media) return null;
+	const posterSrc = media.posterPath
+		? await resolveChangelogPosterThumb(
+				media.id,
+				media.type,
+				media.externalId,
+				media.posterPath,
+			)
+		: PLACEHOLDER_POSTER_SRC;
+	return { id: media.id, title: media.title, posterSrc };
+}
 
 async function requireUserId(): Promise<string> {
 	const session = await auth();
@@ -61,12 +97,18 @@ const PAGE_SIZE = 50;
 // deep enough to need real pagination.
 export async function getNotifications(): Promise<NotificationEntry[]> {
 	const userId = await requireUserId();
-	return db.notification.findMany({
+	const notifications = await db.notification.findMany({
 		where: { userId },
 		orderBy: { createdAt: "desc" },
 		take: PAGE_SIZE,
 		select: NOTIFICATION_SELECT,
 	});
+	return Promise.all(
+		notifications.map(async (notification) => ({
+			...notification,
+			media: await toMediaEntry(notification.media),
+		})),
+	);
 }
 
 export async function getUnreadNotificationCount(): Promise<number> {

@@ -1,19 +1,12 @@
 "use client";
-import { Fragment, type CSSProperties } from "react";
-import Image from "next/image";
-import { Link } from "@/components/ui/link";
-import {
-	ArrowRight,
-	IterationCw,
-	ListPlus,
-	PenLine,
-	RotateCcw,
-} from "lucide-react";
+import { ArrowRight, IterationCw, ListPlus, PenLine, RotateCcw } from "lucide-react";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { WatchlistIcon } from "@/components/icons/watchlist-icon";
 import type { ActivityFeedEntry } from "@/components/activity/activity-actions";
 import { useLazyReveal } from "@/components/media/media-grids/lazy-media-grid/use-lazy-reveal";
-import { groupByActivityMonth } from "./group-by-activity-month";
+import { Link } from "@/components/ui/link";
+import { TimelineList } from "./timeline-list";
+import { TimelineRow } from "./timeline-row";
 import styles from "./activity-feed.module.sass";
 
 const DateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -23,27 +16,6 @@ const DateFormatter = new Intl.DateTimeFormat("en-GB", {
 	hour: "2-digit",
 	minute: "2-digit",
 });
-
-// A gap at least this long between consecutive entries in the same month group gets a divider.
-const TIMELINE_GAP_DAYS = 3;
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
-
-function daysBetween(a: Date, b: Date): number {
-	return Math.abs(a.getTime() - b.getTime()) / MS_PER_DAY;
-}
-
-function formatGap(days: number): string {
-	const rounded = Math.round(days);
-	if (rounded < 30) {
-		return `${rounded} day${rounded === 1 ? "" : "s"} later`;
-	}
-	const months = Math.round(days / 30.44);
-	if (months < 12) {
-		return `${months} month${months === 1 ? "" : "s"} later`;
-	}
-	const years = Math.round(days / 365.25);
-	return `${years} year${years === 1 ? "" : "s"} later`;
-}
 
 // One icon per ActivityType — RATING_CHANGED reuses the star rating value's own icon.
 const TYPE_ICON = {
@@ -175,48 +147,19 @@ function activityLabel(entry: ActivityFeedEntry): {
 	}
 }
 
-// index is this row's position within its own month group (not global), passed
-// through to --stagger-index for .entry's animation-delay.
-function ActivityRow({
-	entry,
-	index,
-}: {
-	entry: ActivityFeedEntry;
-	index: number;
-}) {
-	const Icon = TYPE_ICON[entry.type];
+function ActivityRow({ entry, index }: { entry: ActivityFeedEntry; index: number }) {
 	const { action, target, value } = activityLabel(entry);
 
 	return (
-		<li
-			className={styles.entry}
-			style={{ "--stagger-index": index } as CSSProperties}>
-			{entry.media ? (
-				<Image
-					className={styles.poster}
-					src={entry.media.posterSrc}
-					alt=""
-					// Matches the cached thumbnail's actual on-disk size; .poster's own
-					// sizing governs the rendered size regardless.
-					width={93}
-					height={140}
-				/>
-			) : (
-				<Icon size={16} className={styles.type_icon} />
-			)}
-			<span className={styles.content}>
-				<span className={styles.title_row}>
-					<span className={styles.target}>{target}</span>
-					<span className={styles.date}>
-						{DateFormatter.format(entry.createdAt)}
-					</span>
-				</span>
-				<span className={styles.meta}>
-					{action && <span className={styles.action}>{action}</span>}
-					<span className={styles.value}>{value}</span>
-				</span>
-			</span>
-		</li>
+		<TimelineRow
+			index={index}
+			icon={TYPE_ICON[entry.type]}
+			posterSrc={entry.media?.posterSrc}
+			target={target}
+			date={DateFormatter.format(entry.createdAt)}
+			action={action}
+			value={value}
+		/>
 	);
 }
 
@@ -238,51 +181,14 @@ export function ActivityFeed({ entries }: { entries: ActivityFeedEntry[] }) {
 		return <div className={styles.empty}>No activity recorded yet.</div>;
 	}
 
-	const groups = groupByActivityMonth(visibleEntries);
-
 	return (
 		<>
-			<div className={styles.groups}>
-				{groups.map((group, groupIndex) => {
-					const list = (
-						<ul className={styles.list}>
-							{group.entries.map((entry, index) => {
-								const prevEntry = group.entries[index - 1];
-								const gapDays = prevEntry
-									? daysBetween(prevEntry.createdAt, entry.createdAt)
-									: 0;
-								const showGapDivider = gapDays >= TIMELINE_GAP_DAYS;
-
-								return (
-									<Fragment key={entry.id}>
-										{showGapDivider && (
-											<li
-												className={styles.timeline_gap}
-												aria-hidden="true"
-												style={{ "--stagger-index": index } as CSSProperties}>
-												<span className={styles.timeline_gap_line} />
-											</li>
-										)}
-										<ActivityRow entry={entry} index={index} />
-									</Fragment>
-								);
-							})}
-						</ul>
-					);
-
-					// The first group ("this month") is self-evident, so it skips the label.
-					if (groupIndex === 0) {
-						return <Fragment key={group.key}>{list}</Fragment>;
-					}
-
-					return (
-						<details key={group.key} open>
-							<summary className={styles.group_header}>{group.label}</summary>
-							{list}
-						</details>
-					);
-				})}
-			</div>
+			<TimelineList
+				entries={visibleEntries}
+				renderRow={(entry, index) => (
+					<ActivityRow key={entry.id} entry={entry} index={index} />
+				)}
+			/>
 			{visibleCount < entries.length && (
 				<div className={styles.sentinel} ref={sentinelRef} />
 			)}

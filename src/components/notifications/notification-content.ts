@@ -20,32 +20,40 @@ export function getNotificationHref(entry: NotificationEntry): string | null {
 	}
 }
 
-export function getNotificationText(entry: NotificationEntry): {
-	title: string;
-	body: string | null;
+// Feeds TimelineRow's target/action/value slots — the same three-piece shape
+// activity-feed.tsx's own activityLabel returns, so both feeds render through
+// one shared row layout (see timeline-row.tsx). `target` here is always plain
+// text, never a Link: NotificationFeed makes the whole row clickable (see
+// getNotificationHref), and a Link can't nest inside a Link.
+export function getNotificationRowContent(entry: NotificationEntry): {
+	target: string;
+	action: string | null;
+	value: string | null;
 } {
 	switch (entry.type) {
 		case "LIST_CREATED":
 			return {
-				title: "A new list was made for you",
-				body: entry.list?.title ?? null,
+				target: entry.list?.title ?? "A new list was made for you",
+				action: "Created list for you",
+				value: null,
 			};
 		case "LIST_ITEM_ADDED":
 			return {
-				title: entry.media
-					? `${entry.media.title} was added to your list`
-					: "An item was added to your list",
-				body: entry.list?.title ?? null,
+				target: entry.media?.title ?? "An item",
+				action: "Added to",
+				value: entry.list?.title ?? null,
 			};
 		case "CRON_JOB_FAILED":
 			return {
-				title: "A scheduled job failed",
-				body: entry.message,
+				target: "A scheduled job failed",
+				action: null,
+				value: null,
 			};
 		case "CRON_JOB_SUCCEEDED":
 			return {
-				title: "A scheduled job completed",
-				body: entry.message,
+				target: "A scheduled job completed",
+				action: null,
+				value: null,
 			};
 	}
 }

@@ -1,17 +1,18 @@
 "use client";
 import { useState } from "react";
-import { Link } from "@/components/ui/link";
 import {
 	NOTIFICATION_TYPE_ICON,
 	getNotificationHref,
-	getNotificationText,
+	getNotificationRowContent,
 } from "@/components/notifications/notification-content";
 import {
 	markAllNotificationsRead,
 	markNotificationRead,
 } from "@/components/notifications/notification-actions";
 import type { NotificationEntry } from "@/components/notifications/notification-actions";
-import { groupByNotificationMonth } from "@/components/notifications/group-by-notification-month";
+import { useLazyReveal } from "@/components/media/media-grids/lazy-media-grid/use-lazy-reveal";
+import { TimelineList } from "@/components/activity/activity-feed/timeline-list";
+import { TimelineRow } from "@/components/activity/activity-feed/timeline-row";
 import { Clickable } from "@/components/ui/clickable";
 import styles from "./notification-feed.module.sass";
 
@@ -23,52 +24,39 @@ const DateFormatter = new Intl.DateTimeFormat("en-GB", {
 	minute: "2-digit",
 });
 
+// Dialed separately from useLazyReveal's own 24-item default, same reasoning
+// as ACTIVITY_BATCH_SIZE — a notification row is a different shape than a grid card.
+const NOTIFICATION_BATCH_SIZE = 10;
+
 function NotificationRow({
 	entry,
+	index,
 	onRead,
 }: {
 	entry: NotificationEntry;
+	index: number;
 	onRead: (id: number) => void;
 }) {
-	const Icon = NOTIFICATION_TYPE_ICON[entry.type];
-	const { title, body } = getNotificationText(entry);
+	const { target, action, value } = getNotificationRowContent(entry);
+	// href is null when the linked list has since been deleted (see
+	// getNotificationHref) — TimelineRow still renders a clickable (mark-read)
+	// span rather than dropping the row, so a notification never just vanishes.
 	const href = getNotificationHref(entry);
 	const unread = entry.readAt === null;
 
-	function handleClick() {
-		if (unread) onRead(entry.id);
-	}
-
-	const children = (
-		<>
-			<Icon size={16} className={styles.type_icon} />
-			<span className={styles.content}>
-				<span className={styles.title_row}>
-					<span className={styles.title}>{title}</span>
-					<span className={styles.date}>
-						{DateFormatter.format(entry.createdAt)}
-					</span>
-				</span>
-				{body && <span className={styles.body}>{body}</span>}
-			</span>
-			{unread && <span className={styles.unread_dot} aria-hidden="true" />}
-		</>
-	);
-
 	return (
-		<li className={`${styles.entry} ${unread ? styles.unread : ""}`}>
-			{/* href is null when the linked list has since been deleted (see
-			getNotificationHref) — rendered without a Link wrapper rather than
-			dropped from the feed entirely, so a notification never just
-			vanishes. */}
-			{href ? (
-				<Link href={href} className={styles.entry_link} onClick={handleClick}>
-					{children}
-				</Link>
-			) : (
-				<span className={styles.entry_link}>{children}</span>
-			)}
-		</li>
+		<TimelineRow
+			index={index}
+			icon={NOTIFICATION_TYPE_ICON[entry.type]}
+			posterSrc={entry.media?.posterSrc}
+			target={target}
+			date={DateFormatter.format(entry.createdAt)}
+			action={action}
+			value={value}
+			href={href}
+			{...(unread ? { onClick: () => onRead(entry.id) } : {})}
+			unread={unread}
+		/>
 	);
 }
 
@@ -90,6 +78,15 @@ export function NotificationFeed({
 	);
 	const hasUnread = entries.some((entry) => entry.readAt === null);
 
+	// Same reveal-more-on-scroll pattern as ActivityFeed — avoids mounting
+	// every notification up front.
+	const { visibleCount, sentinelRef } = useLazyReveal(
+		entries,
+		"notifications",
+		NOTIFICATION_BATCH_SIZE,
+	);
+	const visibleEntries = entries.slice(0, visibleCount);
+
 	function markRead(id: number) {
 		setReadOverrides((prev) => new Set(prev).add(id));
 		void markNotificationRead(id);
@@ -109,8 +106,6 @@ export function NotificationFeed({
 		);
 	}
 
-	const groups = groupByNotificationMonth(entries);
-
 	return (
 		<>
 			{hasUnread && (
@@ -118,22 +113,20 @@ export function NotificationFeed({
 					Mark all as read
 				</Clickable>
 			)}
-			<div className={styles.groups}>
-				{groups.map((group) => (
-					<details key={group.key} open>
-						<summary className={styles.group_header}>{group.label}</summary>
-						<ul className={styles.list}>
-							{group.entries.map((entry) => (
-								<NotificationRow
-									key={entry.id}
-									entry={entry}
-									onRead={markRead}
-								/>
-							))}
-						</ul>
-					</details>
-				))}
-			</div>
+			<TimelineList
+				entries={visibleEntries}
+				renderRow={(entry, index) => (
+					<NotificationRow
+						key={entry.id}
+						entry={entry}
+						index={index}
+						onRead={markRead}
+					/>
+				)}
+			/>
+			{visibleCount < entries.length && (
+				<div className={styles.sentinel} ref={sentinelRef} />
+			)}
 		</>
 	);
 }

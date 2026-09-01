@@ -1,10 +1,9 @@
 import { Calendar } from "lucide-react";
-import type { ActivityFeedEntry } from "@/components/activity/activity-actions";
 
-export type ActivityGroup = {
+export type TimelineGroup<T> = {
 	key: string;
 	label: React.ReactNode;
-	entries: ActivityFeedEntry[];
+	entries: T[];
 };
 
 const MONTH_LABEL = new Intl.DateTimeFormat("en-US", {
@@ -12,16 +11,15 @@ const MONTH_LABEL = new Intl.DateTimeFormat("en-US", {
 	year: "numeric",
 });
 
-// Separate copy of group-by-review-month.tsx's grouping since the two group
-// different shapes off a different date field.
 const MONTH_ICON_SIZE = 17;
 
 // Buckets entries into one group per calendar month — assumes `entries` already
-// arrives newest-first (true for getActivityFeed's query).
-export function groupByActivityMonth(
-	entries: ActivityFeedEntry[],
-): ActivityGroup[] {
-	const groups: ActivityGroup[] = [];
+// arrives newest-first. Shared by ActivityFeed and NotificationFeed, which both
+// group a differently-shaped entry off its own createdAt.
+export function groupByMonth<T extends { createdAt: Date }>(
+	entries: T[],
+): TimelineGroup<T>[] {
+	const groups: TimelineGroup<T>[] = [];
 	for (const entry of entries) {
 		const date = entry.createdAt;
 		const key = `${date.getFullYear()}-${date.getMonth()}`;
