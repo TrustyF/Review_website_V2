@@ -62,13 +62,12 @@ export async function getEmbedPreview(mediaId: number): Promise<EmbedPreview | n
 			overview: true,
 			publicRating: true,
 			posterPath: true,
-			bannerPath: true,
 			review: { select: { rating: true } },
 		},
 	});
 	if (!media) return null;
 
-	const embedSrc = toLinkEmbedImageSrc(mediaId, media.posterPath, media.bannerPath);
+	const embedSrc = toLinkEmbedImageSrc(mediaId, media.posterPath);
 	return {
 		title: media.title,
 		description: buildLinkEmbedDescription(media) ?? null,

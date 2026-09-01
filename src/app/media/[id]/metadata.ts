@@ -27,11 +27,7 @@ export async function generateMediaMetadata({
 	// JPEG, not the site's usual WebP poster, composited into the standard
 	// 1200x630 og:image shape rather than just resized into it — see
 	// toLinkEmbedImageSrc/resolveLinkEmbedImage's own comments on why.
-	const linkEmbedImageUrl = toLinkEmbedImageSrc(
-		mediaId,
-		media.posterPath,
-		media.bannerPath,
-	);
+	const linkEmbedImageUrl = toLinkEmbedImageSrc(mediaId, media.posterPath);
 
 	const description = buildLinkEmbedDescription(media);
 

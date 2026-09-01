@@ -18,7 +18,6 @@ import {
 	POSTER_DIR,
 	POSTER_QUALITY,
 	bannerUrlFor,
-	linkEmbedCacheKey,
 	mediaAssetFilename,
 	personPhotoUrlFor,
 	posterUrlFor,
@@ -44,16 +43,6 @@ const BANNER_THUMB_MAX_WIDTH = 120;
 // metadata, hence compositing (resolveLinkEmbedImage) rather than resizing.
 const LINK_EMBED_WIDTH = 1200;
 const LINK_EMBED_HEIGHT = 630;
-// Height of the poster on the backdrop — width follows its own ratio at
-// this height. 90% of the frame so the blurred backdrop still shows through
-// as a visible border on all sides.
-const LINK_EMBED_POSTER_HEIGHT = Math.round(LINK_EMBED_HEIGHT * 0.9);
-// Left edge of the poster, as a fraction of the canvas width — left-aligned
-// rather than centered, with this much breathing room from the edge.
-const LINK_EMBED_POSTER_PADDING_X = 0.025;
-const LINK_EMBED_POSTER_RADIUS = 16;
-const LINK_EMBED_SHADOW_BLUR = 15;
-const LINK_EMBED_SHADOW_OFFSET_Y = 5;
 // JPEG needs a higher quality number than WebP/AVIF for similar fidelity —
 // deliberately above POSTER_QUALITY's 50 rather than reused from it.
 const LINK_EMBED_QUALITY = 60;
@@ -179,28 +168,32 @@ async function fetchImageBytes(url: string): Promise<Buffer> {
 	return Buffer.from(await res.arrayBuffer());
 }
 
-// Composites a standard-shaped (1200x630) link-preview image rather than
-// resizing the poster into that box (see LINK_EMBED_WIDTH). Prefers a real
-// banner as the backdrop when one exists, falling back to a blurred poster
-// otherwise. Doesn't share cacheOrDownload's shape — needs two sources and a
-// composite, not one resize.
+// Height of the poster on the backdrop — width follows its own ratio at
+// this height. 90% of the frame so the blurred backdrop still shows through
+// as a visible border on all sides.
+const LINK_EMBED_POSTER_HEIGHT = Math.round(LINK_EMBED_HEIGHT * 0.9);
+const LINK_EMBED_POSTER_RADIUS = 25;
+const LINK_EMBED_SHADOW_BLUR = 20;
+const LINK_EMBED_SHADOW_OFFSET_Y = 5;
+
+// Composites a standard-shaped (1200x630) link-preview image: the poster
+// centered over a blurred, cover-cropped copy of itself as the backdrop —
+// the classic movie-poster-on-backdrop look, kept on-theme with the poster
+// art rather than a differently-toned banner. Doesn't share cacheOrDownload's
+// shape — needs two derived sizes of the same source and a composite, not
+// one resize.
 export async function resolveLinkEmbedImage(
 	mediaId: number,
 	type: MediaType,
 	externalId: string | null,
 	posterPath: string | null,
-	bannerPath: string | null,
 	// Lets the dev preview tool force a fresh composite (and skip persisting
 	// it) instead of serving/writing the disk cache.
 	skipCache = false,
 ): Promise<ResolvedAsset | null> {
 	if (!posterPath) return null;
 
-	const filename = mediaAssetFilename(
-		mediaId,
-		linkEmbedCacheKey(posterPath, bannerPath),
-		"jpeg",
-	);
+	const filename = mediaAssetFilename(mediaId, posterPath, "jpeg");
 	const storage = getImageStorage();
 
 	if (!skipCache) {
@@ -215,27 +208,29 @@ export async function resolveLinkEmbedImage(
 				posterUrlFor(type, externalId, posterPath, "full"),
 			);
 
-			let backgroundBytes = posterBytes;
-			if (bannerPath) {
-				try {
-					backgroundBytes = await fetchImageBytes(
-						bannerUrlFor(type, bannerPath),
-					);
-				} catch {
-					// Falls back to the poster itself (still assigned above) — a
-					// broken/unreachable banner shouldn't block the whole embed image.
-				}
-			}
+			// Cover-cropped poster, not the banner — keeps the backdrop on-theme
+			// with the poster art itself rather than a differently-toned banner.
+			const background = sharp(posterBytes)
+				.resize({
+					width: LINK_EMBED_WIDTH,
+					height: LINK_EMBED_HEIGHT,
+					fit: "cover",
+				})
+				.blur(100);
 
-			const background = sharp(backgroundBytes).resize({
-				width: LINK_EMBED_WIDTH,
-				height: LINK_EMBED_HEIGHT,
-				fit: "cover",
-			});
-
-			// Darkens the backdrop so the poster card stays readable against it.
+			// Vignette, not a flat scrim — darkens the backdrop's edges/corners
+			// (where the poster isn't) while leaving the center clear, so the
+			// blurred banner still reads as an image rather than just tinted.
 			const scrim = Buffer.from(
-				`<svg width="${LINK_EMBED_WIDTH}" height="${LINK_EMBED_HEIGHT}"><rect width="100%" height="100%" fill="black" fill-opacity="0.5"/></svg>`,
+				`<svg width="${LINK_EMBED_WIDTH}" height="${LINK_EMBED_HEIGHT}">
+					<defs>
+						<radialGradient id="vignette" cx="50%" cy="50%" r="75%">
+							<stop offset="40%" stop-color="black" stop-opacity="0"/>
+							<stop offset="100%" stop-color="black" stop-opacity="0.15"/>
+						</radialGradient>
+					</defs>
+					<rect width="100%" height="100%" fill="url(#vignette)"/>
+				</svg>`,
 			);
 
 			const resizedPoster = await sharp(posterBytes)
@@ -254,9 +249,7 @@ export async function resolveLinkEmbedImage(
 				.png()
 				.toBuffer();
 
-			const posterLeft = Math.round(
-				LINK_EMBED_WIDTH * LINK_EMBED_POSTER_PADDING_X,
-			);
+			const posterLeft = Math.round((LINK_EMBED_WIDTH - posterWidth!) / 2);
 			const posterTop = Math.round((LINK_EMBED_HEIGHT - posterHeight!) / 2);
 
 			// Drawn at the full canvas size (not just the poster's own bounds) so
@@ -273,7 +266,7 @@ export async function resolveLinkEmbedImage(
 
 			const bytes = await background
 				.composite([
-					{ input: scrim },
+					// { input: scrim },
 					{ input: shadow },
 					{ input: posterCard, left: posterLeft, top: posterTop },
 				])
