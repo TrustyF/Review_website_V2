@@ -1,12 +1,8 @@
 @use "@/app/styles/variables" as *
 
 .wrapper
-  width: 950px
+  @include content-wrapper
   margin: 2rem auto
   display: flex
   flex-flow: column
   gap: 1.5rem
-
-.hint
-  color: var(--accent1)
-  margin-top: -1rem

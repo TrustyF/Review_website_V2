@@ -10,10 +10,12 @@ type Props = {
 	options: RecommendationTargetOption[];
 	value: string | null;
 	onChange: (id: string | null) => void;
+	// Omits the "Public" tile — for pickers that only ever navigate to a specific user.
+	hidePublicOption?: boolean;
 };
 
 // "Recommend to" picker: avatar tiles instead of a <select>, so an admin recognizes a recipient by face.
-export function UserPicker({ options, value, onChange }: Props) {
+export function UserPicker({ options, value, onChange, hidePublicOption }: Props) {
 	// Set, not one boolean, since multiple tiles' images can fail to load independently.
 	const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
 
@@ -23,16 +25,18 @@ export function UserPicker({ options, value, onChange }: Props) {
 
 	return (
 		<div className={styles.grid}>
-			<Clickable
-				className={`${styles.option} ${value === null ? styles.option_selected : ""}`}
-				aria-label="Public — visible to everyone"
-				aria-pressed={value === null}
-				onClick={() => onChange(null)}>
-				<div className={styles.avatar_placeholder}>
-					<Globe size={20} />
-				</div>
-				<span className={styles.name}>Public</span>
-			</Clickable>
+			{!hidePublicOption && (
+				<Clickable
+					className={`${styles.option} ${value === null ? styles.option_selected : ""}`}
+					aria-label="Public — visible to everyone"
+					aria-pressed={value === null}
+					onClick={() => onChange(null)}>
+					<div className={styles.avatar_placeholder}>
+						<Globe size={20} />
+					</div>
+					<span className={styles.name}>Public</span>
+				</Clickable>
+			)}
 			{options.map((user) => {
 				const hasImage = user.image && !failedIds.has(user.id);
 				const label = displayName(user);

@@ -30,10 +30,12 @@ type Props = {
 	onSubmit: (values: ListFormValues) => Promise<void>;
 	// Edit page's "Delete list" button — a separate destructive action, not a form field.
 	extra?: ReactNode;
+	// Hides the "Recommend to" picker, keeping initial.targetUserId fixed — used when the form is reached from that user's own admin page and the target is already implied.
+	hideRecommendTo?: boolean;
 };
 
 // Shared by /lists/new and /lists/[id]/edit; only onSubmit differs. Thumbnail can be a pasted URL or an uploaded file — both just set the same thumbnailUrl state.
-export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
+export function ListForm({ initial, submitLabel, onSubmit, extra, hideRecommendTo }: Props) {
 	const [title, setTitle] = useState(initial.title);
 	const [description, setDescription] = useState(initial.description);
 	const [thumbnailUrl, setThumbnailUrl] = useState(initial.thumbnailUrl);
@@ -46,8 +48,9 @@ export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 
 	// Fetched on mount rather than passed as a prop, to keep both call sites as thin wrappers.
 	useEffect(() => {
+		if (hideRecommendTo) return;
 		listRecommendationTargets().then(setTargets);
-	}, []);
+	}, [hideRecommendTo]);
 
 	async function handleSubmit(e: FormEvent) {
 		e.preventDefault();
@@ -131,15 +134,17 @@ export function ListForm({ initial, submitLabel, onSubmit, extra }: Props) {
 					className={styles.thumbnail_preview}
 				/>
 			)}
-			<div className={styles.field}>
-				Recommend to
-				<UserPicker options={targets} value={targetUserId} onChange={setTargetUserId} />
-				{targetUserId && (
-					<span className={styles.recommend_hint}>
-						Only this account (and admins) will be able to see this list.
-					</span>
-				)}
-			</div>
+			{!hideRecommendTo && (
+				<div className={styles.field}>
+					Recommend to
+					<UserPicker options={targets} value={targetUserId} onChange={setTargetUserId} />
+					{targetUserId && (
+						<span className={styles.recommend_hint}>
+							Only this account (and admins) will be able to see this list.
+						</span>
+					)}
+				</div>
+			)}
 			<div className={styles.field}>
 				Sort mode
 				<div className={styles.sort_mode_row}>

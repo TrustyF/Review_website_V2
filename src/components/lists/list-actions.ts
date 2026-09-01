@@ -103,6 +103,18 @@ export async function listRecommendationTargets(): Promise<
 	});
 }
 
+// Powers /admin/users/[id]'s header — same shape as the picker options, looked up by id instead of listed in bulk.
+export async function getRecommendationTarget(
+	userId: string,
+): Promise<RecommendationTargetOption | null> {
+	await requireAdmin();
+
+	return db.user.findUnique({
+		where: { id: userId },
+		select: { id: true, username: true, name: true, email: true, image: true },
+	});
+}
+
 export type UserListSummary = {
 	id: number;
 	title: string;
