@@ -22,6 +22,7 @@ export async function GET(
 			type: true,
 			externalId: true,
 			posterPath: true,
+			bannerPath: true,
 			isDeleted: true,
 		},
 	});
@@ -41,6 +42,7 @@ export async function GET(
 		media.type,
 		media.externalId,
 		media.posterPath,
+		media.bannerPath,
 		noCache,
 	);
 	if (!resolved) {

@@ -15,13 +15,28 @@
   code
     opacity: 1
 
+.search_row
+  display: flex
+  gap: 8px
+
 .search
   position: relative
+  flex: 1
 
 .search_input
   width: 100%
   box-sizing: border-box
   padding: 8px 10px
+
+.randomize_button
+  flex-shrink: 0
+  padding: 8px 10px
+  border: 1px solid var(--border-highlight)
+  border-radius: 4px
+  cursor: pointer
+
+  &:hover
+    background: var(--accent1-tint)
 
 .results
   position: absolute
@@ -81,9 +96,8 @@
 .discord_image
   display: block
   width: 100%
-  aspect-ratio: 2 / 3
-  object-fit: contain
-  background: #1e1f22
+  aspect-ratio: 1200 / 630
+  object-fit: cover
 
 .discord_body
   padding: 10px 12px
@@ -115,9 +129,8 @@
 .whatsapp_image
   display: block
   width: 100%
-  aspect-ratio: 2 / 3
-  object-fit: contain
-  background: #d9d9d9
+  aspect-ratio: 1200 / 630
+  object-fit: cover
 
 .whatsapp_body
   padding: 8px 10px

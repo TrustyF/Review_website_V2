@@ -80,10 +80,19 @@ export function posterUrlFor(
 	return `https://image.tmdb.org/t/p/${size === "full" ? "w500" : "w154"}${posterPath}`;
 }
 
+// Both poster and banner feed the composite, so both need to be in the content-address; shared with resolveLinkEmbedImage so they can't compute different filenames for the same inputs.
+export function linkEmbedCacheKey(posterPath: string, bannerPath: string | null) {
+	return `${posterPath}::${bannerPath ?? ""}`;
+}
+
 // Lazy-resolve counterpart to resolveLinkEmbedImage. Returns null (not a placeholder) when there's no poster, since a generic image would misrepresent the title on a preview card.
-export function toLinkEmbedImageSrc(mediaId: number, posterPath: string | null) {
+export function toLinkEmbedImageSrc(
+	mediaId: number,
+	posterPath: string | null,
+	bannerPath: string | null,
+) {
 	return posterPath
-		? `/api/link-embed/${mediaId}/${mediaAssetFilename(mediaId, posterPath, "jpeg")}`
+		? `/api/link-embed/${mediaId}/${mediaAssetFilename(mediaId, linkEmbedCacheKey(posterPath, bannerPath), "jpeg")}`
 		: null;
 }
 

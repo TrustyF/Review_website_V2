@@ -27,6 +27,23 @@ export async function searchMediaForEmbedPreview(
 	return fuzzySearch(candidates, EMBED_FUSE_OPTIONS, trimmed, EMBED_SEARCH_LIMIT);
 }
 
+// Skip-a-random-offset instead of ORDER BY random() — cheap at this table
+// size and avoids a full-table sort on every click.
+export async function getRandomEmbedTarget(): Promise<EmbedSearchResult | null> {
+	await requireAdmin();
+
+	const where = { posterPath: { not: null } };
+	const count = await db.media.count({ where });
+	if (count === 0) return null;
+
+	const media = await db.media.findFirst({
+		where,
+		select: { id: true, title: true },
+		skip: Math.floor(Math.random() * count),
+	});
+	return media;
+}
+
 export type EmbedPreview = {
 	title: string;
 	description: string | null;
@@ -45,16 +62,17 @@ export async function getEmbedPreview(mediaId: number): Promise<EmbedPreview | n
 			overview: true,
 			publicRating: true,
 			posterPath: true,
+			bannerPath: true,
 			review: { select: { rating: true } },
 		},
 	});
 	if (!media) return null;
 
-	const embedSrc = toLinkEmbedImageSrc(mediaId, media.posterPath);
+	const embedSrc = toLinkEmbedImageSrc(mediaId, media.posterPath, media.bannerPath);
 	return {
 		title: media.title,
 		description: buildLinkEmbedDescription(media) ?? null,
-		// noCache so the dev tool always sees a freshly re-encoded image, not
+		// noCache so the dev tool always sees a freshly composited image, not
 		// the disk/browser-cached one.
 		imageUrl: embedSrc ? `${embedSrc}?noCache=1` : null,
 		canonicalPath: `/media/${mediaId}`,

@@ -18,6 +18,7 @@ import {
 	POSTER_DIR,
 	POSTER_QUALITY,
 	bannerUrlFor,
+	linkEmbedCacheKey,
 	mediaAssetFilename,
 	personPhotoUrlFor,
 	posterUrlFor,
@@ -37,10 +38,22 @@ const THUMB_MAX_HEIGHT = 140;
 // see resolveChangelogBannerThumb.
 const BANNER_THUMB_MAX_WIDTH = 120;
 
-// Poster resized to this height (width follows its own aspect ratio) for
-// the link-preview image — plenty of resolution for Discord/WhatsApp's
-// unfurl cards without shipping the full-size source.
+// 1200x630 (~1.91:1) is the standard og:image shape Discord/WhatsApp render
+// as a clean rectangle — a poster's 2:3 crop doesn't fit it, and WhatsApp
+// force-crops non-matching shapes into a square client-side regardless of
+// metadata, hence compositing (resolveLinkEmbedImage) rather than resizing.
+const LINK_EMBED_WIDTH = 1200;
 const LINK_EMBED_HEIGHT = 630;
+// Height of the poster on the backdrop — width follows its own ratio at
+// this height. 90% of the frame so the blurred backdrop still shows through
+// as a visible border on all sides.
+const LINK_EMBED_POSTER_HEIGHT = Math.round(LINK_EMBED_HEIGHT * 0.9);
+// Left edge of the poster, as a fraction of the canvas width — left-aligned
+// rather than centered, with this much breathing room from the edge.
+const LINK_EMBED_POSTER_PADDING_X = 0.025;
+const LINK_EMBED_POSTER_RADIUS = 16;
+const LINK_EMBED_SHADOW_BLUR = 15;
+const LINK_EMBED_SHADOW_OFFSET_Y = 5;
 // JPEG needs a higher quality number than WebP/AVIF for similar fidelity —
 // deliberately above POSTER_QUALITY's 50 rather than reused from it.
 const LINK_EMBED_QUALITY = 60;
@@ -166,22 +179,28 @@ async function fetchImageBytes(url: string): Promise<Buffer> {
 	return Buffer.from(await res.arrayBuffer());
 }
 
-// The link-preview image is just the poster itself, re-encoded to JPEG
-// (crawlers need JPEG/PNG reliably, unlike the site's own WebP poster cache)
-// and resized to LINK_EMBED_HEIGHT. No banner backdrop/compositing — Discord
-// and WhatsApp both render a plain poster-shaped image fine.
+// Composites a standard-shaped (1200x630) link-preview image rather than
+// resizing the poster into that box (see LINK_EMBED_WIDTH). Prefers a real
+// banner as the backdrop when one exists, falling back to a blurred poster
+// otherwise. Doesn't share cacheOrDownload's shape — needs two sources and a
+// composite, not one resize.
 export async function resolveLinkEmbedImage(
 	mediaId: number,
 	type: MediaType,
 	externalId: string | null,
 	posterPath: string | null,
-	// Lets the dev preview tool force a fresh encode (and skip persisting it)
-	// instead of serving/writing the disk cache.
+	bannerPath: string | null,
+	// Lets the dev preview tool force a fresh composite (and skip persisting
+	// it) instead of serving/writing the disk cache.
 	skipCache = false,
 ): Promise<ResolvedAsset | null> {
 	if (!posterPath) return null;
 
-	const filename = mediaAssetFilename(mediaId, posterPath, "jpeg");
+	const filename = mediaAssetFilename(
+		mediaId,
+		linkEmbedCacheKey(posterPath, bannerPath),
+		"jpeg",
+	);
 	const storage = getImageStorage();
 
 	if (!skipCache) {
@@ -196,8 +215,68 @@ export async function resolveLinkEmbedImage(
 				posterUrlFor(type, externalId, posterPath, "full"),
 			);
 
-			const bytes = await sharp(posterBytes)
-				.resize({ height: LINK_EMBED_HEIGHT })
+			let backgroundBytes = posterBytes;
+			if (bannerPath) {
+				try {
+					backgroundBytes = await fetchImageBytes(
+						bannerUrlFor(type, bannerPath),
+					);
+				} catch {
+					// Falls back to the poster itself (still assigned above) — a
+					// broken/unreachable banner shouldn't block the whole embed image.
+				}
+			}
+
+			const background = sharp(backgroundBytes).resize({
+				width: LINK_EMBED_WIDTH,
+				height: LINK_EMBED_HEIGHT,
+				fit: "cover",
+			});
+
+			// Darkens the backdrop so the poster card stays readable against it.
+			const scrim = Buffer.from(
+				`<svg width="${LINK_EMBED_WIDTH}" height="${LINK_EMBED_HEIGHT}"><rect width="100%" height="100%" fill="black" fill-opacity="0.5"/></svg>`,
+			);
+
+			const resizedPoster = await sharp(posterBytes)
+				.resize({ height: LINK_EMBED_POSTER_HEIGHT })
+				.toBuffer();
+			const { width: posterWidth, height: posterHeight } =
+				await sharp(resizedPoster).metadata();
+
+			// Rounds the poster's corners by punching it through a matching
+			// rounded-rect mask — sharp has no border-radius of its own.
+			const roundedMask = Buffer.from(
+				`<svg width="${posterWidth}" height="${posterHeight}"><rect width="100%" height="100%" rx="${LINK_EMBED_POSTER_RADIUS}" ry="${LINK_EMBED_POSTER_RADIUS}" fill="black"/></svg>`,
+			);
+			const posterCard = await sharp(resizedPoster)
+				.composite([{ input: roundedMask, blend: "dest-in" }])
+				.png()
+				.toBuffer();
+
+			const posterLeft = Math.round(
+				LINK_EMBED_WIDTH * LINK_EMBED_POSTER_PADDING_X,
+			);
+			const posterTop = Math.round((LINK_EMBED_HEIGHT - posterHeight!) / 2);
+
+			// Drawn at the full canvas size (not just the poster's own bounds) so
+			// blur() has room to spread outward without ever exceeding the
+			// background's dimensions — sharp refuses to composite a layer
+			// larger than its base image.
+			const shadowShape = Buffer.from(
+				`<svg width="${LINK_EMBED_WIDTH}" height="${LINK_EMBED_HEIGHT}"><rect x="${posterLeft}" y="${posterTop + LINK_EMBED_SHADOW_OFFSET_Y}" width="${posterWidth}" height="${posterHeight}" rx="${LINK_EMBED_POSTER_RADIUS}" ry="${LINK_EMBED_POSTER_RADIUS}" fill="black" fill-opacity="0.95"/></svg>`,
+			);
+			const shadow = await sharp(shadowShape)
+				.blur(LINK_EMBED_SHADOW_BLUR)
+				.png()
+				.toBuffer();
+
+			const bytes = await background
+				.composite([
+					{ input: scrim },
+					{ input: shadow },
+					{ input: posterCard, left: posterLeft, top: posterTop },
+				])
 				.jpeg({ quality: LINK_EMBED_QUALITY })
 				.toBuffer();
 

@@ -24,9 +24,14 @@ export async function generateMediaMetadata({
 	const media = await getMediaCore(mediaId);
 	if (!media || media.isDeleted) return {};
 
-	// JPEG, not the site's usual WebP poster — link-preview crawlers need
-	// JPEG/PNG reliably. See toLinkEmbedImageSrc/resolveLinkEmbedImage.
-	const linkEmbedImageUrl = toLinkEmbedImageSrc(mediaId, media.posterPath);
+	// JPEG, not the site's usual WebP poster, composited into the standard
+	// 1200x630 og:image shape rather than just resized into it — see
+	// toLinkEmbedImageSrc/resolveLinkEmbedImage's own comments on why.
+	const linkEmbedImageUrl = toLinkEmbedImageSrc(
+		mediaId,
+		media.posterPath,
+		media.bannerPath,
+	);
 
 	const description = buildLinkEmbedDescription(media);
 
@@ -36,9 +41,9 @@ export async function generateMediaMetadata({
 		openGraph: {
 			title: media.title,
 			description,
-			// No explicit width/height — the poster's aspect ratio varies by
-			// title, unlike the fixed-shape og:image this used to composite.
-			images: linkEmbedImageUrl ? [{ url: linkEmbedImageUrl }] : undefined,
+			images: linkEmbedImageUrl
+				? [{ url: linkEmbedImageUrl, width: 1200, height: 630 }]
+				: undefined,
 		},
 	};
 }

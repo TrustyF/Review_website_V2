@@ -4,6 +4,7 @@ import {
 	EmbedPreview,
 	EmbedSearchResult,
 	getEmbedPreview,
+	getRandomEmbedTarget,
 	searchMediaForEmbedPreview,
 } from "./link-embed-preview-actions";
 import { useIsAdmin } from "@/lib/use-is-admin";
@@ -73,6 +74,14 @@ export function LinkEmbedPreviewTool() {
 		setIsLoadingPreview(true);
 	}
 
+	function randomize() {
+		setIsLoadingPreview(true);
+		getRandomEmbedTarget().then((result) => {
+			if (result) pick(result);
+			else setIsLoadingPreview(false);
+		});
+	}
+
 	const canonicalUrl = preview ? `${origin}${preview.canonicalPath}` : "";
 	const imageUrl = preview?.imageUrl
 		? `${preview.imageUrl}&r=${refreshNonce}`
@@ -87,31 +96,36 @@ export function LinkEmbedPreviewTool() {
 				builds for the real page.
 			</p>
 
-			<div className={styles.search} ref={searchRef}>
-				<input
-					type="text"
-					className={styles.search_input}
-					placeholder="Search a title…"
-					value={query}
-					onChange={(e) => {
-						const value = e.target.value;
-						setQuery(value);
-						if (!value.trim()) setResults([]);
-					}}
-				/>
-				{isSearching && <div className={styles.hint}>Searching…</div>}
-				{results.length > 0 && (
-					<div className={styles.results}>
-						{results.map((result) => (
-							<Clickable
-								key={result.id}
-								className={styles.result}
-								onClick={() => pick(result)}>
-								{result.title}
-							</Clickable>
-						))}
-					</div>
-				)}
+			<div className={styles.search_row}>
+				<div className={styles.search} ref={searchRef}>
+					<input
+						type="text"
+						className={styles.search_input}
+						placeholder="Search a title…"
+						value={query}
+						onChange={(e) => {
+							const value = e.target.value;
+							setQuery(value);
+							if (!value.trim()) setResults([]);
+						}}
+					/>
+					{isSearching && <div className={styles.hint}>Searching…</div>}
+					{results.length > 0 && (
+						<div className={styles.results}>
+							{results.map((result) => (
+								<Clickable
+									key={result.id}
+									className={styles.result}
+									onClick={() => pick(result)}>
+									{result.title}
+								</Clickable>
+							))}
+						</div>
+					)}
+				</div>
+				<Clickable className={styles.randomize_button} onClick={randomize}>
+					Randomize
+				</Clickable>
 			</div>
 
 			{isLoadingPreview && <p className={styles.hint}>Loading…</p>}
