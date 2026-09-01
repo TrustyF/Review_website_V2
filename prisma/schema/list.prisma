@@ -26,10 +26,11 @@ model List {
   // list a recommendation: hidden from ListsOverviewPage's /lists query and
   // from list-detail-page.tsx's own view (notFound() unless the viewer is
   // this user or an admin), everything else about a List works identically
-  // either way. onDelete: Cascade rather than SetNull — a recommendation
-  // list has no meaning once its one intended recipient is gone.
+  // either way. onDelete: SetNull — the list itself (and its items) outlives
+  // its recipient; once they're gone it just falls back to a normal public
+  // list instead of being deleted with them.
   targetUserId String?
-  targetUser   User?  @relation(fields: [targetUserId], references: [id], onDelete: Cascade)
+  targetUser   User?  @relation(fields: [targetUserId], references: [id], onDelete: SetNull)
 
   items         ListItem[]
   notifications Notification[]
