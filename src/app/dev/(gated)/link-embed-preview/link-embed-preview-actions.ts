@@ -35,12 +35,7 @@ export type EmbedPreview = {
 };
 
 // Mirrors generateMediaMetadata (metadata.ts) exactly, via the same helpers.
-// posterOnly is a dev-only override that skips the backdrop composite and
-// serves the raw poster, sized to its own aspect ratio.
-export async function getEmbedPreview(
-	mediaId: number,
-	posterOnly = false,
-): Promise<EmbedPreview | null> {
+export async function getEmbedPreview(mediaId: number): Promise<EmbedPreview | null> {
 	await requireAdmin();
 
 	const media = await db.media.findUnique({
@@ -50,21 +45,18 @@ export async function getEmbedPreview(
 			overview: true,
 			publicRating: true,
 			posterPath: true,
-			bannerPath: true,
 			review: { select: { rating: true } },
 		},
 	});
 	if (!media) return null;
 
-	const embedSrc = toLinkEmbedImageSrc(mediaId, media.posterPath, media.bannerPath);
+	const embedSrc = toLinkEmbedImageSrc(mediaId, media.posterPath);
 	return {
 		title: media.title,
 		description: buildLinkEmbedDescription(media) ?? null,
-		// noCache so the dev tool always sees a freshly composited image, not
+		// noCache so the dev tool always sees a freshly re-encoded image, not
 		// the disk/browser-cached one.
-		imageUrl: embedSrc
-			? `${embedSrc}?noCache=1${posterOnly ? "&posterOnly=1" : ""}`
-			: null,
+		imageUrl: embedSrc ? `${embedSrc}?noCache=1` : null,
 		canonicalPath: `/media/${mediaId}`,
 	};
 }

@@ -7,6 +7,7 @@ import { MobileViewportListener } from "@/lib/mobile-viewport-listener";
 import MediaEditorModal from "@/components/media/media-management/media-editor/media-editor-modal";
 import { FeaturedManagerModal } from "@/components/home/featured-review/featured-manager/featured-manager-modal";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
+import { VersionBadge } from "@/components/version-badge/version-badge";
 import { AvatarProvider } from "@/components/account/avatar-context";
 import { WatchlistProvider } from "@/components/watchlist/watchlist-context";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -36,6 +37,7 @@ export default function RootLayout({
 							<MobileViewportListener />
 							<MediaEditorModal />
 							<FeaturedManagerModal />
+							<VersionBadge />
 							<main>{children}</main>
 						</WatchlistProvider>
 					</AvatarProvider>

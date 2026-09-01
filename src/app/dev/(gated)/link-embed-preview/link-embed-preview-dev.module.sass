@@ -49,13 +49,8 @@
   flex-flow: row wrap
   gap: 24px
 
-.toolbar
-  width: 100%
-  display: flex
-  align-items: center
-  gap: 16px
-
 .refresh_button
+  width: 100%
   padding: 8px 10px
   border: 1px solid var(--border-highlight)
   border-radius: 4px
@@ -64,13 +59,6 @@
 
   &:hover
     background: var(--accent1-tint)
-
-.poster_only_toggle
-  display: flex
-  align-items: center
-  gap: 6px
-  font-size: 0.85rem
-  cursor: pointer
 
 .card_column
   display: flex
@@ -93,8 +81,9 @@
 .discord_image
   display: block
   width: 100%
-  aspect-ratio: 1200 / 630
-  object-fit: cover
+  aspect-ratio: 2 / 3
+  object-fit: contain
+  background: #1e1f22
 
 .discord_body
   padding: 10px 12px
@@ -126,8 +115,9 @@
 .whatsapp_image
   display: block
   width: 100%
-  aspect-ratio: 1200 / 630
-  object-fit: cover
+  aspect-ratio: 2 / 3
+  object-fit: contain
+  background: #d9d9d9
 
 .whatsapp_body
   padding: 8px 10px

@@ -29,8 +29,6 @@ export function LinkEmbedPreviewTool() {
 	// carries ?noCache=1 so the server always recomposites, but an unchanged
 	// <img src> won't re-fetch on its own.
 	const [refreshNonce, setRefreshNonce] = useState(0);
-	// Dev-only toggle: preview the no-banner fallback without touching Media.bannerPath.
-	const [posterOnly, setPosterOnly] = useState(false);
 	const searchRef = useRef<HTMLDivElement>(null);
 	useOutsideClick(searchRef, () => setResults([]), { enabled: results.length > 0 });
 	// Prevents pick()'s own query update from re-triggering the search effect.
@@ -57,10 +55,10 @@ export function LinkEmbedPreviewTool() {
 
 	useEffect(() => {
 		if (selectedId == null) return;
-		getEmbedPreview(selectedId, posterOnly)
+		getEmbedPreview(selectedId)
 			.then(setPreview)
 			.finally(() => setIsLoadingPreview(false));
-	}, [selectedId, refreshNonce, posterOnly]);
+	}, [selectedId, refreshNonce]);
 
 	if (!isAdmin) {
 		return <div className={styles.wrapper}>Admin access required.</div>;
@@ -120,27 +118,14 @@ export function LinkEmbedPreviewTool() {
 
 			{preview && (
 				<div className={styles.cards}>
-					<div className={styles.toolbar}>
-						<Clickable
-							className={styles.refresh_button}
-							onClick={() => {
-								setIsLoadingPreview(true);
-								setRefreshNonce((n) => n + 1);
-							}}>
-							Refresh
-						</Clickable>
-						<label className={styles.poster_only_toggle}>
-							<input
-								type="checkbox"
-								checked={posterOnly}
-								onChange={(e) => {
-									setIsLoadingPreview(true);
-									setPosterOnly(e.target.checked);
-								}}
-							/>
-							Poster only (skip backdrop composite)
-						</label>
-					</div>
+					<Clickable
+						className={styles.refresh_button}
+						onClick={() => {
+							setIsLoadingPreview(true);
+							setRefreshNonce((n) => n + 1);
+						}}>
+						Refresh
+					</Clickable>
 
 					<div className={styles.card_column}>
 						<span className={styles.card_label}>Discord</span>
@@ -151,7 +136,6 @@ export function LinkEmbedPreviewTool() {
 									src={imageUrl}
 									alt=""
 									className={styles.discord_image}
-									style={posterOnly ? { objectFit: "contain", aspectRatio: "auto" } : undefined}
 								/>
 							)}
 							<div className={styles.discord_body}>
@@ -174,7 +158,6 @@ export function LinkEmbedPreviewTool() {
 									src={imageUrl}
 									alt=""
 									className={styles.whatsapp_image}
-									style={posterOnly ? { objectFit: "contain", aspectRatio: "auto" } : undefined}
 								/>
 							)}
 							<div className={styles.whatsapp_body}>

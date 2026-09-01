@@ -10,11 +10,8 @@ export async function GET(
 ) {
 	const { mediaId } = await params;
 	const id = Number(mediaId);
-	// Dev-only escape hatches (link-embed-preview tool): bypass caching, and/or
-	// skip the backdrop composite to preview the raw poster, while experimenting.
-	const searchParams = new URL(req.url).searchParams;
-	const noCache = searchParams.has("noCache");
-	const posterOnly = searchParams.has("posterOnly");
+	// Dev-only escape hatch (link-embed-preview tool) to bypass both the disk cache and browser caching while experimenting.
+	const noCache = new URL(req.url).searchParams.has("noCache");
 	if (!Number.isFinite(id)) {
 		return NextResponse.json({ error: "Invalid media id" }, { status: 400 });
 	}
@@ -25,7 +22,6 @@ export async function GET(
 			type: true,
 			externalId: true,
 			posterPath: true,
-			bannerPath: true,
 			isDeleted: true,
 		},
 	});
@@ -45,9 +41,7 @@ export async function GET(
 		media.type,
 		media.externalId,
 		media.posterPath,
-		media.bannerPath,
 		noCache,
-		posterOnly,
 	);
 	if (!resolved) {
 		return NextResponse.json({ error: "No poster for this media" }, { status: 404 });

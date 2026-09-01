@@ -5,7 +5,7 @@
 	"scripts": {
 		"dev": "next dev",
 		"postinstall": "prisma generate",
-		"build": "prisma migrate deploy && next build && npm run build_search_index",
+		"build": "prisma migrate deploy && NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) next build && npm run build_search_index",
 		"start": "next start",
 		"lint": "eslint && npm run lint:colors",
 		"lint:colors": "node scripts/check-color-literals.mjs",
