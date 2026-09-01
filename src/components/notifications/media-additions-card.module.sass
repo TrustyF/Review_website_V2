@@ -1,0 +1,132 @@
+@use "@/app/styles/variables" as *
+
+// Same mount-only fade+slide as activity-feed.module.sass's own entry-enter —
+// duplicated rather than shared since CSS Modules scope keyframe names too.
+@keyframes card-enter
+  0%
+    opacity: 0
+    transform: translateY(1rem)
+  100%
+    opacity: 1
+    transform: translateY(0)
+
+.card
+  position: relative
+  border-radius: 0.5rem
+  transition: background 0.15s ease
+  animation: card-enter 300ms ease both
+  animation-delay: min(calc(var(--stagger-index, 0) * 70ms), 1000ms)
+
+  @media (prefers-reduced-motion: reduce)
+    animation: none
+
+.card.unread
+  background: color-mix(in srgb, var(--brand) 8%, transparent)
+
+.card_link
+  display: flex
+  flex-flow: column
+  gap: 0.6rem
+  color: inherit
+  text-decoration: none
+
+// Same left-image/right-text shape as activity-feed.module.sass's own
+// .entry_link — a fixed-width poster column, same as a plain row's.
+.header
+  display: grid
+  grid-template-columns: 4rem 1fr
+  align-items: center
+  column-gap: 0.75rem
+  height: 6rem
+
+.poster
+  min-width: 0
+  min-height: 0
+  height: 100%
+  width: auto
+  object-fit: contain
+  border-radius: 0.2rem
+
+.content
+  min-width: 0
+  height: 100%
+  display: flex
+  flex-flow: column
+  justify-content: center
+  gap: 0.3rem
+
+.title_row
+  display: flex
+  flex-flow: row
+  align-items: baseline
+  justify-content: space-between
+  gap: 0.75rem
+  min-width: 0
+
+.title
+  min-width: 0
+  overflow: hidden
+  white-space: nowrap
+  text-overflow: ellipsis
+  font-size: 1rem
+  line-height: normal
+  font-weight: 500
+
+.caption
+  color: var(--accent3)
+  font-size: 0.85rem
+
+.date
+  flex-shrink: 0
+  color: var(--accent1)
+  font-family: $font-mono
+  font-size: 0.8rem
+
+.list_wrap
+  position: relative
+  padding-left: 1.75rem
+
+// Sharp-cornered "L" branching down from the header and turning into the
+// grid — same as ListAdditionsCard's own .connector.
+.connector
+  position: absolute
+  left: 1rem
+  top: 0.5rem
+  width: 1.6rem
+  height: 2rem
+  color: var(--accent1)
+  overflow: visible
+
+.list_grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr))
+  gap: 0.5rem
+  margin-left: 1.6rem
+
+.list_thumbnail,
+.list_thumbnail_placeholder
+  width: 100%
+  aspect-ratio: 16 / 9
+  border-radius: 0.2rem
+
+.list_thumbnail
+  object-fit: cover
+
+.list_thumbnail_placeholder
+  display: flex
+  align-items: center
+  justify-content: center
+  background: var(--surface)
+  font-size: 1rem
+  font-weight: 600
+  color: var(--accent1)
+  text-transform: uppercase
+
+.unread_dot
+  position: absolute
+  top: 0.6rem
+  right: 0
+  width: 0.5rem
+  height: 0.5rem
+  border-radius: 50%
+  background: var(--brand)
