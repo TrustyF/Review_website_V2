@@ -5,7 +5,10 @@
   //width: 150px
   //height: 250px
   position: relative
-  padding: 20px
+  // Right only — top/bottom spacing between rows comes from
+  // lazy-media-list.module.sass's own .list gap instead, and the poster
+  // should sit flush with the page's own left edge.
+  padding: 0 20px 0 0
   display: flex
   gap: 2rem
 

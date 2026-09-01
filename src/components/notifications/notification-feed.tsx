@@ -14,6 +14,7 @@ import { useLazyReveal } from "@/components/media/media-grids/lazy-media-grid/us
 import { TimelineList } from "@/components/activity/activity-feed/timeline-list";
 import { TimelineRow } from "@/components/activity/activity-feed/timeline-row";
 import { ListAdditionsCard } from "@/components/notifications/list-additions-card";
+import { MediaAdditionsCard } from "@/components/notifications/media-additions-card";
 import { Clickable } from "@/components/ui/clickable";
 import styles from "./notification-feed.module.sass";
 
@@ -106,8 +107,8 @@ export function NotificationFeed({
 	if (entries.length === 0) {
 		return (
 			<p className={styles.empty}>
-				Nothing yet — you&apos;ll see it here when an admin makes a list for
-				you or adds something to one of your lists.
+				Nothing yet — you&apos;ll see it here when an admin makes a list for you
+				or adds something to one of your lists.
 			</p>
 		);
 	}
@@ -121,23 +122,37 @@ export function NotificationFeed({
 			)}
 			<TimelineList
 				entries={visibleEntries}
-				renderRow={(entry, index) =>
-					entry.groupedMedia && entry.groupedMedia.length > 0 ? (
-						<ListAdditionsCard
-							key={entry.id}
-							entry={entry}
-							index={index}
-							onRead={markRead}
-						/>
-					) : (
+				rowGap="3rem"
+				renderRow={(entry, index) => {
+					if (entry.groupedMedia && entry.groupedMedia.length > 0) {
+						return (
+							<ListAdditionsCard
+								key={entry.id}
+								entry={entry}
+								index={index}
+								onRead={markRead}
+							/>
+						);
+					}
+					if (entry.groupedLists && entry.groupedLists.length > 0) {
+						return (
+							<MediaAdditionsCard
+								key={entry.id}
+								entry={entry}
+								index={index}
+								onRead={markRead}
+							/>
+						);
+					}
+					return (
 						<NotificationRow
 							key={entry.id}
 							entry={entry}
 							index={index}
 							onRead={markRead}
 						/>
-					)
-				}
+					);
+				}}
 			/>
 			{visibleCount < entries.length && (
 				<div className={styles.sentinel} ref={sentinelRef} />

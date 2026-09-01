@@ -17,9 +17,21 @@
 .group_header
   @include sticky-group-header
 
+// A plain <hr>, not part of .group_header — kept separate so it doesn't
+// inherit the header's own sticky positioning/cursor/padding.
+.group_divider
+  margin: 0 0 1.5rem
+  border: none
+  border-top: 1px solid color-mix(in srgb, var(--accent1) 30%, transparent)
+
 .list
   display: flex
   flex-flow: column
+  // Replaces .entry/.card's own former top/bottom padding — one gap between
+  // rows instead of each row padding both its own edges. --row-gap lets
+  // TimelineList's rowGap prop override this per caller (e.g. NotificationFeed
+  // tuning its own spacing independently of ActivityFeed's).
+  gap: var(--row-gap, 1rem)
   list-style: none
 
 // Mount-only fade+slide, keyed by entry.id so it never replays on a later batch.
@@ -36,7 +48,6 @@
 // (NotificationFeed) and inert (ActivityFeed) row share the same grid.
 .entry
   position: relative
-  padding: 0.5rem 0
   border-radius: 0.5rem
   transition: background 0.15s ease
   // --stagger-index staggers entrance; min() caps a long group's delay at 300ms.
@@ -201,7 +212,7 @@
   gap: 1rem
   height: 2rem
   // 2rem centers it under .entry's 4rem icon/poster column.
-  margin: 0.5rem 0 0.2rem 2rem
+  margin: 0.25rem 0 0 2rem
   // Shares the following row's --stagger-index so it animates in step with it.
   animation: entry-enter 300ms ease both
   animation-delay: min(calc(var(--stagger-index, 0) * 70ms), 1000ms)
@@ -211,7 +222,9 @@
 
 .timeline_gap_line
   align-self: stretch
-  border-left: 1px var(--accent1) dashed
+  width: 2px
+  height: 100%
+  color: var(--accent1)
 
 .timeline_gap_label
   flex-shrink: 0

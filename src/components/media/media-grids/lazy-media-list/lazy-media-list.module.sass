@@ -3,7 +3,9 @@
 .list
   display: flex
   flex-flow: column
-  gap: 2.5rem
+  // 2.5rem original + 2.5rem to replace media-card-shell's removed 20px
+  // top/bottom padding (40px = 2.5rem between two adjacent cards).
+  gap: 5rem
 
 .item
   position: relative

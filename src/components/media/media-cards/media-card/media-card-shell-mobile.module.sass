@@ -3,7 +3,10 @@
 // Grid so .review can span both columns in its own row below .poster/.top; poster is narrower (90px vs 130px) to leave more room for text on phones.
 .wrapper
   position: relative
-  padding: 20px
+  // Right only — top/bottom spacing between rows comes from
+  // lazy-media-list.module.sass's own .list gap instead, and the poster
+  // should sit flush with the page's own left edge.
+  padding: 0 20px 0 0
   display: grid
   grid-template-columns: 90px 1fr
   grid-template-areas: "poster top" "review review"

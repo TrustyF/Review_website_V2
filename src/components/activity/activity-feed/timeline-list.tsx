@@ -14,12 +14,19 @@ function daysBetween(a: Date, b: Date): number {
 // Shared grouping/gap-divider/skip-first-label engine for ActivityFeed and
 // NotificationFeed — entries must already arrive newest-first. `renderRow`
 // returns each entry's <li>, keyed by the caller.
-export function TimelineList<T extends { id: string | number; createdAt: Date }>({
+export function TimelineList<
+	T extends { id: string | number; createdAt: Date },
+>({
 	entries,
 	renderRow,
+	rowGap,
 }: {
 	entries: T[];
 	renderRow: (entry: T, index: number) => ReactNode;
+	// Overrides .list's own default gap (--row-gap, see activity-feed.module.sass)
+	// so a caller (NotificationFeed) can tune its row spacing without affecting
+	// ActivityFeed's, despite both sharing this engine/stylesheet.
+	rowGap?: string;
 }) {
 	const groups = groupByMonth(entries);
 
@@ -27,7 +34,9 @@ export function TimelineList<T extends { id: string | number; createdAt: Date }>
 		<div className={styles.groups}>
 			{groups.map((group, groupIndex) => {
 				const list = (
-					<ul className={styles.list}>
+					<ul
+						className={styles.list}
+						style={rowGap ? ({ "--row-gap": rowGap } as CSSProperties) : undefined}>
 						{group.entries.map((entry, index) => {
 							const prevEntry = group.entries[index - 1];
 							const gapDays = prevEntry
@@ -42,7 +51,22 @@ export function TimelineList<T extends { id: string | number; createdAt: Date }>
 											className={styles.timeline_gap}
 											aria-hidden="true"
 											style={{ "--stagger-index": index } as CSSProperties}>
-											<span className={styles.timeline_gap_line} />
+											<svg
+												className={styles.timeline_gap_line}
+												viewBox="0 0 4 32"
+												preserveAspectRatio="none"
+												fill="none">
+												<line
+													x1="1"
+													y1="0"
+													x2="1"
+													y2="32"
+													stroke="currentColor"
+													strokeWidth={1}
+													strokeLinecap="round"
+													strokeDasharray="3 4"
+												/>
+											</svg>
 										</li>
 									)}
 									{renderRow(entry, index)}
@@ -60,6 +84,7 @@ export function TimelineList<T extends { id: string | number; createdAt: Date }>
 				return (
 					<details key={group.key} open>
 						<summary className={styles.group_header}>{group.label}</summary>
+						<hr className={styles.group_divider} />
 						{list}
 					</details>
 				);

@@ -34,6 +34,7 @@ export function GroupedMediaList({ groups }: Props) {
 				return (
 					<details key={group.key} open>
 						<summary className={styles.group_header}>{group.label}</summary>
+						<hr className={styles.group_divider} />
 						{list}
 					</details>
 				);

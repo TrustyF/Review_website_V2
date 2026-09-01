@@ -25,3 +25,11 @@
 
 .group_header
   @include sticky-group-header
+
+// A plain <hr>, not part of .group_header — kept separate so it doesn't
+// inherit the header's own sticky positioning/cursor/padding. Same treatment
+// as activity-feed.module.sass's own .group_divider.
+.group_divider
+  margin: 0 0 1.5rem
+  border: none
+  border-top: 1px solid color-mix(in srgb, var(--accent1) 30%, transparent)
