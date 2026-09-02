@@ -8,9 +8,11 @@ import {
 import { appendJobSummary } from "./job-summary";
 
 // Uploads a pre-made pg_dump (piped in from backup-database.yml) and prunes old ones to a grandfather-father-son rotation:
-// 5 most recent, newest of each of the 3 most recent months, and newest of every year (kept forever). Sets are unioned before deleting.
+// 5 most recent (daily), newest of each of the 3 most recent ISO weeks, newest of each of the 2 most recent months,
+// and newest of every year (kept forever). Sets are unioned before deleting.
 const SHORT_TERM_KEEP = 5;
-const MONTHLY_KEEP = 3;
+const WEEKLY_KEEP = 3;
+const MONTHLY_KEEP = 2;
 
 const KEY_PREFIX = "db/";
 
@@ -63,6 +65,16 @@ async function listBackups(bucket: string) {
 	return objects.sort((a, b) => b.date.getTime() - a.date.getTime());
 }
 
+// ISO 8601 week number (weeks start Monday, week 1 contains the year's first Thursday).
+function weekKey(d: Date) {
+	const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+	const dayNum = date.getUTCDay() || 7;
+	date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+	const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+	const weekNum = Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+	return `${date.getUTCFullYear()}-W${weekNum}`;
+}
+
 function monthKey(d: Date) {
 	return `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
 }
@@ -75,6 +87,15 @@ function computeKeep(backups: { key: string; date: Date }[]): Set<string> {
 	const keep = new Set<string>();
 
 	for (const b of backups.slice(0, SHORT_TERM_KEEP)) keep.add(b.key);
+
+	const newestPerWeek = new Map<string, { key: string; date: Date }>();
+	for (const b of backups) {
+		const wk = weekKey(b.date);
+		if (!newestPerWeek.has(wk)) newestPerWeek.set(wk, b);
+	}
+	for (const b of [...newestPerWeek.values()].slice(0, WEEKLY_KEEP)) {
+		keep.add(b.key);
+	}
 
 	const newestPerMonth = new Map<string, { key: string; date: Date }>();
 	for (const b of backups) {
