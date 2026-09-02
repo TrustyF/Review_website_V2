@@ -10,9 +10,13 @@ import Image from "next/image";
 type Props = {
 	media: MediaRecord;
 	className?: string | undefined;
+	// Smaller than the default 15 when stacked tightly against another admin action (see
+	// media-mini-card-shell.tsx's .admin_actions) — the default's hit area would otherwise
+	// overlap the neighboring button's.
+	hitboxPadding?: number;
 };
 
-export function MediaEditButton({ media, className }: Props) {
+export function MediaEditButton({ media, className, hitboxPadding = 15 }: Props) {
 	const open = useReviewEditorStore((s) => s.open);
 	const editingMediaId = useReviewEditorStore((s) => s.media?.id ?? null);
 	const sessionIsAdmin = useIsAdmin();
@@ -26,7 +30,7 @@ export function MediaEditButton({ media, className }: Props) {
 	if (editingMediaId === media.id) return null;
 
 	return (
-		<Hitbox className={className} onClick={() => open(media)} padding={15}>
+		<Hitbox className={className} onClick={() => open(media)} padding={hitboxPadding}>
 			<Image
 				src={"/ui/edit_pen_1.svg"}
 				width={20}

@@ -43,17 +43,25 @@
   font-size: 0.8rem
   color: var(--accent1)
 
-.edit_button,
+.admin_actions,
 .status_buttons
   opacity: 0
   visibility: hidden
   // Delays visibility:hidden until the opacity fade finishes, so it stays hoverable throughout the fade-out.
   transition: opacity 0.3s ease, visibility 0s linear 0.3s
 
-.edit_button
+// Groups MediaEditButton and PosterQuickEditButton into one corner stack instead of each
+// separately absolute-positioned — new admin actions just join this flex column.
+.admin_actions
   position: absolute
   top: 0.25rem
   left: 0.25rem
+  display: flex
+  flex-flow: column
+  // Wider than .subtitle/.status_buttons' usual 0.2-0.25rem gaps — these items' own Hitbox hit
+  // areas (padding: 6, see media-mini-card-shell.tsx) still overlap a little at this gap, but a
+  // wider one starts eating into the poster art above/below the icons themselves.
+  gap: 0.5rem
 
 // Groups the watchlist/seen toggles into one pill surface; border-radius keeps a full stadium shape regardless of how tall the column grows as toggles are added.
 .status_buttons
@@ -69,7 +77,7 @@
   background: var(--surface)
 
 .wrapper:hover
-  .edit_button,
+  .admin_actions,
   .status_buttons
     visibility: visible
     opacity: 1

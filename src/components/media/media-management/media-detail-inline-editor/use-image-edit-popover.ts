@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { RefObject, useRef, useState } from "react";
 import { PickableImage } from "@/components/media/media-management/media-editor/components/image-picker";
 import { useOutsideClick } from "@/lib/use-outside-click";
 
@@ -8,6 +8,7 @@ export function useImageEditPopover({
 	initialSrc,
 	stagedSrc,
 	onStage,
+	extraContainerRef,
 }: {
 	initialSrc: string;
 	// The page-level draft's own preview for this field, or null if nothing's staged yet.
@@ -15,6 +16,10 @@ export function useImageEditPopover({
 	// Hands the picked filePath/URL and preview straight to the page-level draft. Purely local:
 	// no DB write until Publish is clicked, so this never fails and never needs awaiting.
 	onStage: (path: string, previewSrc: string | null) => void;
+	// A second element to also treat as "inside" for the outside-click check — for a caller that
+	// portals the popover away from containerRef (see PosterQuickEditButton), so a click inside
+	// the portaled popover doesn't read as an outside click and close it immediately.
+	extraContainerRef?: RefObject<HTMLElement | null>;
 }) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [urlInput, setUrlInput] = useState("");
@@ -30,10 +35,11 @@ export function useImageEditPopover({
 
 	// Only way the popover closes, so an admin can pick through several options without it
 	// closing after each one. Only wired up while open.
-	useOutsideClick(containerRef, close, {
-		enabled: isOpen,
-		escapeToo: true,
-	});
+	useOutsideClick(
+		extraContainerRef ? [containerRef, extraContainerRef] : containerRef,
+		close,
+		{ enabled: isOpen, escapeToo: true },
+	);
 
 	// Every pick is a committed choice, not a preview needing a separate Stage step —
 	// but the popover stays open so another pick can immediately follow.

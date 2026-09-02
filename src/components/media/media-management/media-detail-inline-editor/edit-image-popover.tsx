@@ -1,3 +1,4 @@
+import { CSSProperties } from "react";
 import { MediaRecord } from "@/components/media/types";
 import { MediaType } from "@prisma/client";
 import {
@@ -27,6 +28,10 @@ type Props = {
 	// Stages the pasted URL into the page-level draft and closes, same as picking a grid option.
 	onSubmitUrl: () => void;
 	onClose: () => void;
+	// Overrides the default position: absolute/top/left anchoring (see the module's own comment)
+	// — PosterQuickEditButton computes a position: fixed spot next to the card that opened it,
+	// since there's no sensible single anchor point across a whole grid of cards.
+	style?: CSSProperties | undefined;
 };
 
 // The part shared between PosterEditTrigger/BannerEditTrigger — a picker grid plus a
@@ -43,11 +48,12 @@ export function EditImagePopover({
 	onUrlInputChange,
 	onSubmitUrl,
 	onClose,
+	style,
 }: Props) {
 	const trimmedUrl = urlInput.trim();
 
 	return (
-		<div className={styles.popover}>
+		<div className={styles.popover} style={style}>
 			<div className={styles.header}>
 				{title}
 				<button

@@ -8,20 +8,23 @@ type Options = {
 	escapeToo?: boolean;
 };
 
-// Fires `onOutside` on a click outside `ref`'s element (and optionally on
-// Escape) — dedupes an identical listener from four call sites.
+// Fires `onOutside` on a click outside every given element (and optionally on Escape) — dedupes
+// an identical listener from four call sites. Takes an array so a trigger portaled apart from its
+// popover (see PosterQuickEditButton) can still treat a click inside either as "inside".
 export function useOutsideClick(
-	ref: RefObject<HTMLElement | null>,
+	refs: RefObject<HTMLElement | null> | RefObject<HTMLElement | null>[],
 	onOutside: () => void,
 	{ enabled = true, escapeToo = false }: Options = {},
 ) {
+	const refList = Array.isArray(refs) ? refs : [refs];
+
 	useEffect(() => {
 		if (!enabled) return;
 
 		function handlePointerDown(e: MouseEvent) {
-			if (ref.current && !ref.current.contains(e.target as Node)) {
-				onOutside();
-			}
+			const target = e.target as Node;
+			const isInside = refList.some((ref) => ref.current?.contains(target));
+			if (!isInside) onOutside();
 		}
 		function handleKeyDown(e: KeyboardEvent) {
 			if (e.key === "Escape") onOutside();
@@ -33,5 +36,6 @@ export function useOutsideClick(
 			document.removeEventListener("mousedown", handlePointerDown);
 			if (escapeToo) document.removeEventListener("keydown", handleKeyDown);
 		};
-	}, [enabled, escapeToo, onOutside, ref]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [enabled, escapeToo, onOutside, ...refList]);
 }

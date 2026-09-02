@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { MediaPoster } from "@/components/media/primitives/poster";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaTitle } from "@/components/media/primitives/title";
@@ -10,6 +10,7 @@ import { ReviewIcon } from "@/components/media/icons/review-icon";
 import { useMediaCardDisplay } from "@/components/media/media-card-display-context";
 import { AddToWatchlistHoverButton } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-hover-button";
 import { MarkAsSeenHoverButton } from "@/components/media/media-cards/media-mini-card/mark-as-seen-hover-button";
+import { PosterQuickEditButton } from "@/components/media/media-cards/media-mini-card/poster-quick-edit-button";
 
 type Props = {
 	media: MediaRecord;
@@ -20,11 +21,18 @@ type Props = {
 // Poster + title + rating only, for dense grid listings where full MediaCardShell is too much; per-type cards supply only the differing secondary info.
 export function MediaMiniCardShell({ media, children }: Props) {
 	const { showRating, showTitle, showReviewIcon } = useMediaCardDisplay();
+	// Set optimistically as soon as an alternate is picked — the freshly-saved posterPath's
+	// resolved image isn't guaranteed to exist yet (resolvePoster defers its resize/encode to
+	// after()), so pointing MediaPoster at it immediately would show a broken image until that
+	// finishes. The picker's own previewSrc is already a real, fully-resolved image.
+	const [posterOverrideSrc, setPosterOverrideSrc] = useState<string | null>(
+		null,
+	);
 
 	return (
 		<div className={styles.wrapper}>
 			<MediaPoster
-				src={media.posterSrc}
+				src={posterOverrideSrc ?? media.posterSrc}
 				title={media.title}
 				mediaId={media.id}
 				ratio={posterRatioFor(media.type)}
@@ -47,7 +55,14 @@ export function MediaMiniCardShell({ media, children }: Props) {
 				<AddToWatchlistHoverButton mediaId={media.id} />
 				{/*<MarkAsSeenHoverButton mediaId={media.id} />*/}
 			</div>
-			<MediaEditButton media={media} className={styles.edit_button} />
+			<div className={styles.admin_actions}>
+				<MediaEditButton media={media} hitboxPadding={6} />
+				<PosterQuickEditButton
+					media={media}
+					onPosterChange={setPosterOverrideSrc}
+					hitboxPadding={6}
+				/>
+			</div>
 		</div>
 	);
 }

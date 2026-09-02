@@ -112,7 +112,15 @@ export function ImagePicker({
 	return (
 		<div className={styles.image_picker}>
 			{error && <div className={styles.image_picker_error}>{error}</div>}
-			{options && (
+			{!error && options === null && (
+				<div className={styles.image_picker_status}>Loading…</div>
+			)}
+			{!error && options?.length === 0 && (
+				<div className={styles.image_picker_status}>
+					No alternates found for this title.
+				</div>
+			)}
+			{options && options.length > 0 && (
 				<div className={styles.options} ref={optionsRef}>
 					{options.map((option) => (
 						<img
