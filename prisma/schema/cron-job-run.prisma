@@ -1,0 +1,19 @@
+enum CronJobStatus {
+  SUCCESS
+  FAILURE
+}
+
+// One row per run of a host-crontab job (see run-and-notify.sh) — replaces
+// the old approach of creating a Notification for every admin. Read by
+// /admin/logs.
+model CronJobRun {
+  id      Int           @id @default(autoincrement())
+  jobName String
+  status  CronJobStatus
+  // Success: the job's own appendJobSummary lines. Failure: a tail of its log.
+  summary String
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

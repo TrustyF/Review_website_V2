@@ -1,4 +1,4 @@
-import { CircleCheck, ListPlus, TriangleAlert } from "lucide-react";
+import { ListPlus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { NotificationType } from "@prisma/client";
 import type { NotificationEntry } from "@/components/notifications/notification-actions";
@@ -14,9 +14,6 @@ export function getNotificationHref(entry: NotificationEntry): string | null {
 		case "LIST_CREATED":
 		case "LIST_ITEM_ADDED":
 			return entry.list ? `/lists/${entry.list.id}` : null;
-		case "CRON_JOB_FAILED":
-		case "CRON_JOB_SUCCEEDED":
-			return null;
 	}
 }
 
@@ -46,18 +43,6 @@ export function getNotificationRowContent(entry: NotificationEntry): {
 				action: "Added to",
 				value: entry.list?.title ?? null,
 			};
-		case "CRON_JOB_FAILED":
-			return {
-				target: "A scheduled job failed",
-				action: null,
-				value: null,
-			};
-		case "CRON_JOB_SUCCEEDED":
-			return {
-				target: "A scheduled job completed",
-				action: null,
-				value: null,
-			};
 	}
 }
 
@@ -69,6 +54,4 @@ export function getNotificationRowContent(entry: NotificationEntry): {
 export const NOTIFICATION_TYPE_ICON: Record<NotificationType, LucideIcon> = {
 	LIST_CREATED: ListPlus,
 	LIST_ITEM_ADDED: ListPlus,
-	CRON_JOB_FAILED: TriangleAlert,
-	CRON_JOB_SUCCEEDED: CircleCheck,
 };

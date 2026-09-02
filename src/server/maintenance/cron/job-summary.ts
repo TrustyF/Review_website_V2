@@ -1,6 +1,6 @@
 import { appendFile } from "fs/promises";
 
-// Sentinels run-and-notify.sh greps from the job's log file to bridge the summary into the notification, since the job and notify containers share no memory/filesystem.
+// Sentinels run-and-notify.sh greps from the job's log file to bridge the summary into the CronJobRun row, since the job and record-cron-success containers share no memory/filesystem.
 const SUMMARY_START = "===JOB_SUMMARY_START===";
 const SUMMARY_END = "===JOB_SUMMARY_END===";
 

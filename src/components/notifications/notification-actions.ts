@@ -12,7 +12,6 @@ export type NotificationEntry = {
 	readAt: Date | null;
 	list: { id: number; title: string; thumbnail: string | null } | null;
 	media: { id: number; title: string; posterSrc: string } | null;
-	message: string | null;
 	// Present only for a LIST_ITEM_ADDED row standing in for several same-day
 	// notifications (either axis below) — id/media/list/createdAt above are
 	// the most recent one's.
@@ -47,7 +46,6 @@ const NOTIFICATION_SELECT = {
 			externalId: true,
 		},
 	},
-	message: true,
 } as const;
 
 // Same small pre-cached thumbnail activity-actions.ts's own toMediaEntry
@@ -87,7 +85,6 @@ type RawNotification = {
 		posterPath: string | null;
 		externalId: string | null;
 	} | null;
-	message: string | null;
 };
 
 // A same-day run of LIST_ITEM_ADDED rows sharing either a list (axis "list")
@@ -177,23 +174,13 @@ async function requireUserId(): Promise<string> {
 // notification (createList, addMediaToList in list-actions.ts) — kept here
 // rather than inlined at each call site so a 3rd write site later is a
 // one-line call, not a duplicated db.notification.create.
-//
-// markAsRead is for CRON_JOB_SUCCEEDED (see notify-admin-success.ts) — a
-// routine success shouldn't bump getUnreadNotificationCount's badge the way
-// an actual failure should, but should still show up for anyone who opens
-// the notification list looking for a paper trail of what ran.
 export async function createNotification(input: {
 	type: NotificationType;
 	userId: string;
 	listId?: number;
 	mediaId?: number;
-	message?: string;
-	markAsRead?: boolean;
 }): Promise<void> {
-	const { markAsRead, ...data } = input;
-	await db.notification.create({
-		data: { ...data, readAt: markAsRead ? new Date() : null },
-	});
+	await db.notification.create({ data: { ...input, readAt: null } });
 }
 
 const PAGE_SIZE = 50;

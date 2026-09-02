@@ -1,4 +1,4 @@
-import { CirclePlus, Users } from "lucide-react";
+import { CirclePlus, ScrollText, Users } from "lucide-react";
 import { NavLink } from "@/components/navbar/nav-link";
 import barStyle from "./nav-bar.module.sass";
 import style from "./nav-admin-links.module.sass";
@@ -25,6 +25,13 @@ export function NavAdminLinks({ pathname }: Props) {
 				className={barStyle.link}
 				pathname={pathname}>
 				User lists
+			</NavLink>
+			<NavLink
+				href="/admin/logs"
+				icon={ScrollText}
+				className={barStyle.link}
+				pathname={pathname}>
+				Cron logs
 			</NavLink>
 		</div>
 	);

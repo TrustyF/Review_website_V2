@@ -11,16 +11,6 @@
 enum NotificationType {
   LIST_CREATED
   LIST_ITEM_ADDED
-  // Recipient is every ADMIN user, not the usual "always a normal user" case
-  // below — see src/server/maintenance/cron/notify-admin-failure.ts, the
-  // sole write site. Has no list/media to link to, so it's the one type that
-  // uses `message` instead.
-  CRON_JOB_FAILED
-  // Same shape as CRON_JOB_FAILED (every ADMIN user, `message` holds the job
-  // name — see notify-admin-success.ts) but created with readAt already set
-  // (createNotification's markAsRead) so a routine success doesn't bump the
-  // unread badge — it's a paper trail, not something that needs attention.
-  CRON_JOB_SUCCEEDED
 }
 
 model Notification {
@@ -44,10 +34,6 @@ model Notification {
 
   mediaId Int?
   media   Media? @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-
-  // Only CRON_JOB_FAILED sets this — everything else derives its text from
-  // the linked list/media instead (see notification-content.ts).
-  message String?
 
   readAt    DateTime?
   createdAt DateTime  @default(now())

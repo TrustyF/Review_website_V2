@@ -3,14 +3,12 @@
 # Wraps every host cron job (see the host's crontab) so a failure of any
 # kind — a JS exception inside the job, a `docker compose run`/build
 # failure, pg_dump erroring inside backup-database.sh, anything with a
-# non-zero exit — creates an in-app admin notification, not just an
+# non-zero exit — records a CronJobRun row (see /admin/logs), not just an
 # uncaught-exception case inside one script's own .catch(). Also owns the
 # per-job log file (cron-logs/<job-name>.log), replacing each crontab line's
-# own `>> ... 2>&1` suffix. A success also gets a notification (see
-# notify_cron_success) so there's a paper trail of what ran without digging
-# through log files — but created already-read (see createNotification's
-# markAsRead) so it doesn't bump the unread badge the way a real failure
-# should.
+# own `>> ... 2>&1` suffix. A success also gets a CronJobRun row (see
+# record_cron_success) so there's a paper trail of what ran without digging
+# through log files.
 set -uo pipefail
 cd "$(dirname "$0")/../../../.."
 
@@ -39,7 +37,7 @@ if [ "$EXIT_CODE" -ne 0 ]; then
 	# failure. Scope to lines from this run's own "=== timestamp ===" marker
 	# onward (mirrors the SUMMARY_START/END isolation below) before tailing.
 	TAIL_B64=$(awk '/^=== .* ===$/ { buf="" } { buf = buf $0 "\n" } END { printf "%s", buf }' "$LOG_FILE" | tail -c 2000 | base64 -w 0)
-	sudo docker compose run --rm maintenance npm run notify_cron_failure -- "$JOB_NAME" "$TAIL_B64"
+	sudo docker compose run --rm maintenance npm run record_cron_failure -- "$JOB_NAME" "$TAIL_B64"
 else
 	# $LOG_FILE accumulates every past run's own SUMMARY_START/END block too
 	# (see job-summary.ts) — awk resets `buf` on each START it sees, so by
@@ -53,7 +51,7 @@ else
 			END { printf "%s", buf }
 		' "$LOG_FILE" | base64 -w 0
 	)
-	sudo docker compose run --rm maintenance npm run notify_cron_success -- "$JOB_NAME" "$SUMMARY_B64"
+	sudo docker compose run --rm maintenance npm run record_cron_success -- "$JOB_NAME" "$SUMMARY_B64"
 fi
 
 exit "$EXIT_CODE"
