@@ -19,7 +19,21 @@ export async function GET(
 	recordInvocation("GET /api/image-proxy");
 	recordInvocation(`GET /api/image-proxy (${url.hostname})`);
 
-	const upstream = await fetch(url, { headers: { Accept: "image/*" } });
+	let upstream: Response;
+	try {
+		upstream = await fetch(url, {
+			headers: { Accept: "image/*" },
+			// Without this, a slow/hung upstream leaves the request open indefinitely,
+			// which keeps the browser tab's loading spinner going even after the rest
+			// of the page has rendered.
+			signal: AbortSignal.timeout(10_000),
+		});
+	} catch {
+		return NextResponse.json(
+			{ error: "Upstream image fetch timed out" },
+			{ status: 504 },
+		);
+	}
 	if (!upstream.ok || !upstream.body) {
 		return NextResponse.json(
 			{ error: "Upstream image fetch failed" },

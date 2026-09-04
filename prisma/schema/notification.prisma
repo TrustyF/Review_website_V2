@@ -38,6 +38,14 @@ model Notification {
   readAt    DateTime?
   createdAt DateTime  @default(now())
 
+  // Set once a LIST_ITEM_ADDED/LIST_CREATED row has been included in a sent
+  // list-add digest email (see send-list-add-digest.ts) — null means "not
+  // emailed yet", not "unread" (readAt tracks the in-app badge separately).
+  // Prevents double-sending the same addition if the cron job overlaps or
+  // retries.
+  emailedAt DateTime?
+
   @@index([userId, readAt])
   @@index([userId, createdAt])
+  @@index([userId, emailedAt])
 }

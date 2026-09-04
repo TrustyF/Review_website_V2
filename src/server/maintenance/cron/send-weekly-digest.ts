@@ -87,7 +87,9 @@ async function main() {
 	]);
 
 	if (!latestReviewed && recentlyRated.length === 0) {
-		await appendJobSummary(["No rating/review activity in the past week — skipped."]);
+		await appendJobSummary([
+			"No rating/review activity in the past week — skipped.",
+		]);
 		return;
 	}
 
@@ -125,10 +127,11 @@ async function main() {
 	for (const recipient of recipients) {
 		await sendEmail({
 			to: recipient.email!,
-			subject: "Your weekly recap",
+			subject: "What I've been watching",
 			react: LatestActivityEmail({
 				latestReview,
 				recentWatches,
+				activityUrl: toAbsoluteUrl("/activity"),
 				accountUrl: toAbsoluteUrl("/account/settings"),
 			}),
 		});

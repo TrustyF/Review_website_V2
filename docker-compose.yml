@@ -196,6 +196,14 @@ services:
       IGDB_CLIENT_SECRET: ${IGDB_CLIENT_SECRET}
       COMIC_VINE_KEY: ${COMIC_VINE_KEY}
       GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY}
+      # Used by weekly_digest/list_add_digest (see .env.example's own comment)
+      # and to build the absolute media/account URLs those emails link to.
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      EMAIL_FROM: ${EMAIL_FROM}
+      SITE_URL: ${SITE_URL}
 
   # Uptime monitoring: pings `app` (and can be pointed at review.arthursirjacobs.com
   # itself) and alerts if it goes down. Bound to all interfaces (not just

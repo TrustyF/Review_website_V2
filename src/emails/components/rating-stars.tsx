@@ -1,26 +1,30 @@
 import { Text } from "@react-email/components";
-
-// Plain Unicode glyph, not inline SVG like star-icon.tsx — Outlook's
-// Word-based renderer strips <svg> entirely.
-const STAR_COLOR = "#FCCA00";
+import { formatRating } from "../lib/format-rating";
+import { StarGlyph } from "./star-glyph";
 
 export function RatingStars({
 	rating,
+	releaseYear,
 	fontSize = "14px",
 }: {
 	rating: number | null;
+	releaseYear?: string | null;
 	fontSize?: string;
 }) {
-	if (rating == null) return null;
+	if (rating == null && !releaseYear) return null;
 	return (
-		<Text
-			style={{
-				margin: 0,
-				fontSize,
-				fontWeight: 700,
-				color: "#ededed",
-			}}>
-			<span style={{ color: STAR_COLOR }}>★</span> {rating.toFixed(1)}
+		<Text className="m-0 font-medium text-fg" style={{ fontSize }}>
+			{releaseYear && (
+				<span className="font-normal text-fg-3">{releaseYear}</span>
+			)}
+			{rating != null && releaseYear && (
+				<span className="font-normal text-fg-3"> · </span>
+			)}
+			{rating != null && (
+				<>
+					{formatRating(rating)} <StarGlyph size={11} />
+				</>
+			)}
 		</Text>
 	);
 }

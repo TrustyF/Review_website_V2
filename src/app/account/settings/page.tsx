@@ -16,6 +16,7 @@ export default async function AccountSettingsPage() {
 		select: {
 			preferredLanguage: true,
 			newsletterOptIn: true,
+			listAddEmailOptIn: true,
 			username: true,
 			passwordHash: true,
 		},
@@ -32,6 +33,7 @@ export default async function AccountSettingsPage() {
 				initial={{
 					preferredLanguage: user.preferredLanguage,
 					newsletterOptIn: user.newsletterOptIn,
+					listAddEmailOptIn: user.listAddEmailOptIn,
 					username: user.username,
 				}}
 			/>

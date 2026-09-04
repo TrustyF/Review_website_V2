@@ -1,97 +1,168 @@
 import {
 	Body,
+	Button,
 	Container,
 	Head,
-	Heading,
-	Hr,
 	Html,
 	Link,
 	Preview,
 	Row,
 	Section,
+	Tailwind,
 	Text,
 } from "@react-email/components";
+import { EmailLogo } from "./components/email-logo";
 import { MediaReviewCard } from "./components/media-review-card";
 import { MediaMiniCard } from "./components/media-mini-card";
+import { EMAIL_TAILWIND_CONFIG } from "./theme";
+import { EmailFonts } from "./theme-fonts";
 
-// Sample data only — not wired to the database yet; a real sending script
-// will query latest review/recent watches and pass them as props instead.
-// Poster paths are real TMDB hashes, kept accurate since a wrong one 404s silently.
-const SAMPLE_LATEST_REVIEW = {
-	title: "Ghostbusters",
-	mediaUrl: "https://example.com/media/5",
-	posterSrc: "https://image.tmdb.org/t/p/w342/7E8nLijS9AwwUEPu2oFYOVKhdFA.jpg",
-	releaseYear: "1984",
-	rating: 9,
-	watchedDateLabel: "Aug 8, 2026",
-	body: "They're here to save the world, and honestly they mostly succeed.\n\nGreat mix of comedy and just enough horror to keep it interesting — ||the librarian ghost at the start is still the best scare in the whole thing||. [Great writeup on the practical effects](https://example.com) if you want the technical side.",
+type ReviewProps = {
+	title: string;
+	mediaUrl: string;
+	posterSrc: string;
+	releaseYear: string | null;
+	rating: number | null;
+	watchedDateLabel: string | null;
+	body: string | null;
 };
 
-const SAMPLE_RECENT_WATCHES = [
-	{
-		title: "Oldboy",
-		mediaUrl: "https://example.com/media/481",
-		posterSrc: "https://image.tmdb.org/t/p/w342/pWDtjs568ZfOTMbURQBYuT4Qxka.jpg",
-		rating: 9.5,
-	},
-	{
-		title: "The Shining",
-		mediaUrl: "https://example.com/media/304",
-		posterSrc: "https://image.tmdb.org/t/p/w342/uAR0AWqhQL1hQa69UDEbb2rE5Wx.jpg",
-		rating: 9,
-	},
-	{
-		title: "Blade Runner",
-		mediaUrl: "https://example.com/media/305",
-		posterSrc: "https://image.tmdb.org/t/p/w342/63N9uy8nd9j7Eog2axPQ8lbr3Wj.jpg",
-		rating: 8.5,
-	},
-	{
-		title: "Paprika",
-		mediaUrl: "https://example.com/media/310",
-		posterSrc: "https://image.tmdb.org/t/p/w342/nHJljo2Pi7XimYEgV9hvRchQWmg.jpg",
-		rating: 8,
-	},
-];
-
-const SECTION_LABEL_STYLE = {
-	color: "#666666",
-	fontSize: "13px",
-	textTransform: "uppercase" as const,
-	letterSpacing: "0.03em",
-	margin: "24px 0 8px",
+type WatchProps = {
+	title: string;
+	mediaUrl: string;
+	posterSrc: string;
+	rating: number | null;
 };
 
-export default function LatestActivityEmail() {
+type Props = {
+	latestReview: ReviewProps | null;
+	recentWatches: WatchProps[];
+	activityUrl: string;
+	accountUrl: string;
+};
+
+const SECTION_LABEL_CLASS =
+	"m-0 mb-2 text-[13px] uppercase tracking-[0.03em] text-fg";
+
+// Real dev-DB data (unfiltered — whatever the latest review/recently-rated
+// happened to be when this was last refreshed), not hand-written placeholders
+// — only used by `npm run email_dev`'s preview server, never by the real
+// send path (send-weekly-digest.ts always passes real props).
+LatestActivityEmail.PreviewProps = {
+	latestReview: {
+		title: "The Odyssey",
+		mediaUrl: "https://example.com/media/1457",
+		posterSrc:
+			"https://image.tmdb.org/t/p/w500/krVa7rKCQb4OBfsr2LTJv4rTz5q.jpg",
+		releaseYear: "2026",
+		rating: 7,
+		watchedDateLabel: "Aug 12, 2026",
+		body: "This was a very fun ride!\n\nInitially I found the number of famous actors somewhat distracting, but I ended up settling into it. The performances were very strong overall.\n\nThe first third of the movie seems to want to rush a lot, and the editing felt frantic, which might just be a side-effect of how much ground it needs to cover.\nI did find myself enjoying it more once we started making the trip back, the movie slows down a lot and takes more time to appreciate the beautiful views and tortured feeling of the characters.\n\nThe suitors plotline I found to be the least interesting of the bunch. The mystical/spiritual adventure was much more engaging, I really enjoyed the weird lands and creatures they would run into. The \"sailing into hell\" sequence being a standout.\n\nWhile I saw it in IMAX, I don't believe we actually got the full frame version. Which is a shame since the nice framing seems to have been lost in the cropped version. \nIt was also very loud for some reason, which seems to be a common complaint. Sharp sounds like swords clashing forced me to cover my ears.\n\nI very much appreciated the practical effects as well. The cyclops felt a little goofy, but all other scenes benefited from it; Any of the sailing scenes in particular felt really grounded and gritty as a result.\n\nA strong addition to the Nolan library, but I can't see myself watching it again.",
+	},
+	recentWatches: [
+		{
+			title: "Toy Story 5",
+			mediaUrl: "https://example.com/media/1463",
+			posterSrc:
+				"https://image.tmdb.org/t/p/w500/sfQtVlIHljToOwYjhe21KPGzZWK.jpg",
+			rating: 8,
+		},
+		{
+			title: "The Book of Life",
+			mediaUrl: "https://example.com/media/1456",
+			posterSrc:
+				"https://image.tmdb.org/t/p/w500/aotTZos5KswgCryEzx2rlOjFsm1.jpg",
+			rating: 7,
+		},
+		{
+			title: "Neon Genesis Evangelion: The End of Evangelion",
+			mediaUrl: "https://example.com/media/1455",
+			posterSrc:
+				"https://image.tmdb.org/t/p/w500/mZOAWRKbeQw5ZoXd9N6GChT2NSO.jpg",
+			rating: 9,
+		},
+		{
+			title: "The Invite",
+			mediaUrl: "https://example.com/media/1454",
+			posterSrc:
+				"https://image.tmdb.org/t/p/w500/b7Dr8Chzse8VagexAporUu2RtLx.jpg",
+			rating: 8,
+		},
+	],
+	activityUrl: "https://example.com/activity",
+	accountUrl: "https://example.com/account",
+} satisfies Props;
+
+export default function LatestActivityEmail({
+	latestReview,
+	recentWatches,
+	activityUrl,
+	accountUrl,
+}: Props) {
 	return (
-		<Html>
-			<Head />
-			<Preview>Your latest review and what you&apos;ve watched this week</Preview>
-			<Body style={{ backgroundColor: "#151315", fontFamily: "sans-serif" }}>
-				<Container style={{ maxWidth: "600px", padding: "24px 0" }}>
-					<Heading style={{ color: "#ededed", fontSize: "20px" }}>Review app</Heading>
+		<Tailwind config={EMAIL_TAILWIND_CONFIG}>
+			<Html>
+				<Head>
+					<EmailFonts />
+				</Head>
+				<Preview>
+					My latest review, plus what I&apos;ve been watching this week
+				</Preview>
+				<Body className="m-0 bg-bg-2 py-8 font-sans">
+					<Container className="mx-auto w-full max-w-[600px]">
+						<Section className="mb-6">
+							<EmailLogo />
+						</Section>
 
-					<Text style={SECTION_LABEL_STYLE}>Latest review</Text>
-					<MediaReviewCard {...SAMPLE_LATEST_REVIEW} />
+						<Section className="rounded-[10px] bg-bg p-6">
+							<Text className="m-0 mb-6 text-[15px] text-fg-2">
+								Hey! Here&apos;s what I&apos;ve been watching this week.
+							</Text>
 
-					<Text style={SECTION_LABEL_STYLE}>Recently watched</Text>
-					<Section>
-						<Row>
-							{SAMPLE_RECENT_WATCHES.map((movie) => (
-								<MediaMiniCard key={movie.mediaUrl} {...movie} />
-							))}
-						</Row>
-					</Section>
+							{latestReview && (
+								<>
+									<Text className={SECTION_LABEL_CLASS}>Latest review</Text>
+									<MediaReviewCard {...latestReview} />
+								</>
+							)}
 
-					<Hr style={{ borderColor: "#333333", margin: "32px 0 16px" }} />
-					<Text style={{ color: "#666666", fontSize: "11px" }}>
-						You&apos;re receiving this because you subscribed to the newsletter.{" "}
-						<Link href="https://example.com/account" style={{ color: "#666666" }}>
-							Manage preferences
-						</Link>
-					</Text>
-				</Container>
-			</Body>
-		</Html>
+							{recentWatches.length > 0 && (
+								<>
+									<Text className={`${SECTION_LABEL_CLASS} mt-6`}>
+										Recently watched
+									</Text>
+									<Section>
+										<Row>
+											{recentWatches.map((movie) => (
+												<MediaMiniCard key={movie.mediaUrl} {...movie} />
+											))}
+										</Row>
+									</Section>
+								</>
+							)}
+
+							<Section className="mt-8 text-center">
+								<Button
+									href={activityUrl}
+									className="inline-block rounded-lg bg-brand px-6 py-3 text-[14px] font-semibold text-brand-ink">
+									See more
+								</Button>
+							</Section>
+						</Section>
+
+						<Section className="mt-6 text-center">
+							{/*<Text className="m-0 mb-2 text-[13px] text-fg-2">— Arthur</Text>*/}
+							<Text className="m-0 text-[11px] text-fg-3">
+								You&apos;re getting this because you signed up for updates from
+								Arthur&apos;s Corner.{" "}
+								<Link href={accountUrl} className="text-fg-3 underline">
+									Manage your subscription
+								</Link>
+							</Text>
+						</Section>
+					</Container>
+				</Body>
+			</Html>
+		</Tailwind>
 	);
 }

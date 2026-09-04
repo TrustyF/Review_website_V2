@@ -1,4 +1,6 @@
 import { Column, Img, Link, Text } from "@react-email/components";
+import { formatRating } from "../lib/format-rating";
+import { StarGlyph } from "./star-glyph";
 
 type Props = {
 	title: string;
@@ -11,34 +13,24 @@ type Props = {
 // Renders as a bare <Column> so several can sit in one parent <Row>.
 export function MediaMiniCard({ title, mediaUrl, posterSrc, rating }: Props) {
 	return (
-		<Column style={{ width: "110px", verticalAlign: "top", paddingRight: "12px" }}>
+		<Column className="w-[110px] pr-3 align-top">
 			<Link href={mediaUrl}>
 				<Img
 					src={posterSrc}
 					width={100}
 					height={150}
 					alt={title}
-					style={{ borderRadius: "4px", display: "block" }}
+					className="block rounded"
 				/>
 			</Link>
-			<Link href={mediaUrl} style={{ textDecoration: "none" }}>
-				<Text
-					style={{
-						margin: "6px 0 2px",
-						fontSize: "12px",
-						fontWeight: 500,
-						color: "#ededed",
-						whiteSpace: "nowrap",
-						overflow: "hidden",
-						textOverflow: "ellipsis",
-						maxWidth: "100px",
-					}}>
+			<Link href={mediaUrl} className="no-underline">
+				<Text className="m-0 mt-0.5 max-w-[100px] truncate text-[13px] font-bold text-fg">
 					{title}
 				</Text>
 			</Link>
 			{rating != null && (
-				<Text style={{ margin: 0, fontSize: "11px", color: "#ededed" }}>
-					<span style={{ color: "#FCCA00" }}>★</span> {rating.toFixed(1)}
+				<Text className="m-0 text-[12px] leading-none text-fg-3">
+					{formatRating(rating)} <StarGlyph size={12} />
 				</Text>
 			)}
 		</Column>

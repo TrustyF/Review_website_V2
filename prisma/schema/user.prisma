@@ -23,7 +23,12 @@ model User {
 
   role              UserRole @default(USER)
   preferredLanguage String   @default("en")
+  // Weekly "what I rated and reviewed" recap email.
   newsletterOptIn   Boolean  @default(false)
+  // Daily batch email summarizing recommendation-list additions — separate
+  // from newsletterOptIn since it's a more personal/transactional email, not
+  // a newsletter someone would want to opt out of independently.
+  listAddEmailOptIn Boolean  @default(false)
 
   createDate DateTime @default(now())
 

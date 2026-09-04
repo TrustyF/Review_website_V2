@@ -8,6 +8,7 @@ import { comparePassword } from "@/lib/password";
 export type AccountSettingsInput = {
 	preferredLanguage: string;
 	newsletterOptIn: boolean;
+	listAddEmailOptIn: boolean;
 	// null clears the override, falling back to `name`.
 	username: string | null;
 };
@@ -23,6 +24,7 @@ export async function updateAccountSettings(
 		data: {
 			preferredLanguage: input.preferredLanguage,
 			newsletterOptIn: input.newsletterOptIn,
+			listAddEmailOptIn: input.listAddEmailOptIn,
 			username: input.username,
 		},
 	});

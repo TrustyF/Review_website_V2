@@ -8,6 +8,7 @@ type Props = {
 	initial: {
 		preferredLanguage: string;
 		newsletterOptIn: boolean;
+		listAddEmailOptIn: boolean;
 		username: string | null;
 	};
 };
@@ -18,6 +19,9 @@ export function AccountSettingsForm({ initial }: Props) {
 	);
 	const [newsletterOptIn, setNewsletterOptIn] = useState(
 		initial.newsletterOptIn,
+	);
+	const [listAddEmailOptIn, setListAddEmailOptIn] = useState(
+		initial.listAddEmailOptIn,
 	);
 	const [username, setUsername] = useState(initial.username ?? "");
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +34,7 @@ export function AccountSettingsForm({ initial }: Props) {
 			await updateAccountSettings({
 				preferredLanguage,
 				newsletterOptIn,
+				listAddEmailOptIn,
 				username: username.trim() || null,
 			});
 			setSaved(true);
@@ -79,6 +84,17 @@ export function AccountSettingsForm({ initial }: Props) {
 					}}
 				/>
 				Subscribe to the newsletter
+			</label>
+			<label className={styles.checkbox_field}>
+				<input
+					type="checkbox"
+					checked={listAddEmailOptIn}
+					onChange={(e) => {
+						setListAddEmailOptIn(e.target.checked);
+						setSaved(false);
+					}}
+				/>
+				Email me when media is added to my lists
 			</label>
 			{saved && <div className={styles.saved}>Saved.</div>}
 			<button

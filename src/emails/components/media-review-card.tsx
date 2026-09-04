@@ -25,40 +25,30 @@ export function MediaReviewCard({
 	body,
 }: Props) {
 	return (
-		<Section
-			style={{
-				backgroundColor: "#1a1a1a",
-				borderRadius: "8px",
-				padding: "20px",
-			}}>
+		<Section className="rounded-[10px] bg-bg-2 p-5">
 			<Row>
-				<Column style={{ width: "130px", verticalAlign: "top" }}>
+				<Column className="w-[130px] align-top">
 					<Link href={mediaUrl}>
 						<Img
 							src={posterSrc}
 							width={110}
 							height={165}
 							alt={title}
-							style={{ borderRadius: "4px", display: "block" }}
+							className="block rounded"
 						/>
 					</Link>
 				</Column>
-				<Column style={{ verticalAlign: "top", paddingLeft: "20px" }}>
-					<Link href={mediaUrl} style={{ textDecoration: "none" }}>
-						<Text style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "#ededed" }}>
-							{title}
-							{releaseYear && (
-								<span style={{ color: "#666666", fontWeight: 400 }}> ({releaseYear})</span>
-							)}
-						</Text>
+				<Column className="pl-5 align-top">
+					<Link href={mediaUrl} className="no-underline">
+						<Text className="m-0 text-[18px] font-bold text-fg">{title}</Text>
 					</Link>
-					<RatingStars rating={rating} />
+					<RatingStars rating={rating} releaseYear={releaseYear} />
 					{watchedDateLabel && (
-						<Text style={{ margin: "4px 0 12px", fontSize: "12px", color: "#666666" }}>
+						<Text className="mb-3 mt-1 text-[12px] text-fg-3">
 							Watched on {watchedDateLabel}
 						</Text>
 					)}
-					{body && formatReviewBody(body)}
+					{body && formatReviewBody(body, mediaUrl)}
 				</Column>
 			</Row>
 		</Section>
