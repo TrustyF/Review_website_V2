@@ -1,7 +1,6 @@
 "use client";
 import styles from "./image-picker.module.sass";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MediaRecord } from "@/components/media/types";
 import { MediaType } from "@prisma/client";
 
 export type PickableImage = {
@@ -14,8 +13,17 @@ const PAGE_SIZE = 10;
 
 export type ImageOptionsPage = { images: PickableImage[]; hasMore: boolean };
 
+// Only what this component actually reads — a full MediaRecord (its usual
+// caller, the media editor) satisfies this structurally, but so does a bare
+// search result from a context with no full record at all (see AssetBrowser).
+type ImagePickerSource = {
+	id: number;
+	type: MediaType;
+	externalId: string | null;
+};
+
 type Props = {
-	draft: MediaRecord;
+	draft: ImagePickerSource;
 	// The only real difference between posters and banners; grid/pagination/error state is
 	// identical. Each call fetches one page — the server slices/sorts, so the full candidate
 	// list is never sent all at once.

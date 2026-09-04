@@ -15,7 +15,12 @@ type Props = {
 };
 
 // "Recommend to" picker: avatar tiles instead of a <select>, so an admin recognizes a recipient by face.
-export function UserPicker({ options, value, onChange, hidePublicOption }: Props) {
+export function UserPicker({
+	options,
+	value,
+	onChange,
+	hidePublicOption,
+}: Props) {
 	// Set, not one boolean, since multiple tiles' images can fail to load independently.
 	const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
 

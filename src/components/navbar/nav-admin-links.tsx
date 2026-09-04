@@ -1,4 +1,4 @@
-import { CirclePlus, Image, ScrollText, Users } from "lucide-react";
+import { CirclePlus, Crop, Image, ScrollText, Users } from "lucide-react";
 import { NavLink } from "@/components/navbar/nav-link";
 import barStyle from "./nav-bar.module.sass";
 import style from "./nav-admin-links.module.sass";
@@ -19,27 +19,37 @@ export function NavAdminLinks({ pathname }: Props) {
 				pathname={pathname}>
 				Add media
 			</NavLink>
-			<NavLink
-				href="/admin/user-lists"
-				icon={Users}
-				className={barStyle.link}
-				pathname={pathname}>
-				User lists
-			</NavLink>
-			<NavLink
-				href="/admin/logs"
-				icon={ScrollText}
-				className={barStyle.link}
-				pathname={pathname}>
-				Cron logs
-			</NavLink>
-			<NavLink
-				href="/admin/digest-banner"
-				icon={Image}
-				className={barStyle.link}
-				pathname={pathname}>
-				Digest banner
-			</NavLink>
+			<div className={style.group}>
+				<NavLink
+					href="/admin/user-lists"
+					icon={Users}
+					className={barStyle.link}
+					pathname={pathname}>
+					User lists
+				</NavLink>
+				<NavLink
+					href="/admin/logs"
+					icon={ScrollText}
+					className={barStyle.link}
+					pathname={pathname}>
+					Cron logs
+				</NavLink>
+				<NavLink
+					href="/admin/digest-banner"
+					icon={Image}
+					className={barStyle.link}
+					pathname={pathname}>
+					Digest
+				</NavLink>
+				<NavLink
+					href="/dev/image-crop"
+					icon={Crop}
+					className={barStyle.link}
+					pathname={pathname}
+					target="_blank">
+					Image crop
+				</NavLink>
+			</div>
 		</div>
 	);
 }

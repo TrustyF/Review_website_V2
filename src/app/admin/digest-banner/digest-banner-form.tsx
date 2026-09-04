@@ -1,6 +1,7 @@
 "use client";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { Clickable } from "@/components/ui/clickable";
+import { AssetBrowser } from "@/components/media/asset-browser/asset-browser";
 import styles from "./digest-banner.module.sass";
 import {
 	DigestBannerOverride,
@@ -26,6 +27,7 @@ export function DigestBannerForm({ initial, onSaved }: Props) {
 	const [isUploading, setIsUploading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [saved, setSaved] = useState(false);
+	const [isBrowserOpen, setIsBrowserOpen] = useState(false);
 
 	async function handleSubmit(e: FormEvent) {
 		e.preventDefault();
@@ -95,20 +97,23 @@ export function DigestBannerForm({ initial, onSaved }: Props) {
 					disabled={isUploading}
 				/>
 			</label>
+			<Clickable
+				className={styles.browse_button}
+				onClick={() => setIsBrowserOpen(true)}>
+				Browse posters &amp; banners…
+			</Clickable>
 			{isUploading && <div className={styles.uploading}>Uploading…</div>}
-			{image.trim() && (
-				<label className={styles.field}>
-					Vertical position ({positionY}%)
-					<input
-						className={styles.slider}
-						type="range"
-						min={0}
-						max={100}
-						value={positionY}
-						onChange={(e) => setPositionY(Number(e.target.value))}
-					/>
-				</label>
-			)}
+			<label className={styles.field}>
+				Vertical position ({positionY}%)
+				<input
+					className={styles.slider}
+					type="range"
+					min={0}
+					max={100}
+					value={positionY}
+					onChange={(e) => setPositionY(Number(e.target.value))}
+				/>
+			</label>
 			<label className={styles.field}>
 				Headline
 				<input
@@ -145,6 +150,15 @@ export function DigestBannerForm({ initial, onSaved }: Props) {
 					Clear override
 				</Clickable>
 			</div>
+			{/* Always mounted (visibility toggled via isOpen) so its search/selection state survives being closed and reopened. */}
+			<AssetBrowser
+				isOpen={isBrowserOpen}
+				onSelect={(url) => {
+					setImage(url);
+					setIsBrowserOpen(false);
+				}}
+				onClose={() => setIsBrowserOpen(false)}
+			/>
 		</form>
 	);
 }

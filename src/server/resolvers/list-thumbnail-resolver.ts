@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import sharp from "sharp";
 import { getImageStorage } from "@/server/storage/image-storage";
+import { toAbsoluteUrl } from "@/server/email/mailer";
 
 // Capped well below what this ever actually renders at — a list thumbnail
 // only shows inside ListPreviewCard's 16:9 grid card or the edit form's own
@@ -38,7 +39,8 @@ export async function saveListThumbnail(source: Buffer): Promise<string> {
 // permanent (an untouched edit re-submitting the same value). Matches either
 // storage backend's urlFor() form: LocalImageStorage's bare "/list-thumbnails/…"
 // or R2ImageStorage's "https://<R2_PUBLIC_URL>/list-thumbnails/…".
-const LIST_THUMBNAIL_FILE_URL = /^(?:https?:\/\/[^/]+)?\/list-thumbnails\/[a-f0-9]+\.webp$/;
+const LIST_THUMBNAIL_FILE_URL =
+	/^(?:https?:\/\/[^/]+)?\/list-thumbnails\/[a-f0-9]+\.webp$/;
 
 export function isListThumbnailUrl(url: string): boolean {
 	return LIST_THUMBNAIL_FILE_URL.test(url);
@@ -50,7 +52,9 @@ export function isListThumbnailUrl(url: string): boolean {
 // re-hosted the same way an uploaded file would be, so a list's thumbnail
 // never stays a live hotlink to whatever site the URL was pasted from.
 export async function saveListThumbnailFromUrl(url: string): Promise<string> {
-	const res = await fetch(url);
+	// AssetBrowser hands back a root-relative /api/image-proxy/... URL — fetch()
+	// has no implicit base URL server-side, so it needs to be absolute first.
+	const res = await fetch(toAbsoluteUrl(url));
 	if (!res.ok) throw new Error(`Image download failed: ${url}`);
 	const bytes = Buffer.from(await res.arrayBuffer());
 	return saveListThumbnail(bytes);

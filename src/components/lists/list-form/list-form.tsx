@@ -8,6 +8,8 @@ import {
 	uploadListThumbnail,
 } from "@/components/lists/list-actions";
 import { UserPicker } from "@/components/lists/list-form/user-picker";
+import { Clickable } from "@/components/ui/clickable";
+import { AssetBrowser } from "@/components/media/asset-browser/asset-browser";
 
 export type ListFormValues = {
 	title: string;
@@ -35,7 +37,13 @@ type Props = {
 };
 
 // Shared by /lists/new and /lists/[id]/edit; only onSubmit differs. Thumbnail can be a pasted URL or an uploaded file — both just set the same thumbnailUrl state.
-export function ListForm({ initial, submitLabel, onSubmit, extra, hideRecommendTo }: Props) {
+export function ListForm({
+	initial,
+	submitLabel,
+	onSubmit,
+	extra,
+	hideRecommendTo,
+}: Props) {
 	const [title, setTitle] = useState(initial.title);
 	const [description, setDescription] = useState(initial.description);
 	const [thumbnailUrl, setThumbnailUrl] = useState(initial.thumbnailUrl);
@@ -45,6 +53,7 @@ export function ListForm({ initial, submitLabel, onSubmit, extra, hideRecommendT
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [isBrowserOpen, setIsBrowserOpen] = useState(false);
 
 	// Fetched on mount rather than passed as a prop, to keep both call sites as thin wrappers.
 	useEffect(() => {
@@ -58,7 +67,13 @@ export function ListForm({ initial, submitLabel, onSubmit, extra, hideRecommendT
 		setIsSubmitting(true);
 		setError(null);
 		try {
-			await onSubmit({ title, description, thumbnailUrl, sortMode, targetUserId });
+			await onSubmit({
+				title,
+				description,
+				thumbnailUrl,
+				sortMode,
+				targetUserId,
+			});
 		} catch {
 			setError("Failed to save. Try again.");
 			setIsSubmitting(false);
@@ -124,6 +139,11 @@ export function ListForm({ initial, submitLabel, onSubmit, extra, hideRecommendT
 					disabled={isUploading}
 				/>
 			</label>
+			<Clickable
+				className={styles.browse_button}
+				onClick={() => setIsBrowserOpen(true)}>
+				Browse posters &amp; banners…
+			</Clickable>
 			{isUploading && <div className={styles.uploading}>Uploading…</div>}
 			{thumbnailUrl.trim() && (
 				// Plain <img>, not next/image — arbitrary pasted host.
@@ -137,7 +157,11 @@ export function ListForm({ initial, submitLabel, onSubmit, extra, hideRecommendT
 			{!hideRecommendTo && (
 				<div className={styles.field}>
 					Recommend to
-					<UserPicker options={targets} value={targetUserId} onChange={setTargetUserId} />
+					<UserPicker
+						options={targets}
+						value={targetUserId}
+						onChange={setTargetUserId}
+					/>
 					{targetUserId && (
 						<span className={styles.recommend_hint}>
 							Only this account (and admins) will be able to see this list.
@@ -169,6 +193,15 @@ export function ListForm({ initial, submitLabel, onSubmit, extra, hideRecommendT
 				{isSubmitting ? "Saving…" : submitLabel}
 			</button>
 			{extra}
+			{/* Always mounted (visibility toggled via isOpen) so its search/selection state survives being closed and reopened. */}
+			<AssetBrowser
+				isOpen={isBrowserOpen}
+				onSelect={(url) => {
+					setThumbnailUrl(url);
+					setIsBrowserOpen(false);
+				}}
+				onClose={() => setIsBrowserOpen(false)}
+			/>
 		</form>
 	);
 }

@@ -13,7 +13,7 @@ type Props = {
 
 // Tall, closer to the reference screenshot's proportions relative to a
 // 600px-wide email — a short banner read as a thin strip, not a hero.
-const BANNER_HEIGHT = 250;
+const BANNER_HEIGHT = 200;
 
 // Two stacked CSS backgrounds (photo on the outer table cell, a top-only
 // gradient on a nested one) instead of an <Img> + absolutely-positioned

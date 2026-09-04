@@ -17,6 +17,9 @@ type NavLinkProps = {
 	// Leave unset for anything dynamic/session-scoped (e.g. /account); pass
 	// true only for a cheap-to-prefetch static/ISR destination.
 	prefetch?: boolean;
+	// Pass "_blank" for a destination that shouldn't navigate away from
+	// whatever the admin already has open (e.g. the image crop tool).
+	target?: string;
 };
 
 // Every plain top-level item (vs. a NavDropdown) goes through here so the
@@ -29,6 +32,7 @@ export function NavLink({
 	children,
 	iconOnly = false,
 	prefetch = false,
+	target,
 }: NavLinkProps) {
 	const isActive = isNavActive(pathname, href);
 	const label = typeof children === "string" ? children : undefined;
@@ -37,6 +41,8 @@ export function NavLink({
 			href={href}
 			prefetch={prefetch}
 			className={className}
+			target={target}
+			rel={target === "_blank" ? "noopener noreferrer" : undefined}
 			aria-current={isActive ? "page" : undefined}
 			aria-label={iconOnly ? label : undefined}
 			title={iconOnly ? label : undefined}>

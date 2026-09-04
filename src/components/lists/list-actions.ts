@@ -23,13 +23,17 @@ type ListInput = {
 };
 
 // Normalizes any thumbnail input (existing URL, /cropped/ temp file, or external link) into a self-hosted list-thumbnails URL, so nothing hotlinks another host or breaks when temp files get cleaned up.
-async function resolveThumbnailUrl(raw: string | null | undefined): Promise<string | null> {
+async function resolveThumbnailUrl(
+	raw: string | null | undefined,
+): Promise<string | null> {
 	const trimmed = raw?.trim();
 	if (!trimmed) return null;
 	if (isListThumbnailUrl(trimmed)) return trimmed;
 
 	const cropped = await readCroppedFile(trimmed);
-	return cropped ? saveListThumbnail(cropped) : saveListThumbnailFromUrl(trimmed);
+	return cropped
+		? saveListThumbnail(cropped)
+		: saveListThumbnailFromUrl(trimmed);
 }
 
 export async function createList(input: ListInput): Promise<number> {

@@ -2,7 +2,12 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db/client";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { saveDigestBannerOverride } from "@/server/resolvers/digest-banner-resolver";
+import { toAbsoluteUrl } from "@/server/email/mailer";
+import {
+	isDigestBannerOverrideUrl,
+	saveDigestBannerOverride,
+	saveDigestBannerOverrideFromUrl,
+} from "@/server/resolvers/digest-banner-resolver";
 
 // Settings is a singleton row, always id 1 — see prisma/schema/settings.prisma.
 const SETTINGS_ID = 1;
@@ -15,12 +20,28 @@ export type DigestBannerOverride = {
 	positionY: number;
 };
 
+// Normalizes any image input (existing override URL, or a pasted/picked
+// link) into a self-hosted digest-override URL — same idea as list-actions'
+// resolveThumbnailUrl — so the override never depends on a third-party host
+// staying up.
+async function resolveOverrideImageUrl(
+	raw: string | null,
+): Promise<string | null> {
+	const trimmed = raw?.trim();
+	if (!trimmed) return null;
+	if (isDigestBannerOverrideUrl(trimmed)) return trimmed;
+	// AssetBrowser hands back a root-relative /api/image-proxy/... URL (see
+	// buildProxiedImageUrl) — fetch() has no implicit base URL server-side, so
+	// it needs to be absolute before downloading.
+	return saveDigestBannerOverrideFromUrl(toAbsoluteUrl(trimmed));
+}
+
 export async function updateDigestBannerOverride(
 	input: DigestBannerOverride,
 ): Promise<void> {
 	await requireAdmin();
 	const data = {
-		digestBannerImage: input.image?.trim() || null,
+		digestBannerImage: await resolveOverrideImageUrl(input.image),
 		digestBannerHeadline: input.headline?.trim() || null,
 		digestBannerSubtitle: input.subtitle?.trim() || null,
 		digestBannerPositionY: Math.min(

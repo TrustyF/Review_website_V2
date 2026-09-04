@@ -91,7 +91,11 @@ export async function ListDetailPage({ id }: Props) {
 			) : list.sortMode === "RANKED" ? (
 				<RankedList listId={list.id} media={media} />
 			) : (
-				<ListMediaView listId={list.id} media={media} sortMode={list.sortMode} />
+				<ListMediaView
+					listId={list.id}
+					media={media}
+					sortMode={list.sortMode}
+				/>
 			)}
 		</div>
 	);

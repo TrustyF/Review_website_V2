@@ -16,3 +16,14 @@
   // Admin tools aren't offered on mobile; no drawer-friendly replacement.
   @media (max-width: $mobile-breakpoint)
     display: none
+
+// Separates "Add media" (a primary action) from the rest (admin utility
+// pages) — a top border plus its own padding reads as a divider without
+// needing an extra empty spacer element.
+.group
+  display: flex
+  flex-flow: column
+  align-items: flex-end
+  gap: 0.5rem
+  padding-top: 0.5rem
+  border-top: 1px solid var(--border-highlight)

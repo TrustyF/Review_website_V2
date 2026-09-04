@@ -27,8 +27,14 @@ export function RankedListRow({
 	isRemoving,
 	onRemove,
 }: Props) {
-	const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-		useSortable({ id: media.id, disabled: dragDisabled });
+	const {
+		attributes,
+		listeners,
+		setNodeRef,
+		transform,
+		transition,
+		isDragging,
+	} = useSortable({ id: media.id, disabled: dragDisabled });
 
 	return (
 		<div

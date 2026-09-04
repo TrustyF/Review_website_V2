@@ -23,6 +23,7 @@ import styles from "./media-detail.module.sass";
 import { CircularGauge } from "@/components/ui/circular-gauge";
 import { Tooltip } from "@/components/ui/tooltip";
 import { generateMediaMetadata } from "./metadata";
+import { MediaStatus } from "@prisma/client";
 
 // See metadata.ts — kept there rather than inlined here so this file stays
 // about rendering the page, not also building link-preview tags.
@@ -34,6 +35,14 @@ const CurrencyFormatter = new Intl.NumberFormat("en-US", {
 	notation: "compact",
 	maximumFractionDigits: 1,
 });
+
+// Covers both a confirmed future release date and a title that's merely
+// announced/in-production at the source with no date yet (e.g. TMDB shows
+// still "In Production" — see tv-show.ts's TV_STATUS_MAP).
+function isUpcomingRelease(releaseDate: Date | null, status: MediaStatus): boolean {
+	if (status === MediaStatus.ANNOUNCED || status === MediaStatus.UPCOMING) return true;
+	return releaseDate != null && releaseDate.getTime() > Date.now();
+}
 
 function Fact({ label, value }: { label: string; value: ReactNode }) {
 	return (
@@ -166,6 +175,9 @@ export default async function MediaDetailPage({
 	// null/0 both mean "not rated for difficulty" — same convention
 	// MediaPoster's own corner notch uses (see poster.tsx).
 	const difficulty = raw.review?.difficulty;
+	// Computed here (not inside ReviewBodyEditTrigger) since comparing against
+	// Date.now() during a client component's render trips react-hooks/purity.
+	const isUpcoming = isUpcomingRelease(media.releaseDate, raw.status);
 
 	return (
 		<div className={styles.page}>
@@ -250,7 +262,7 @@ export default async function MediaDetailPage({
 	
 							<div className={styles.review_row}>
 								<div className={styles.review_col}>
-									<ReviewBodyEditTrigger media={media} />
+									<ReviewBodyEditTrigger media={media} isUpcoming={isUpcoming} />
 								</div>
 								{(runtimeLabel != null ||
 									publicRating != null ||

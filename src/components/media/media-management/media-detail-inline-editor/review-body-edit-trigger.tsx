@@ -11,7 +11,25 @@ import styles from "./review-body-edit-trigger.module.sass";
 
 type Props = {
 	media: MediaRecord;
+	// Computed by the server component from Date.now() vs media.releaseDate —
+	// kept out of this client component since comparing against the current
+	// time during render trips react-hooks/purity.
+	isUpcoming: boolean;
 };
+
+const ReleaseDateFormatter = new Intl.DateTimeFormat("en-GB", {
+	year: "numeric",
+	month: "short",
+	day: "numeric",
+});
+
+function UpcomingReviewPlaceholder({ date }: { date: Date | null }) {
+	return (
+		<div className={styles.upcoming}>
+			{date ? `Releasing ${ReleaseDateFormatter.format(date)}` : "Not yet released"}
+		</div>
+	);
+}
 
 // Drop-in replacement for <MediaReview> — click to open the same body editor (with AI diff) the
 // full editor modal uses. Closing it stages the edit into media-publish-store instead of saving
@@ -19,7 +37,7 @@ type Props = {
 //
 // Scoped to the whole review card, not just the body text, since MediaReview (a shared primitive
 // used everywhere) doesn't expose its body as a separate targetable sub-element.
-export function ReviewBodyEditTrigger({ media }: Props) {
+export function ReviewBodyEditTrigger({ media, isUpcoming }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
 	// Mobile admin edits are intentionally unsupported.
@@ -33,6 +51,10 @@ export function ReviewBodyEditTrigger({ media }: Props) {
 
 	const [body, setBody] = useState(draftBody ?? review?.body ?? "");
 	const [isOpen, setIsOpen] = useState(false);
+
+	if (!review && isUpcoming) {
+		return <UpcomingReviewPlaceholder date={media.releaseDate} />;
+	}
 
 	if (!review || !isAdmin) {
 		return <MediaReview review={review} watchedDate={media.watchedDate} />;
