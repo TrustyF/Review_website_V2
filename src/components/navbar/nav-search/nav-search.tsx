@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "@/components/ui/link";
 import { Clickable } from "@/components/ui/clickable";
 import Image from "next/image";
@@ -25,6 +26,16 @@ const TYPE_LABELS: Record<MediaType, string> = {
 // Wait after the last keystroke before querying, so the input stays responsive.
 const DEBOUNCE_MS = 500;
 
+// Avoids React's "useLayoutEffect does nothing on the server" warning.
+const useIsomorphicLayoutEffect =
+	typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+// Narrower than this, and result rows (poster + title + meta) get cramped.
+const DROPDOWN_MIN_WIDTH = 320;
+const VIEWPORT_MARGIN = 8;
+
+type DropdownPosition = { top: number; left: number; width: number };
+
 // Media-agnostic search reachable from every page via the navbar. Collapsed
 // to a trigger icon by default; clicking it expands the input inline with
 // an animated width, showing live results in a popout below.
@@ -37,8 +48,43 @@ export function NavSearch() {
 	const [error, setError] = useState<string | null>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
+	const overlayRef = useRef<HTMLDivElement>(null);
+	const dropdownRef = useRef<HTMLDivElement>(null);
+	const [dropdownPos, setDropdownPos] = useState<DropdownPosition | null>(
+		null,
+	);
 
-	useOutsideClick(containerRef, collapseSearch, { enabled: isExpanded });
+	// Dropdown is portaled apart from the wrapper (see below), so a click
+	// inside it must count as "inside" too, same as PosterQuickEditButton.
+	useOutsideClick([containerRef, dropdownRef], collapseSearch, {
+		enabled: isExpanded,
+	});
+
+	// Dropdown is portaled to document.body (see below) so it can render
+	// wider than the search bar itself instead of being clamped to it — so
+	// its position has to be measured in JS rather than left to CSS.
+	useIsomorphicLayoutEffect(() => {
+		if (!isExpanded || !isOpen || !overlayRef.current) return;
+
+		function update() {
+			const rect = overlayRef.current!.getBoundingClientRect();
+			const width = Math.max(rect.width, DROPDOWN_MIN_WIDTH);
+			let left = rect.left;
+			if (left + width > window.innerWidth - VIEWPORT_MARGIN) {
+				left = window.innerWidth - width - VIEWPORT_MARGIN;
+			}
+			left = Math.max(left, VIEWPORT_MARGIN);
+			setDropdownPos({ top: rect.bottom + 8, left, width });
+		}
+
+		update();
+		window.addEventListener("resize", update);
+		window.addEventListener("scroll", update, true);
+		return () => {
+			window.removeEventListener("resize", update);
+			window.removeEventListener("scroll", update, true);
+		};
+	}, [isExpanded, isOpen]);
 
 	// Autofocus on expand, since no click landed on the input itself.
 	useEffect(() => {
@@ -78,28 +124,20 @@ export function NavSearch() {
 		setIsExpanded(false);
 	}
 
-	return (
-		<div className={styles.wrapper} ref={containerRef}>
-			{/* Always mounted so .expanded animates width instead of mount/unmount;
-			tabIndex/aria-hidden keep the width:0 input out of tab order while collapsed. */}
-			<div
-				className={`${styles.overlay} ${isExpanded ? styles.expanded : ""}`}>
-				<input
-					ref={inputRef}
-					type="text"
-					className={styles.input}
-					placeholder="Search…"
-					value={input}
-					tabIndex={isExpanded ? 0 : -1}
-					aria-hidden={!isExpanded}
-					onChange={(e) => handleQueryChange(e.target.value)}
-					onFocus={(e) => {
-						e.target.select();
-						if (input.trim()) setIsOpen(true);
-					}}
-				/>
-				{isExpanded && isOpen && (
-					<div className={styles.dropdown}>
+	// Portaled to document.body (rather than sitting inside .overlay with
+	// position: absolute) so it can render wider than the search bar and
+	// isn't clipped by the navbar's own overflow/stacking context.
+	const dropdown =
+		isExpanded && isOpen && dropdownPos && typeof document !== "undefined"
+			? createPortal(
+					<div
+						ref={dropdownRef}
+						className={styles.dropdown}
+						style={{
+							top: dropdownPos.top,
+							left: dropdownPos.left,
+							width: dropdownPos.width,
+						}}>
 						{error ? (
 							<div className={styles.status}>{error}</div>
 						) : results.length > 0 ? (
@@ -170,8 +208,32 @@ export function NavSearch() {
 								{isSearching ? "Searching…" : "No matches."}
 							</div>
 						)}
-					</div>
-				)}
+					</div>,
+					document.body,
+				)
+			: null;
+
+	return (
+		<div className={styles.wrapper} ref={containerRef}>
+			{/* Always mounted so .expanded animates width instead of mount/unmount;
+			tabIndex/aria-hidden keep the width:0 input out of tab order while collapsed. */}
+			<div
+				ref={overlayRef}
+				className={`${styles.overlay} ${isExpanded ? styles.expanded : ""}`}>
+				<input
+					ref={inputRef}
+					type="text"
+					className={styles.input}
+					placeholder="Search…"
+					value={input}
+					tabIndex={isExpanded ? 0 : -1}
+					aria-hidden={!isExpanded}
+					onChange={(e) => handleQueryChange(e.target.value)}
+					onFocus={(e) => {
+						e.target.select();
+						if (input.trim()) setIsOpen(true);
+					}}
+				/>
 			</div>
 			<Clickable
 				className={styles.trigger}
@@ -180,6 +242,7 @@ export function NavSearch() {
 				onClick={() => setIsExpanded((expanded) => !expanded)}>
 				<Search size={18} />
 			</Clickable>
+			{dropdown}
 		</div>
 	);
 }
