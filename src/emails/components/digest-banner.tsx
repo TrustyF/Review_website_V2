@@ -4,18 +4,29 @@ import { emailAssetSrc } from "../lib/email-asset";
 type Props = {
 	bannerSrc: string | null;
 	dateLabel: string;
+	// Admin override from /admin/digest-banner — default to "Weekly Digest"/dateLabel when unset.
+	headline?: string | null | undefined;
+	subtitle?: string | null | undefined;
+	// 0-100, vertical crop focus — defaults to 50 (centered) when unset.
+	positionY?: number | null | undefined;
 };
 
 // Tall, closer to the reference screenshot's proportions relative to a
 // 600px-wide email — a short banner read as a thin strip, not a hero.
-const BANNER_HEIGHT = 420;
+const BANNER_HEIGHT = 250;
 
 // Two stacked CSS backgrounds (photo on the outer table cell, a top-only
 // gradient on a nested one) instead of an <Img> + absolutely-positioned
 // overlay — lets the logo/date row sit in normal document flow on top, no
 // positioning needed. Outlook desktop ignores both backgrounds and falls
 // back to the flat color; every other modern/mobile mail client renders it.
-export function DigestBanner({ bannerSrc, dateLabel }: Props) {
+export function DigestBanner({
+	bannerSrc,
+	dateLabel,
+	headline,
+	subtitle,
+	positionY,
+}: Props) {
 	return (
 		<Section
 			className="rounded-t-[10px]"
@@ -25,7 +36,7 @@ export function DigestBanner({ bannerSrc, dateLabel }: Props) {
 					? {
 							backgroundImage: `url(${bannerSrc})`,
 							backgroundSize: "cover",
-							backgroundPosition: "center",
+							backgroundPosition: `center ${positionY ?? 50}%`,
 						}
 					: {}),
 			}}>
@@ -64,10 +75,10 @@ export function DigestBanner({ bannerSrc, dateLabel }: Props) {
 						</Column>
 						<Column className="text-center align-top">
 							<Text className="m-0 mt-2 font-serif text-[50px] font-bold uppercase leading-[1] text-white">
-								Weekly Digest
+								{headline || "Weekly Digest"}
 							</Text>
 							<Text className="m-0 mt-2 text-[12px] font-medium text-white">
-								{dateLabel}
+								{subtitle || dateLabel}
 							</Text>
 						</Column>
 						<Column className="w-[170px] align-top" />

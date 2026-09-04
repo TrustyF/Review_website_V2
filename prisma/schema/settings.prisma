@@ -1,0 +1,14 @@
+// Singleton row (always id 1) for small admin-editable site config that
+// doesn't warrant its own table — currently just the weekly digest email's
+// banner override. Read/written by /admin/digest-banner.
+model Settings {
+  id Int @id @default(1)
+
+  digestBannerImage    String?
+  digestBannerHeadline String?
+  digestBannerSubtitle String?
+  // 0-100, vertical crop focus within the banner's fixed height (see
+  // DigestBanner's BANNER_HEIGHT) — 50 is centered. Only meaningful when
+  // digestBannerImage is set.
+  digestBannerPositionY Int @default(50)
+}

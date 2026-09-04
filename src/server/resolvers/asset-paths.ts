@@ -41,6 +41,10 @@ export const EMAIL_BANNER_DIR = "banners/email-cache";
 export const EMAIL_BANNER_MAX_WIDTH = 900;
 export const EMAIL_BANNER_QUALITY = 65;
 
+// Admin-uploaded override for the digest's banner (see Settings.digestBannerImage) — separate
+// from EMAIL_BANNER_DIR since it's content-addressed by uploaded bytes, not a mediaId+sourcePath.
+export const DIGEST_BANNER_OVERRIDE_DIR = "banners/digest-override";
+
 export type CacheFormat = "webp" | "avif" | "jpeg";
 
 // Content-addressable: derived from the source path so switching a poster/banner naturally produces a new filename, no cache-busting needed. Old files become orphaned (see cleanup-posters.ts / purge-deleted-change-log.ts).
@@ -89,7 +93,10 @@ export function posterUrlFor(
 }
 
 // Lazy-resolve counterpart to resolveLinkEmbedImage. Returns null (not a placeholder) when there's no poster, since a generic image would misrepresent the title on a preview card.
-export function toLinkEmbedImageSrc(mediaId: number, posterPath: string | null) {
+export function toLinkEmbedImageSrc(
+	mediaId: number,
+	posterPath: string | null,
+) {
 	return posterPath
 		? `/api/link-embed/${mediaId}/${mediaAssetFilename(mediaId, posterPath, "jpeg")}`
 		: null;

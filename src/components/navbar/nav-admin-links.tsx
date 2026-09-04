@@ -1,4 +1,4 @@
-import { CirclePlus, ScrollText, Users } from "lucide-react";
+import { CirclePlus, Image, ScrollText, Users } from "lucide-react";
 import { NavLink } from "@/components/navbar/nav-link";
 import barStyle from "./nav-bar.module.sass";
 import style from "./nav-admin-links.module.sass";
@@ -32,6 +32,13 @@ export function NavAdminLinks({ pathname }: Props) {
 				className={barStyle.link}
 				pathname={pathname}>
 				Cron logs
+			</NavLink>
+			<NavLink
+				href="/admin/digest-banner"
+				icon={Image}
+				className={barStyle.link}
+				pathname={pathname}>
+				Digest banner
 			</NavLink>
 		</div>
 	);
