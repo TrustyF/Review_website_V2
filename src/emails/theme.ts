@@ -28,6 +28,9 @@ export const EMAIL_TAILWIND_CONFIG: TailwindConfig = {
 				// in a mail client; Inter is loaded via theme-fonts.tsx's
 				// <EmailFonts>, same as react-email's own demo templates.
 				sans: ["Inter", "Arial", "Helvetica", "sans-serif"],
+				// Playfair Display, loaded via <EmailFonts> alongside Inter —
+				// used for the digest banner headline only.
+				serif: ["Playfair Display", "Georgia", "serif"],
 			},
 		},
 	},

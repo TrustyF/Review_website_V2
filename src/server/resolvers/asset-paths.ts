@@ -33,6 +33,14 @@ export const BANNER_QUALITY = 60;
 export const BANNER_GRAIN_OPACITY = 0.5;
 export const POSTER_QUALITY = 50;
 
+// Own directory/format from BANNER_DIR's avif cache — the weekly digest's
+// hero banner needs a format mail clients can actually render (Outlook/many
+// webmail clients don't support AVIF), and a smaller width since it's
+// rendered at ~600px CSS wide, not the site's full content column.
+export const EMAIL_BANNER_DIR = "banners/email-cache";
+export const EMAIL_BANNER_MAX_WIDTH = 900;
+export const EMAIL_BANNER_QUALITY = 65;
+
 export type CacheFormat = "webp" | "avif" | "jpeg";
 
 // Content-addressable: derived from the source path so switching a poster/banner naturally produces a new filename, no cache-busting needed. Old files become orphaned (see cleanup-posters.ts / purge-deleted-change-log.ts).

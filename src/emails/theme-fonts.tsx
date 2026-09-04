@@ -9,8 +9,18 @@ export function EmailFonts() {
 		<>
 			<style
 				dangerouslySetInnerHTML={{
-					__html: `@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');`,
+					__html: `@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:wght@700&display=swap');`,
 				}}
+			/>
+			<Font
+				fontFamily="Playfair Display"
+				fallbackFontFamily={["Georgia", "serif"]}
+				webFont={{
+					url: "https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKeiukDQ.ttf",
+					format: "truetype",
+				}}
+				fontWeight={700}
+				fontStyle="normal"
 			/>
 			<Font
 				fontFamily="Inter"

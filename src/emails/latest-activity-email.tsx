@@ -11,7 +11,7 @@ import {
 	Tailwind,
 	Text,
 } from "@react-email/components";
-import { EmailLogo } from "./components/email-logo";
+import { DigestBanner } from "./components/digest-banner";
 import { MediaReviewCard } from "./components/media-review-card";
 import { MediaMiniCard } from "./components/media-mini-card";
 import { EMAIL_TAILWIND_CONFIG } from "./theme";
@@ -35,6 +35,8 @@ type WatchProps = {
 };
 
 type Props = {
+	bannerSrc: string | null;
+	dateLabel: string;
 	latestReview: ReviewProps | null;
 	recentWatches: WatchProps[];
 	activityUrl: string;
@@ -49,6 +51,11 @@ const SECTION_LABEL_CLASS =
 // — only used by `npm run email_dev`'s preview server, never by the real
 // send path (send-weekly-digest.ts always passes real props).
 LatestActivityEmail.PreviewProps = {
+	// Reuses recentWatches' own (verified-live) Toy Story 5 poster path below
+	// — a real backdrop path isn't available without a TMDB API key, and
+	// background-size:cover crops any aspect ratio to fit the banner anyway.
+	bannerSrc: "https://image.tmdb.org/t/p/w1280/sfQtVlIHljToOwYjhe21KPGzZWK.jpg",
+	dateLabel: "September 4, 2026",
 	latestReview: {
 		title: "The Odyssey",
 		mediaUrl: "https://example.com/media/1457",
@@ -94,6 +101,8 @@ LatestActivityEmail.PreviewProps = {
 } satisfies Props;
 
 export default function LatestActivityEmail({
+	bannerSrc,
+	dateLabel,
 	latestReview,
 	recentWatches,
 	activityUrl,
@@ -110,11 +119,9 @@ export default function LatestActivityEmail({
 				</Preview>
 				<Body className="m-0 bg-bg-2 py-8 font-sans">
 					<Container className="mx-auto w-full max-w-[600px]">
-						<Section className="mb-6">
-							<EmailLogo />
-						</Section>
+						<DigestBanner bannerSrc={bannerSrc} dateLabel={dateLabel} />
 
-						<Section className="rounded-[10px] bg-bg p-6">
+						<Section className="rounded-b-[10px] bg-bg p-6">
 							<Text className="m-0 mb-6 text-[15px] text-fg-2">
 								Hey! Here&apos;s what I&apos;ve been watching this week.
 							</Text>

@@ -11,6 +11,9 @@ import {
 	BANNER_QUALITY,
 	CHANGELOG_BANNER_THUMB_DIR,
 	CHANGELOG_THUMB_DIR,
+	EMAIL_BANNER_DIR,
+	EMAIL_BANNER_MAX_WIDTH,
+	EMAIL_BANNER_QUALITY,
 	LINK_EMBED_DIR,
 	PERSON_PHOTO_DIR,
 	PERSON_PHOTO_MAX_WIDTH,
@@ -383,6 +386,37 @@ export async function resolvePersonPhoto(
 	});
 
 	return { bytes: source, contentType: sourceContentType, fresh: true };
+}
+
+// Same content-addressable caching as resolveChangelogPosterThumb, but for
+// the weekly digest email's hero banner — JPEG, not BANNER_FORMAT's avif
+// (mail-client-safe), and falls back to the poster (cover-cropped by the
+// email's CSS, same as a real banner) when the media has no bannerPath.
+export async function resolveEmailBanner(
+	mediaId: number,
+	type: MediaType,
+	externalId: string | null,
+	bannerPath: string | null,
+	posterPath: string | null,
+): Promise<string | null> {
+	const sourcePath = bannerPath ?? posterPath;
+	if (!sourcePath) return null;
+
+	const filename = mediaAssetFilename(mediaId, sourcePath, "jpeg");
+	const sourceUrl = bannerPath
+		? bannerUrlFor(type, bannerPath)
+		: posterUrlFor(type, externalId, posterPath!, "full");
+
+	await cacheOrDownload(
+		EMAIL_BANNER_DIR,
+		filename,
+		sourceUrl,
+		{ resize: { width: EMAIL_BANNER_MAX_WIDTH } },
+		EMAIL_BANNER_QUALITY,
+		"jpeg",
+	);
+
+	return getImageStorage().urlFor(EMAIL_BANNER_DIR, filename);
 }
 
 // Same content-addressable caching as resolveChangelogPosterThumb, but for a

@@ -1,5 +1,8 @@
 import { db } from "@/server/db/client";
-import { resolveChangelogPosterThumb } from "@/server/resolvers/poster-resolver";
+import {
+	resolveChangelogPosterThumb,
+	resolveEmailBanner,
+} from "@/server/resolvers/poster-resolver";
 import { sendEmail, toAbsoluteUrl } from "@/server/email/mailer";
 import LatestActivityEmail from "@/emails/latest-activity-email";
 import { appendJobSummary, formatSummaryList } from "./job-summary";
@@ -13,6 +16,7 @@ const MEDIA_SELECT = {
 	title: true,
 	type: true,
 	posterPath: true,
+	bannerPath: true,
 	externalId: true,
 	releaseDate: true,
 } as const;
@@ -22,6 +26,7 @@ type MediaSelection = {
 	title: string;
 	type: MediaType;
 	posterPath: string | null;
+	bannerPath: string | null;
 	externalId: string | null;
 	releaseDate: Date | null;
 };
@@ -39,9 +44,30 @@ async function toPosterSrc(media: MediaSelection): Promise<string> {
 	return toAbsoluteUrl(src);
 }
 
+async function toBannerSrc(media: MediaSelection): Promise<string | null> {
+	const src = await resolveEmailBanner(
+		media.id,
+		media.type,
+		media.externalId,
+		media.bannerPath,
+		media.posterPath,
+	);
+	return src ? toAbsoluteUrl(src) : null;
+}
+
 function formatWatchedDate(date: Date): string {
 	return date.toLocaleDateString("en-US", {
 		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
+}
+
+// Long month, matching the banner's "WEEKLY DIGEST · <date>" subtitle —
+// distinct from formatWatchedDate's shorter "Aug 12, 2026" review byline.
+function formatDigestDate(date: Date): string {
+	return date.toLocaleDateString("en-US", {
+		month: "long",
 		day: "numeric",
 		year: "numeric",
 	});
@@ -119,6 +145,11 @@ async function main() {
 			})),
 	);
 
+	const featuredMedia =
+		latestReviewed?.media ?? recentlyRated[0]?.media ?? null;
+	const bannerSrc = featuredMedia ? await toBannerSrc(featuredMedia) : null;
+	const dateLabel = formatDigestDate(new Date());
+
 	const recipients = await db.user.findMany({
 		where: { newsletterOptIn: true, email: { not: null } },
 		select: { email: true },
@@ -129,6 +160,8 @@ async function main() {
 			to: recipient.email!,
 			subject: "What I've been watching",
 			react: LatestActivityEmail({
+				bannerSrc,
+				dateLabel,
 				latestReview,
 				recentWatches,
 				activityUrl: toAbsoluteUrl("/activity"),
