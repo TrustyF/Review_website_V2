@@ -4,6 +4,7 @@ import { FeaturedReview } from "@/components/home/featured-review/featured-revie
 import { RecentMoviesSection } from "@/components/home/recent-movies-section/recent-movies-section";
 import { RecentlyWatchedSection } from "@/components/home/recently-watched-section/recently-watched-section";
 import { AnticipatedReleasesSection } from "@/components/home/anticipated-releases-section/anticipated-releases-section";
+import { LazyRecentMediaSection } from "@/components/home/recent-media/lazy-recent-media-section";
 import {
 	EnrichmentStatus,
 	MediaStatus,
@@ -40,6 +41,16 @@ const SCREEN_MEDIA_TYPES: MediaType[] = [
 	MediaType.MOVIE,
 	MediaType.SHORT,
 	MediaType.TVSHOW,
+];
+
+// The other home sections, one recent-releases/recently-watched pair per type — each is lazily
+// fetched client-side (LazyRecentMediaSection) once it scrolls near the viewport, rather than
+// queried up front here alongside the movie sections above.
+const OTHER_MEDIA_TYPES: MediaType[] = [
+	MediaType.BOOK,
+	MediaType.COMIC,
+	MediaType.GAME,
+	MediaType.MANGA,
 ];
 
 // Recent releases *you've rated* — not just "what's new" (that's RecentMediaListPage's job). Scoped to RECENT_MOVIES_MONTHS, but the date filter drops entirely below MIN_RECENT_MOVIES rather than showing a half-empty section.
@@ -267,6 +278,9 @@ export default async function HomePage() {
 			<RecentMoviesSection items={recentMovies} />
 			<AnticipatedReleasesSection items={anticipatedReleases} />
 			<RecentlyWatchedSection items={recentlyWatched} />
+			{OTHER_MEDIA_TYPES.map((type) => (
+				<LazyRecentMediaSection key={type} type={type} />
+			))}
 		</div>
 	);
 }

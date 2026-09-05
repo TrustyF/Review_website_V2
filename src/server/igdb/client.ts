@@ -18,6 +18,9 @@ const GAME_FIELDS = [
 	"url",
 	"summary",
 	"first_release_date",
+	// Per-release dates (e.g. early access vs. full 1.0) — first_release_date alone can reflect
+	// whichever release IGDB currently considers "main" rather than the earliest one.
+	"release_dates.date",
 	"total_rating",
 	"status",
 	"genres.name",

@@ -7,6 +7,11 @@ export const IgdbGameSchema = type({
 	url: "string",
 	"summary?": "string | null",
 	"first_release_date?": "number | null",
+	// Per-platform/per-status release events (e.g. early access, then full release) — used to find
+	// the earliest actual release rather than trusting first_release_date alone (see game.ts).
+	"release_dates?": type({
+		"date?": "number | null",
+	}).array(),
 	"total_rating?": "number | null",
 	"status?": "number | null",
 	"genres?": type({

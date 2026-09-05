@@ -14,6 +14,18 @@ const STATUS_MAP: Record<number, MediaStatus> = {
 	6: MediaStatus.COMPLETED, // Cancelled
 };
 
+// IGDB's first_release_date can reflect whichever release it currently considers "main" (e.g. a
+// game's full 1.0 release) rather than the earliest one (e.g. an early access launch years prior).
+// release_dates carries every release event, so the true earliest is the min across those, falling
+// back to first_release_date only when release_dates is empty/missing.
+function earliestReleaseDate(game: IgdbGame): Date | null {
+	const dates = (game.release_dates ?? [])
+		.map((rd) => rd.date)
+		.filter((d): d is number => d != null);
+	if (dates.length > 0) return new Date(Math.min(...dates) * 1000);
+	return game.first_release_date ? new Date(game.first_release_date * 1000) : null;
+}
+
 // Fields other than status/publicRating only fill in if existing has no value; those two genuinely
 // change over time at the source, so they always refresh.
 function buildMediaFields(
@@ -29,11 +41,7 @@ function buildMediaFields(
 	return {
 		title: existing?.title ?? game.name,
 		overview: existing?.overview ?? (game.summary ?? null),
-		releaseDate:
-			existing?.releaseDate ??
-			(game.first_release_date
-				? new Date(game.first_release_date * 1000)
-				: null),
+		releaseDate: existing?.releaseDate ?? earliestReleaseDate(game),
 		status:
 			game.status != null
 				? (STATUS_MAP[game.status] ?? MediaStatus.RELEASED)
