@@ -70,13 +70,17 @@
     outline: none
     border-color: var(--brand)
 
-// Floating overlay so results don't push the navbar's own height around.
+// Portaled to document.body and positioned via getBoundingClientRect() in
+// JS (see nav-search.tsx) rather than absolute-inside-.overlay, so it can
+// grow to fit its content instead of being clamped to the search bar's
+// width, and isn't clipped by the navbar's own overflow/stacking context.
+// Anchored with `right` (set inline) rather than `left`+width, so it stays
+// lined up with the search bar's right edge as it grows.
 .dropdown
-  position: absolute
-  top: calc(100% + 0.5rem)
-  left: 0
+  position: fixed
   z-index: 20
-  width: 100%
+  min-width: 20rem
+  max-width: min(28rem, calc(100vw - 1rem))
   max-height: 22rem
   overflow-y: auto
   display: flex
@@ -85,6 +89,7 @@
   border: 1px solid var(--surface-border)
   border-radius: 0.5rem
   padding: 0.35rem
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.25)
 
 .status
   padding: 0.5rem
