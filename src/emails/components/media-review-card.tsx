@@ -25,7 +25,7 @@ export function MediaReviewCard({
 	body,
 }: Props) {
 	return (
-		<Section className="rounded-[10px] bg-bg-2 p-5">
+		<Section className="rounded-[10px] pt-5 pb-5">
 			<Row>
 				<Column className="w-[130px] align-top">
 					<Link href={mediaUrl}>
@@ -38,16 +38,11 @@ export function MediaReviewCard({
 						/>
 					</Link>
 				</Column>
-				<Column className="pl-5 align-top">
+				<Column className="pl-2 align-top">
 					<Link href={mediaUrl} className="no-underline">
-						<Text className="m-0 text-[18px] font-bold text-fg">{title}</Text>
+						<Text className="m-0 text-[18px] font-medium text-fg">{title}</Text>
 					</Link>
 					<RatingStars rating={rating} releaseYear={releaseYear} />
-					{watchedDateLabel && (
-						<Text className="mb-3 mt-1 text-[12px] text-fg-3">
-							Watched on {watchedDateLabel}
-						</Text>
-					)}
 					{body && formatReviewBody(body, mediaUrl)}
 				</Column>
 			</Row>

@@ -9,7 +9,7 @@ export function EmailFonts() {
 		<>
 			<style
 				dangerouslySetInnerHTML={{
-					__html: `@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:wght@700&display=swap');`,
+					__html: `@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:wght@700&family=Roboto:wght@400;500;700&display=swap');`,
 				}}
 			/>
 			<Font
@@ -23,33 +23,33 @@ export function EmailFonts() {
 				fontStyle="normal"
 			/>
 			<Font
-				fontFamily="Inter"
+				fontFamily="Roboto"
 				fallbackFontFamily={["Arial", "sans-serif"]}
 				webFont={{
-					url: "https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuOKfMZg.ttf",
+					url: "https://fonts.gstatic.com/s/roboto/v51/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWubEbWmTggvWlnwk.ttf",
 					format: "truetype",
 				}}
 				fontWeight={400}
 				fontStyle="normal"
 			/>
 			<Font
-				fontFamily="Inter"
+				fontFamily="Roboto"
 				fallbackFontFamily={["Arial", "sans-serif"]}
 				webFont={{
-					url: "https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuI6fMZg.ttf",
+					url: "https://fonts.gstatic.com/s/roboto/v51/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWub2bWmTggvWlnwk.ttf",
 					format: "truetype",
 				}}
 				fontWeight={500}
 				fontStyle="normal"
 			/>
 			<Font
-				fontFamily="Inter"
+				fontFamily="Roboto"
 				fallbackFontFamily={["Arial", "sans-serif"]}
 				webFont={{
-					url: "https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuGKYMZg.ttf",
+					url: "https://fonts.gstatic.com/s/roboto/v51/KFOMCnqEu92Fr1ME7kSn66aGLdTylUAMQXC89YmC2DPNWuYjammTggvWlnwk.ttf",
 					format: "truetype",
 				}}
-				fontWeight={600}
+				fontWeight={700}
 				fontStyle="normal"
 			/>
 		</>

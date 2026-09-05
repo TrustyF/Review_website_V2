@@ -143,9 +143,19 @@ async function getRecentlyWatchedMovies(excludeIds: number[]) {
 const REVIEWED_REVIEW_WHERE: Prisma.ReviewWhereInput = {
 	AND: [{ body: { not: null } }, { body: { not: "" } }],
 };
+// Book/comic/manga never get a bannerPath (no ingestion source for one), and
+// the hero card looks bare without its backdrop — excluded here rather than
+// filtered client-side so a banner-less review doesn't consume a featured
+// slot.
+const NO_BANNER_MEDIA_TYPES: MediaType[] = [
+	MediaType.BOOK,
+	MediaType.COMIC,
+	MediaType.MANGA,
+];
 const REVIEWED_WHERE: Prisma.MediaWhereInput = {
 	enrichmentStatus: EnrichmentStatus.DONE,
 	isAdult: false,
+	type: { notIn: NO_BANNER_MEDIA_TYPES },
 	review: REVIEWED_REVIEW_WHERE,
 };
 const REVIEWED_ORDER_BY: Prisma.MediaOrderByWithRelationInput[] = [

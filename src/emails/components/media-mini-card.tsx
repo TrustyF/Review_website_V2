@@ -13,7 +13,7 @@ type Props = {
 // Renders as a bare <Column> so several can sit in one parent <Row>.
 export function MediaMiniCard({ title, mediaUrl, posterSrc, rating }: Props) {
 	return (
-		<Column className="w-[110px] pr-3 align-top">
+		<Column className="w-[110px] pr-5 align-top">
 			<Link href={mediaUrl}>
 				<Img
 					src={posterSrc}
@@ -24,7 +24,7 @@ export function MediaMiniCard({ title, mediaUrl, posterSrc, rating }: Props) {
 				/>
 			</Link>
 			<Link href={mediaUrl} className="no-underline">
-				<Text className="m-0 mt-0.5 max-w-[100px] truncate text-[13px] font-bold text-fg">
+				<Text className="m-0 mt-0.5 max-w-[100px] truncate text-[13px] font-medium text-fg">
 					{title}
 				</Text>
 			</Link>

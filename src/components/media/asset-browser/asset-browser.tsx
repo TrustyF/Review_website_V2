@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Clickable } from "@/components/ui/clickable";
 import { ImagePicker } from "@/components/media/media-management/media-editor/components/image-picker";
 import {
@@ -41,6 +41,14 @@ export function AssetBrowser({ isOpen, onSelect, onClose }: Props) {
 	// Banners are what this browser gets used for most (see the digest
 	// banner) — defaults to that tab rather than posters.
 	const [tab, setTab] = useState<Tab>("banner");
+	const searchInputRef = useRef<HTMLInputElement>(null);
+
+	// The panel stays mounted while closed (see the isOpen doc comment above),
+	// so autoFocus only fires once — refocus explicitly whenever it reopens.
+	useEffect(() => {
+		if (isOpen && !selected) searchInputRef.current?.focus();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isOpen]);
 
 	async function handleSearch(value: string) {
 		setQuery(value);
@@ -81,6 +89,7 @@ export function AssetBrowser({ isOpen, onSelect, onClose }: Props) {
 				{!selected && (
 					<div className={styles.search_step}>
 						<input
+							ref={searchInputRef}
 							className={styles.search_input}
 							type="text"
 							placeholder="Search a title…"

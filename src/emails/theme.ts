@@ -23,14 +23,16 @@ export const EMAIL_TAILWIND_CONFIG: TailwindConfig = {
 	theme: {
 		extend: {
 			colors,
+			borderColor: {
+				DEFAULT: colors.brand,
+			},
 			fontFamily: {
-				// Inter, not Geist ($font-sans) — Geist can't load as a web font
-				// in a mail client; Inter is loaded via theme-fonts.tsx's
-				// <EmailFonts>, same as react-email's own demo templates.
-				sans: ["Inter", "Arial", "Helvetica", "sans-serif"],
 				// Playfair Display, loaded via <EmailFonts> alongside Inter —
 				// used for the digest banner headline only.
 				serif: ["Playfair Display", "Georgia", "serif"],
+				// Loaded via <EmailFonts> alongside Inter/Playfair Display —
+				// not used by any component yet, opt in with font-roboto.
+				roboto: ["Roboto", "Arial", "sans-serif"],
 			},
 		},
 	},
