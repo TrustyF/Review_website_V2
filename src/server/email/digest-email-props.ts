@@ -172,7 +172,6 @@ export async function buildDigestEmailProps(): Promise<DigestEmailProps | null> 
 		dateLabel: formatDigestDate(new Date()),
 		bannerHeadline: settings?.digestBannerHeadline,
 		bannerSubtitle: settings?.digestBannerSubtitle,
-		bannerPositionY: settings?.digestBannerPositionY,
 		latestReview,
 		recentWatches,
 		activityUrl: toAbsoluteUrl("/activity"),

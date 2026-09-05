@@ -16,8 +16,6 @@ export type DigestBannerOverride = {
 	image: string | null;
 	headline: string | null;
 	subtitle: string | null;
-	// 0-100, vertical crop focus — see prisma/schema/settings.prisma.
-	positionY: number;
 };
 
 // Normalizes any image input (existing override URL, or a pasted/picked
@@ -44,10 +42,6 @@ export async function updateDigestBannerOverride(
 		digestBannerImage: await resolveOverrideImageUrl(input.image),
 		digestBannerHeadline: input.headline?.trim() || null,
 		digestBannerSubtitle: input.subtitle?.trim() || null,
-		digestBannerPositionY: Math.min(
-			100,
-			Math.max(0, Math.round(input.positionY)),
-		),
 	};
 
 	await db.settings.upsert({

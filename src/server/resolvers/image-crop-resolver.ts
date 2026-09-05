@@ -4,6 +4,8 @@ import {
 	BANNER_FORMAT,
 	BANNER_MAX_WIDTH,
 	BANNER_QUALITY,
+	EMAIL_BANNER_MAX_WIDTH,
+	EMAIL_BANNER_QUALITY,
 	POSTER_QUALITY,
 } from "@/server/resolvers/poster-resolver";
 import {
@@ -13,7 +15,7 @@ import {
 import { CropShapeId } from "@/app/dev/image-crop/crop-shapes";
 import { getImageStorage } from "@/server/storage/image-storage";
 
-type ShapeFormat = "webp" | "avif";
+type ShapeFormat = "webp" | "avif" | "jpeg";
 
 // Small and square — this is a preset-picker thumbnail (see AVATAR_OPTIONS in
 // src/lib/avatars.ts), not a hero image, so it doesn't need posters' 500px
@@ -122,7 +124,11 @@ async function cropAndSave(
 	}
 
 	const encoded =
-		format === "avif" ? pipeline.avif({ quality }) : pipeline.webp({ quality });
+		format === "avif"
+			? pipeline.avif({ quality })
+			: format === "jpeg"
+				? pipeline.jpeg({ quality })
+				: pipeline.webp({ quality });
 	const bytes = await encoded.toBuffer();
 
 	const storage = getImageStorage();
@@ -156,6 +162,16 @@ export async function saveCroppedImage(
 				BANNER_MAX_WIDTH,
 				BANNER_QUALITY,
 				BANNER_FORMAT,
+				vignette,
+			);
+		case "digest-banner":
+			return cropAndSave(
+				source,
+				shapeId,
+				crop,
+				EMAIL_BANNER_MAX_WIDTH,
+				EMAIL_BANNER_QUALITY,
+				"jpeg",
 				vignette,
 			);
 		case "list-thumbnail-16-9":

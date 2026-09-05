@@ -2,9 +2,6 @@
 import { saveCroppedImage } from "@/server/resolvers/image-crop-resolver";
 import { CROP_SHAPES, CropShapeId } from "@/app/dev/image-crop/crop-shapes";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { dbPublic } from "@/server/db/client";
-import { bannerUrlFor, toPosterSrc } from "@/server/resolvers/asset-paths";
-import { fuzzySearch } from "@/lib/fuzzy-search";
 
 export async function saveCroppedImageAction(formData: FormData): Promise<string> {
 	await requireAdmin();
@@ -51,49 +48,4 @@ export async function fetchImportedImage(url: string): Promise<string> {
 	const bytes = Buffer.from(await res.arrayBuffer());
 	const contentType = res.headers.get("content-type") ?? "image/jpeg";
 	return `data:${contentType};base64,${bytes.toString("base64")}`;
-}
-
-export type BannerSearchResult = {
-	id: number;
-	title: string;
-	// Thumbnail for the results list only — bannerSrc is the actual crop source
-	posterSrc: string;
-	// Absolute TMDB/IGDB URL, not this app's /api/banner route — fetchImportedImage's
-	// raw server-side fetch() can't resolve a relative path
-	bannerSrc: string;
-};
-
-const BANNER_SEARCH_LIMIT = 20;
-
-// Same typo tolerance as list-actions.ts's searchMediaForList
-const BANNER_FUSE_OPTIONS = {
-	keys: ["title"],
-	threshold: 0.35,
-	ignoreLocation: true,
-};
-
-// Backs "search a movie/show for its banner" — loads every eligible
-// candidate and ranks in memory, same tradeoff as searchMediaForList.
-export async function searchMediaForBanner(
-	query: string,
-): Promise<BannerSearchResult[]> {
-	await requireAdmin();
-	const trimmed = query.trim();
-	if (!trimmed) return [];
-
-	const candidates = await dbPublic.media.findMany({
-		where: { bannerPath: { not: null } },
-		select: { id: true, title: true, type: true, posterPath: true, bannerPath: true },
-		orderBy: { id: "asc" },
-	});
-
-	return fuzzySearch(candidates, BANNER_FUSE_OPTIONS, trimmed, BANNER_SEARCH_LIMIT).map(
-		(m) => ({
-			id: m.id,
-			title: m.title,
-			posterSrc: toPosterSrc(m.id, m.posterPath),
-			// Non-null guaranteed by the where clause; Prisma's select type just doesn't narrow it
-			bannerSrc: bannerUrlFor(m.type, m.bannerPath!),
-		}),
-	);
 }

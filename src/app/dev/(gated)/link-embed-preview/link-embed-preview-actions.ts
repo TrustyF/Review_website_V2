@@ -9,7 +9,7 @@ export type EmbedSearchResult = { id: number; title: string };
 
 const EMBED_SEARCH_LIMIT = 20;
 
-// Same fuzzy-match tolerance as crop-actions.ts's searchMediaForBanner.
+// Same fuzzy-match tolerance as asset-browser-actions.ts's FUSE_OPTIONS.
 const EMBED_FUSE_OPTIONS = { keys: ["title"], threshold: 0.35, ignoreLocation: true };
 
 export async function searchMediaForEmbedPreview(

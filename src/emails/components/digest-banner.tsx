@@ -7,13 +7,11 @@ type Props = {
 	// Admin override from /admin/digest-banner — default to "Weekly Digest"/dateLabel when unset.
 	headline?: string | null | undefined;
 	subtitle?: string | null | undefined;
-	// 0-100, vertical crop focus — defaults to 50 (centered) when unset.
-	positionY?: number | null | undefined;
 };
 
 // Tall, closer to the reference screenshot's proportions relative to a
 // 600px-wide email — a short banner read as a thin strip, not a hero.
-const BANNER_HEIGHT = 200;
+const BANNER_HEIGHT = 220;
 
 // Two stacked CSS backgrounds (photo on the outer table cell, a top-only
 // gradient on a nested one) instead of an <Img> + absolutely-positioned
@@ -25,18 +23,17 @@ export function DigestBanner({
 	dateLabel,
 	headline,
 	subtitle,
-	positionY,
 }: Props) {
 	return (
 		<Section
-			className="rounded-t-[10px]"
+			className=""
 			style={{
 				backgroundColor: "#1a1a1a",
 				...(bannerSrc
 					? {
 							backgroundImage: `url(${bannerSrc})`,
 							backgroundSize: "cover",
-							backgroundPosition: `center ${positionY ?? 50}%`,
+							backgroundPosition: "center",
 						}
 					: {}),
 			}}>
@@ -45,17 +42,17 @@ export function DigestBanner({
 				vertical-align has to go on an actual table-cell, so this layer
 				(height + gradient + top alignment) is a Column, not a Section. */}
 				<Column
-					className="rounded-t-[10px] px-6 pt-5 align-top"
+					className="px-4 pt-3 align-top"
 					style={{
 						backgroundImage:
-							"linear-gradient(to bottom, rgba(0, 0, 0,0.85) 0%, transparent 65%)",
+							"linear-gradient(to bottom, rgba(0, 0, 0,0.75) 0%, rgba(0, 0, 0,0.15) 30%)",
 						height: BANNER_HEIGHT,
 						verticalAlign: "top",
 					}}>
 					<Row>
 						<Column className="w-[170px] align-top">
 							<Row>
-								<Column className="w-[32px] align-middle">
+								<Column className="w-[20px] align-middle">
 									<Img
 										src={emailAssetSrc("/ui/icon.png")}
 										width={28}
@@ -75,13 +72,13 @@ export function DigestBanner({
 						</Column>
 						<Column className="text-center align-top">
 							<Text
-								className="m-0 mt-2 font-serif text-[50px] font-bold uppercase leading-[1] text-white"
-								style={{ textShadow: "2px 2px 2px rgba(0,0,0,0.75)" }}>
+								className="m-0 mt-9 font-serif text-[50px] font-bold uppercase leading-[1] text-white"
+								style={{ textShadow: "2px 2px 6px rgba(0,0,0,0.85)" }}>
 								{headline || "Weekly Digest"}
 							</Text>
 							<Text
 								className="m-0 mt-2 text-[12px] font-medium text-white"
-								style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.75)" }}>
+								style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.85)" }}>
 								{subtitle || dateLabel}
 							</Text>
 						</Column>

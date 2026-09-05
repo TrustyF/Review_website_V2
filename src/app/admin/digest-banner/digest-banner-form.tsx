@@ -22,7 +22,6 @@ export function DigestBannerForm({ initial, onSaved }: Props) {
 	const [image, setImage] = useState(initial.image ?? "");
 	const [headline, setHeadline] = useState(initial.headline ?? "");
 	const [subtitle, setSubtitle] = useState(initial.subtitle ?? "");
-	const [positionY, setPositionY] = useState(initial.positionY);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -39,7 +38,6 @@ export function DigestBannerForm({ initial, onSaved }: Props) {
 				image,
 				headline,
 				subtitle,
-				positionY,
 			});
 			setSaved(true);
 			onSaved?.();
@@ -72,7 +70,6 @@ export function DigestBannerForm({ initial, onSaved }: Props) {
 		setImage("");
 		setHeadline("");
 		setSubtitle("");
-		setPositionY(50);
 	}
 
 	return (
@@ -103,17 +100,6 @@ export function DigestBannerForm({ initial, onSaved }: Props) {
 				Browse posters &amp; banners…
 			</Clickable>
 			{isUploading && <div className={styles.uploading}>Uploading…</div>}
-			<label className={styles.field}>
-				Vertical position ({positionY}%)
-				<input
-					className={styles.slider}
-					type="range"
-					min={0}
-					max={100}
-					value={positionY}
-					onChange={(e) => setPositionY(Number(e.target.value))}
-				/>
-			</label>
 			<label className={styles.field}>
 				Headline
 				<input

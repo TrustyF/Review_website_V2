@@ -18,7 +18,6 @@ export default async function DigestBannerPage() {
 				image: settings?.digestBannerImage ?? null,
 				headline: settings?.digestBannerHeadline ?? null,
 				subtitle: settings?.digestBannerSubtitle ?? null,
-				positionY: settings?.digestBannerPositionY ?? 50,
 			}}
 		/>
 	);

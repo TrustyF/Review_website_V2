@@ -140,46 +140,23 @@
   border: 1px solid var(--border-highlight)
   border-radius: 4px
 
+// Opens AssetBrowser — same trigger styling as digest-banner-form.tsx's own
+// browse_button.
 .banner_search
-  display: flex
-  flex-flow: column
-  gap: 6px
-
-.banner_results
-  display: flex
-  flex-flow: column
-  gap: 2px
-  max-height: 220px
-  overflow-y: auto
-  border: 1px solid var(--border-highlight)
-  border-radius: 4px
-  padding: 4px
-
-.banner_result
-  display: flex
+  display: inline-flex
   align-items: center
-  gap: 8px
-  padding: 4px 6px
-  text-align: left
-  font-size: 0.85rem
+  align-self: flex-start
+  padding: 0.4rem 0.9rem
+  border: 1px solid var(--accent1)
+  border-radius: 0.4rem
   color: var(--foreground)
-  background: transparent
-  border-radius: 4px
+  background-color: var(--surface)
+  font-size: 0.85rem
   cursor: pointer
-
-  &:hover
-    background: var(--surface)
 
   &:disabled
     cursor: default
     opacity: 0.6
-
-.banner_result_poster
-  width: 28px
-  aspect-ratio: 2 / 3
-  object-fit: cover
-  border-radius: 2px
-  flex-shrink: 0
 
 .result_row
   display: flex

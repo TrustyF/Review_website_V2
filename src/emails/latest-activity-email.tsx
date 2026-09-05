@@ -40,7 +40,6 @@ type Props = {
 	// Admin override from /admin/digest-banner — see send-weekly-digest.ts.
 	bannerHeadline?: string | null | undefined;
 	bannerSubtitle?: string | null | undefined;
-	bannerPositionY?: number | null | undefined;
 	latestReview: ReviewProps | null;
 	recentWatches: WatchProps[];
 	activityUrl: string;
@@ -111,7 +110,6 @@ export default function LatestActivityEmail({
 	dateLabel,
 	bannerHeadline,
 	bannerSubtitle,
-	bannerPositionY,
 	latestReview,
 	recentWatches,
 	activityUrl,
@@ -127,17 +125,16 @@ export default function LatestActivityEmail({
 				<Preview>
 					My latest review, plus what I&apos;ve been watching this week
 				</Preview>
-				<Body className="m-0 bg-bg-2 py-8 font-sans">
+				<Body className="m-0 bg-bg-2 font-sans">
 					<Container className="mx-auto w-full max-w-[600px]">
 						<DigestBanner
 							bannerSrc={bannerSrc}
 							dateLabel={dateLabel}
 							headline={bannerHeadline}
 							subtitle={bannerSubtitle}
-							positionY={bannerPositionY}
 						/>
 
-						<Section className="rounded-b-[10px] bg-bg p-6">
+						<Section className="bg-bg p-6">
 							<Text className="m-0 mb-6 text-[15px] text-fg-2">
 								Hey! Here&apos;s what I&apos;ve been watching this week.
 							</Text>

@@ -5,6 +5,7 @@ export type CropShapeId =
 	| "poster-2-3"
 	| "poster-3-4"
 	| "banner-16-9"
+	| "digest-banner"
 	| "list-thumbnail-16-9"
 	| "avatar-1-1";
 
@@ -21,6 +22,7 @@ export const CROP_SHAPES: Record<
 	"poster-2-3": { label: "Poster (2:3)", ratio: 2 / 3 },
 	"poster-3-4": { label: "Poster (3:4, comic/game)", ratio: 3 / 4 },
 	"banner-16-9": { label: "Banner (16:9)", ratio: 16 / 9 },
+	"digest-banner": { label: "Digest banner (30:11)", ratio: 500 / 220 },
 	"list-thumbnail-16-9": { label: "List thumbnail (16:9)", ratio: 16 / 9 },
 	"avatar-1-1": { label: "Avatar (1:1)", ratio: 1, cropShape: "round" },
 };

@@ -7,8 +7,4 @@ model Settings {
   digestBannerImage    String?
   digestBannerHeadline String?
   digestBannerSubtitle String?
-  // 0-100, vertical crop focus within the banner's fixed height (see
-  // DigestBanner's BANNER_HEIGHT) — 50 is centered. Only meaningful when
-  // digestBannerImage is set.
-  digestBannerPositionY Int @default(50)
 }

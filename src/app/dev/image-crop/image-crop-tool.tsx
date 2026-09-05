@@ -2,21 +2,12 @@
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import Cropper, { Area, MediaSize, Point } from "react-easy-crop";
 import { CROP_SHAPES, CropShapeId } from "./crop-shapes";
-import {
-	BannerSearchResult,
-	fetchImportedImage,
-	saveCroppedImageAction,
-	searchMediaForBanner,
-} from "./crop-actions";
+import { fetchImportedImage, saveCroppedImageAction } from "./crop-actions";
 import { useIsAdmin } from "@/lib/use-is-admin";
+import { AssetBrowser } from "@/components/media/asset-browser/asset-browser";
 import styles from "./image-crop-dev.module.sass";
 
 const DEFAULT_SHAPE: CropShapeId = "poster-2-3";
-
-// Same debounce as featured-manager-modal.tsx's own search — long enough
-// that fast typing doesn't fire a query per keystroke, short enough to
-// still feel live.
-const BANNER_SEARCH_DEBOUNCE_MS = 200;
 
 // Width of the result-preview panel — height follows from the shape's own
 // ratio (see the preview style calc below), same as the Cropper's own crop
@@ -68,34 +59,14 @@ export function ImageCropTool() {
 	const [copied, setCopied] = useState(false);
 	const [urlInput, setUrlInput] = useState("");
 	const [isImporting, setIsImporting] = useState(false);
-	const [bannerQuery, setBannerQuery] = useState("");
-	const [bannerResults, setBannerResults] = useState<BannerSearchResult[]>([]);
-	const [isSearchingBanner, setIsSearchingBanner] = useState(false);
-	const [isImportingBanner, setIsImportingBanner] = useState(false);
+	const [isBrowserOpen, setIsBrowserOpen] = useState(false);
+	const [isImportingAsset, setIsImportingAsset] = useState(false);
 
 	useEffect(() => {
 		return () => {
 			if (previewUrl) URL.revokeObjectURL(previewUrl);
 		};
 	}, [previewUrl]);
-
-	// Debounced live search as bannerQuery changes — same shape as
-	// featured-manager-modal.tsx's own query effect (setState inside the
-	// timeout callback, cleared/restarted on every keystroke). The empty-query
-	// case clears synchronously from the input's own onChange below instead
-	// of here, since setState directly in an effect body (as opposed to
-	// inside its setTimeout/async callback) trips
-	// react-hooks/set-state-in-effect.
-	useEffect(() => {
-		if (!bannerQuery.trim()) return;
-		const timeout = setTimeout(() => {
-			setIsSearchingBanner(true);
-			searchMediaForBanner(bannerQuery)
-				.then(setBannerResults)
-				.finally(() => setIsSearchingBanner(false));
-		}, BANNER_SEARCH_DEBOUNCE_MS);
-		return () => clearTimeout(timeout);
-	}, [bannerQuery]);
 
 	if (!isAdmin) {
 		return <div className={styles.wrapper}>Admin access required.</div>;
@@ -144,21 +115,21 @@ export function ImageCropTool() {
 		}
 	}
 
-	// Same shape as handleUrlImport above, just sourced from a picked search
-	// result's bannerSrc instead of a typed-in URL.
-	async function handleBannerPick(result: BannerSearchResult) {
-		setIsImportingBanner(true);
+	// AssetBrowser hands back a same-origin /api/image-proxy/... URL, so this
+	// can fetch it directly client-side — no CORS concern, unlike
+	// handleUrlImport's arbitrary (likely third-party) URL, which needs the
+	// server-side round trip in fetchImportedImage to avoid it.
+	async function handleAssetPick(url: string) {
+		setIsImportingAsset(true);
 		setError(null);
 		try {
-			const dataUrl = await fetchImportedImage(result.bannerSrc);
-			const blob = await (await fetch(dataUrl)).blob();
+			const blob = await (await fetch(url)).blob();
 			loadFile(new File([blob], "imported", { type: blob.type }));
-			setBannerQuery("");
-			setBannerResults([]);
+			setIsBrowserOpen(false);
 		} catch {
-			setError("Failed to import banner. Try again.");
+			setError("Failed to import image. Try again.");
 		} finally {
-			setIsImportingBanner(false);
+			setIsImportingAsset(false);
 		}
 	}
 
@@ -208,7 +179,13 @@ export function ImageCropTool() {
 			formData.append("shapeId", shapeId);
 			formData.append("crop", JSON.stringify(croppedAreaPixels));
 			formData.append("vignette", String(vignette));
-			setResultPath(await saveCroppedImageAction(formData));
+			const path = await saveCroppedImageAction(formData);
+			setResultPath(path);
+			// Saving is the actual point of friction this tool exists to remove —
+			// copying is what you always do with the result next, so do it
+			// automatically instead of making every save end with a manual click.
+			await navigator.clipboard.writeText(path);
+			setCopied(true);
 		} catch {
 			setError("Failed to save. Try again.");
 		} finally {
@@ -249,44 +226,13 @@ export function ImageCropTool() {
 				</button>
 			</div>
 
-			<div className={styles.banner_search}>
-				<input
-					type="text"
-					className={styles.import_input}
-					placeholder="Search a movie/show/game for its banner…"
-					value={bannerQuery}
-					onChange={(e) => {
-						const value = e.target.value;
-						setBannerQuery(value);
-						if (!value.trim()) setBannerResults([]);
-					}}
-					disabled={isImportingBanner}
-				/>
-				{isSearchingBanner && <div className={styles.uploading}>Searching…</div>}
-				{bannerResults.length > 0 && (
-					<div className={styles.banner_results}>
-						{bannerResults.map((result) => (
-							<button
-								key={result.id}
-								type="button"
-								className={styles.banner_result}
-								disabled={isImportingBanner}
-								onClick={() => handleBannerPick(result)}>
-								{/* Arbitrary proxied/cached poster URL, same reasoning as
-								every other search-result thumbnail in this app for using a
-								plain <img> instead of next/image. */}
-								{/* eslint-disable-next-line @next/next/no-img-element */}
-								<img
-									src={result.posterSrc}
-									alt=""
-									className={styles.banner_result_poster}
-								/>
-								<span>{result.title}</span>
-							</button>
-						))}
-					</div>
-				)}
-			</div>
+			<button
+				type="button"
+				className={styles.banner_search}
+				onClick={() => setIsBrowserOpen(true)}
+				disabled={isImportingAsset}>
+				{isImportingAsset ? "Importing…" : "Browse posters & banners…"}
+			</button>
 
 			<div className={styles.shape_row}>
 				{Object.entries(CROP_SHAPES).map(([id, shape]) => (
@@ -441,6 +387,13 @@ export function ImageCropTool() {
 					</button>
 				</div>
 			)}
+
+			{/* Always mounted (visibility toggled via isOpen) so its search/selection state survives being closed and reopened — same reasoning as digest-banner-form.tsx's own usage. */}
+			<AssetBrowser
+				isOpen={isBrowserOpen}
+				onSelect={handleAssetPick}
+				onClose={() => setIsBrowserOpen(false)}
+			/>
 		</div>
 	);
 }
