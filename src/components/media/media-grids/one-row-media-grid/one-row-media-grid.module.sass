@@ -1,0 +1,38 @@
+@use "@/app/styles/variables" as *
+
+// Highest column count worth a breakpoint for — matches the largest home-section fetch limit (14);
+// past that, more columns would never reveal more cards since no caller has more items to show.
+$max-columns: 14
+// Highest `rows` prop value supported — raise if a caller needs more.
+$max-rows: 3
+$gap: 1.25rem
+
+// Container must be an ancestor of the element it sizes (.grid) — an element can't query its own
+// size to style itself.
+.wrapper
+  container-type: inline-size
+
+.grid
+  display: grid
+  grid-template-columns: 1fr
+  gap: $gap
+  padding: 1rem 0 1.25rem
+  overflow: hidden
+
+.item
+  display: none
+
+// Visible count at n columns is n * rows; the data-rows attribute selects which multiple to use.
+@for $rows from 1 through $max-rows
+  .wrapper[data-rows="#{$rows}"]
+    .item:nth-child(-n + #{$rows})
+      display: block
+
+    @for $n from 2 through $max-columns
+      // Width at which n cards of $mini-card-min-width fit edge-to-edge with (n-1) gaps between them.
+      @container (min-width: calc(#{$mini-card-min-width} * #{$n} + #{$gap} * #{$n - 1}))
+        .grid
+          grid-template-columns: repeat($n, 1fr)
+
+        .item:nth-child(-n + #{$n * $rows})
+          display: block

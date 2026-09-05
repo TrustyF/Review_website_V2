@@ -2,7 +2,7 @@ import { MediaType } from "@prisma/client";
 import { MediaRecord } from "@/components/media/types";
 import { recentlyWatchedTitle } from "@/components/media/media-verb-labels";
 import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
-import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
+import { OneRowMediaGrid } from "@/components/media/media-grids/one-row-media-grid/one-row-media-grid";
 import styles from "./recent-media-sections.module.sass";
 
 const RELEASES_TITLE_BY_TYPE: Partial<Record<MediaType, string>> = {
@@ -30,10 +30,7 @@ export function RecentMediaSections({
 					<h2 className={styles.title}>
 						{RELEASES_TITLE_BY_TYPE[type] ?? "Recent releases"}
 					</h2>
-					<LazyMediaGrid
-						items={recentReleases}
-						restoreKey={`home-recent-${type.toLowerCase()}`}
-					/>
+					<OneRowMediaGrid items={recentReleases} />
 				</section>
 			)}
 			{recentlyWatched.length > 0 && (
@@ -41,10 +38,7 @@ export function RecentMediaSections({
 					<h2 className={styles.title}>
 						{recentlyWatchedTitle(type)}
 					</h2>
-					<LazyMediaGrid
-						items={recentlyWatched}
-						restoreKey={`home-recently-watched-${type.toLowerCase()}`}
-					/>
+					<OneRowMediaGrid items={recentlyWatched} />
 				</section>
 			)}
 		</MediaCardDisplayProvider>

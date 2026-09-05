@@ -1,5 +1,5 @@
 import { MediaRecord } from "@/components/media/types";
-import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
+import { OneRowMediaGrid } from "@/components/media/media-grids/one-row-media-grid/one-row-media-grid";
 import styles from "./my-watchlist-section.module.sass";
 import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
 
@@ -15,7 +15,7 @@ export function MyWatchlistSection({ items }: Props) {
 		<section className={styles.wrapper}>
 			<h2 className={styles.title}>My watchlist</h2>
 			<MediaCardDisplayProvider showTitle={false}>
-				<LazyMediaGrid items={items} restoreKey="home-my-watchlist" />
+				<OneRowMediaGrid items={items} />
 			</MediaCardDisplayProvider>
 		</section>
 	);
