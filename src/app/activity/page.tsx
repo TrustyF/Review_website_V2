@@ -14,7 +14,7 @@ export default async function ActivityPage() {
 					Activity
 				</h1>
 			</div>
-			<ActivityFeed entries={entries} />
+			<ActivityFeed entries={entries} rowGap="1.25rem" />
 		</div>
 	);
 }

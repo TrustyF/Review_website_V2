@@ -167,7 +167,13 @@ function ActivityRow({ entry, index }: { entry: ActivityFeedEntry; index: number
 // different shape/weight than a grid card or review card.
 const ACTIVITY_BATCH_SIZE = 10;
 
-export function ActivityFeed({ entries }: { entries: ActivityFeedEntry[] }) {
+export function ActivityFeed({
+	entries,
+	rowGap,
+}: {
+	entries: ActivityFeedEntry[];
+	rowGap?: string;
+}) {
 	// Same reveal-more-on-scroll pattern as LazyMediaGrid/LazyMediaList — avoids
 	// mounting up to ~700 rows (each with its own poster Image) up front.
 	const { visibleCount, sentinelRef } = useLazyReveal(
@@ -185,6 +191,7 @@ export function ActivityFeed({ entries }: { entries: ActivityFeedEntry[] }) {
 		<>
 			<TimelineList
 				entries={visibleEntries}
+				{...(rowGap ? { rowGap } : {})}
 				renderRow={(entry, index) => (
 					<ActivityRow key={entry.id} entry={entry} index={index} />
 				)}

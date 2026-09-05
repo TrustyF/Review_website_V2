@@ -3,6 +3,7 @@ import { toMediaRecord } from "@/components/media/types";
 import { FeaturedReview } from "@/components/home/featured-review/featured-review";
 import { RecentMoviesSection } from "@/components/home/recent-movies-section/recent-movies-section";
 import { RecentlyWatchedSection } from "@/components/home/recently-watched-section/recently-watched-section";
+import { MyWatchlistSection } from "@/components/home/my-watchlist-section/my-watchlist-section";
 import { AnticipatedReleasesSection } from "@/components/home/anticipated-releases-section/anticipated-releases-section";
 import { LazyRecentMediaSection } from "@/components/home/recent-media/lazy-recent-media-section";
 import {
@@ -18,6 +19,7 @@ import styles from "./page.module.sass";
 const RECENT_REVIEWS_COUNT = 6;
 const RECENT_MOVIES_COUNT = 14;
 const RECENTLY_WATCHED_COUNT = 14;
+const MY_WATCHLIST_COUNT = 7;
 const ANTICIPATED_RELEASES_COUNT = 14;
 // How far back "recent" reaches for getRecentMovies.
 const RECENT_MOVIES_MONTHS = 5;
@@ -137,6 +139,22 @@ async function getRecentlyWatchedMovies(excludeIds: number[]) {
 		take: RECENTLY_WATCHED_COUNT,
 	});
 	return recentlyWatched;
+}
+
+// The ADMIN account's watchlist (not the visitor's) — same "whose watchlist" convention as getAnticipatedReleases, just without that function's release-date/unrated filtering. Newest-added first. excludeIds drops anything already shown in "Anticipated releases".
+async function getMyWatchlist(excludeIds: number[]) {
+	const items = await db.watchlistItem.findMany({
+		where: {
+			user: { role: UserRole.ADMIN },
+			mediaId: { notIn: excludeIds },
+			media: { isDeleted: false },
+		},
+		include: { media: { include: { ...EVERY_TYPE_RELATION, review: true } } },
+		orderBy: { addedAt: "desc" },
+		take: MY_WATCHLIST_COUNT,
+	});
+
+	return items.map((item) => item.media);
 }
 
 // Shared by both queries below so featured vs. recent are only ever distinguished by the `featured` condition.
@@ -264,23 +282,25 @@ function compareReviewRecency(
 
 export default async function HomePage() {
 	// dbPublic (not db) — soft-deleted media is excluded automatically, see
-	// src/server/db/client.ts. recentMoviesRaw has to resolve before
-	// getRecentlyWatchedMovies can run (it excludes those ids), so it's
-	// pulled out of the Promise.all below; the rest still don't depend on
-	// each other.
+	// src/server/db/client.ts. recentMoviesRaw/anticipatedRaw have to resolve
+	// before getRecentlyWatchedMovies/getMyWatchlist can run (they exclude
+	// those ids), so those two are pulled out of the Promise.all below; the
+	// rest still don't depend on each other.
 	const [reviewed, recentMoviesRaw, anticipatedRaw] = await Promise.all([
 		getFeaturedReviewItems(),
 		getRecentMovies(),
 		getAnticipatedReleases(),
 	]);
-	const recentlyWatchedRaw = await getRecentlyWatchedMovies(
-		recentMoviesRaw.map((m) => m.id),
-	);
+	const [recentlyWatchedRaw, myWatchlistRaw] = await Promise.all([
+		getRecentlyWatchedMovies(recentMoviesRaw.map((m) => m.id)),
+		getMyWatchlist(anticipatedRaw.map((m) => m.id)),
+	]);
 
 	const reviewedList = reviewed.map(toMediaRecord);
 	const recentMovies = recentMoviesRaw.map(toMediaRecord);
 	const recentlyWatched = recentlyWatchedRaw.map(toMediaRecord);
 	const anticipatedReleases = anticipatedRaw.map(toMediaRecord);
+	const myWatchlist = myWatchlistRaw.map(toMediaRecord);
 
 	return (
 		<div className={styles.wrapper}>
@@ -288,6 +308,7 @@ export default async function HomePage() {
 			<RecentMoviesSection items={recentMovies} />
 			<AnticipatedReleasesSection items={anticipatedReleases} />
 			<RecentlyWatchedSection items={recentlyWatched} />
+			<MyWatchlistSection items={myWatchlist} />
 			{OTHER_MEDIA_TYPES.map((type) => (
 				<LazyRecentMediaSection key={type} type={type} />
 			))}
