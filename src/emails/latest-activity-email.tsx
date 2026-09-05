@@ -149,7 +149,7 @@ export default function LatestActivityEmail({
 							{recentWatches.length > 0 && (
 								<>
 									<Text className={`${SECTION_LABEL_CLASS} mt-6`}>
-										Recently watched
+										Recent activity
 									</Text>
 									<Section>
 										<Row>

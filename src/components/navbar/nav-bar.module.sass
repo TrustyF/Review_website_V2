@@ -143,8 +143,10 @@ $nav-content-gap: 0.75rem
     align-items: stretch
     gap: 1rem
 
-    &:not(:first-child)
-      margin-left: 0
+  // Matches .groups > .nav_group:not(:first-child)'s specificity above so
+  // this actually overrides it here instead of losing to source-order.
+  .groups > .nav_group:not(:first-child)
+    margin-left: 0
 
   .nav_group_account
     justify-content: flex-start

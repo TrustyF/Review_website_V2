@@ -519,6 +519,7 @@ async function getSearchIndex(): Promise<Fuse<SearchableEntry>> {
 // all — keeps the per-keystroke payload lighter.
 export async function searchAllMedia(
 	query: string,
+	limit: number = SEARCH_LIMIT,
 ): Promise<GlobalSearchResult[]> {
 	const trimmed = query.trim();
 	if (!trimmed) return [];
@@ -596,7 +597,7 @@ export async function searchAllMedia(
 	});
 
 	const results = matches
-		.slice(0, SEARCH_LIMIT)
+		.slice(0, limit)
 		.map(({ item }): GlobalSearchResult => {
 			switch (item.kind) {
 				case "media":
