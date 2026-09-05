@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./styles/globals.sass";
 import React from "react";
+import { logLayoutRequestTiming } from "@/lib/debug-request-log";
 import Navbar from "@/components/navbar/nav-bar";
 import { DevMenu } from "@/components/dev-menu/dev-menu";
 import { MobileViewportListener } from "@/lib/mobile-viewport-listener";
@@ -26,6 +27,10 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+	// See debug-request-log.ts — temporary instrumentation for the recurring
+	// "infinite tab spinner" bug.
+	logLayoutRequestTiming();
+
 	return (
 		<html lang="en" className={fontVariables}>
 			<body>

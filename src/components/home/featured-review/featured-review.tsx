@@ -5,7 +5,6 @@ import { Link } from "@/components/ui/link";
 import { Settings } from "lucide-react";
 import { MediaRecord } from "@/components/media/types";
 import { MediaPoster } from "@/components/media/primitives/poster";
-import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaReleaseDate } from "@/components/media/primitives/release-date";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import {
@@ -222,7 +221,8 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 					<MediaPoster
 						src={media.posterSrc}
 						title={media.title}
-						ratio={posterRatioFor(media.type)}
+						// Fixed regardless of media type (unlike the grid cards) — the poster's width is fixed here too, so a varying ratio would change the card's height and shove the picker below it as items rotate.
+						ratio="2/3"
 					/>
 				</div>
 				<div className={styles.info}>

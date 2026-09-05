@@ -3,7 +3,6 @@ import Image from "next/image";
 import { Link } from "@/components/ui/link";
 import { MediaRecord } from "@/components/media/types";
 import { MediaPoster } from "@/components/media/primitives/poster";
-import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaReleaseDate } from "@/components/media/primitives/release-date";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import {
@@ -74,7 +73,8 @@ export function FeaturedReviewCardMobile({ media, direction, exiting = false }: 
 						<MediaPoster
 							src={media.posterSrc}
 							title={media.title}
-							ratio={posterRatioFor(media.type)}
+							// Fixed regardless of media type, same reasoning as the desktop card.
+							ratio="2/3"
 						/>
 					</div>
 					<div className={styles.top}>
