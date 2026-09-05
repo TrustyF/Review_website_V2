@@ -1,16 +1,9 @@
 import { MediaType } from "@prisma/client";
 import { MediaRecord } from "@/components/media/types";
+import { recentlyWatchedTitle } from "@/components/media/media-verb-labels";
 import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
 import styles from "./recent-media-sections.module.sass";
-
-// "Watched"'s verb depends on the media's type — mirrors WATCHED_LABEL_BY_TYPE in change-log-list.tsx.
-const WATCHED_TITLE_BY_TYPE: Partial<Record<MediaType, string>> = {
-	[MediaType.BOOK]: "Recently read",
-	[MediaType.COMIC]: "Recently read",
-	[MediaType.MANGA]: "Recently read",
-	[MediaType.GAME]: "Recently played",
-};
 
 const RELEASES_TITLE_BY_TYPE: Partial<Record<MediaType, string>> = {
 	[MediaType.GAME]: "Recent games",
@@ -48,7 +41,7 @@ export function RecentMediaSections({
 			{recentlyWatched.length > 0 && (
 				<section className={styles.wrapper}>
 					<h2 className={styles.title}>
-						{WATCHED_TITLE_BY_TYPE[type] ?? "Recently watched"}
+						{recentlyWatchedTitle(type)}
 					</h2>
 					<LazyMediaGrid
 						items={recentlyWatched}

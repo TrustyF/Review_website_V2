@@ -2,6 +2,7 @@
 import { ArrowRight, IterationCw, ListPlus, PenLine, RotateCcw } from "lucide-react";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { WatchlistIcon } from "@/components/icons/watchlist-icon";
+import { rewatchedVerb } from "@/components/media/media-verb-labels";
 import type { ActivityFeedEntry } from "@/components/activity/activity-actions";
 import { useLazyReveal } from "@/components/media/media-grids/lazy-media-grid/use-lazy-reveal";
 import { Link } from "@/components/ui/link";
@@ -103,7 +104,7 @@ function activityLabel(entry: ActivityFeedEntry): {
 			};
 		case "REWATCHED":
 			return {
-				action: "Rewatched",
+				action: entry.media ? rewatchedVerb(entry.media.type) : "Rewatched",
 				target: entry.media && <MediaLink media={entry.media} />,
 				// REWATCHED always carries media, so the poster wins over TYPE_ICON's
 				// RotateCcw — shown in the value spot instead, like WATCHLIST_ADDED's icon.

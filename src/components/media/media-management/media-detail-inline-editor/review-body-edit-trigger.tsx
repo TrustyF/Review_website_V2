@@ -57,7 +57,13 @@ export function ReviewBodyEditTrigger({ media, isUpcoming }: Props) {
 	}
 
 	if (!review || !isAdmin) {
-		return <MediaReview review={review} watchedDate={media.watchedDate} />;
+		return (
+			<MediaReview
+				review={review}
+				watchedDate={media.watchedDate}
+				type={media.type}
+			/>
+		);
 	}
 
 	// Synchronous — nothing here touches the network; the actual save happens on Publish.
@@ -76,7 +82,11 @@ export function ReviewBodyEditTrigger({ media, isUpcoming }: Props) {
 			<Hitbox
 				className={styles.hitbox}
 				onClick={() => setIsOpen(true)}>
-				<MediaReview review={{ ...review, body }} watchedDate={media.watchedDate} />
+				<MediaReview
+					review={{ ...review, body }}
+					watchedDate={media.watchedDate}
+					type={media.type}
+				/>
 				<div className={styles.hover_badge}>Edit review body</div>
 			</Hitbox>
 

@@ -4,6 +4,10 @@ import { ArrowRight } from "lucide-react";
 import { MediaChangeLog, MediaType, Review } from "@prisma/client";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import {
+	rewatchedOnLabel,
+	watchedOnLabel,
+} from "@/components/media/media-verb-labels";
+import {
 	resolveChangelogBannerThumb,
 	resolveChangelogPosterThumb,
 } from "@/server/resolvers/poster-resolver";
@@ -26,21 +30,9 @@ const FIELD_LABELS: Record<string, string> = {
 	body: "Review",
 	posterPath: "Poster",
 	bannerPath: "Banner",
-	// Milestones (see MILESTONE_FIELDS) skip old/new/arrow; "watched" is omitted here since its
-	// wording depends on media type (see WATCHED_LABEL_BY_TYPE).
+	// Milestones (see MILESTONE_FIELDS) skip old/new/arrow; "watched"/"rewatched" are omitted
+	// here since their wording depends on media type (see media-verb-labels.ts).
 	reviewed: "Reviewed on",
-	rewatched: "Rewatched on",
-};
-
-// "watched"'s verb depends on the media's type rather than being fixed like other fields.
-const WATCHED_LABEL_BY_TYPE: Record<MediaType, string> = {
-	[MediaType.MOVIE]: "Watched on",
-	[MediaType.SHORT]: "Watched on",
-	[MediaType.TVSHOW]: "Watched on",
-	[MediaType.MANGA]: "Read on",
-	[MediaType.COMIC]: "Read on",
-	[MediaType.BOOK]: "Read on",
-	[MediaType.GAME]: "Played on",
 };
 
 // Rows for these fields are date-only markers — oldValue/newValue is just a "true" placeholder.
@@ -225,8 +217,10 @@ export function ChangeLogList({
 						<>
 							<span className={styles.field}>
 								{entry.field === "watched"
-									? WATCHED_LABEL_BY_TYPE[type]
-									: (FIELD_LABELS[entry.field] ?? entry.field)}
+									? watchedOnLabel(type)
+									: entry.field === "rewatched"
+										? rewatchedOnLabel(type)
+										: (FIELD_LABELS[entry.field] ?? entry.field)}
 							</span>
 							{/* Milestone fields skip the value diff, but the empty span keeps .date right-aligned. */}
 							<span className={styles.change}>

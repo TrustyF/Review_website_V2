@@ -36,6 +36,7 @@ export function MediaCardShellMobile({ media, children }: Props) {
 				<MediaReviewMeta
 					review={media.review}
 					watchedDate={media.watchedDate}
+					type={media.type}
 				/>
 			</div>
 			{media.review?.body && (

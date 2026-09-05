@@ -1,5 +1,6 @@
-import { Review } from "@prisma/client";
+import { MediaType, Review } from "@prisma/client";
 import { StarIcon } from "@/components/media/icons/star-icon";
+import { watchedOnLabel } from "@/components/media/media-verb-labels";
 import {
 	ReviewBody,
 	ReviewSpoilerProvider,
@@ -16,10 +17,11 @@ type Props = {
 	review: Review | null | undefined;
 	// Not a Review column — derived from the "watched" MediaChangeLog milestone, the single source of truth for this date.
 	watchedDate?: Date | null | undefined;
+	type: MediaType;
 };
 
 // The rating + "Watched on" pair, split out (no wrapper) so MediaCardShellMobile can place it separately from MediaReviewBody's full-width row.
-export function MediaReviewMeta({ review, watchedDate }: Props) {
+export function MediaReviewMeta({ review, watchedDate, type }: Props) {
 	if (!review) return null;
 
 	return (
@@ -32,7 +34,7 @@ export function MediaReviewMeta({ review, watchedDate }: Props) {
 			{/* "Reviewed on" isn't shown here — it's changelog-only, not duplicated on the card. */}
 			{watchedDate && (
 				<div className={styles.review_date}>
-					Watched on {DateFormatter.format(watchedDate)}
+					{watchedOnLabel(type)} {DateFormatter.format(watchedDate)}
 				</div>
 			)}
 		</>
@@ -57,12 +59,12 @@ export function MediaReviewBody({
 	);
 }
 
-export function MediaReview({ review, watchedDate }: Props) {
+export function MediaReview({ review, watchedDate, type }: Props) {
 	if (!review) return null;
 
 	return (
 		<div className={styles.wrapper}>
-			<MediaReviewMeta review={review} watchedDate={watchedDate} />
+			<MediaReviewMeta review={review} watchedDate={watchedDate} type={type} />
 			<MediaReviewBody review={review} />
 		</div>
 	);
