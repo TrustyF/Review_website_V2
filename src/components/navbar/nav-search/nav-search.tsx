@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { Link } from "@/components/ui/link";
 import { Clickable } from "@/components/ui/clickable";
 import Image from "next/image";
@@ -11,6 +12,7 @@ import {
 	searchAllMedia,
 } from "@/components/search/search-actions";
 import { useOutsideClick } from "@/lib/use-outside-click";
+import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import styles from "./nav-search.module.sass";
 
 const TYPE_LABELS: Record<MediaType, string> = {
@@ -41,6 +43,8 @@ type DropdownPosition = { top: number; right: number };
 // to a trigger icon by default; clicking it expands the input inline with
 // an animated width, showing live results in a popout below.
 export function NavSearch() {
+	const router = useRouter();
+	const isMobile = useIsMobileViewport();
 	const [input, setInput] = useState("");
 	const [results, setResults] = useState<GlobalSearchResult[]>([]);
 	const [isOpen, setIsOpen] = useState(false);
@@ -228,6 +232,13 @@ export function NavSearch() {
 					aria-hidden={!isExpanded}
 					onChange={(e) => handleQueryChange(e.target.value)}
 					onFocus={(e) => {
+						// Mobile drawer has no room for the results dropdown, so
+						// send it to the dedicated search page instead.
+						if (isMobile) {
+							e.target.blur();
+							router.push("/search");
+							return;
+						}
 						e.target.select();
 						if (input.trim()) setIsOpen(true);
 					}}
@@ -237,7 +248,15 @@ export function NavSearch() {
 				className={styles.trigger}
 				aria-label="Search"
 				aria-pressed={isExpanded}
-				onClick={() => setIsExpanded((expanded) => !expanded)}>
+				onClick={() => {
+					// Mobile has no room for the dropdown, so send it to the
+					// dedicated search page instead of expanding inline.
+					if (isMobile) {
+						router.push("/search");
+						return;
+					}
+					setIsExpanded((expanded) => !expanded);
+				}}>
 				<Search size={18} />
 			</Clickable>
 			{dropdown}

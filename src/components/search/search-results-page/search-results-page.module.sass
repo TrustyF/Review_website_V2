@@ -1,0 +1,31 @@
+@use "@/app/styles/variables" as *
+
+.wrapper
+  @include content-wrapper
+  margin: 3rem auto 2rem auto
+  display: flex
+  flex-flow: column
+
+.empty
+  @include empty-text
+
+.section
+  margin-bottom: 2.5rem
+
+.section_title
+  color: var(--body)
+  font-size: 0.85rem
+  font-weight: 500
+  word-spacing: 0.1rem
+  margin-bottom: 1rem
+
+.media_grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax($mini-card-min-width, 1fr))
+  gap: 1.25rem
+
+.entity_list
+  display: flex
+  flex-flow: column
+  gap: 0.6rem
+  max-width: 28rem
