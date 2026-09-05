@@ -36,18 +36,22 @@ export function MediaMiniCardShell({ media, children }: Props) {
 				ratio={posterRatioFor(media.type)}
 				difficulty={media.review?.difficulty}
 			/>
-			{showTitle && <MediaTitle title={media.title} className={styles.title} />}
-			<div className={styles.subtitle}>
-				{showRating && media.review && (
-					<div className={styles.rating}>
-						{media.review.rating}
-						<StarIcon size={11} />
-					</div>
+			<div className={styles.info_group}>
+				{showTitle && (
+					<MediaTitle title={media.title} className={styles.title} />
 				)}
-				{showReviewIcon && media.review && media.review.body && (
-					<ReviewIcon size={9} title="Has review" />
-				)}
-				{children}
+				<div className={styles.subtitle}>
+					{showRating && media.review && (
+						<div className={styles.rating}>
+							{media.review.rating}
+							<StarIcon size={11} />
+						</div>
+					)}
+					{showReviewIcon && media.review && media.review.body && (
+						<ReviewIcon size={9} title="Has review" />
+					)}
+					{children}
+				</div>
 			</div>
 			<div className={styles.status_buttons}>
 				<AddToWatchlistHoverButton mediaId={media.id} />

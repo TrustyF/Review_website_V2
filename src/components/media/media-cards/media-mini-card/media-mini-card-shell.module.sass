@@ -1,6 +1,7 @@
 @use "@/app/styles/variables" as *
 
 // content-visibility skips render work while off-screen (native, no JS); contain-intrinsic-height reserves an estimated size so page height stays stable, derived from $mini-card-min-width so it can't drift out of sync.
+// height: 100% + LazyMediaGrid's default (stretch) align-items is what actually solves mixed-ratio grids: the grid row's height is set by its tallest item, every .item stretches to match it, and this fills that stretched height rather than sitting shorter at its own content size — so a uniform-type grid (all rows the same height already) shrinks right back down, nothing hardcoded.
 .wrapper
   content-visibility: auto
   contain-intrinsic-height: $mini-card-min-width * 1.5 + 60px
@@ -9,7 +10,16 @@
   flex-flow: column
   gap: 0.4rem
   width: 100%
+  height: 100%
   align-items: flex-start
+
+// Groups title + subtitle so they move as one unit; margin-top: auto soaks up whatever space the poster (natural per-type height, see poster-ratio.ts) doesn't use of .wrapper's stretched height, pinning this group to the bottom so the info row lines up across a row's differently-sized posters.
+.info_group
+  display: flex
+  flex-flow: column
+  gap: 0.4rem
+  width: 100%
+  margin-top: auto
 
 .title
   width: 100%
