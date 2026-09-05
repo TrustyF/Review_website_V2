@@ -204,6 +204,9 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       EMAIL_FROM: ${EMAIL_FROM}
       SITE_URL: ${SITE_URL}
+      # Signs each recipient's unsubscribe link (see unsubscribe-token.ts) —
+      # same secret `app` uses for NextAuth, just needed here too now.
+      AUTH_SECRET: ${AUTH_SECRET}
 
   # Uptime monitoring: pings `app` (and can be pointed at review.arthursirjacobs.com
   # itself) and alerts if it goes down. Bound to all interfaces (not just
