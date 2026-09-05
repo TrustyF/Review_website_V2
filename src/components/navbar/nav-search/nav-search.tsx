@@ -30,11 +30,12 @@ const DEBOUNCE_MS = 500;
 const useIsomorphicLayoutEffect =
 	typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-// Narrower than this, and result rows (poster + title + meta) get cramped.
-const DROPDOWN_MIN_WIDTH = 320;
 const VIEWPORT_MARGIN = 8;
 
-type DropdownPosition = { top: number; left: number; width: number };
+// Right-anchored (not left+width) so the dropdown can grow to fit its
+// content instead of being stretched or clamped to the search bar's width,
+// while staying lined up with the search bar's right edge.
+type DropdownPosition = { top: number; right: number };
 
 // Media-agnostic search reachable from every page via the navbar. Collapsed
 // to a trigger icon by default; clicking it expands the input inline with
@@ -68,13 +69,11 @@ export function NavSearch() {
 
 		function update() {
 			const rect = overlayRef.current!.getBoundingClientRect();
-			const width = Math.max(rect.width, DROPDOWN_MIN_WIDTH);
-			let left = rect.left;
-			if (left + width > window.innerWidth - VIEWPORT_MARGIN) {
-				left = window.innerWidth - width - VIEWPORT_MARGIN;
-			}
-			left = Math.max(left, VIEWPORT_MARGIN);
-			setDropdownPos({ top: rect.bottom + 8, left, width });
+			const right = Math.max(
+				window.innerWidth - rect.right,
+				VIEWPORT_MARGIN,
+			);
+			setDropdownPos({ top: rect.bottom + 8, right });
 		}
 
 		update();
@@ -135,8 +134,7 @@ export function NavSearch() {
 						className={styles.dropdown}
 						style={{
 							top: dropdownPos.top,
-							left: dropdownPos.left,
-							width: dropdownPos.width,
+							right: dropdownPos.right,
 						}}>
 						{error ? (
 							<div className={styles.status}>{error}</div>

@@ -72,11 +72,15 @@
 
 // Portaled to document.body and positioned via getBoundingClientRect() in
 // JS (see nav-search.tsx) rather than absolute-inside-.overlay, so it can
-// render wider than the search bar instead of being clamped to it, and
-// isn't clipped by the navbar's own overflow/stacking context.
+// grow to fit its content instead of being clamped to the search bar's
+// width, and isn't clipped by the navbar's own overflow/stacking context.
+// Anchored with `right` (set inline) rather than `left`+width, so it stays
+// lined up with the search bar's right edge as it grows.
 .dropdown
   position: fixed
   z-index: 20
+  min-width: 20rem
+  max-width: min(28rem, calc(100vw - 1rem))
   max-height: 22rem
   overflow-y: auto
   display: flex
