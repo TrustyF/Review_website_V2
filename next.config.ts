@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -7,6 +8,30 @@ const nextConfig: NextConfig = {
 	// full node_modules tree — this is a no-op for Vercel's own build.
 	output: "standalone",
 	reactCompiler: true,
+	// Without this, a tab left open across a redeploy has no way to detect
+	// its client-side router is now talking to a different build — a
+	// prefetch/navigation can request an RSC payload or chunk that no longer
+	// exists, and Next.js has nothing to compare against to trigger its
+	// hard-navigation fallback (see self-hosting.md's "Version Skew"
+	// section). That's the likely cause of the "page looks loaded but the
+	// tab spinner never stops" bug: no version-skew protection meant the
+	// stale tab's router had no signal to reload. Derived from
+	// NEXT_PUBLIC_BUILD_TIME (already computed fresh per build — see
+	// package.json's build script) rather than a second value to keep in
+	// sync; hashed since deploymentId only allows
+	// alphanumerics/hyphens/underscores and a raw ISO timestamp has colons.
+	// Conditional spread (not `?? undefined`) because
+	// exactOptionalPropertyTypes rejects an explicit undefined — this only
+	// omits the key entirely for a local `next dev` run, which doesn't set
+	// the env var at all.
+	...(process.env.NEXT_PUBLIC_BUILD_TIME
+		? {
+				deploymentId: createHash("sha256")
+					.update(process.env.NEXT_PUBLIC_BUILD_TIME)
+					.digest("hex")
+					.slice(0, 16),
+			}
+		: {}),
 	experimental: {
 		serverActions: {
 			// Default 1MB cap is too small for uploadListThumbnail's raw source
