@@ -22,9 +22,7 @@
 
 .option
   height: 10rem
-  // Reserves width up front so .options doesn't collapse too short on first render, which would
-  // otherwise fire the sentinel's IntersectionObserver before any option has loaded. Overridden
-  // by the inline aspectRatio style when optionAspectRatio is passed (e.g. banners' 16/9).
+  // Reserves width via aspect-ratio; overridden inline when optionAspectRatio passed
   aspect-ratio: 2 / 3
   max-width: 100%
   // Placeholder color shown while opacity is 0, so each option is a calm box instead of a blank gap.

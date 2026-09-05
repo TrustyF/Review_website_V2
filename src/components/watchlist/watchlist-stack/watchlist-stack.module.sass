@@ -7,10 +7,7 @@
   cursor: pointer
   container-type: size
 
-// height: 100% + aspect-ratio derives each card's width from its height
-// (matching MediaPoster's own ratio) instead of letting a flex-grown width
-// make the height drift from the container's. z-index/margin-left are set
-// inline in watchlist-stack.tsx since they depend on card count and position.
+// height:100% + aspect-ratio derives width; z-index/margin-left set inline per count/position
 .card
   height: 100%
   aspect-ratio: 2 / 3

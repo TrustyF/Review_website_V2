@@ -30,10 +30,7 @@
   color: inherit
   text-decoration: none
 
-// Same left-image/right-text shape as activity-feed.module.sass's own
-// .entry_link, but the first column is auto- not fixed-width: the list
-// thumbnail is a wide (16:9) banner, not a poster, and object-fit: cover
-// would crop it — sized to the row's height instead, keeping its own aspect.
+// First column auto-width (not fixed) — 16:9 banner sized to row height, keeps aspect
 .header
   display: grid
   grid-template-columns: auto 1fr

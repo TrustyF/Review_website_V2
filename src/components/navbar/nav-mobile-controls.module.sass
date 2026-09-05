@@ -1,9 +1,6 @@
 @use "@/app/styles/variables" as *
 
-// Groups the two icons under one margin-left: auto so they push together to
-// the bar's right edge — putting auto-margin on each individually would
-// split the free space between them per the flex spec, spacing them apart
-// too; gap below handles their own spacing instead.
+// margin-left:auto on group keeps icons together; individual margins would split them
 .mobile_controls
   display: none
   align-items: center

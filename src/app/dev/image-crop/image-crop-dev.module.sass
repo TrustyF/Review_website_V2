@@ -24,20 +24,14 @@
   gap: 4px
   cursor: pointer
 
-// Cropper frame + result-preview panel side by side — align-items:
-// flex-start rather than stretch since the two boxes have unrelated heights
-// (cropper_frame is a fixed 420px, preview_frame follows the shape's own
-// ratio at a much smaller PREVIEW_SIZE).
+// align-items:flex-start — boxes have unrelated heights (420px vs PREVIEW_SIZE)
 .cropper_row
   display: flex
   flex-flow: row
   align-items: flex-start
   gap: 16px
 
-// react-easy-crop fills this box (position: absolute internally) — needs an
-// explicit height and a positioned ancestor, per the library's own usage
-// note. flex: 1 (rather than width: 100%) so it's the one side of
-// .cropper_row that gives up space to preview_column's fixed size.
+// Library needs explicit height + positioned ancestor; flex:1 gives up space to preview's fixed size
 .cropper_frame
   position: relative
   flex: 1 1 auto
@@ -47,16 +41,12 @@
   border-radius: 4px
   overflow: hidden
 
-// Shared by both vignette treatments below — the cropper's own overlay
-// (absolutely centered atop the crop rect) and the preview panel's (already
-// exactly the crop rect's own size, so it only needs to fill its parent).
+// Shared vignette gradient by cropper overlay and preview panel
 .vignette_gradient
   pointer-events: none
   background: radial-gradient(ellipse at center, transparent 55%, black 100%)
 
-// Positioned to match react-easy-crop's own crop rect exactly (see
-// image-crop-tool.tsx's cropSize state) — width/height/opacity are set
-// inline per-instance, this just owns the parts that don't vary.
+// Positioned to match crop rect exactly; inline styles for varying parts
 .vignette_overlay
   @extend .vignette_gradient
   position: absolute
@@ -67,9 +57,7 @@
 .vignette_overlay_round
   border-radius: 50%
 
-// Same centering trick as .vignette_overlay above, just a plain outline
-// instead of a gradient fill — width/height (the shrunk-down diameter) are
-// set inline per-instance (see AVATAR_SAFE_MARGIN_RATIO).
+// Plain outline (not gradient); inline styles for varying diameter
 .safe_margin_circle
   position: absolute
   top: 50%
@@ -96,10 +84,7 @@
   font-size: 0.75rem
   opacity: 0.6
 
-// background-image/-size/-position are set inline per-instance (see
-// image-crop-tool.tsx) — reproduces image-crop-resolver.ts's own extract()
-// rect at a small fixed display size, so what's saved is what's shown here
-// rather than something the crop window's own live view only implies.
+// Shows exact saved crop rect at fixed size, not live preview
 .preview_frame
   position: relative
   background-repeat: no-repeat

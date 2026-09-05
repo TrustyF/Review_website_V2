@@ -31,12 +31,7 @@
   border-right: 2px dashed var(--body)
   z-index: 10
 
-// Perforation holes along the mark's inner-left edge — a genuine cutout
-// (mask-image, not a solid dot color) so whatever's actually behind the tag
-// shows through, rather than needing to match a fixed backing color the way
-// a painted dot would. mask-size's height is the repeat period, so this
-// tiles down the mark's full height (however tall .name's content makes it)
-// instead of needing a fixed count of hand-placed holes.
+// Mask cutout (not solid dot) so background shows; mask-size height tiles for variable mark height
 .mark
   width: 1.75rem
   background: var(--logo-tag-accent)
@@ -48,9 +43,7 @@
   --dash-height: 3px
   --dot-gap: 8px
   --dot-inset: 4px
-  // Shifts the repeating tile itself, not any one hole — since mask-repeat
-  // wraps every --dot-gap px, this only needs to move within that range;
-  // shifting a full period further has no visible effect.
+// Shifts tile within one period; full period shift has no visible effect
   --dot-offset: -1px
   mask-image: radial-gradient(ellipse var(--dash-width) var(--dash-height) at var(--dot-inset) center, transparent 60%, black 68%)
   mask-repeat: repeat-y

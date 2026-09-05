@@ -27,10 +27,7 @@
 .list
   display: flex
   flex-flow: column
-  // Replaces .entry/.card's own former top/bottom padding — one gap between
-  // rows instead of each row padding both its own edges. --row-gap lets
-  // TimelineList's rowGap prop override this per caller (e.g. NotificationFeed
-  // tuning its own spacing independently of ActivityFeed's).
+  // One gap between rows; --row-gap lets caller override (NotificationFeed, etc.)
   gap: var(--row-gap, 1rem)
   list-style: none
 
@@ -43,9 +40,7 @@
     opacity: 1
     transform: translateY(0)
 
-// li wrapper: stagger animation + a relative anchor for .unread_dot.
-// Layout itself lives on .entry_link (its only child), so a clickable
-// (NotificationFeed) and inert (ActivityFeed) row share the same grid.
+// li wrapper: stagger animation + .unread_dot anchor; layout on .entry_link
 .entry
   position: relative
   border-radius: 0.5rem
@@ -60,11 +55,7 @@
 .entry.unread
   background: color-mix(in srgb, var(--brand) 8%, transparent)
 
-// Two columns: poster/icon, and a content block of two stacked lines
-// (title+date, action+value) — poster height drives the row height, .content
-// centers within it. A <Link> when the row is clickable (NotificationFeed),
-// a plain <span> otherwise (ActivityFeed, whose target/value carry their own
-// inline Links) — see TimelineRow.
+// Two columns (poster/icon, content); Link if clickable, span otherwise
 .entry_link
   display: grid
   grid-template-columns: 4rem 1fr
@@ -86,9 +77,7 @@
 // Same sizing/fit as change-log-list.module.sass's own .poster_value.
 // justify-self centers it since icon (16px) and poster width vary.
 .poster
-  // Grid items default min-width/height to auto, which for <img> resolves to its
-  // intrinsic size (93x140) rather than height:100%/width:auto below, without
-  // this override the fixed column can't shrink it and it spills out.
+  // Override grid's auto min-width so <img> shrinks (not spills)
   min-width: 0
   min-height: 0
   justify-self: center
@@ -176,15 +165,6 @@
 .value_old
   position: relative
 
-  //&::after
-  //  content: ""
-  //  position: absolute
-  //  top: 50%
-  //  left: -0.1rem
-  //  right: -0.1rem
-  //  height: 1.5px
-  //  background: var(--accent2)
-  //  transform: rotate(-18deg)
 
 .arrow_icon
   flex-shrink: 0

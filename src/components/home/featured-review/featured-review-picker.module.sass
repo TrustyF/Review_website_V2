@@ -53,11 +53,7 @@ $picker-progress-size: 0.7rem
   inherits: false
   initial-value: 0deg
 
-// Halo ring behind the *next* picker item's dot. pointer-events: none so it doesn't block .picker_dot's click target. Fades in rather than popping at 0% (see .picker_item_progress_fade).
-//
-// Laid out at 2x size and scaled down (supersample trick) rather than sized directly, since a circle/wedge this small rasterizes jagged at 1x.
-//
-// Centered via top/left 50% + translate(-50%, -50%), not inset+margin:auto — Chrome resolves auto-margins unevenly on the flex main-axis when this box is larger than its flex container, pushing it off-center; translate avoids that.
+// Halo ring behind next dot; pointer-events:none; fades in; 2x size scaled (supersample); centered via translate
 .picker_item_progress
   position: absolute
   z-index: 0

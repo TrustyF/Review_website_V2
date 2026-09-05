@@ -58,9 +58,7 @@
   left: 0.25rem
   display: flex
   flex-flow: column
-  // Wider than .subtitle/.status_buttons' usual 0.2-0.25rem gaps — these items' own Hitbox hit
-  // areas (padding: 6, see media-mini-card-shell.tsx) still overlap a little at this gap, but a
-  // wider one starts eating into the poster art above/below the icons themselves.
+  // Wider gap (items' Hitbox padding overlaps); narrower would eat into poster art
   gap: 0.5rem
 
 // Groups the watchlist/seen toggles into one pill surface; border-radius keeps a full stadium shape regardless of how tall the column grows as toggles are added.

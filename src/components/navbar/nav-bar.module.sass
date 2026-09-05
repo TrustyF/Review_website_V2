@@ -71,12 +71,7 @@ $nav-content-gap: 0.75rem
 .groups > .nav_group:not(:first-child)
   margin-left: 0.75rem
 
-// An ordinary flex item (no position: absolute), so it shrinks/pushes with
-// the row. min-width reserves the body column's right margin as a floor so
-// .groups's own right edge lands exactly at the body edge; flex-shrink: 0
-// keeps that floor from shrinking away, and justify-content: flex-end packs
-// the avatar/bell flush against it. Below that floor width, the box just
-// falls back to sizing to its content (no overlap).
+// min-width reserves body-margin floor; flex-shrink:0 holds it; falls back to content size at narrow widths
 .nav_group.nav_group_account
   justify-content: flex-end
   flex-shrink: 0

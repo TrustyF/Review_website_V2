@@ -1,9 +1,6 @@
 @use "@/app/styles/variables" as *
 
-// Pinned to its own corner instead of the .nav_group flex flow — <nav>'s
-// fixed positioning makes its padding box the containing block, so right:0/
-// top:120% land at the same edge the flex content ends at without
-// duplicating .wrapper's padding values.
+// Pinned to corner via absolute positioning against nav's containing block
 .add_media_link
   position: absolute
   right: 2rem
@@ -17,9 +14,7 @@
   @media (max-width: $mobile-breakpoint)
     display: none
 
-// Separates "Add media" (a primary action) from the rest (admin utility
-// pages) — a top border plus its own padding reads as a divider without
-// needing an extra empty spacer element.
+// Top border + padding divides without spacer element
 .group
   display: flex
   flex-flow: column

@@ -3,56 +3,32 @@
 :root
   --background: #151315
   --foreground: #ededed
-  // Translucent --background, for the navbar's frosted-glass scrim — mixed
-  // rather than a hand-picked rgba() so it can't drift out of sync with
-  // --background itself.
+  // Translucent --background mix for navbar scrim — avoids rgba() drift from --background itself
   --nav-scrim: color-mix(in srgb, var(--background) 75%, transparent)
 
   --ticket-accent: #F35001
   --ticket-accent-muted: #803713
   --ticket-accent-dark: #59270d
 
-  // LogoTag's own mark color — a distinct shade tuned for that compact
-  // navbar mark specifically, not a reuse of --ticket-accent (the printed-
-  // ticket card's red) or --brand (the site's general orange); giving it
-  // its own token keeps lint:colors happy without conflating the two.
+  // LogoTag's distinct mark color — own token keeps lint:colors happy without conflating ticket-accent/--brand
   --logo-tag-accent: #f25100
-  // The logo's own ticket-stub card is a fixed light "paper" surface —
-  // unlike --surface, it doesn't invert with the site's dark theme, since
-  // the whole point is reading as a printed ticket regardless of where it's
-  // placed. --ticket-ink is that paper's text/border color, not --foreground
-  // (which is tuned for the dark --background elsewhere).
+  // Fixed light paper surface — doesn't invert with dark theme; --ticket-ink is paper's text/border, not --foreground
   --ticket-paper: #faf8f4
   --ticket-ink: #1a1a1a
 
-  // Single brand color, plus the interaction-state and on-color variants
-  // derived from it — the shape most sites with one primary color use
-  // (base fill, a lighter hover, a darker pressed/active, a low-opacity
-  // tint for subtle backgrounds, and the text/icon color for placement on
-  // top of --brand itself). Everything below is color-mix()'d off this one
-  // value, so re-branding is a one-line change here.
+  // Single brand color with all variants derived via color-mix() — one-line re-branding
   --brand: #ff860d
   --brand-hover: color-mix(in srgb, var(--brand) 85%, white 15%)
   --brand-active: color-mix(in srgb, var(--brand) 80%, black 20%)
   --brand-muted: color-mix(in srgb, var(--brand) 15%, var(--background) 85%)
   --on-brand: var(--foreground)
 
-  // Muted-text/border grey scale — accent1 is the workhorse (icons,
-  // dividers, secondary text); accent2/3 are lighter steps reached for
-  // occasionally. Used to run to accent5, but 4 and 5 had never once been
-  // referenced, and a separate --darkaccent1..5 + --color1accent1..5 sat
-  // alongside it in the same shape, both mostly dead (see --surface/
-  // --surface-border and --link below for the two pieces of those that
-  // actually were in use).
+  // Muted grey scale: accent1 is main (icons/dividers/secondary text), accent2/3 occasional; streamlined from larger set
   --accent1: #666666
   --accent2: #808080
   --accent3: #999999
 
-  // The recurring "raised surface on the dark background" pair — card/
-  // popover/tooltip fill plus its border — factored out of what used to be
-  // --darkaccent2/--darkaccent4. --surface-border is derived from --surface
-  // (lightened toward --foreground) rather than its own hardcoded value, so
-  // the two can't drift out of step the way the old pair eventually did.
+  // Raised surface + border pair factored from old darkaccent vars; --surface-border derives from --surface to stay in sync
   --surface: #1a1a1a
   --surface-border: color-mix(in srgb, var(--surface) 88%, var(--foreground) 12%)
 
@@ -73,10 +49,7 @@
   // previously two independent hardcoded copies of the same value.
   --warning: #fcca00
 
-  // Recurring overlay treatments — a scrim behind text on a poster/banner
-  // image, a modal/menu backdrop dim, and the light hairline border used
-  // on dark preview cards throughout the /dev pages. Previously copy-pasted
-  // literals in every file that needed them.
+  // Recurring overlay treatments (scrim, backdrop, preview-card border) — previously copy-pasted, now centralized
   --overlay-scrim: rgba(0, 0, 0, 0.65)
   --overlay-backdrop: rgba(0, 0, 0, 0.5)
   --border-highlight: rgba(255, 255, 255, 0.15)
@@ -88,14 +61,7 @@
 
   --navbar-height: 3rem
   --footer-margin: 3rem
-  // What a sticky element elsewhere on the page (GroupedMediaGrid/
-  // GroupedMediaList's .group_header) should offset itself by to sit right
-  // below the navbar instead of either colliding with it (offsetting 0
-  // while the navbar's still on screen) or leaving a permanent gap above
-  // itself (offsetting the full height once the navbar's auto-hidden itself
-  // away). This default (full height) only holds before the navbar's own
-  // scroll-hide effect mounts — see useNavbarVisibility, which sets this
-  // variable directly on <html> once it knows whether the navbar's hidden.
+  // Navbar offset for sticky elements; useNavbarVisibility overrides it on <html> once navbar hide effect mounts
   --navbar-offset: var(--navbar-height)
 
 
@@ -107,14 +73,7 @@ html,
 body
   max-width: 100vw
 
-// overflow-x here only, not on html too — html and body both setting
-// overflow-x confuses which one the viewport's scroll/clip propagates from
-// (CSS overflow propagation: body's overflow propagates to the viewport in
-// HTML documents, but with html *also* setting it, the propagation gets
-// inconsistent across engines) and that in turn breaks position: sticky for
-// every descendant, since sticky offsets are computed relative to the
-// nearest actual scrolling ancestor. Confirmed by removing this from html
-// alone: the RatedTierGrid's sticky tier_header started working immediately.
+// Body overflow-x only, not html — html + body breaks sticky positioning by confusing propagation target
 body
   overflow-x: hidden
   min-height: 100%

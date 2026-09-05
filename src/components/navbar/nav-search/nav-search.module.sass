@@ -70,12 +70,7 @@
     outline: none
     border-color: var(--brand)
 
-// Portaled to document.body and positioned via getBoundingClientRect() in
-// JS (see nav-search.tsx) rather than absolute-inside-.overlay, so it can
-// grow to fit its content instead of being clamped to the search bar's
-// width, and isn't clipped by the navbar's own overflow/stacking context.
-// Anchored with `right` (set inline) rather than `left`+width, so it stays
-// lined up with the search bar's right edge as it grows.
+// Portaled to body, positioned via JS; can grow beyond bar width; anchored with right (not left+width)
 .dropdown
   position: fixed
   z-index: 20

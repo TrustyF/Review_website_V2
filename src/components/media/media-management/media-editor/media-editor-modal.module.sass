@@ -25,9 +25,7 @@
   width: 100%
   height: 1px
 
-// Stays put while .content_column scrolls past it (the modal's own scroll —
-// see wrapper's overflow-y) so the poster's always in view alongside
-// whichever field is currently being edited.
+// Sticky so stays in view while content scrolls
 .poster_column
   position: sticky
   top: 2rem
@@ -58,21 +56,14 @@
   gap: 0.75rem
   padding: 0 20px
 
-// Grid, not flex: Release date only needs its own content width (auto), and
-// .details_row_secondary needs to actually claim the rest of the row (1fr)
-// rather than just its own shrink-to-fit content width, which a flex row's
-// default sizing would give it — that alone was enough to force it onto a
-// second line even when the row had plenty of room left.
+// Grid so Release date is auto, details_row_secondary is 1fr (not shrink-to-fit)
 .details_row
   display: grid
   grid-template-columns: auto 1fr
   align-items: start
   gap: 2rem
 
-// +18 / Poster URL / Banner URL, grouped to the right of Release date (see
-// .details_row's grid above). min-width: 0 lets its own fields actually
-// shrink instead of forcing this whole group to wrap below Release date the
-// moment their combined natural width doesn't fit.
+// Grouped right of Release date; min-width:0 lets fields shrink
 .details_row_secondary
   display: flex
   flex-flow: row wrap
@@ -119,10 +110,7 @@
   font-size: 1rem
   resize: vertical
 
-// Shared by both the poster and banner URL fields — a plain paste-a-URL
-// input is the same shape either way, only the preview's natural aspect
-// ratio differs (portrait vs landscape), and that comes from the image
-// itself rather than anything set here.
+// Shared by poster/banner URL fields; preview aspect ratio from image only
 .url_input_row
   display: flex
   flex-flow: row
@@ -148,9 +136,7 @@
   align-items: flex-start
   gap: 1rem
 
-// Default look for every field input: transparent, underlined, matching the
-// rendered review's typography instead of a boxed form control. Mirrors
-// .rating/.rating_number in media-card/review.module.sass.
+// Default field look: transparent, underlined, matches review typography
 .field_input
   width: 4rem
   padding: 0.1rem 0.3rem
@@ -161,9 +147,7 @@
   font-family: $font-body
   font-size: 1.1rem
 
-// Same look as .field_input, just wide enough for a full mm/dd/yyyy date
-// input to render without clipping — .field_input's 4rem is sized for the
-// short numeric fields (Rating, Difficulty), not this.
+// Same as field_input but wide for mm/dd/yyyy
 .field_input_date
   width: 9.5rem
   padding: 0.1rem 0.3rem
@@ -177,9 +161,7 @@
 .field_checkbox
   accent-color: var(--foreground)
 
-// Same underlined, no-box look as .field_input, but auto-width (a button's
-// label — "Log today"/"Logged" — doesn't fit .field_input's fixed 4rem) and
-// clickable.
+// Same underlined no-box look, auto-width and clickable
 .rewatch_button
   width: auto
   padding: 0.1rem 0.3rem

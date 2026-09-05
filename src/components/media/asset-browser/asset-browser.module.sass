@@ -10,9 +10,7 @@
   padding: 2rem
   background: rgba(0, 0, 0, 0.6)
 
-  // Kept mounted while closed (see AssetBrowser's isOpen prop) so its
-  // search/selection state survives — the `hidden` attribute needs a real
-  // rule here since it'd otherwise lose to this class's own `display: flex`.
+  // Kept mounted while closed (preserves state); hidden needs explicit rule
   &[hidden]
     display: none
 

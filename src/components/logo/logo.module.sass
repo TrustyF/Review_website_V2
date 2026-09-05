@@ -1,23 +1,13 @@
 @use "@/app/styles/variables" as *
 
-// Every sized property below is expressed through this instead of a literal
-// value, so --logo-scale (set to 1 on .ticket, overridden smaller by
-// .compact — see nav-bar.tsx) shrinks the whole mark as one proportional
-// unit — border, shadow offset, perforation holes, both type sizes — rather
-// than needing a second hand-tuned copy of every rule for the navbar's
-// cramped-height version. Hairline strokes (borders, the stub's underline)
-// go through px-scale instead of scale so they get a max(1px, ...) floor —
-// scaled linearly like everything else they'd fall under a device pixel at
-// .compact's size and disappear instead of just reading as a thinner line.
+// --logo-scale shrinks mark proportionally; hairlines use px-scale for min 1px floor at .compact size
 @function scale($value)
   @return calc(var(--logo-scale, 1) * #{$value})
 
 @function px-scale($value)
   @return max(1px, scale($value))
 
-// Solid offset shadow (not blurred) reads as a second sheet of card stock
-// sitting behind the ticket, rather than a soft ambient drop shadow — matches
-// the flat, printed look the rest of the mark goes for.
+// Solid offset shadow (not blurred) reads as card stock, matches flat printed look
 .ticket
   --logo-scale: 1
   position: relative
@@ -31,17 +21,11 @@
   overflow: hidden
   font-family: $font-sans
 
-// Sized to sit in the navbar's title slot (see nav-bar.module.sass/.tsx) —
-// 0.25 was picked so the scaled-down ticket's height lands close to the
-// navbar's own ~3.5rem row instead of forcing it noticeably taller; every
-// other compact dimension above just falls out of that one ratio via
-// scale()/px-scale() rather than being tuned by hand to match.
+// 0.25 scale so height lands close to navbar ~3.5rem; other dimensions derive from this ratio
 .compact
   --logo-scale: 0.25
 
-// Margin strip along the left edge — a column of punched sprocket holes
-// plus the dashed tear line separating it from .body, same as a real ticket
-// stub's perforated edge.
+// Margin strip with sprocket holes and tear line, like real ticket stub
 .perforation
   display: flex
   flex-direction: column

@@ -1,0 +1,7 @@
+{
+	"customSyntax": "./stylelint-rules/raw-text-syntax.mjs",
+	"plugins": ["./stylelint-rules/comment-length.mjs"],
+	"rules": {
+		"sass-comment-length/flag-long": [true, { "severity": "warning" }]
+	}
+}

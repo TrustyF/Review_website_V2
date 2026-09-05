@@ -15,11 +15,7 @@
   cursor: pointer
   @include nav-item-look
 
-// Wraps icon + label (not the chevron) in an <a> so a click navigates to
-// the group's first item (see nav-dropdown.tsx); inherits .trigger's color
-// instead of default link styling. Repeats nav-item-look's ::before hit-box
-// trick scoped to this element — otherwise a click in that enlarged margin
-// lands on <summary> (native toggle) rather than this Link.
+// Wraps icon + label in <a> for navigation; repeats nav-item-look's ::before hit-box trick
 .trigger_link
   position: relative
   display: flex
@@ -74,10 +70,7 @@
     transition: opacity 0.2s ease
     transform: none
 
-// Flush against the trigger with the gap as padding-top (not a top offset),
-// so hovering through that gap never actually leaves .panel — a real offset
-// would open a dead zone the pointer visibly exits and re-enters. Visible
-// chrome moves to .panel_content so the padding itself stays invisible.
+// Gap as padding-top so hover doesn't exit .panel; visible chrome on .panel_content
 .panel
   position: absolute
   top: 100%
@@ -85,17 +78,13 @@
   z-index: 20
   padding-top: 0.5rem
 
-  // In the mobile drawer there's no pointer to lose, and floating the panel
-  // would hide the links after it instead of pushing them down like an
-  // accordion — static keeps it in normal flow.
+// Mobile drawer needs static positioning to keep links in normal flow
   [data-mobile-open="true"] &
     position: static
     padding-top: 0
     margin-top: 0.5rem
 
-// For a trigger flush against the navbar's right edge: anchoring from
-// `right` grows the panel leftward instead of off-viewport. Moot once
-// .panel goes static in the mobile drawer.
+// Anchor from right to avoid off-viewport; moot in mobile drawer
 .panel_right
   left: auto
   right: 0

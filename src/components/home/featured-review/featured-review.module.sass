@@ -127,9 +127,7 @@ $page-padding: 1.25rem
   @media (max-width: $mobile-breakpoint)
     width: clamp(80px, 20vw, 150px)
 
-// padding-top, not margin-top — .info stretches to the poster's full height with bottom-anchored content, so padding (not margin) is what actually pushes the visible content down.
-//
-// TODO: fix body overflowing past poster height — a 2-line title plus a maxed-out excerpt can make .info taller than the poster, growing .card_stack and shoving the picker down. Check across media types (poster-ratio.ts).
+// padding-top (not margin) pushes content down; TODO: body can overflow poster height
 .info
   display: flex
   flex-flow: column
@@ -146,9 +144,6 @@ $page-padding: 1.25rem
   align-items: center
   gap: 0.3rem
   color: var(--brand)
-  //background-color: color-mix(in srgb, var(--brand-muted) 75%, transparent)
-  //padding: 0.3rem 0.4rem
-  //border-radius: 0.5rem
   font-size: 0.8rem
   font-weight: 600
   text-transform: uppercase

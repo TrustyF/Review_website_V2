@@ -3,37 +3,20 @@ $font-mono: var(--font-geist-mono), Arial, Helvetica, sans-serif
 $font-serif: var(--font-geist-serif), Georgia, "Times New Roman", serif
 $font-body: var(--font-ibm-plex-sans), Arial, Helvetica, sans-serif
 
-// Single source of truth for mini card grid sizing — used by every grid
-// that lays out MediaMiniCardShell (rated-tier-grid, the dev preview grid)
-// and by the shell's own contain-intrinsic-height estimate, so resizing
-// the cards can't leave that estimate stale.
+// Mini card grid sizing — also used by contain-intrinsic-height to keep estimates in sync
 $mini-card-min-width: 120px
 
-// The page content column's width on every page that has one (home, media
-// detail, catalog/list pages, lists, activity, add-media, watchlist, ...) —
-// was independently hardcoded as `width: 950px` in each of those files.
+// Page content column width — previously hardcoded per-file, now centralized
 $content-width: 950px
 
 // The single navbar breakpoint — below this it's a hamburger-triggered
 // drawer, at or above it the full desktop row (see nav-bar.module.sass/.tsx).
 $mobile-breakpoint: 830px
 
-// nav-mobile-controls.module.sass's own .mobile_account_link/.mobile_toggle
-// square size — also feeds nav-bar.module.sass's own $mobile-bar-height, so
-// the drawer's top/max-height actually starts flush against the mobile
-// bar's real rendered height instead of reusing --navbar-height (a ~3rem
-// estimate calibrated for the shorter desktop bar, used elsewhere —
-// globals.sass's main padding-top, --navbar-offset for sticky elements).
-// Shared here (rather than declared once and duplicated) since both files
-// need the exact same value to agree.
+// Mobile icon square size — also feeds nav-bar's $mobile-bar-height; shared to keep values in sync
 $mobile-icon-size: 2.25rem
 
-// Replaces a page wrapper's own `width: $content-width` literal — caps at
-// $max-width same as before, but once the viewport can no longer fit that
-// (i.e. the wrapper is effectively full-width) it also picks up side
-// padding, so content doesn't butt directly against the screen edge. The
-// padding is scoped to only that range (rather than applied unconditionally)
-// so desktop layout stays pixel-identical to before this existed.
+// Responsive wrapper: adds padding below $content-width, keeping desktop layout pixel-identical
 @mixin content-wrapper($max-width: $content-width)
   width: 100%
   max-width: $max-width
@@ -41,22 +24,12 @@ $mobile-icon-size: 2.25rem
   @media (max-width: $max-width)
     padding-inline: 1.25rem
 
-// Shared "nothing here yet" text treatment — was independently redefined in
-// four different module.sass files (change log, search results, credit
-// pages, add-media) with the same intent; centralized so the look only
-// needs to change in one place.
+// Empty-state text treatment — was redefined in 4 files, now centralized
 @mixin empty-text
   color: var(--accent1)
   font-size: 0.9rem
 
-// Shared sticky "group header" look for every month/tier grouped list or
-// grid on the site (activity, reviews, notifications, catalog sort/tier
-// grids) — was four independently hand-copied blocks (grouped-media-grid,
-// grouped-media-list, activity-feed, notification-feed) that had already
-// drifted from each other (padding, an extra negative margin on two of
-// them, a bigger .groups gap) despite all being the same sticky-month-
-// header pattern. Callers still own their own .groups gap/margin-top,
-// since that's a list-level rhythm choice, not part of the header itself.
+// Shared sticky group header — was 4 hand-copied blocks that drifted; callers own .groups gap/margin-top
 @mixin sticky-group-header
   cursor: pointer
   padding: 0.5rem
@@ -70,20 +43,8 @@ $mobile-icon-size: 2.25rem
   width: fit-content
   margin-top: 2rem
 
-  // Sticks to the top of the viewport while its <details> is scrolling
-  // past, then scrolls away with the rest of that group once the next
-  // <details> pushes it out — sticky's containing block is the parent
-  // <details>, so it naturally can't overstay into the next group.
-  // top: var(--navbar-offset) (see globals.sass) rather than a fixed
-  // value — the navbar auto-hides on scroll-down (nav-bar.tsx), so a fixed
-  // offset is only ever right in one of its two states: 0 collides with a
-  // still-visible navbar, and the navbar's full height leaves a permanent
-  // gap once it's auto-hidden itself away. The transition here mirrors the
-  // navbar's own 0.25s slide so this eases into its new offset in step
-  // with it instead of snapping. z-index below the navbar's so it tucks
-  // behind it during the brief top-of-page window where the navbar is
-  // still visible. Opaque background is needed since the grid scrolls
-  // underneath it once stuck.
+  // Sticky to parent <details> so it scrolls away with its own group, not past it.
+  // top uses --navbar-offset (not fixed) since the navbar auto-hides; transition mirrors its slide.
   position: sticky
   top: calc(var(--navbar-offset) + 1rem)
   z-index: 5
@@ -91,11 +52,7 @@ $mobile-icon-size: 2.25rem
   transform: translateX(-0.5rem)
   transition: top 0.25s ease
 
-// The h1 + its nav icon (Activity/Reviews/Lists all repeat this — the same
-// icon their own NavLink uses, so the page reads as a continuation of the
-// link that led here) — a plain flex pairing, kept separate from
-// page-header below since that positions the *row* (title vs. an action)
-// while this positions the title's own two pieces.
+// h1 + nav icon flex pairing — separate from page-header which positions the row
 @mixin page-title-icon
   display: flex
   flex-flow: row
@@ -103,18 +60,12 @@ $mobile-icon-size: 2.25rem
   gap: 0.6rem
   font-size: 1.5rem
 
-// Applied to the icon itself (a call-site className, not part of the mixin
-// above) so only it picks up --accent1 — the h1 text next to it keeps its
-// own inherited foreground color rather than tinting along with it.
+// Applied to icon only — h1 keeps inherited foreground color
 @mixin page-title-icon-color
   color: var(--accent1)
   flex-shrink: 0
 
-// Shared page-title header row — an h1 with an optional action (a button,
-// a link) pushed to the far right, wrapping onto its own line rather than
-// overflowing on narrow viewports. Was independently redefined per page
-// (Lists, Reviews, Activity) with the same intent; centralized so a new
-// listing page picks up the same title treatment instead of inventing one.
+// Shared h1 + optional action row (wraps on narrow); was per-page, now centralized
 @mixin page-header
   display: flex
   flex-flow: row wrap
@@ -123,25 +74,14 @@ $mobile-icon-size: 2.25rem
   gap: 0.75rem
   margin-bottom: 2rem
 
-// Shared color/hover/active-state look for a top-level nav item — a plain
-// link (nav-bar.module.sass's .link/.sign_out_button) and a dropdown's own
-// trigger (nav-dropdown.module.sass's .trigger) both want to read as the
-// same kind of control. Was two independently hand-copied blocks that had
-// already drifted (the trigger's gap silently diverged from .link's) before
-// being centralized here; layout bits (display, gap, cursor, ...) stay with
-// each caller since those legitimately differ (a trigger has an extra
-// chevron the plain links don't).
+// Shared top-level nav item look — was 2 hand-copied blocks that drifted; layout bits stay with callers
 @mixin nav-item-look
   position: relative
   color: inherit
   text-shadow: var(--background) 2px 1px 3px
 
-  // Invisible hit-area padding — a ::before is generated content of this
-  // same element, not a separate overlapping one the way src/components/
-  // ui/hitbox.tsx's own hit_area div would be, so hovering or clicking
-  // anywhere in the expanded box still counts as hovering/clicking this
-  // link itself, with nothing painted on top of a neighboring element to
-  // block. Purely a bigger target; nothing about how the link looks changes.
+  // Invisible hit-area padding via ::before (generated content of this element,
+  // not a separate overlapping div like hitbox.tsx) — bigger target, no visual change.
   &::before
     content: ""
     position: absolute
@@ -153,12 +93,7 @@ $mobile-icon-size: 2.25rem
   &[aria-current="page"]
     color: var(--brand)
 
-  // Icons (nav-bar.tsx/nav-dropdown.tsx pass this as each <Icon>'s
-  // className) read as secondary to the label text at rest — a dimmer tone
-  // instead of inheriting this element's own (brighter) color via
-  // currentColor — but match the text's brand color on hover/active rather
-  // than staying muted, so the icon and its label always agree on emphasis
-  // together.
+  // Dimmer than the label at rest (not currentColor); matches text's brand color on hover/active.
   .nav_icon
     color: var(--accent3)
     transition: color 0.15s ease
@@ -167,10 +102,7 @@ $mobile-icon-size: 2.25rem
   &[aria-current="page"] .nav_icon
     color: var(--brand)
 
-// Brightens a nav-item-look icon (above) to full foreground for an item
-// that's icon-only (no label ever shown) — otherwise it stays at the dim
-// resting accent3 tone. Compounded onto .nav_icon (".nav_icon.nav_icon_always")
-// so its specificity matches nav-item-look's own dim rule and wins by
-// source order.
+// Brightens an icon-only nav-item-look item (no label) past its dim resting tone.
+// Compounded onto .nav_icon so specificity matches and wins by source order.
 @mixin nav-icon-brighten
   color: var(--foreground)
