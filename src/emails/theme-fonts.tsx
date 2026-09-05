@@ -1,9 +1,6 @@
 import { Font } from "@react-email/components";
 
-// Inter via Google's CSS @import, same as react-email's own demo templates
-// (node_modules/react-email/../demo/emails/01-Barebone/theme-fonts.tsx).
-// Many webmail clients strip @import, so the <Font> entries below register
-// 400/500/600 static files as a fallback for when it doesn't run.
+// Inter from @import; webmail often strips it, so Font entries are fallback.
 export function EmailFonts() {
 	return (
 		<>

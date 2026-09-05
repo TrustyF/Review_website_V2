@@ -3,9 +3,7 @@
 import { useState } from "react";
 import styles from "./responsive-preview-dev.module.sass";
 
-// Real iframes at real pixel widths so rendering (fonts, media queries) is
-// actually true to size, not a scaled mockup. Relative src stays same-origin
-// regardless of which port the dev server landed on.
+// Real iframes at actual widths so rendering (fonts, media queries) is true-to-size
 const DEFAULT_WIDTHS = [375, 800, 1400];
 
 export function ResponsivePreview() {

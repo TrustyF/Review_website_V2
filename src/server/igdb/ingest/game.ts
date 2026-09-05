@@ -7,17 +7,12 @@ import { pickBestArtwork } from "@/server/igdb/client";
 // IGDB's GameStatus enum — only values we're confident about; anything else defaults to RELEASED.
 const STATUS_MAP: Record<number, MediaStatus> = {
 	0: MediaStatus.RELEASED, // Released
-	2: MediaStatus.ONGOING, // Alpha
-	3: MediaStatus.ONGOING, // Beta
-	4: MediaStatus.ONGOING, // Early Access
+	// IGDB status mappings
 	5: MediaStatus.RELEASED, // Offline
 	6: MediaStatus.COMPLETED, // Cancelled
 };
 
-// IGDB's first_release_date can reflect whichever release it currently considers "main" (e.g. a
-// game's full 1.0 release) rather than the earliest one (e.g. an early access launch years prior).
-// release_dates carries every release event, so the true earliest is the min across those, falling
-// back to first_release_date only when release_dates is empty/missing.
+// first_release_date may not be earliest; use min of release_dates, fallback if empty.
 function earliestReleaseDate(game: IgdbGame): Date | null {
 	const dates = (game.release_dates ?? [])
 		.map((rd) => rd.date)

@@ -13,11 +13,7 @@ const DateFormatter = new Intl.DateTimeFormat("en-GB", {
 	minute: "2-digit",
 });
 
-// Inverse of ListAdditionsCard: one media item added to several different
-// lists the same day (see groupSameDayMediaAdditions) — the media's own
-// poster on the left like a plain row, "Added to N lists" underneath, and a
-// grid of every list's thumbnail below. Only ever called with
-// entry.groupedLists set.
+// Inverse of ListAdditionsCard: one media item added to multiple lists same day
 export function MediaAdditionsCard({
 	entry,
 	index,

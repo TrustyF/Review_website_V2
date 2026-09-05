@@ -47,10 +47,8 @@ type Props = {
 	banners: AssetOption[];
 	posters: AssetOption[];
 	people: AssetOption[];
-	// Current production values, used by "Reset to production defaults" below.
-	// Passed from the server component rather than importing the resolver's
-	// constants directly — that module pulls in fs/promises and sharp, which
-	// break the browser bundle since this file is "use client".
+	// Production values for "Reset to defaults". Passed in rather than imported
+	// directly — the resolver module pulls in fs/promises and sharp, breaking this client bundle.
 	bannerSettings: ProductionSettings;
 	posterSettings: ProductionSettings;
 	personSettings: ProductionSettings;
@@ -151,9 +149,8 @@ export function CompressionPlayground({
 	const [error, setError] = useState<string | null>(null);
 	const [isPending, startTransition] = useTransition();
 
-	// Guards against a slow request clobbering a newer result; two separate
-	// counters because sharing one meant the debounced compress effect's tick
-	// kept invalidating the still-in-flight baseline request before it resolved.
+	// Guards against a slow request clobbering a newer result. Two counters
+	// because one shared counter let the debounce tick invalidate an in-flight baseline request.
 	const baselineRequestIdRef = useRef(0);
 	const resultRequestIdRef = useRef(0);
 

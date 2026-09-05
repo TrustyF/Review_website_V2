@@ -3,9 +3,8 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { closeAllNavDropdowns } from "@/components/navbar/nav-dropdown";
 
-// Tracks the mobile drawer's open state, scoped to <nav> via a
-// data-mobile-open attribute rather than a class on <html>, since nothing
-// outside <nav> needs to react to it.
+// Tracks the mobile drawer's open state via a data-mobile-open attribute scoped to
+// <nav>, not a class on <html>, since nothing outside <nav> needs to react to it.
 export function useMobileDrawer() {
 	const pathname = usePathname();
 	const [mobileOpen, setMobileOpen] = useState(false);

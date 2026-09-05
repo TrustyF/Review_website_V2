@@ -15,9 +15,7 @@ type Props = {
 	recentlyWatched: MediaRecord[];
 };
 
-// Recent-releases + recently-watched pair for one media type, presentational — data is fetched
-// by LazyRecentMediaSection once this pair scrolls into view. Same fixed-size, deferred-reveal
-// grid as the movie home sections (LazyMediaGrid), just parameterized by type.
+// Recent-releases + recently-watched pair for one media type. Data fetched when scrolled into view. Same fixed-size deferred-reveal grid as movie sections, parameterized by type.
 export function RecentMediaSections({
 	type,
 	recentReleases,

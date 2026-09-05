@@ -11,9 +11,7 @@ import styles from "./review-body-edit-trigger.module.sass";
 
 type Props = {
 	media: MediaRecord;
-	// Computed by the server component from Date.now() vs media.releaseDate —
-	// kept out of this client component since comparing against the current
-	// time during render trips react-hooks/purity.
+	// Server-computed to avoid Date.now() comparison during render (purity violation)
 	isUpcoming: boolean;
 };
 
@@ -31,12 +29,7 @@ function UpcomingReviewPlaceholder({ date }: { date: Date | null }) {
 	);
 }
 
-// Drop-in replacement for <MediaReview> — click to open the same body editor (with AI diff) the
-// full editor modal uses. Closing it stages the edit into media-publish-store instead of saving
-// immediately, same as the poster/banner triggers.
-//
-// Scoped to the whole review card, not just the body text, since MediaReview (a shared primitive
-// used everywhere) doesn't expose its body as a separate targetable sub-element.
+// Drop-in <MediaReview> replacement: click to open body editor with AI diff. Closing stages edit to media-publish-store (not save). Scoped to whole card since MediaReview doesn't expose body as targetable sub-element.
 export function ReviewBodyEditTrigger({ media, isUpcoming }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();

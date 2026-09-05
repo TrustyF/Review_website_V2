@@ -4,9 +4,7 @@ import { MediaType } from "@prisma/client";
 import { fetchIgdbGameById } from "@/server/igdb/client";
 import { fetchComicVineById } from "@/server/comicvine/client";
 
-// One-time backfill for rows created before ingest started writing
-// sourceUrl. TMDB/MangaDex URLs are derivable from (type, externalId)
-// alone; IGDB/ComicVine URLs are slug-based and need a live call per row.
+// One-time backfill; TMDB/MangaDex URLs derivable, IGDB/ComicVine need slug.
 function localSourceUrl(type: MediaType, externalId: string): string | null {
 	switch (type) {
 		case MediaType.MOVIE:

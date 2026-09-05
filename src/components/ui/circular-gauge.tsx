@@ -116,32 +116,20 @@ export function CircularGauge({
 	const sweepFlag = sign > 0 ? 1 : 0;
 	const arcPath = `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} ${sweepFlag} ${tip.x} ${tip.y}`;
 
-	// Darkening trail as a true angular gradient (no discrete segments, so
-	// no seams) — transparent right at the tip, opaque black one lap back.
-	// Capped at one lap: further laps redraw the same span instead of
-	// stacking. Authored in the clockwise direction and mirrored via
-	// scaleX for negative (counter-clockwise) values.
+	// Angular gradient trail: transparent at tip, opaque one lap back, capped at 360deg
 	const tipDeg = progressRatio * 360;
 	const trailSpanDeg = Math.min(magnitude / max, 1) * 360;
 	// Peak trail darkness ramps up only past +-50%, reaching full
 	// `trailOpacity` at +-100% — flat/no darkening below that.
 	const trailOpacityFactor = Math.max(0, (t - 0.5) / 0.5);
 	const trailColor = `rgba(0, 0, 0, ${trailOpacity * trailOpacityFactor})`;
-	// `from` is the gradient's own origin — stop offsets below are relative
-	// to it, not absolute angles. Starting at the tail and sweeping forward
-	// to the tip (offset 0 = tail = dark, offset trailSpanDeg = tip = clear)
-	// puts the fade where the swept arc actually is.
+	// `from` is gradient's origin; stop offsets relative to it. Tail→tip sweep puts fade where the arc actually is.
 	const tailDeg = tipDeg - trailSpanDeg;
-	// The tail's `strokeLinecap="round"` cap (only present when the arc
-	// isn't a full lap) physically pokes out past `tailDeg` by strokeWidth/2
-	// — extend the solid-dark region back by that same angle so the cap is
-	// fully covered instead of poking out from under the gradient.
+	// strokeLinecap extends past tailDeg; extend dark region to cover.
 	const capMarginDeg =
 		laps === 0 ? (strokeWidth / 2 / radius) * (180 / Math.PI) : 0;
 	const trailGradient = `conic-gradient(from ${tailDeg - capMarginDeg}deg, ${trailColor} 0deg, ${trailColor} ${capMarginDeg}deg, transparent ${trailSpanDeg + capMarginDeg}deg, transparent 360deg)`;
-	// A couple px of soft feather (rather than a hard 0-width stop) keeps the
-	// mask's own antialiasing from mismatching the stroke's antialiased edge
-	// and leaving stray pixels poking through the gradient.
+	// Soft feather prevents antialiasing mismatch and stray pixels through gradient.
 	const maskFeather = 1;
 	const innerRadius = Math.max(0, radius - strokeWidth / 2 - maskFeather);
 	const outerRadius = radius + strokeWidth / 2 + maskFeather;

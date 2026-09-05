@@ -15,9 +15,8 @@ type Props = {
 	onSaved?: () => void;
 };
 
-// Empty override falls back to the automatic per-send behavior in
-// send-weekly-digest.ts: the featured media's own backdrop, "Weekly Digest"
-// headline, and the send date as subtitle.
+// Empty override falls back to send-weekly-digest.ts's automatic per-send
+// behavior (featured media's backdrop, "Weekly Digest" headline, send date).
 export function DigestBannerForm({ initial, onSaved }: Props) {
 	const [image, setImage] = useState(initial.image ?? "");
 	const [headline, setHeadline] = useState(initial.headline ?? "");

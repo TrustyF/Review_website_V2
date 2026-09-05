@@ -6,11 +6,7 @@ import { getMediaCredits } from "./get-media";
 import { CastPhotos } from "./cast-photos";
 import styles from "./media-detail.module.sass";
 
-// Director/Actor/Studio are promoted out of the collapsed credits list (see
-// below) — everything left in there is a long tail that varies a lot by
-// source (TMDB crew jobs are free text, MangaDex/ComicVine/IGDB each have
-// their own handful of role names). Known roles worth surfacing first get a
-// rank here; anything unlisted falls back to alphabetical after them.
+// Known roles get priority rank; rest sort alphabetically.
 const ROLE_PRIORITY: Record<string, number> = {
 	Writer: 0,
 	Screenplay: 0,
@@ -29,20 +25,13 @@ export type CreditLink = {
 	href: string;
 	name: string;
 	order: number | null;
-	// Only ever set on Actor entries (see the credit-building loop below) —
-	// Person.photoPath itself is cast-only, and this is gated by role on top
-	// of that so a person who's also credited as e.g. Director elsewhere
-	// still never shows a photo there.
+	// Only ever set on Actor entries, gated by role so other credits (Director) don't show photos.
 	photoSrc: string | null;
 	// Only ever set on Actor entries, same gating as photoSrc.
 	character: string | null;
 };
 
-// Shared by the promoted Director/Cast/Studio facts and each row of the
-// collapsed "everything else" list — linked names, comma-separated when
-// they need to read as inline prose (the "by <names>" byline), or plain
-// flex-wrapped (gap doing the spacing, no punctuation) everywhere else,
-// where each name already reads as its own item rather than a sentence.
+// Names comma-separated for inline prose (byline) or flex-wrapped elsewhere
 function CreditNames({
 	entries,
 	flex = false,
@@ -66,19 +55,11 @@ function CreditNames({
 	);
 }
 
-// Shared by MediaDirectorCredit and MediaCreditsDetails below — both need
-// the same grouped-by-role shape off the same getMediaCredits call, just to
-// render different slices of it (director only vs. cast/studio/everything
-// else).
+// Shared by MediaDirectorCredit and MediaCreditsDetails. Both need same grouped-by-role shape, just render different slices.
 async function groupCredits(mediaId: number, type: MediaType) {
 	const credits = await getMediaCredits(mediaId);
 
-	// Same person/company can be attached to a role more than once (e.g.
-	// duplicate TMDB credit rows) — dedupe per role by id, not just name, so
-	// two different people who happen to share a name don't collapse. Only
-	// the first occurrence is kept: credits is already ordered by billing
-	// order ascending, so for Actor that's the earliest (most prominent) row
-	// for that person.
+	// Dedupe credits per role by id (not name); keep first.
 	const creditsByRole = new Map<string, Map<string, CreditLink>>();
 	for (const credit of credits) {
 		const entry = credit.person
@@ -112,20 +93,14 @@ async function groupCredits(mediaId: number, type: MediaType) {
 		}
 	}
 
-	// Director/Cast/Studio surface directly on the page — everything else
-	// (writers, producers, publishers, ...) stays in the collapsed list,
-	// ranked by ROLE_PRIORITY rather than left in arbitrary credit order.
+	// Director/Cast/Studio surface directly; others stay in collapsed list ranked by ROLE_PRIORITY.
 	const directorRoleEntries = [
 		...(creditsByRole.get("Director")?.values() ?? []),
 	];
 	const creatorRoleEntries = [
 		...(creditsByRole.get("Creator")?.values() ?? []),
 	];
-	// Manga only: MangaDex only ever hands back an Author and/or Artist
-	// relationship per title (see manga-credits.ts) — no separate "Director"
-	// concept at all — so those are what belongs in the byline instead.
-	// Merged into one list (deduped by person, e.g. a mangaka credited as
-	// both) rather than shown as two separate facts.
+	// Manga: author/artist (no director concept) merged in byline, deduped by person
 	const authorArtistEntries = [
 		...new Map(
 			[
@@ -135,25 +110,13 @@ async function groupCredits(mediaId: number, type: MediaType) {
 		).values(),
 	];
 
-	// TV shows: aggregate_credits' "Director" job reflects every individual
-	// episode's director across the show's whole run (see
-	// tv-show-credits.ts), not who actually created the show — a 50+ name
-	// byline for a long-running series. Creator (from TMDB's created_by,
-	// same file) is what the byline should show instead, when the show
-	// actually has one.
-	// Comics: ComicVine has no per-person role breakdown at the volume level
-	// at all (see comic-credits.ts) — everyone credited lands under the same
-	// generic "Creator" role, which is the closest thing a comic has to a
-	// byline.
+	// TV shows: aggregate_credits' "Director" reflects every episode's director (50+ names for long series), not show creator. Comics: everyone under generic "Creator" role (closest to byline).
 	const promoteCreator =
 		(type === MediaType.TVSHOW || type === MediaType.COMIC) &&
 		creatorRoleEntries.length > 0;
 	const promoteAuthorArtist =
 		type === MediaType.MANGA && authorArtistEntries.length > 0;
-	// Capped at 2 — the byline is meant for a quick "who made this", not a
-	// full credits dump (that's what the collapsed list below is for). A
-	// prolific TV Creator lineup or ComicVine's flat, unranked Creator list
-	// could otherwise run long.
+	// Capped at 2 — quick "who made this", not full credits.
 	const directorEntries = (
 		promoteCreator
 			? creatorRoleEntries
@@ -167,12 +130,8 @@ async function groupCredits(mediaId: number, type: MediaType) {
 		.sort((a, b) => (a.order ?? Infinity) - (b.order ?? Infinity))
 		.slice(0, MAX_BILLED_CAST);
 
-	// Director/Creator/Author/Artist stay in here too, even though a capped
-	// slice of them is also promoted into the byline above (directorEntries)
-	// — the byline only ever shows 2, so anyone past that still needs
-	// somewhere to show up. Studio and Actor are the only roles fully
-	// promoted out of this list, since they always get their own dedicated
-	// section below regardless of how many entries they have.
+	// Director/Creator/Author stay here too even when promoted to byline (max 2 shown).
+	// Studio/Actor are fully promoted out with dedicated sections.
 	const otherRoles = [...creditsByRole.entries()]
 		.filter(([role]) => role !== "Studio" && role !== "Actor")
 		.sort(([a], [b]) => {
@@ -183,9 +142,7 @@ async function groupCredits(mediaId: number, type: MediaType) {
 	return { directorEntries, studioEntries, actorEntries, otherRoles };
 }
 
-// Sits inline in the title row ("<Title> by <Director>") — split into its
-// own component (and <Suspense> boundary, see page.tsx) purely so the title
-// itself doesn't wait on the credits query to render.
+// Split into own Suspense boundary so title doesn't wait on credits query
 export async function MediaDirectorCredit({
 	mediaId,
 	type,
@@ -203,11 +160,7 @@ export async function MediaDirectorCredit({
 	);
 }
 
-// The Details section's cast strip / Studio fact / collapsed "everything
-// else" credits list — split into its own component (and <Suspense>
-// boundary, see page.tsx) so it doesn't gate the rest of the page either.
-// Calls the same getMediaCredits as MediaDirectorCredit above; React.cache
-// means that's one shared query, not two.
+// Details section (cast strip, Studio fact, collapsed credits). Split into own <Suspense> boundary so doesn't gate rest of page. React.cache dedupes getMediaCredits.
 export async function MediaCreditsDetails({
 	mediaId,
 	type,

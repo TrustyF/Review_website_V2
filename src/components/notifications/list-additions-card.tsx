@@ -13,11 +13,7 @@ const DateFormatter = new Intl.DateTimeFormat("en-GB", {
 	minute: "2-digit",
 });
 
-// Renders a LIST_ITEM_ADDED group (see groupSameDayListAdditions) — same
-// left-image/right-text header shape as TimelineRow's other rows (the list's
-// own thumbnail standing in for a poster, "Added N items" where a plain row's
-// action text goes), plus a grid of every added item's poster underneath.
-// Only ever called with entry.groupedMedia set.
+// Renders LIST_ITEM_ADDED group with header and poster grid; requires groupedMedia.
 export function ListAdditionsCard({
 	entry,
 	index,

@@ -92,9 +92,7 @@ export const TmdbTvResponseSchema = type({
 		name: "string",
 		profile_path: "string | null",
 	}).array(),
-	// aggregate_credits, not credits — TMDB's plain `credits` only reflects the current/last-known
-	// season's cast (e.g. drops Steve Carell from The Office's final season), while aggregate_credits
-	// merges cast/crew across the whole run. See tv-show-credits.ts for how this is flattened.
+	// aggregate_credits merges cast/crew across whole run; plain credits only current season.
 	aggregate_credits: {
 		// order is deliberately not read — aggregate_credits' order doesn't reflect billing prominence
 		// (e.g. BoJack's Will Arnett, 76 episodes, comes back at order 67). Ranked by total_episode_count instead.

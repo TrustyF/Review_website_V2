@@ -7,9 +7,7 @@ import {
 	EMAIL_BANNER_QUALITY,
 } from "./asset-paths";
 
-// Content-addressed by the uploaded bytes, same idea as saveListThumbnail —
-// an admin-picked override has no source URL to hash. JPEG at the same
-// width/quality as resolveEmailBanner's own mail-client-safe encoding.
+// Content-addressed bytes (no source URL); JPEG at same width/quality as mail encoding
 export async function saveDigestBannerOverride(
 	source: Buffer,
 ): Promise<string> {
@@ -26,9 +24,7 @@ export async function saveDigestBannerOverride(
 	return storage.urlFor(DIGEST_BANNER_OVERRIDE_DIR, filename);
 }
 
-// Recognizes this function's own output — same idea as
-// list-thumbnail-resolver.ts's isListThumbnailUrl — so re-saving an
-// untouched override doesn't re-download/re-encode it.
+// Recognizes this function's output so re-saving untouched override doesn't re-download/encode. Same idea as list-thumbnail-resolver.ts's isListThumbnailUrl.
 const DIGEST_BANNER_OVERRIDE_FILE_URL =
 	/^(?:https?:\/\/[^/]+)?\/banners\/digest-override\/[a-f0-9]+\.jpg$/;
 
@@ -36,10 +32,7 @@ export function isDigestBannerOverrideUrl(url: string): boolean {
 	return DIGEST_BANNER_OVERRIDE_FILE_URL.test(url);
 }
 
-// Generic fallback for the admin form's "image" field: self-hosts any other
-// URL (a pasted link, or one handed back by the asset browser's picker,
-// itself a same-origin /api/image-proxy URL) so the override never depends
-// on a third-party host staying up.
+// Fallback self-hosts any URL (pasted link or picker result).
 export async function saveDigestBannerOverrideFromUrl(
 	url: string,
 ): Promise<string> {

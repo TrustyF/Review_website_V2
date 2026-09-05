@@ -1,7 +1,4 @@
-// Corrects GAME rows whose releaseDate got frozen to a later release (e.g. a full 1.0 launch)
-// instead of the earliest one (e.g. an early access launch) — see
-// src/server/igdb/ingest/game.ts and find-wrong-game-release-dates.ts. Run with:
-//   CACHE_RESPONSES=0 npx tsx src/scripts/dev/fix-wrong-game-release-dates.ts
+// Fixes GAME rows whose releaseDate froze to later release instead of earliest (e.g. early access). See src/server/igdb/ingest/game.ts and find-wrong-game-release-dates.ts.
 import { db } from "@/server/db/client";
 import { fetchIgdbGameById } from "@/server/igdb/client";
 import { MediaType } from "@prisma/client";

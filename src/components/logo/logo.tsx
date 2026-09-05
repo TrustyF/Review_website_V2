@@ -2,15 +2,11 @@ import style from "./logo.module.sass";
 
 const PERFORATIONS = Array.from({ length: 8 });
 
-// The site's brand mark — a movie-ticket stub reading "arthur's corner",
-// admit-one header, and a seat/showing/host line, capped by a red "stub"
-// panel. Deliberately not theme-aware (see --ticket-paper/--ticket-ink in
-// globals.sass) — it's meant to read as a printed ticket wherever it's
-// placed, not invert with the site's dark background the way most UI does.
-//
-// `compact` scales the whole mark down (see .compact/scale() in
-// logo.module.sass) for the navbar's title slot, which doesn't have room for
-// the full-size card.
+// The site's brand mark — a movie-ticket stub. Deliberately not theme-aware
+// (--ticket-paper/--ticket-ink in globals.sass); it reads as a printed ticket.
+
+// `compact` scales the whole mark down for the navbar's title slot, which
+// doesn't have room for the full-size card.
 export function Logo({ compact = false }: { compact?: boolean }) {
 	return (
 		<div className={`${style.ticket} ${compact ? style.compact : ""}`}>

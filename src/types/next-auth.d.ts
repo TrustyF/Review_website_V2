@@ -20,9 +20,7 @@ declare module "next-auth" {
 	}
 }
 
-// Must augment "@auth/core/jwt" directly, not "next-auth/jwt" — its
-// wildcard re-export of JWT doesn't participate in declare-module merging,
-// so @auth/core's callbacks would never see members added there.
+// Augment "@auth/core/jwt" directly (next-auth/jwt's re-export doesn't participate in merging)
 declare module "@auth/core/jwt" {
 	interface JWT {
 		id: string;

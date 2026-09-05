@@ -12,19 +12,11 @@ export type NotificationEntry = {
 	readAt: Date | null;
 	list: { id: number; title: string; thumbnail: string | null } | null;
 	media: { id: number; title: string; posterSrc: string } | null;
-	// Present only for a LIST_ITEM_ADDED row standing in for several same-day
-	// notifications (either axis below) — id/media/list/createdAt above are
-	// the most recent one's.
+	// LIST_ITEM_ADDED row standing in for same-day notifications. id/media/list/createdAt are from most recent one.
 	groupedIds?: number[];
-	// Same list, several media added the same day (see groupSameDayListAdditions)
-	// — every item in the group, representative's own `media` included, for
-	// ListAdditionsCard's poster grid. Mutually exclusive with groupedLists.
+	// Same list, items added same day (see groupSameDayListAdditions).
 	groupedMedia?: NonNullable<NotificationEntry["media"]>[];
-	// Same media, added to several different lists the same day (see
-	// groupSameDayMediaAdditions) — every list in the group, representative's
-	// own `list` included, for MediaAdditionsCard's list-thumbnail grid.
-	// Only ever populated for rows groupSameDayListAdditions didn't already
-	// claim — a row belongs to at most one of groupedMedia/groupedLists.
+	// Same media added to multiple lists same day; only for rows unclaimed by list-grouping.
 	groupedLists?: NonNullable<NotificationEntry["list"]>[];
 };
 
@@ -48,9 +40,7 @@ const NOTIFICATION_SELECT = {
 	},
 } as const;
 
-// Same small pre-cached thumbnail activity-actions.ts's own toMediaEntry
-// resolves, not /api/poster's full-size resolve — stays resolvable even for
-// deleted media.
+// Small pre-cached thumbnail (like activity-actions); stays resolvable for deleted media
 async function toMediaEntry(
 	media: {
 		id: number;
@@ -87,19 +77,13 @@ type RawNotification = {
 	} | null;
 };
 
-// A same-day run of LIST_ITEM_ADDED rows sharing either a list (axis "list")
-// or a media item (axis "media"), newest-first — members[0] is the
-// representative NotificationEntry is built from. axis is unset for a group
-// that never grew past its own single starting member.
+// Same-day LIST_ITEM_ADDED rows sharing a list or media item, newest-first. members[0] is representative. axis unset if group never grew past single member.
 type NotificationGroup = {
 	members: RawNotification[];
 	axis?: "list" | "media";
 };
 
-// Groups LIST_ITEM_ADDED rows for the same list on the same day, newest-first,
-// so admin batches (or several separate adds) read as one ListAdditionsCard
-// instead of a flood — same idea as activity-actions.ts's own same-day
-// RATED/REVIEWED merge, just keyed by list+day instead of media.
+// Groups same-list additions by day; reads as one card, not flood.
 function groupSameDayListAdditions(
 	entries: RawNotification[],
 ): NotificationGroup[] {
@@ -127,11 +111,7 @@ function groupSameDayListAdditions(
 	return grouped;
 }
 
-// Inverse of groupSameDayListAdditions: folds the same media item added to
-// several different lists on the same day into one MediaAdditionsCard.
-// Runs second and only over groups list-grouping left untouched (still a
-// single member) — list-grouping always gets first claim on a row, so a row
-// already absorbed into a list group never also joins a media group.
+// Inverse of list-grouping: same media to multiple lists. Runs second over unclaimed groups.
 function groupSameDayMediaAdditions(
 	groups: NotificationGroup[],
 ): NotificationGroup[] {
@@ -170,10 +150,7 @@ async function requireUserId(): Promise<string> {
 	return session.user.id;
 }
 
-// Called from the two admin write sites that currently produce a
-// notification (createList, addMediaToList in list-actions.ts) — kept here
-// rather than inlined at each call site so a 3rd write site later is a
-// one-line call, not a duplicated db.notification.create.
+// Centralized so future write sites need one-line call, not duplicated db.notification.create
 export async function createNotification(input: {
 	type: NotificationType;
 	userId: string;
@@ -185,10 +162,7 @@ export async function createNotification(input: {
 
 const PAGE_SIZE = 50;
 
-// Most-recent-first, capped rather than paginated — same small-scale
-// tradeoff as list-actions.ts's searchMediaForList and activity-actions.ts's
-// getActivityFeed; a personal site's per-user notification volume never gets
-// deep enough to need real pagination.
+// Most-recent-first, capped not paginated (same tradeoff as searchMediaForList/getActivityFeed). Personal site's per-user volume never needs pagination.
 export async function getNotifications(): Promise<NotificationEntry[]> {
 	const userId = await requireUserId();
 	const notifications = await db.notification.findMany({
@@ -251,14 +225,10 @@ export async function getUnreadNotificationCount(): Promise<number> {
 	return db.notification.count({ where: { userId, readAt: null } });
 }
 
-// Takes a batch, not a single id — a single unread row is just a length-1
-// call — so a grouped LIST_ITEM_ADDED row (see groupSameDayListAdditions)
-// can mark every underlying notification it stands in for read with one click.
+// Takes batch (single id = length-1 call) for grouped rows.
 export async function markNotificationsRead(ids: number[]): Promise<void> {
 	const userId = await requireUserId();
-	// where: { id: { in: ids }, userId } rather than a plain { id } — a user can
-	// only ever mark their own notifications read, same scoping requireAdmin's
-	// server-action callers rely on elsewhere for their own rows.
+	// Includes userId scope so users only mark their own notifications read.
 	await db.notification.updateMany({
 		where: { id: { in: ids }, userId, readAt: null },
 		data: { readAt: new Date() },

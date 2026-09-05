@@ -12,12 +12,7 @@ type Props = {
 	media: MediaRecord[];
 };
 
-// Compact, non-interactive preview for the account dashboard's grid cell —
-// no mediaId means no individual poster links; the whole panel around this
-// is the click target instead.
-//
-// Overlap uses a computed negative margin-left rather than manual
-// width/left percentages, so the deck always spans the box edge-to-edge.
+// Compact non-interactive dashboard preview (no mediaId, no poster links; whole panel clickable). Overlap via negative margin-left for edge-to-edge span.
 export function WatchlistStack({ media }: Props) {
 	const visible = media.slice(0, MAX_VISIBLE);
 	const count = visible.length;

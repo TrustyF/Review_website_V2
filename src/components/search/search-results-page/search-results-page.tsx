@@ -3,25 +3,18 @@ import { SearchResultCard } from "@/components/search/search-result-card";
 import { SearchPageInput } from "@/components/search/search-page-input";
 import styles from "./search-results-page.module.sass";
 
-// Full page beats the old navbar dropdown once the number of relevant
-// matches grows — 8 was the largest the dropdown could show without eating
-// half the viewport, this page has room for many more.
+// Full page beats the old navbar dropdown once matches grow — 8 was the most
+// the dropdown could show without eating half the viewport.
 const RESULTS_LIMIT = 60;
 
-// Both sections are capped at display time (rather than lowering
-// RESULTS_LIMIT) so a query with many strong title matches doesn't get
-// starved by a query that also happens to surface a lot of entities, or
-// vice versa — each section's own cap is independent of how the other fills.
+// Capped at display time (not by lowering RESULTS_LIMIT) so one section's cap
+// is independent of how much the other fills, in either direction.
 const MEDIA_DISPLAY_LIMIT = 14;
-// People/companies are a secondary result kind here (titles are what most
-// visitors are after), so even after searchAllMedia's own confidence
-// threshold trims weak name matches, the section is capped rather than
-// letting it grow to match however many of the 60 fetched results happen to
-// be entities.
+// People/companies are secondary here (titles are what most visitors want), so
+// this stays capped rather than growing to match however many of the 60 are entities.
 const ENTITY_DISPLAY_LIMIT = 16;
 
-// Backs /search — the navbar's search icon now navigates here instead of
-// showing a live popout (see nav-search.tsx).
+// Backs /search — the navbar's search icon navigates here instead of a live popout.
 export async function SearchResultsPage({ query }: { query: string }) {
 	const trimmed = query.trim();
 	const results = trimmed ? await searchAllMedia(trimmed, RESULTS_LIMIT) : [];

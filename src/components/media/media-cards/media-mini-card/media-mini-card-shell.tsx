@@ -21,10 +21,8 @@ type Props = {
 // Poster + title + rating only, for dense grid listings where full MediaCardShell is too much; per-type cards supply only the differing secondary info.
 export function MediaMiniCardShell({ media, children }: Props) {
 	const { showRating, showTitle, showReviewIcon } = useMediaCardDisplay();
-	// Set optimistically as soon as an alternate is picked — the freshly-saved posterPath's
-	// resolved image isn't guaranteed to exist yet (resolvePoster defers its resize/encode to
-	// after()), so pointing MediaPoster at it immediately would show a broken image until that
-	// finishes. The picker's own previewSrc is already a real, fully-resolved image.
+	// Set optimistically when an alternate is picked — resolvePoster defers its resize/encode
+	// to after(), so the picker's own previewSrc (already resolved) stands in until it's ready.
 	const [posterOverrideSrc, setPosterOverrideSrc] = useState<string | null>(
 		null,
 	);

@@ -2,14 +2,10 @@ import { dbPublic } from "@/server/db/client";
 import { toMediaRecord, MediaRecord } from "@/components/media/types";
 import { EnrichmentStatus, MediaType } from "@prisma/client";
 
-// Shared by every non-screen home section (books/comics/games/manga) added alongside the
-// movie-specific ones in src/app/page.tsx, which keep their own bespoke query logic.
-// Fixed-size like the movie sections — these are curated lists, not a paginated feed.
+// Shared by non-screen home sections (books/comics/games/manga). Fixed-size curated lists like movie sections, not paginated feed.
 export const RECENT_COUNT = 14;
 
-// Every type-specific relation toMediaRecord might need. Simpler to always include all of them
-// (the query is scoped to a single `type` anyway, so the others just come back null) than to
-// type a per-type include map, which loses the literal narrowing Prisma needs to infer the result shape.
+// All type-specific relations (others null for scoped query).
 const EVERY_TYPE_RELATION = {
 	movie: true,
 	tvShow: true,
@@ -32,10 +28,7 @@ function monthsAgo(months: number): Date {
 	return date;
 }
 
-// Recent releases *you've rated*, newest release first, within the last RECENT_MONTHS — falling
-// back to an unfiltered (but still rated) list if that cutoff leaves fewer than MIN_RECENT, unless
-// it leaves none at all, in which case the whole catalog predates the cutoff and the section
-// should just be hidden (see loadRecentMediaSection) rather than padded out with old items.
+// Recent releases you've rated, fallback to unfiltered if below MIN_RECENT, hidden if none.
 async function getRecentReleases(type: MediaType): Promise<MediaRecord[]> {
 	const cutoff = monthsAgo(RECENT_MONTHS);
 
@@ -70,9 +63,7 @@ async function getRecentReleases(type: MediaType): Promise<MediaRecord[]> {
 	return fallback.map(toMediaRecord);
 }
 
-// Watched/read/played (rated) within the last RECENT_MONTHS, most recently rated first.
-// excludeIds keeps this list from repeating what "Recent releases" just showed — mirrors
-// getRecentlyWatchedMovies in page.tsx.
+// Recent items (by rating date); excludeIds avoids repeating "Recent releases"
 async function getRecentlyWatched(
 	type: MediaType,
 	excludeIds: number[],

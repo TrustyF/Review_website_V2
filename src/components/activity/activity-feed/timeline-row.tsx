@@ -4,17 +4,11 @@ import Image from "next/image";
 import { Link } from "@/components/ui/link";
 import styles from "./activity-feed.module.sass";
 
-// Not a structural props check (Record<string, unknown> accepts any prop
-// shape) since lucide icons and the project's own hand-rolled ones (StarIcon,
-// WatchlistIcon) have incompatible prop signatures despite both taking
-// size/className — every caller already passes exactly those two.
+// Not structural (lucide/custom icons have incompatible sigs);
+// all callers pass exactly size/className.
 type RowIcon = ComponentType<Record<string, unknown>>;
 
-// Shared row shell for ActivityFeed and NotificationFeed — poster/icon column
-// plus a two-line content block (target+date, action+value). `href` being
-// present (even null) switches the whole row into a clickable Link/span with
-// `onClick`; omitting it (activity's case) leaves the row inert and lets
-// `target`/`value` carry their own inline Links instead.
+// Shared row for feeds: href presence switches row between clickable vs. inert.
 export function TimelineRow({
 	index,
 	icon: Icon,

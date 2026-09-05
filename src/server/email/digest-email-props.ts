@@ -12,18 +12,13 @@ import {
 	UserRole,
 } from "@prisma/client";
 
-// Shared by send-weekly-digest.ts (the real send) and the admin preview
-// route — same query/prop-building logic, so the preview always matches
-// what actually gets mailed.
+// Shared by send-weekly-digest.ts (real send) and admin preview route — same query/prop logic, so preview always matches what gets mailed.
 
 const DIGEST_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_RECENT_WATCHES = 6;
 const MAX_LATEST_REVIEWS = 3;
 const MAX_ANTICIPATED_RELEASES = 6;
-// Same home-page windows (src/app/page.tsx's getAnticipatedReleases) — kept
-// duplicated rather than shared since the two queries select different media
-// fields (this one only needs MEDIA_SELECT, not the movie/tvShow relations
-// the home page's media grid needs).
+// Duplicated from home-page windows (selects different fields).
 const ANTICIPATED_RECENT_MONTHS = 5;
 const ANTICIPATED_SOON_MONTHS = 2;
 const SCREEN_MEDIA_TYPES: MediaType[] = [
@@ -94,10 +89,7 @@ function formatDigestDate(date: Date): string {
 	});
 }
 
-// What's on the ADMIN account's watchlist that's worth anticipating — same
-// rule as the home page's getAnticipatedReleases: UPCOMING with a confirmed
-// date within ANTICIPATED_SOON_MONTHS, or released within
-// ANTICIPATED_RECENT_MONTHS ("in theaters"), and not yet rated.
+// Admin watchlist: UPCOMING within ANTICIPATED_SOON_MONTHS or ANTICIPATED_RECENT_MONTHS, not rated.
 async function getAnticipatedReleases(): Promise<MediaSelection[]> {
 	const cutoff = new Date();
 	cutoff.setMonth(cutoff.getMonth() - ANTICIPATED_RECENT_MONTHS);
@@ -131,22 +123,13 @@ async function getAnticipatedReleases(): Promise<MediaSelection[]> {
 	return items.map((item) => item.media);
 }
 
-// unsubscribeUrl is per-recipient (signed with that recipient's user id), so
-// it's built by the caller (send-weekly-digest.ts / the admin preview route)
-// rather than here.
+// Per-recipient URL (signed with recipient's user id), built by caller
 export type DigestEmailProps = Omit<
 	Parameters<typeof LatestActivityEmail>[0],
 	"unsubscribeUrl"
 >;
 
-// Null when there's no rating/review activity in the past week — the digest
-// gets skipped that week (see send-weekly-digest.ts), and the preview route
-// has nothing real to render either.
-//
-// Same admin-authored-content scope as activity-actions.ts's getActivityFeed
-// — Review has no per-user owner on this single-admin site, so "what I rated
-// and reviewed" means the admin's own activity, broadcast to every
-// newsletterOptIn subscriber, not a personalized per-recipient query.
+// null when no rating/review activity past week (digest skipped; preview has nothing real to render). Same admin-content scope as activity-actions.ts's getActivityFeed.
 export async function buildDigestEmailProps(): Promise<DigestEmailProps | null> {
 	const since = new Date(Date.now() - DIGEST_WINDOW_MS);
 
@@ -224,9 +207,7 @@ export async function buildDigestEmailProps(): Promise<DigestEmailProps | null> 
 			})),
 	);
 
-	// Admin override (/admin/digest-banner) always wins over the automatic
-	// featured-media backdrop — checked here rather than in toBannerSrc since
-	// it's a pre-hosted URL with no media/type/externalId to resolve.
+	// Admin override always wins over automatic backdrop.
 	const settings = await db.settings.findUnique({ where: { id: 1 } });
 	const featuredMedia =
 		latestReviewed[0]?.media ?? recentlyRated[0]?.media ?? null;

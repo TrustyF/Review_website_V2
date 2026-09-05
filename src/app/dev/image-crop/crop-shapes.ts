@@ -1,6 +1,5 @@
-// Client-safe shape metadata, kept separate from image-crop-resolver.ts's
-// server-only settings — a "use client" module can't import from a module
-// pulling in fs/sharp, even a plain constant.
+// Client-safe shape metadata; separate from server-only since
+// "use client" can't import fs/sharp.
 export type CropShapeId =
 	| "poster-2-3"
 	| "poster-3-4"

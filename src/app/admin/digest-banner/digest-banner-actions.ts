@@ -18,19 +18,14 @@ export type DigestBannerOverride = {
 	subtitle: string | null;
 };
 
-// Normalizes any image input (existing override URL, or a pasted/picked
-// link) into a self-hosted digest-override URL — same idea as list-actions'
-// resolveThumbnailUrl — so the override never depends on a third-party host
-// staying up.
+// Normalizes image input (URL or pasted link) to self-hosted digest-override URL.
 async function resolveOverrideImageUrl(
 	raw: string | null,
 ): Promise<string | null> {
 	const trimmed = raw?.trim();
 	if (!trimmed) return null;
 	if (isDigestBannerOverrideUrl(trimmed)) return trimmed;
-	// AssetBrowser hands back a root-relative /api/image-proxy/... URL (see
-	// buildProxiedImageUrl) — fetch() has no implicit base URL server-side, so
-	// it needs to be absolute before downloading.
+	// AssetBrowser returns root-relative URL; needs absolute before fetch() server-side
 	return saveDigestBannerOverrideFromUrl(toAbsoluteUrl(trimmed));
 }
 

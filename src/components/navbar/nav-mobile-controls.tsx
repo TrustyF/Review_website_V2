@@ -26,9 +26,7 @@ export function NavMobileControls({
 }: Props) {
 	return (
 		<div className={style.mobile_controls}>
-			{/* Also in the drawer (NavAccountMenu), but stays visible in the bar
-			like the hamburger — .account_identity is hidden at this width so it
-			doesn't show twice. Skipped while signed out; "Sign in" is in the drawer. */}
+			{/* Also in drawer (NavAccountMenu), stays visible in bar. .account_identity hidden at this width (no duplication). Skipped when signed out. */}
 			{signedIn && (
 				<>
 					<NotificationBell />

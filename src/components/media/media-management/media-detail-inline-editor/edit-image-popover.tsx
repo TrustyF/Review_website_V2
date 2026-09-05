@@ -28,9 +28,8 @@ type Props = {
 	// Stages the pasted URL into the page-level draft and closes, same as picking a grid option.
 	onSubmitUrl: () => void;
 	onClose: () => void;
-	// Overrides the default position: absolute/top/left anchoring (see the module's own comment)
-	// — PosterQuickEditButton computes a position: fixed spot next to the card that opened it,
-	// since there's no sensible single anchor point across a whole grid of cards.
+	// Overrides the default absolute/top/left anchoring — PosterQuickEditButton computes a fixed
+	// spot next to the card that opened it, since a card grid has no single sensible anchor point.
 	style?: CSSProperties | undefined;
 };
 
@@ -89,8 +88,7 @@ export function EditImagePopover({
 			</div>
 
 			{trimmedUrl && (
-				// Plain <img>, deliberately not next/image — a pasted URL can be any host,
-				// and only gets proxied/cached once actually published.
+				// Plain <img>: pasted URL can be any host, only proxied/cached once published.
 				// eslint-disable-next-line @next/next/no-img-element
 				<img src={trimmedUrl} alt="" className={styles.url_preview} />
 			)}

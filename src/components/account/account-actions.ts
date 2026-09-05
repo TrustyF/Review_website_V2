@@ -59,11 +59,8 @@ export async function getMyAvatar(): Promise<string | null> {
 	return user?.image ?? null;
 }
 
-// Deletes the row outright — related tables cascade off User.id, so nothing
-// is orphaned. Caller signs the browser out right after, since this doesn't
-// revoke the JWT session cookie itself.
-// Feature-disabled for now; guarded here too since a Server Action stays
-// reachable regardless of whether any client component calls it.
+// Cascades related rows; caller signs out after. Currently disabled;
+// guarded since Server Action is always reachable.
 const ACCOUNT_DELETION_ENABLED = false;
 
 export async function deleteAccount(password: string | null): Promise<void> {

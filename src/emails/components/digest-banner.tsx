@@ -13,11 +13,7 @@ type Props = {
 // 600px-wide email — a short banner read as a thin strip, not a hero.
 const BANNER_HEIGHT = 220;
 
-// Two stacked CSS backgrounds (photo on the outer table cell, a top-only
-// gradient on a nested one) instead of an <Img> + absolutely-positioned
-// overlay — lets the logo/date row sit in normal document flow on top, no
-// positioning needed. Outlook desktop ignores both backgrounds and falls
-// back to the flat color; every other modern/mobile mail client renders it.
+// Two stacked CSS backgrounds; lets logo/date sit in normal flow.
 export function DigestBanner({
 	bannerSrc,
 	dateLabel,
@@ -38,9 +34,7 @@ export function DigestBanner({
 					: {}),
 			}}>
 			<Row>
-				{/* Section's style lands on the outer <table>, not the <td> —
-				vertical-align has to go on an actual table-cell, so this layer
-				(height + gradient + top alignment) is a Column, not a Section. */}
+				{/* Styles on table/vertical-align on table-cell; this layer is Column not Section. */}
 				<Column
 					className="px-4 pt-3 align-top"
 					style={{

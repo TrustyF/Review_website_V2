@@ -22,17 +22,12 @@ export type CompressOptions = {
 	format: CompressionFormat;
 	quality: number;
 	width: number;
-	// Smoothing grain before encoding often beats just lowering quality. "median"
-	// = sharp's edge-preserving filter (amount = odd kernel px, 1 = off); "blur"
-	// = gaussian (amount = sigma, 0 = off), softer on edges but kills grain harder.
+	// Denoise before encoding: "median" (edge-preserving), "blur" (gaussian, softer)
 	denoiseMethod?: DenoiseMethod;
 	denoiseAmount?: number;
 };
 
-// Re-encodes the source in memory only (data URL, not a saved file) so trying
-// many combinations leaves no cache residue and can't be mistaken for something
-// already committed. No re-noise step: grain is added back via a free CSS
-// overlay instead of baking bytes into the file (see .grain_overlay).
+// Re-encodes in memory (data URL) so no cache residue from trying combinations. Grain added via CSS overlay instead of baking bytes.
 export async function compressPreview(
 	sourceUrl: string,
 	options: CompressOptions,

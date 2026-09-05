@@ -1,8 +1,6 @@
 import { db } from "@/server/db/client";
 
-// Invoked on a successful cron run; mirrors record-cron-failure.ts. Records
-// a CronJobRun row for /admin/logs.
-// `summary` comes from the job's appendJobSummary output, base64-encoded since tsx truncates multi-line CLI args to their first line.
+// Records CronJobRun; summary base64-encoded (tsx truncates multi-line args)
 async function main() {
 	const jobName = process.argv[2];
 	const summaryB64 = process.argv[3];

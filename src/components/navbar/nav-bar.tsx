@@ -39,10 +39,8 @@ export default function Navbar() {
 	const signedIn = Boolean(session?.user);
 
 	return (
-		// Nav icons render at 14px, where Lucide's default stroke (designed
-		// for its native 24px viewBox) would look soft. absoluteStrokeWidth
-		// keeps the visible stroke a fixed 1.5px regardless of icon size, set
-		// once here instead of per <Icon> call site.
+		// Nav icons render at 14px, where Lucide's default (24px-viewBox) stroke looks
+		// soft. absoluteStrokeWidth fixes it at 1.5px here instead of per <Icon> call site.
 		<LucideProvider strokeWidth={1.5} absoluteStrokeWidth>
 			<nav
 				className={`${style.wrapper} ${hidden ? style.hidden : ""}`}
@@ -130,9 +128,8 @@ export default function Navbar() {
 							</NavLink>
 						</div>
 
-						{/* NavSearch's expand spends whatever room is left in .groups,
-						pushing earlier groups aside via their own flex-shrink once it
-						runs out. */}
+						{/* NavSearch's expand spends leftover room in .groups, pushing
+						earlier groups aside via their own flex-shrink once it runs out. */}
 						<div className={style.nav_group}>
 							<NavSearch />
 						</div>

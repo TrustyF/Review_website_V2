@@ -27,11 +27,7 @@ const STEPS = ["Username", "Avatar", "Preferences"] as const;
 export function OnboardingWizard({ initial, avatarGroups }: Props) {
 	const router = useRouter();
 	const [step, setStep] = useState(0);
-	// Falls back to `name` (set once at signup — credentials' own name field,
-	// or Google's profile name for OAuth) only when there's no username
-	// override yet, same fallback order as display-name.ts — just editable
-	// here rather than read-only, since this step's whole point is letting
-	// the user confirm or change it before it's saved.
+	// Falls back to `name` (from signup) only when no username yet (same order as display-name.ts). Editable here so user can confirm/change before save.
 	const [username, setUsername] = useState(initial.username ?? initial.name ?? "");
 	const [preferredLanguage, setPreferredLanguage] = useState(initial.preferredLanguage);
 	const [newsletterOptIn, setNewsletterOptIn] = useState(initial.newsletterOptIn);

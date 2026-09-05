@@ -7,11 +7,7 @@ import { getUnreadNotificationCount } from "@/components/notifications/notificat
 import { isNavActive } from "@/lib/nav-active";
 import style from "./notification-bell.module.sass";
 
-// Refetches on every route change (App Router layouts, nav-bar's included,
-// stay mounted across client-side navigation — see nav-bar.tsx's own
-// pathname usage) rather than only once on mount, since that's the one
-// "navigation" signal already available here without adding polling/SSE —
-// see notification-actions.ts's own comment on why this repo has neither.
+// Refetch on route change (pathname signal), not just on mount; avoids polling/SSE
 export function NotificationBell() {
 	const pathname = usePathname();
 	const [unreadCount, setUnreadCount] = useState(0);

@@ -9,24 +9,15 @@ import styles from "./image-crop-dev.module.sass";
 
 const DEFAULT_SHAPE: CropShapeId = "poster-2-3";
 
-// Width of the result-preview panel — height follows from the shape's own
-// ratio (see the preview style calc below), same as the Cropper's own crop
-// rect does.
+// Width of the result-preview panel; height follows from the shape's ratio.
 const PREVIEW_SIZE = 160;
 
-// How much smaller the avatar's "safe zone" guide circle is than the actual
-// (outer) crop circle — 0.86 leaves a 7%-of-diameter margin on every side.
-// Purely a guide for where the crop tool operator drags/zooms to; nothing
-// past this ratio is treated differently on save.
+// How much smaller the avatar "safe zone" guide is than the outer crop circle.
+// 0.86 leaves a 7%-of-diameter margin; visual guide only, doesn't affect save.
 const AVATAR_SAFE_MARGIN_RATIO = 0.86;
 
-// Ad hoc local-file crop-and-save tool: pick a file, pick a shape, drag/zoom
-// to position the crop, save — the result is a path meant to be copied out
-// and pasted wherever it's needed (a list thumbnail URL field, etc.).
-// Nothing in the app calls this automatically. Admin-gated (see
-// use-is-admin.ts) rather than dev-gated, since this is meant for
-// production use — see crop-actions.ts's own note on why that action still
-// has no server-side check either.
+// Ad hoc crop-and-save tool: pick a file/shape, drag/zoom, save, copy the result path.
+// Admin- not dev-gated since it's for production use (see crop-actions.ts's own note).
 export function ImageCropTool() {
 	const isAdmin = useIsAdmin();
 	const cropperRef = useRef<InstanceType<typeof Cropper>>(null);
@@ -35,23 +26,16 @@ export function ImageCropTool() {
 	const [shapeId, setShapeId] = useState<CropShapeId>(DEFAULT_SHAPE);
 	const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
 	const [zoom, setZoom] = useState(1);
-	// Mirrors whatever size the library itself computes for the crop rect
-	// (aspect × container, recalculated on resize/shape change) — needed so
-	// the vignette overlay below can be sized/positioned to exactly match it
-	// rather than guessing at a fixed size of its own.
+	// Mirrors the library's own computed crop rect size, so the vignette
+	// overlay below can be sized/positioned to exactly match it.
 	const [cropSize, setCropSize] = useState<{ width: number; height: number } | null>(
 		null,
 	);
-	// 0–1, not reset on file/shape change — unlike zoom/crop this isn't tied
-	// to a particular image or aspect ratio, it's a standing style choice for
-	// this save.
+	// 0-1, not reset on file/shape change — a standing style choice, not tied to a particular image.
 	const [vignette, setVignette] = useState(0);
 	const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-	// Natural (unscaled) pixel dimensions of the loaded image — croppedAreaPixels
-	// (below) is already in this same space, so together they're what the
-	// result-preview panel needs to reproduce, via CSS background-position/
-	// -size, exactly the same extract() rect image-crop-resolver.ts's
-	// cropAndSave applies server-side.
+	// Natural pixel dimensions of the loaded image; together with croppedAreaPixels
+	// this is what the preview panel needs to reproduce the server's extract() rect via CSS.
 	const [mediaSize, setMediaSize] = useState<MediaSize | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -72,9 +56,7 @@ export function ImageCropTool() {
 		return <div className={styles.wrapper}>Admin access required.</div>;
 	}
 
-	// The one place "a new source image was loaded" is defined — shared by
-	// the file picker and the URL import below, so a locally-picked file and
-	// an imported one reset exactly the same state.
+	// Shared by the file picker and URL import so both reset exactly the same state.
 	function loadFile(picked: File) {
 		if (previewUrl) URL.revokeObjectURL(previewUrl);
 		setFile(picked);
@@ -93,10 +75,8 @@ export function ImageCropTool() {
 		if (picked) loadFile(picked);
 	}
 
-	// Fetches server-side (crop-actions.ts's fetchImportedImage — an arbitrary
-	// host won't reliably send CORS headers a browser fetch would need),
-	// then turns the returned data URL into a real File so everything past
-	// this point (Cropper, handleSave) can't tell it apart from a local pick.
+	// Fetches server-side since an arbitrary host won't reliably send CORS headers;
+	// turns the data URL into a real File so downstream code can't tell it apart from a local pick.
 	async function handleUrlImport() {
 		const trimmed = urlInput.trim();
 		if (!trimmed) return;
@@ -115,10 +95,8 @@ export function ImageCropTool() {
 		}
 	}
 
-	// AssetBrowser hands back a same-origin /api/image-proxy/... URL, so this
-	// can fetch it directly client-side — no CORS concern, unlike
-	// handleUrlImport's arbitrary (likely third-party) URL, which needs the
-	// server-side round trip in fetchImportedImage to avoid it.
+	// AssetBrowser's URL is same-origin, so this fetches directly client-side —
+	// unlike handleUrlImport's arbitrary third-party URL, which needs the server round trip.
 	async function handleAssetPick(url: string) {
 		setIsImportingAsset(true);
 		setError(null);
@@ -133,20 +111,8 @@ export function ImageCropTool() {
 		}
 	}
 
-	// Plain `setZoom` alone reproduces react-easy-crop's own default: the
-	// image scales around its own center (CSS transform-origin), which drifts
-	// away from the crop shape the moment you've panned at all — the shape
-	// stays put while the image balloons out from wherever its center
-	// happens to be. Internally the library avoids exactly this for
-	// wheel/pinch zoom by re-deriving `crop` (the pan offset) alongside
-	// `zoom` so a chosen point stays fixed on screen — see this package's own
-	// onWheel/onPinchMove, both of which call setNewZoom with the pointer/
-	// pinch-center point. That same method is reused here with the
-	// container's own center as the point (getPointOnContainer resolves a
-	// page-space point equal to the container's center to {x:0, y:0}, i.e.
-	// "no offset from center" — exactly what the crop shape sits on, since
-	// it's always centered in the container), so dragging the slider zooms
-	// toward the shape instead.
+	// Plain `setZoom` scales around the image's center, drifting from the crop shape once panned.
+	// Reuses the library's own setNewZoom with the container center as the zoom point instead.
 	function handleZoomChange(nextZoom: number) {
 		const cropper = cropperRef.current;
 		const container = cropper?.containerRef;
@@ -181,9 +147,7 @@ export function ImageCropTool() {
 			formData.append("vignette", String(vignette));
 			const path = await saveCroppedImageAction(formData);
 			setResultPath(path);
-			// Saving is the actual point of friction this tool exists to remove —
-			// copying is what you always do with the result next, so do it
-			// automatically instead of making every save end with a manual click.
+			// Auto-copy: copying is always the next step after saving, so skip the manual click.
 			await navigator.clipboard.writeText(path);
 			setCopied(true);
 		} catch {
@@ -253,17 +217,8 @@ export function ImageCropTool() {
 					<div className={styles.cropper_row}>
 						<div className={styles.cropper_frame}>
 							<Cropper
-								// react-easy-crop has a bug where switching `aspect` on an
-								// already-loaded image that's letterboxed (its display doesn't
-								// fill the container height — e.g. a wide image inside this
-								// fixed-height frame) recomputes the crop rect against the
-								// container's own height instead of the image's actual
-								// rendered height, so the round/rect guide (and everything
-								// derived from it, including the Result preview and the saved
-								// crop) ends up wrong — confirmed by comparing DOM rects
-								// before/after a shape switch; a fresh mount always computes
-								// correctly. Remounting on shapeId sidesteps the library's
-								// internal update path entirely rather than fighting it.
+								// react-easy-crop bug: switching `aspect` on a letterboxed image corrupts
+								// the crop rect. Remounting on shapeId sidesteps it.
 								key={shapeId}
 								ref={cropperRef}
 								image={previewUrl}
@@ -277,12 +232,8 @@ export function ImageCropTool() {
 								onMediaLoaded={setMediaSize}
 								onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
 							/>
-							{/* Sits on top of Cropper's own crop rect, sized/positioned to
-							match it exactly (see cropSize's own comment above) — shows
-							what the vignette will look like without actually touching the
-							source image; the real one only gets baked in server-side on
-							save (see image-crop-resolver.ts's cropAndSave). pointer-events:
-							none so drag/zoom on the image underneath still works through it. */}
+							{/* Preview only, sized to match Cropper's crop rect (see cropSize above);
+							the real vignette is baked in server-side on save. pointer-events: none passes drag/zoom through. */}
 							{cropSize && (
 								<div
 									className={`${styles.vignette_overlay} ${CROP_SHAPES[shapeId].cropShape === "round" ? styles.vignette_overlay_round : ""}`}
@@ -293,11 +244,8 @@ export function ImageCropTool() {
 									}}
 								/>
 							)}
-							{/* Guide only — a smaller circle inset from the actual (outer)
-							crop circle, marking the zone that survives however small an
-							avatar ends up displayed elsewhere (nav_avatar is 35px — corner-
-							ish detail near the outer edge can blur/vanish at that size).
-							Purely visual: nothing here changes what's cropped/saved. */}
+							{/* Guide only: marks the zone that survives at small avatar sizes
+							(nav_avatar is 35px, so outer-edge detail can blur/vanish). Doesn't affect what's cropped/saved. */}
 							{cropSize && CROP_SHAPES[shapeId].cropShape === "round" && (
 								<div
 									className={styles.safe_margin_circle}
@@ -312,14 +260,8 @@ export function ImageCropTool() {
 						{mediaSize &&
 							croppedAreaPixels &&
 							(() => {
-								// Reproduces image-crop-resolver.ts's own extract() rect via
-								// CSS background-position/-size instead of round-tripping to
-								// the server on every drag/zoom — croppedAreaPixels and
-								// mediaSize are both in the same natural-pixel space
-								// extract() itself works in, so this is exactly "source
-								// pixels per preview pixel," the one number a background-
-								// image needs to reproduce an arbitrary crop rect at a
-								// different display size.
+								// Reproduces the server's extract() rect via CSS background-position/-size
+								// instead of round-tripping on every drag/zoom — both values share extract()'s natural-pixel space.
 								const scale = PREVIEW_SIZE / croppedAreaPixels.width;
 								return (
 									<div className={styles.preview_column}>

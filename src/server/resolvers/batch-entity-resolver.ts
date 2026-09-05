@@ -12,10 +12,7 @@ function dedupeByKey<T>(items: T[], keyFn: (item: T) => string): T[] {
 	return [...seen.values()];
 }
 
-// Batch counterparts to entity-resolver.ts's single-item resolvers: one findMany + one createManyAndReturn per item instead of one round trip per reference.
-// Never uses upsert() — entity-resolver.ts's resolveRole/resolveCountry/resolveGenre hit a Prisma bug where an empty-update upsert's ON CONFLICT DO NOTHING
-// returns nothing on conflict instead of the existing row (prisma#21853); findMany-then-createMany can't hit that.
-// Each returns a Map keyed by unique fields, not input array index, since `missing` is a filtered subset of the deduped input.
+// Batch counterparts; uses findMany-then-createMany (upsert has Prisma bug #21853)
 
 // Unlike resolveCompaniesBatch's logoPath (create-only), an existing person missing a photo gets backfilled here; one that already has one is never overwritten.
 export async function resolvePeopleBatch(
@@ -43,15 +40,7 @@ export async function resolvePeopleBatch(
 	});
 	for (const row of existing) map.set(key(row), row.id);
 
-	// Backfill: a person who existed before Person.photoPath did (or was only
-	// ever seen as crew until now) still gets caught up on every subsequent
-	// re-enrichment, not just left permanently blank because they weren't
-	// newly created this time. One update per person needing it rather than a
-	// single batched call — Prisma has no "set a different value per row" bulk
-	// update, and this is sequential (not Promise.all) for the same reason
-	// every other resolve* call in this pipeline is: concurrent queries against
-	// one interactive transaction's shared session previously produced a real
-	// empty-result bug (see resolveRole's own comment in entity-resolver.ts).
+	// Backfill: person from before photoPath existed gets caught up on re-enrichment, not left blank. Per-person updates (no bulk "set different per row" in Prisma); sequential to avoid concurrent-query transaction bug.
 	const existingByKey = new Map(existing.map((row) => [key(row), row]));
 	for (const input of deduped) {
 		if (!input.photoPath) continue;
@@ -139,9 +128,7 @@ export async function resolveGenresBatch(
 	return map;
 }
 
-// Keyed by countryCode2 alone (uppercased, matching entity-resolver.ts's
-// resolveCountry) — Country's unique lookup field isn't a compound key the
-// way Person/Company/Role/Genre's are.
+// Keyed by countryCode2 (uppercase, per entity-resolver.ts).
 export async function resolveCountriesBatch(
 	tx: t_client,
 	inputs: { code2: string; name?: string }[],
@@ -176,14 +163,8 @@ export async function resolveCountriesBatch(
 	return map;
 }
 
-// countryId isn't part of Company's own unique key (externalId_source is),
-// so it only matters for the create side — an existing company found via
-// the findMany keeps whatever countryId it already has rather than being
-// refreshed. See this file's own module comment and the plan's "known,
-// accepted behavior changes" note: unlike entity-resolver.ts's
-// resolveCompany, this doesn't refresh name/logoPath for companies that
-// already exist — not worth another round trip for data that essentially
-// never changes between re-enrichments.
+// countryId matters only on create; existing rows keep current value.
+// Doesn't refresh name/logoPath (unlike entity-resolver)—not worth the round trip.
 export async function resolveCompaniesBatch(
 	tx: t_client,
 	inputs: {

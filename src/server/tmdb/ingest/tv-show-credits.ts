@@ -28,9 +28,7 @@ export async function syncTvShowCreditsAndGenres(
 		origin: MediaType.TVSHOW,
 	}));
 
-	// aggregate_credits' cast has one row per person with role(s) nested inside; flattened to
-	// {id, name, character, order}, with order reassigned by descending total_episode_count since
-	// TMDB's own order field doesn't reflect billing prominence (see TmdbTvResponseSchema).
+	// Flattens aggregate_credits, re-orders by total_episode_count (not TMDB's order)
 	const rawCast = [...data.aggregate_credits.cast]
 		.sort((a, b) => b.total_episode_count - a.total_episode_count)
 		.map((c, i) => ({
@@ -81,9 +79,7 @@ export async function syncTvShowCreditsAndGenres(
 		})),
 	];
 
-	// Every role this show's credits could need, resolved in one call:
-	// "Actor" (only if there's a cast), each crew member's own job title
-	// (e.g. "Director", "Creator"), "Studio" (only if there are companies).
+	// Every role this show's credits could need: "Actor" (if cast), each crew member's job title (Director, Creator), "Studio" (if companies).
 	const roleInputs = [
 		...(cast.length ? [{ name: "Actor", origin: MediaType.TVSHOW }] : []),
 		...crew.map((c) => ({ name: c.job, origin: MediaType.TVSHOW })),
@@ -114,9 +110,7 @@ export async function syncTvShowCreditsAndGenres(
 	}));
 	const companyMap = await resolveCompaniesBatch(tx, companyInputs);
 
-	// --- Build the final rows in memory, then insert in bulk ---
-	// Iterates the ORIGINAL (un-deduped) arrays — every credit still needs its own row even when
-	// it shares a person/role/company with another.
+	// Iterates original arrays; every credit gets its own row.
 
 	const mediaGenreRows = genreInputs.map((g) => ({
 		mediaId,

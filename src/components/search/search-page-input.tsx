@@ -9,9 +9,7 @@ import styles from "./search-page-input.module.sass";
 // shortly after typing stops instead of re-querying on every keystroke.
 const DEBOUNCE_MS = 1000;
 
-// Lets a visitor refine the query from the results page itself, not just
-// from the navbar. Uses router.replace (not push) so retyping here doesn't
-// pile up a back-button history entry per keystroke-submit.
+// Refine query from results page; router.replace avoids history buildup.
 export function SearchPageInput({ initialQuery }: { initialQuery: string }) {
 	const router = useRouter();
 	const [input, setInput] = useState(initialQuery);

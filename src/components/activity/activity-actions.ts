@@ -3,9 +3,7 @@ import { db } from "@/server/db/client";
 import { resolveChangelogPosterThumb } from "@/server/resolvers/poster-resolver";
 import type { MediaType } from "@prisma/client";
 
-// No dedicated ActivityLog table — every event is read live off its own source
-// (Review, MediaChangeLog, List, ListItem/WatchlistItem), so removing a row
-// there removes it from this feed too, with nothing to keep in sync.
+// No dedicated ActivityLog table — every event is read live off its own source, so removing a row there removes it from this feed too.
 export type ActivityType =
 	| "RATED"
 	| "RATING_CHANGED"
@@ -56,9 +54,8 @@ type MediaSelection = {
 	externalId: string | null;
 } | null;
 
-// Same small pre-cached thumbnail change-log rows use, not /api/poster's full-size
-// resolve — stays resolvable even for deleted media. posterSrcCache dedupes by media
-// id since the same media often shows up under several entries in one feed.
+// Same small cached thumbnail change-log rows use (stays resolvable for deleted media),
+// not /api/poster's full-size resolve. posterSrcCache dedupes since one media can appear in several entries.
 async function toMediaEntry(
 	media: MediaSelection,
 	posterSrcCache: Map<number, Promise<string>>,
@@ -85,16 +82,8 @@ async function toMediaEntry(
 	};
 }
 
-// Most-recent-first, capped rather than paginated — activity volume never gets deep
-// enough to need it. Public (no requireAdmin), but scoped to admin-authored rows:
-// reviews/ratings/lists have no per-user owner, and WATCHLIST_ADDED is explicitly
-// filtered to `user.role: ADMIN` so this reads as "my activity", not every visitor's.
-// Media-referencing queries filter adult/soft-deleted directly on their own `where`
-// since dbPublic only patches top-level `db.media.*`, not a nested `media: {...}` select.
-//
-// Each source query is capped and sorted independently, NOT re-capped globally after
-// merging — RATED fires far more often than REVIEWED, and a single global cap would let
-// it crowd sparse types out even when they're recent.
+// Most-recent-first, capped not paginated. Each source query is capped/sorted independently,
+// not re-capped globally, so high-volume RATED can't crowd out sparse REVIEWED after merging.
 export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 	const [
 		ratedReviews,

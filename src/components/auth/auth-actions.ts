@@ -8,9 +8,7 @@ export type SignUpInput = {
 	password: string;
 };
 
-// Only creates the row — doesn't sign the browser in. useSession()'s client-side
-// session copy only updates via a client-side signIn() call, not a cookie change
-// alone, so SignupPage calls next-auth/react's signIn itself right after this resolves.
+// Creates row only; caller must call next-auth/react's signIn() to update session
 export async function signUp(input: SignUpInput): Promise<void> {
 	const email = input.email.trim().toLowerCase();
 	if (!email) throw new Error("Email is required");
@@ -21,9 +19,7 @@ export async function signUp(input: SignUpInput): Promise<void> {
 	const existing = await db.user.findUnique({ where: { email } });
 	if (existing) throw new Error("An account with this email already exists");
 
-	// preferredLanguage/newsletterOptIn/username/image are picked in the
-	// /onboarding wizard right after this, not collected here — this only
-	// needs enough to create the row and let the caller sign in.
+	// preferredLanguage/newsletterOptIn/username/image picked in /onboarding wizard after this. Only needs enough to create row and sign in.
 	await db.user.create({
 		data: {
 			email,

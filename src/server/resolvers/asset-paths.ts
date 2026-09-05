@@ -33,10 +33,7 @@ export const BANNER_QUALITY = 60;
 export const BANNER_GRAIN_OPACITY = 0.5;
 export const POSTER_QUALITY = 50;
 
-// Own directory/format from BANNER_DIR's avif cache — the weekly digest's
-// hero banner needs a format mail clients can actually render (Outlook/many
-// webmail clients don't support AVIF), and a smaller width since it's
-// rendered at ~600px CSS wide, not the site's full content column.
+			// Vignette darkens edges/corners, leaves center clear.
 export const EMAIL_BANNER_DIR = "banners/email-cache";
 export const EMAIL_BANNER_MAX_WIDTH = 900;
 export const EMAIL_BANNER_QUALITY = 65;
@@ -70,9 +67,7 @@ export function toPosterSrc(mediaId: number, posterPath: string | null) {
 
 export type PosterSize = "thumb" | "full";
 
-// Single place that turns a stored posterPath into a CDN URL so a source's URL template only changes here.
-// Each source stores posterPath differently (TMDB path segment, MangaDex filename keyed by externalId, IGDB image_id); ComicVine/manual entries are already full URLs, checked first regardless of type.
-// "thumb"/"full" only matters for the templated sources; anything smaller relies on resolveChangelogPosterThumb's own resize instead of a third tier.
+// Single place for posterPath→CDN URL; source formats differ; thumb/full for templated sources.
 export function posterUrlFor(
 	type: MediaType,
 	externalId: string | null,

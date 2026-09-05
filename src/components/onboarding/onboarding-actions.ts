@@ -3,9 +3,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/server/db/client";
 import { auth } from "@/auth";
 
-// Saved per-step rather than as one final submit, so a user who abandons the
-// wizard partway (or hits "Skip" on a later step) still keeps whatever
-// earlier steps they did complete.
+// Saved per-step so incomplete wizard sessions retain earlier progress
 
 export async function saveOnboardingUsername(username: string | null): Promise<void> {
 	const session = await auth();

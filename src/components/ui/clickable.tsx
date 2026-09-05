@@ -12,13 +12,7 @@ type Props = {
 	"aria-current"?: boolean | "true" | "false";
 };
 
-// Stand-in for <button> — every browser ships its own opinionated button
-// defaults (font, padding, appearance, line-height) that fight custom
-// styling and render inconsistently across engines, so this codebase avoids
-// the element entirely for anything that isn't a plain form submit. role
-//="button" plus manual Enter/Space handling keeps it keyboard-operable
-// without any of that baggage (same pattern MediaSortPopover already used
-// inline — this just gives it one shared home).
+// Avoids button's browser defaults; role=button + Enter/Space keeps it keyboard-operable
 export function Clickable({
 	onClick,
 	children,

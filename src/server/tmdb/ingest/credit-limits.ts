@@ -1,6 +1,4 @@
-// Caps applied before credit rows get built — uncapped ingest left ~72 people per media item on
-// average, bloating the search index past Vercel's 10s function timeout on a cache-miss rebuild.
-// Doesn't touch rows already ingested.
+// Caps prevent search-index bloat beyond Vercel's 10s timeout on cache-miss rebuild
 
 // TMDB's cast `order` is billing order (0 = top-billed), the only notability signal available.
 export const MAX_BILLED_CAST = 250;

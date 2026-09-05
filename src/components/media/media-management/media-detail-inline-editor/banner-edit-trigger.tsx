@@ -24,10 +24,7 @@ type Props = {
 	grainOpacity: number;
 };
 
-// Drop-in replacement for the detail page's banner block — click to open the same picker UI the
-// full editor modal uses. Owns the wrapper divs (not just the <Image>) so the click target can be
-// a sibling of the negative-z-index decorative layer rather than nested inside it — a descendant
-// can never paint above whatever its ancestor's stacking context is buried behind.
+// Owns wrapper divs (not just Image) to ensure click target isn't buried by ancestor stacking.
 export function BannerEditTrigger({
 	media,
 	bannerSrc,

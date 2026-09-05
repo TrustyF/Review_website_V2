@@ -27,22 +27,18 @@ export default function MediaEditorModal() {
 	const mediaId = media?.id ?? null;
 	const router = useRouter();
 
-	// Editable copy of the fetched record (poster already resolved). Every
-	// field edit patches this directly, and the preview renders it as-is.
+	// Editable copy of the fetched record; every field edit patches this directly.
 	const [draft, setDraft] = useState<MediaRecord | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveError, setSaveError] = useState<string | null>(null);
 
-	// Soft delete (toggle) / hard delete (irreversible) live in the danger
-	// zone at the bottom — separate from isSaving/saveError since either can
-	// run on its own, without touching the rest of the draft.
+	// Soft delete (toggle) / hard delete (irreversible), in the danger zone below —
+	// separate from isSaving/saveError since either can run without touching the draft.
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
 
-	// Logging a rewatch is its own independent action too — it doesn't touch
-	// (and shouldn't wait on) whatever unsaved edits are sitting in the rest
-	// of the draft, so it gets its own request/error state rather than
-	// riding along with handleSave.
+	// Logging a rewatch is its own independent action — doesn't touch or wait on
+	// unsaved draft edits, so it gets its own request state instead of riding handleSave.
 	const [isLoggingRewatch, setIsLoggingRewatch] = useState(false);
 	const [rewatchLogged, setRewatchLogged] = useState(false);
 	// Hard delete needs an explicit second click before it actually fires —
@@ -59,13 +55,8 @@ export default function MediaEditorModal() {
 		null,
 	);
 
-	// A manually pasted poster/banner URL (for media with no picker, or no
-	// provider at all). Kept separate from the picker's preview: a pasted URL
-	// can be any host, and feeding an unproxied, un-allowlisted host straight
-	// into next/image throws, so this gets a plain <img> preview of its own
-	// instead of updating draft.posterSrc/bannerSrc — the real preview only
-	// picks it up once it's saved and downloaded through resolvePoster/
-	// resolveBanner like any other source.
+	// A manually pasted poster/banner URL (no picker/provider). An unproxied host would
+	// throw in next/image, so it gets a plain <img> until saved through resolvePoster/resolveBanner.
 	const [posterUrlInput, setPosterUrlInput] = useState("");
 	const [bannerUrlInput, setBannerUrlInput] = useState("");
 
@@ -73,11 +64,8 @@ export default function MediaEditorModal() {
 	// see ReviewBodyModal — so it gets enough room to lay out side by side.
 	const [isBodyModalOpen, setIsBodyModalOpen] = useState(false);
 
-	// Reseed the draft the moment a new record shows up in the store (i.e. a
-	// new editor session started) — done during render, not an effect, so
-	// there's no extra commit where the preview would flash empty before
-	// popping in. Track which record draft was seeded from (rather than just
-	// mediaId) since the store always hands us a fresh object on open.
+	// Reseed the draft the moment a new record shows up in the store — done during
+	// render, not an effect, so the preview never flashes empty before popping in.
 	const [draftSource, setDraftSource] = useState<MediaRecord | null>(null);
 	if (media !== null && media !== draftSource) {
 		setDraft(media);
@@ -93,12 +81,8 @@ export default function MediaEditorModal() {
 		setRewatchLogged(false);
 	}
 
-	// The modal itself scrolls internally (its content can exceed viewport
-	// height), so the background page's own scroll is locked while it's open
-	// to avoid the two competing for the same gesture. With this page's CSS
-	// (body has min-height, not height), the document's actual scrolling
-	// element is <html>, not <body> — locking body alone does nothing, so
-	// both need it.
+	// Locks the background page's scroll while the modal (which scrolls internally)
+	// is open. Body has min-height not height, so <html> is the real scroller — both need it.
 	useEffect(() => {
 		if (mediaId === null) return;
 		const html = document.documentElement;
@@ -114,9 +98,8 @@ export default function MediaEditorModal() {
 
 	if (mediaId === null) return null;
 
-	// Just swaps in the proxied preview URL — no download, no DB write, so
-	// trying a poster and changing your mind costs nothing. Media.posterPath
-	// only gets touched (and the poster only gets downloaded/cached) on save.
+	// Just swaps in the preview URL — no download or DB write, so trying a
+	// poster costs nothing. Media.posterPath is only touched on save.
 	function applyPosterUrl() {
 		const url = posterUrlInput.trim();
 		if (!url) return;
@@ -129,10 +112,8 @@ export default function MediaEditorModal() {
 		setPendingBannerPath(url);
 	}
 
-	// MediaEditorModal stays mounted permanently (see layout.tsx) and just
-	// renders null while closed, so its state isn't reset by unmounting —
-	// without this, a picked-but-unsaved poster could still show as pending
-	// next time it's shown.
+	// MediaEditorModal stays mounted permanently and just renders null while closed,
+	// so state isn't reset by unmounting — without this, a stale pending poster would linger.
 	function handleClose() {
 		setPendingPosterPath(null);
 		setPendingBannerPath(null);
@@ -142,10 +123,8 @@ export default function MediaEditorModal() {
 		close();
 	}
 
-	// Toggles isDeleted both ways — same button reads "Soft delete" or
-	// "Restore" depending on the draft's current state (see the danger zone
-	// below). Applies immediately rather than waiting for Save: unlike the
-	// other fields here, there's nothing to preview or reconsider first.
+	// Toggles isDeleted both ways (button reads "Soft delete"/"Restore" accordingly).
+	// Applies immediately rather than waiting for Save — nothing here to preview first.
 	async function handleToggleDeleted() {
 		if (!draft) return;
 		setIsDeleting(true);
@@ -161,10 +140,8 @@ export default function MediaEditorModal() {
 		}
 	}
 
-	// Only reachable after confirmHardDelete's second click. The record is
-	// gone afterwards, so this closes the editor and — since the page
-	// currently open might well be /media/[id] for the thing just deleted —
-	// sends the browser home rather than leaving it on a 404.
+	// Only reachable after confirmHardDelete's second click. Sends the browser home
+	// afterward, since the open page might be /media/[id] for the thing just deleted.
 	async function handleHardDelete() {
 		if (!draft) return;
 		setIsDeleting(true);
@@ -179,12 +156,8 @@ export default function MediaEditorModal() {
 		}
 	}
 
-	// Fires immediately on click, today's date, no draft/confirmation step —
-	// matches logRewatch's own one-click "insert a marker" design (see its
-	// comment in media-editor-actions.ts). rewatchLogged is a transient
-	// "done" acknowledgment, not persisted state — it resets the moment the
-	// modal's reopened (draft reload below), same as any other in-progress
-	// UI state here.
+	// Fires immediately on click, no draft/confirmation step — matches logRewatch's
+	// one-click design. rewatchLogged is transient UI state, reset on reopen.
 	async function handleLogRewatch() {
 		if (!draft) return;
 		setIsLoggingRewatch(true);
@@ -202,20 +175,11 @@ export default function MediaEditorModal() {
 		setSaveError(null);
 		try {
 			await Promise.all([
-				// Only if there's actually a review to save — draft.review stays
-				// unset until patchReview's first call, which only happens once
-				// a review field is actually touched (see patchReview), so this
-				// is false for an untouched, never-rated media. saveReview itself
-				// now rejects a null rating (see its own comment), so an existing
-				// review's rating can't be cleared back out this way either —
-				// exactly the same guard, just skipped here when there's nothing
-				// to even attempt saving.
-				//
-				// Every one of these four saves with revalidate: false — they'd
-				// otherwise each independently re-run revalidateMediaPaths's full
-				// path list, turning one Save click into up to 4x the ISR writes
-				// it needs. finalizeMediaEditorSave below does the one write that
-				// actually needs to happen, once all four have landed.
+				// draft.review stays unset until patchReview's first call, so this is
+				// false for an untouched, never-rated media — saveReview itself rejects a null rating.
+
+				// All four save with revalidate: false to avoid 4x ISR writes;
+				// finalizeMediaEditorSave below does the one write that's actually needed.
 				draft.review
 					? saveReview(
 							draft.id,
@@ -254,10 +218,8 @@ export default function MediaEditorModal() {
 			setPendingBannerPath(null);
 			close();
 		} catch (e) {
-			// Surfaces saveReview's own message (e.g. "A rating is required to
-			// save a review.") when that's what actually failed, rather than a
-			// generic message that gives no clue which of the four requests in
-			// the Promise.all above was the one that rejected.
+			// Surfaces saveReview's own message when that's what failed, rather than a
+			// generic one that gives no clue which of the four requests rejected.
 			setSaveError(
 				e instanceof Error ? e.message : "Failed to save. Try again.",
 			);
@@ -289,9 +251,8 @@ export default function MediaEditorModal() {
 		});
 	}
 
-	// Generic patch helper for the base Media fields — the ones a provider's
-	// ingest normally owns, editable here for media with no provider match
-	// (or a wrong one) at all.
+	// Generic patch helper for base Media fields — normally owned by a provider's
+	// ingest, editable here for media with no (or a wrong) provider match.
 	function patchDetails(patch: {
 		title?: string;
 		overview?: string | null;
@@ -321,9 +282,8 @@ export default function MediaEditorModal() {
 				</div>
 
 				<div className={styles.content_column}>
-					{/* Base Media fields — normally owned entirely by a source's
-				ingest, editable here for the rare case a provider has no match
-				(or the wrong match) for this title at all. */}
+					{/* Base Media fields — normally owned by a source's ingest,
+				editable here for the rare case of no/wrong provider match. */}
 					<div className={styles.details_group}>
 						<label className={styles.field}>
 							Title
@@ -392,11 +352,7 @@ export default function MediaEditorModal() {
 										</button>
 									</div>
 									{posterUrlInput.trim() && (
-										// Plain <img>, deliberately not next/image: a pasted URL
-										// can be any host, and only gets proxied/cached once it's
-										// actually saved (see resolvePoster) — this is just a
-										// best-effort look at what you're about to set.
-										// eslint-disable-next-line @next/next/no-img-element
+										// Plain <img> (pasted URL any host, proxied/cached only once saved). eslint-disable @next/next/no-img-element.
 										<img
 											src={posterUrlInput.trim()}
 											alt=""
@@ -487,11 +443,8 @@ export default function MediaEditorModal() {
 									className={styles.field_input}
 									value={draft?.review?.difficulty ?? 0}
 									onChange={(e) => {
-										// min/max on the input only affect the spinner arrows, not
-										// a typed/pasted value — clamp by hand so a stray "-3" or
-										// "99" can't reach patchReview. Server-side, saveReview
-										// rejects anything outside 0-2 too, for callers that skip
-										// this input entirely.
+										// min/max only affect the spinner arrows, not a typed/pasted
+										// value — clamp by hand so a stray "-3" or "99" can't reach patchReview.
 										const parsed = Number(e.target.value);
 										const clamped = Number.isFinite(parsed)
 											? Math.min(2, Math.max(0, Math.round(parsed)))
@@ -516,9 +469,8 @@ export default function MediaEditorModal() {
 							</div>
 						</div>
 
-						{/* Review body: preview + edit button, kept on its own row.
-					Actual editing (and the AI suggestion diff) happens in
-					ReviewBodyModal, which has room to lay them outside by side. */}
+						{/* Review body preview + edit button; actual editing (and the AI
+					diff) happens in ReviewBodyModal, which has room to lay them side by side. */}
 						<div className={styles.body_group}>
 							<label className={styles.field}>Body</label>
 

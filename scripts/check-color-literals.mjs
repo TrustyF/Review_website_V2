@@ -1,6 +1,4 @@
-// Guards against hardcoded colors creeping back into .sass files outside
-// the single source of truth (globals.sass's :root token block). Run via
-// `npm run lint`, which husky's pre-commit hook already invokes.
+// Prevents hardcoded colors outside globals.sass's :root token block
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -8,15 +6,10 @@ const SRC_DIR = path.resolve(import.meta.dirname, "..", "src");
 const ALLOWED_FILES = new Set([
 	path.join(SRC_DIR, "app", "styles", "globals.sass"),
 ]);
-// Dev-only routes (src/app/dev/**, never shipped to real visitors) often mock
-// a third-party UI (Discord, WhatsApp, ...) where the literal colors ARE the
-// point — they're not part of this site's own theme and don't belong as
-// design tokens.
+// Dev-only routes often mock third-party UIs (Discord, WhatsApp) where literal colors are the point, not design tokens.
 const DEV_ROUTES_DIR = path.join(SRC_DIR, "app", "dev") + path.sep;
 const HEX_PATTERN = /#[0-9a-fA-F]{3,8}\b/g;
-// rgb()/rgba() where r, g, b aren't all equal — i.e. an actual hue, not a
-// black/white/gray shadow tuned to a one-off opacity (those are left alone;
-// tokenizing every shadow alpha would just be a different flavor of noise).
+// rgb()/rgba() with distinct r,g,b (colored, not grayscale).
 const COLORED_RGB_PATTERN =
 	/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,[^)]+)?\)/g;
 const HSL_PATTERN = /hsla?\(/g;

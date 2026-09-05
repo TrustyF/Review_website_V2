@@ -3,9 +3,8 @@ import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { DigestBannerPageClient } from "./digest-banner-page-client";
 
-// Lets an admin override the weekly digest email's banner (see
-// src/emails/components/digest-banner.tsx) instead of it always being
-// derived from the featured title's backdrop — see send-weekly-digest.ts.
+// Lets an admin override the weekly digest email's banner (src/emails/components/digest-banner.tsx)
+// instead of it always deriving from the featured title's backdrop.
 export default async function DigestBannerPage() {
 	const session = await auth();
 	if (session?.user?.role !== "ADMIN") notFound();

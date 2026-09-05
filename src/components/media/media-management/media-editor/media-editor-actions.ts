@@ -40,9 +40,8 @@ function paginate<T>(items: T[], offset: number, limit: number): Page<T> {
 	};
 }
 
-// Returns a MediaChangeLog row per field that actually changed. A field going from no prior
-// value to having one is skipped too — it reads as noise ("— → 8"), not a real change. Enforced
-// here as a hard invariant, not left to caller-by-caller guards.
+// Returns a MediaChangeLog row per field that actually changed. A field going from no
+// prior value to having one is skipped too — it reads as noise ("— → 8"), not a real change.
 function diffFields(
 	mediaId: number,
 	before: Record<string, unknown>,
@@ -122,8 +121,7 @@ export async function saveReview(
 		},
 	});
 
-	// Only diff once a review already exists — the first save just creates it, and a wall of
-	// "— → 8" entries for never-before-set fields isn't worth recording. Body/reviewDate stay
+	// Only diff once a review already exists — the first save just creates it. Body/reviewDate stay
 	// out of this — see change-log-list.tsx's synthesized "Reviewed on" entry instead.
 	if (existing) {
 		const changes = diffFields(mediaId, existing, {
@@ -218,9 +216,8 @@ export async function saveMediaDetails(
 	if (revalidate) revalidateMediaPaths(mediaId, existing!.type);
 }
 
-// Soft delete just flips Media.isDeleted — public list queries filter it out, but the row and
-// /media/[id] stay put so this toggle can restore it. @@unique([externalId, type]) still holds
-// while soft-deleted, so re-adding from search collides; restoring here is the way back.
+// Soft delete just flips Media.isDeleted — public queries filter it out, but the row and /media/[id]
+// stay put so this toggle can restore it (needed since @@unique([externalId, type]) still holds).
 export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
 	await requireAdmin();
 
@@ -322,10 +319,8 @@ export async function getAlternativePosters(
 	}
 
 	if (type === MediaType.COMIC) {
-		// ComicVine has no alternate-cover concept at the volume level (unlike
-		// TMDB/MangaDex) — each issue's own cover stands in for one instead.
-		// filePath is a full URL rather than a path fragment, matching how
-		// poster-resolver.ts stores/reads COMIC posterPaths.
+		// ComicVine has no alternate-cover concept at the volume level; each issue's own cover stands
+		// in. filePath is a full URL, matching how poster-resolver.ts stores/reads COMIC posterPaths.
 		const issues = await fetchComicVineIssuesForVolume(externalId);
 		return paginate(
 			issues
@@ -344,11 +339,8 @@ export async function getAlternativePosters(
 	}
 
 	if (type === MediaType.GAME) {
-		// A game's own game object only ever has one cover — IGDB.com's
-		// "alternate covers" gallery is actually region-specific box art
-		// (game_localizations), fetched and combined with the default cover
-		// in fetchIgdbGameCoverOptions. filePath is a bare image_id, matching
-		// how poster-resolver.ts stores/reads GAME posterPaths.
+		// A game object only ever has one cover — IGDB's "alternate covers" gallery is actually
+		// region-specific box art (game_localizations), combined in fetchIgdbGameCoverOptions.
 		const covers = await fetchIgdbGameCoverOptions(externalId);
 		return paginate(
 			covers.map((cover) => ({
@@ -384,11 +376,8 @@ export async function getAlternativePosters(
 	);
 }
 
-// revalidate defaults to true for the full editor modal's one-click Save
-// (see media-editor-modal.tsx's handleSave), which has no separate publish
-// step of its own. The detail page's standalone PosterEditTrigger popover
-// passes false and relies on MediaPublishButton's publishMediaEdits instead
-// — see that component's own comment for why.
+// revalidate defaults true for the editor modal's one-click Save (no separate publish step).
+// The detail page's standalone PosterEditTrigger passes false, relying on MediaPublishButton's publishMediaEdits instead.
 export async function updateMediaPoster(
 	mediaId: number,
 	posterPath: string,
@@ -415,19 +404,15 @@ export async function updateMediaPoster(
 		});
 	}
 
-	// resolvePoster returns as soon as the source is downloaded and defers
-	// the resize/encode/storage-write to after() — without Fluid Compute,
-	// this Server Action would otherwise tie up the whole instance for as
-	// long as it ran, blocking any other Server Action (e.g. the picker's
-	// own alternates fetch) landing on the same instance behind it.
+	// resolvePoster returns as soon as the source downloads and defers the resize/encode/write
+	// to after(), so this Server Action doesn't tie up the instance and block others behind it.
 	await resolvePoster(mediaId, existing!.type, existing!.externalId, posterPath);
 	if (revalidate) revalidateMediaPaths(mediaId, existing!.type);
 	return `/api/poster/${mediaId}/${mediaAssetFilename(mediaId, posterPath)}`;
 }
 
-// Mirrors getAlternativePosters, but for banners — only TMDB and IGDB have
-// one at all (see bannerUrlFor), so MANGA/COMIC just return no options
-// rather than erroring, and ImagePicker renders an empty grid for them.
+// Mirrors getAlternativePosters, but for banners — only TMDB/IGDB have one (see bannerUrlFor),
+// so MANGA/COMIC return no options and ImagePicker renders an empty grid.
 export async function getAlternativeBanners(
 	externalId: string,
 	type: MediaType,
@@ -442,11 +427,8 @@ export async function getAlternativeBanners(
 	}
 
 	if (type === MediaType.GAME) {
-		// Unlike covers (one default + game_localizations' regional variants),
-		// IGDB's artworks are already a flat list on the game object itself —
-		// no second query needed. t_screenshot_med keeps the thumb landscape
-		// (t_thumb would square-crop it) — see poster-resolver.ts's bannerUrlFor
-		// for the full-size template the preview/save path uses.
+		// Unlike covers, IGDB's artworks are already a flat list on the game object — no second
+		// query needed. t_screenshot_med keeps the thumb landscape (t_thumb would square-crop it).
 		const game = await fetchIgdbGameById(externalId);
 		return paginate(
 			artworksWithDimensions(game.artworks ?? [])
@@ -508,19 +490,15 @@ export async function updateMediaBanner(
 		});
 	}
 
-	// See updateMediaPoster's own comment above — resolveBanner returns as
-	// soon as the source is downloaded and defers the encode to after(), so
-	// this Server Action doesn't tie up the instance and starve others.
+	// resolveBanner returns as soon as the source downloads and defers the encode to
+	// after(), so this Server Action doesn't tie up the instance (see updateMediaPoster).
 	await resolveBanner(mediaId, existing!.type, bannerPath);
 	if (revalidate) revalidateMediaPaths(mediaId, existing!.type);
 	return `/api/banner/${mediaId}/${mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT)}`;
 }
 
-// Purely a display tweak (see Media.bannerFocusY) — not logged to the
-// changelog, same reasoning as review body edits being excluded from the
-// generic diff: a slider fires many updates per drag, and "nudged the
-// framing" isn't a change worth a permanent record the way swapping the
-// banner image itself is.
+// Purely a display tweak (Media.bannerFocusY) — not logged to the changelog, same as review
+// body edits: a slider fires many updates per drag, not worth a permanent record.
 export async function updateMediaBannerFocus(
 	mediaId: number,
 	focusY: number,
@@ -533,28 +511,20 @@ export async function updateMediaBannerFocus(
 		where: { id: mediaId },
 		data: { bannerFocusY: clamped },
 	});
-	// Only /media/[id] ever renders the banner (see api/banner and
-	// media-detail-inline-editor) — no catalog/home site-wide wipe needed for
-	// a framing nudge. Still needs the cache tag, not just the path: the
-	// route itself is dynamic (revalidatePath alone does nothing for it),
-	// but getMediaCore's cached row (get-media.ts) carries bannerFocusY and
-	// won't pick up this change on its own.
+	// Only /media/[id] renders the banner, so no site-wide wipe needed. Needs the cache tag
+	// too, not just the path — getMediaCore's cached row carries bannerFocusY and won't pick up this change otherwise.
 	if (revalidate) {
 		revalidatePath(`/media/${mediaId}`);
 		updateTag(mediaCacheTag(mediaId));
 	}
 }
 
-// Fired by MediaPublishButton once an admin is done trying poster/banner/
-// focus tweaks on the detail page (see PosterEditTrigger/BannerEditTrigger,
-// which save with revalidate: false) — one revalidation for the whole
-// editing session instead of one per pick/drag.
+// Fired by MediaPublishButton once poster/banner/focus tweaks are done (see PosterEditTrigger/
+// BannerEditTrigger, saved with revalidate: false) — one revalidation for the whole session.
 export async function publishMediaEdits(
 	mediaId: number,
-	// Set when the staged draft included a review body edit (see
-	// media-publish-store.ts's pendingReview) — mirrors saveReview's own
-	// revalidatePath("/activity"), which that call skips here via
-	// revalidate: false.
+	// Set when the staged draft included a review body edit (media-publish-store.ts's
+	// pendingReview) — mirrors saveReview's revalidatePath("/activity"), skipped there via revalidate: false.
 	{ includeActivity = false }: { includeActivity?: boolean } = {},
 ): Promise<void> {
 	await requireAdmin();
@@ -567,13 +537,8 @@ export async function publishMediaEdits(
 	if (includeActivity) revalidatePath("/activity");
 }
 
-// Same one-revalidation-per-session idea as publishMediaEdits, for the full
-// editor modal's Save button: saveReview/saveMediaDetails/updateMediaPoster/
-// updateMediaBanner all run in parallel there and each save with
-// revalidate: false, so this is the one call that actually refreshes
-// anything once they're done. includeActivity mirrors saveReview's own
-// revalidatePath("/activity") — only worth it when a review was actually
-// part of this save.
+// Same one-revalidation-per-session idea as publishMediaEdits, for the editor modal's Save button:
+// the parallel saveReview/saveMediaDetails/updateMediaPoster/updateMediaBanner calls all pass revalidate: false, so this is the one call that refreshes anything.
 export async function finalizeMediaEditorSave(
 	mediaId: number,
 	type: MediaType,

@@ -18,19 +18,14 @@ function getTransport() {
 	transport = createTransport({
 		host,
 		port: Number(port),
-		// 465 is the implicit-TLS port; every other port (587, 25) starts
-		// plaintext and upgrades via STARTTLS, which nodemailer already does
-		// on its own when secure is false.
+		// 465 is implicit-TLS; others (587, 25) plaintext→STARTTLS (nodemailer handles this).
 		secure: Number(port) === 465,
 		auth: { user, pass: password },
 	});
 	return transport;
 }
 
-// Renders a React Email component to HTML and sends it via the SMTP relay
-// configured in .env (see mailer.ts's own env-var checks). Used by the
-// weekly-digest/list-add-digest cron scripts, not from request handling —
-// both emails are sent as batches, never inline on a user action.
+// Renders React Email to HTML; sent by cron scripts (weekly-digest, list-add), not inline
 export async function sendEmail(input: {
 	to: string;
 	subject: string;
@@ -45,10 +40,7 @@ export async function sendEmail(input: {
 	});
 }
 
-// Absolute URLs are required in email HTML — mail clients don't resolve
-// relative paths against any base — but LocalImageStorage.urlFor and every
-// app route return root-relative ones. R2ImageStorage's urlFor already
-// returns an absolute URL, so this is a no-op there.
+// Absolute URLs required in email HTML (mail clients don't resolve relative paths). LocalImageStorage returns root-relative; this converts to absolute.
 export function toAbsoluteUrl(path: string): string {
 	if (path.startsWith("http://") || path.startsWith("https://")) return path;
 	const base = (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");

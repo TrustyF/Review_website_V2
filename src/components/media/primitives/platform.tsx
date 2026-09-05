@@ -1,8 +1,7 @@
 import styles from "./primitives.module.sass";
 
-// Game.platform is a comma-joined list (a game can be on many) — mini cards
-// only have room for one line, so show the first platform plus a count of
-// the rest instead of the full list.
+// Game.platform is a comma-joined list — mini cards only have room for one line,
+// so show the first platform plus a count of the rest.
 export function formatPlatformSummary(platform: string | null) {
 	if (!platform) return null;
 

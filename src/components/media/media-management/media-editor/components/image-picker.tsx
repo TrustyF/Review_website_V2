@@ -13,9 +13,7 @@ const PAGE_SIZE = 10;
 
 export type ImageOptionsPage = { images: PickableImage[]; hasMore: boolean };
 
-// Only what this component actually reads — a full MediaRecord (its usual
-// caller, the media editor) satisfies this structurally, but so does a bare
-// search result from a context with no full record at all (see AssetBrowser).
+// Only what this component reads (MediaRecord or bare search result satisfy this).
 type ImagePickerSource = {
 	id: number;
 	type: MediaType;
@@ -24,9 +22,7 @@ type ImagePickerSource = {
 
 type Props = {
 	draft: ImagePickerSource;
-	// The only real difference between posters and banners; grid/pagination/error state is
-	// identical. Each call fetches one page — the server slices/sorts, so the full candidate
-	// list is never sent all at once.
+	// Only difference from posters; server fetches one page, never full candidate list
 	fetchOptions: (
 		externalId: string,
 		type: MediaType,
@@ -36,15 +32,11 @@ type Props = {
 	onPick: (image: PickableImage) => void;
 	altText: string;
 	errorText: string;
-	// Crops the thumbnail to this ratio — banners pass "16/9" to match their actual detail-page
-	// crop, since the uncropped backdrop otherwise looks nothing like it. Unset for posters.
-	// `| undefined` since exactOptionalPropertyTypes rejects EditImagePopover forwarding undefined.
+	// Crops thumbnail to this ratio ("16/9" for banners to match detail-page crop, unset for posters). `| undefined` for exactOptionalPropertyTypes.
 	optionAspectRatio?: string | undefined;
 };
 
-// Lets you browse a media's other posters/banners and preview one without committing — the
-// field only actually changes once the parent saves. Render with `key={draft.id}` so switching
-// items remounts and re-fetches instead of showing the previous item's options.
+// Browse/preview without committing; key={draft.id} remounts.
 export function ImagePicker({
 	draft,
 	fetchOptions,
@@ -53,10 +45,7 @@ export function ImagePicker({
 	errorText,
 	optionAspectRatio,
 }: Props) {
-	// Accumulates one page at a time as the sentinel scrolls into view, so the full candidate
-	// list is only fetched as far as the user scrolls.
-	// A manually-added item has no provider to fetch alternates from — starts as an empty list
-	// rather than null (which would render as still-loading).
+	// Accumulates as user scrolls; manual items start empty list (not null) since no provider.
 	const [options, setOptions] = useState<PickableImage[] | null>(() =>
 		draft.externalId ? null : [],
 	);

@@ -12,9 +12,7 @@ type Props = {
 	body: string | null;
 };
 
-// Email counterpart to MediaCardShell + MediaReview. Uses Row/Column
-// (renders as an HTML table) instead of flexbox, since mail clients like
-// Outlook don't support flexbox reliably.
+// Email version uses Row/Column (HTML table) instead of flexbox for mail client support.
 export function MediaReviewCard({
 	title,
 	mediaUrl,

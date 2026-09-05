@@ -8,9 +8,7 @@ type Options = {
 	escapeToo?: boolean;
 };
 
-// Fires `onOutside` on a click outside every given element (and optionally on Escape) — dedupes
-// an identical listener from four call sites. Takes an array so a trigger portaled apart from its
-// popover (see PosterQuickEditButton) can still treat a click inside either as "inside".
+// Fires `onOutside` on click outside given elements (optionally on Escape) — dedupes identical listener from four call sites. Portaled element (PosterQuickEditButton) needs array to treat both trigger and popover as "inside".
 export function useOutsideClick(
 	refs: RefObject<HTMLElement | null> | RefObject<HTMLElement | null>[],
 	onOutside: () => void,

@@ -4,9 +4,8 @@ import { createPortal } from "react-dom";
 import { Hitbox } from "@/components/ui/hitbox";
 import styles from "./tooltip.module.sass";
 
-// Avoids React's "useLayoutEffect does nothing on the server" warning —
-// this component still gets server-rendered, where there's no trigger
-// element to measure anyway (isVisible can't be true yet).
+// Avoids React's "useLayoutEffect does nothing on the server" warning — there's
+// no trigger element to measure server-side anyway (isVisible can't be true yet).
 const useIsomorphicLayoutEffect =
 	typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
@@ -52,27 +51,16 @@ type Props = {
 	// points back at the trigger from the tooltip's opposite edge.
 	side?: Side;
 	className?: string | undefined;
-	// Extra invisible hover margin around `children`, in px — for a trigger
-	// too small to hover accurately (the difficulty notch is 10x10px). Reuses
-	// Hitbox, same technique it already uses for click targets, just wired to
-	// hover here instead. Omitted (the default) skips Hitbox entirely — no
-	// point adding the extra overlay element for a trigger that's already big
-	// enough to hover on its own.
+	// Extra invisible hover margin around `children`, in px — for a trigger too small
+	// to hover accurately (the difficulty notch is 10x10px). Reuses Hitbox. Omitted skips it.
 	hitboxPadding?: number;
 };
 
-// Wraps `children` (the hover target) and shows `content` in a small
-// arrowed popup on hover — drop it around anything (a button, an icon, a
-// whole card) without that thing needing to know it has a tooltip, same
-// "wrap and don't touch the child" idea as Hitbox.
-//
-// The popup itself is portaled straight to document.body and positioned via
-// getBoundingClientRect() + position: fixed, rather than sitting inside the
-// trigger's own DOM subtree with position: absolute — an ancestor with
-// overflow: hidden (a grid cell, a scroll container, ...) would otherwise
-// clip it, and an ancestor that starts its own stacking context (transform,
-// opacity < 1, ...) could make its z-index lose to something it should
-// render above. On its own layer at the document root, neither can happen.
+// Wraps `children` (the hover target) and shows `content` in a small arrowed popup
+// on hover, same "wrap and don't touch the child" idea as Hitbox.
+
+// Portaled to document.body and positioned via getBoundingClientRect() + position:
+// fixed (not absolute inside the trigger) so an ancestor can't clip or bury it.
 export function Tooltip({
 	content,
 	children,
@@ -84,10 +72,8 @@ export function Tooltip({
 	const triggerRef = useRef<HTMLDivElement>(null);
 	const [position, setPosition] = useState<Position | null>(null);
 
-	// Measured once when the tooltip opens, not tracked continuously — a
-	// hover tooltip closes (via mouseleave) the moment the trigger scrolls
-	// out from under a stationary cursor in practice, so there's no ongoing
-	// scroll/resize case worth the extra listener plumbing here.
+	// Measured once on open, not tracked continuously — a hover tooltip closes via
+	// mouseleave the moment the trigger scrolls out from under the cursor anyway.
 	useIsomorphicLayoutEffect(() => {
 		if (!isVisible || !triggerRef.current) return;
 		setPosition(positionFor(triggerRef.current.getBoundingClientRect(), side));
@@ -114,12 +100,8 @@ export function Tooltip({
 			<div
 				ref={triggerRef}
 				className={[styles.wrapper, className].filter(Boolean).join(" ")}>
-				{/* Hitbox's own wrapper div sits between this element (which is
-				    whatever size `className` actually gives it — e.g. the
-				    difficulty notch's 10x10px) and `children` — without an
-				    explicit fill here, a `children` that sizes itself as a
-				    percentage of its parent (the notch's <svg>, 100%/100%)
-				    would have nothing to resolve that percentage against. */}
+				{/* Without an explicit fill, a `children` sized as a percentage
+				    (the notch's <svg>, 100%/100%) has nothing to resolve against. */}
 				<Hitbox
 					padding={hitboxPadding}
 					onMouseEnter={show}

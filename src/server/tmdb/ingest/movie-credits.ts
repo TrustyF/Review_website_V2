@@ -48,9 +48,7 @@ export async function syncMovieCreditsAndGenres(
 		})),
 	];
 
-	// Every role this movie's credits could need, resolved in one call:
-	// "Actor" (only if there's a cast), each crew member's own job title,
-	// "Studio" (only if there are companies).
+	// Every role this movie's credits could need: "Actor" (if cast), each crew member's job title, "Studio" (if companies).
 	const roleInputs = [
 		...(cast.length ? [{ name: "Actor", origin: MediaType.MOVIE }] : []),
 		...crew.map((c) => ({ name: c.job, origin: MediaType.MOVIE })),
@@ -62,9 +60,7 @@ export async function syncMovieCreditsAndGenres(
 		.filter((co) => co.origin_country)
 		.map((co) => ({ code2: co.origin_country! }));
 
-	// --- Resolve every reference type exactly once ---
-	// Sequential, not Promise.all — concurrent queries against one interactive transaction's shared
-	// session previously caused a real empty-result bug (see entity-resolver.ts's resolveRole).
+	// Sequential (not Promise.all); concurrent queries in transaction bug.
 	const genreMap = await resolveGenresBatch(tx, genreInputs);
 	const personMap = await resolvePeopleBatch(tx, personInputs);
 	const roleMap = await resolveRolesBatch(tx, roleInputs);
@@ -82,9 +78,7 @@ export async function syncMovieCreditsAndGenres(
 	}));
 	const companyMap = await resolveCompaniesBatch(tx, companyInputs);
 
-	// --- Build the final rows in memory, then insert in bulk ---
-	// Iterates the ORIGINAL (un-deduped) arrays — every credit still needs its own row even when
-	// it shares a person/role/company with another (e.g. the same actor twice with different characters).
+	// Iterates ORIGINAL arrays; each credit needs own row (even same actor/different char).
 
 	const mediaGenreRows = genreInputs.map((g) => ({
 		mediaId,

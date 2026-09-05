@@ -9,46 +9,24 @@ import {
 	S3Client,
 } from "@aws-sdk/client-s3";
 
-// Every caller addresses a file by a logical {dir, filename} pair instead of
-// a real filesystem path — dir is a slash-joined key like "posters/cache" or
-// "cropped/poster-2-3", never request-derived (always one of the constants
-// exported by poster-resolver.ts / image-crop-resolver.ts / etc). That's
-// what lets the same call sites work unchanged against either backend below:
-// local disk in dev, and Cloudflare R2 in production (see getImageStorage),
-// without touching a single resolver.
+// Logical {dir, filename} pairs let same resolvers work against disk (dev) or R2 (prod)
 export interface ImageStorage {
 	read(dir: string, filename: string): Promise<Buffer | null>;
 	write(dir: string, filename: string, bytes: Buffer): Promise<void>;
-	// Filenames only (not full keys) — matches what readdir gave the
-	// maintenance scripts before this abstraction existed, so their own
-	// "is this filename still valid" set-membership checks didn't need to
-	// change shape.
+	// Filenames only (not full keys) — matches what readdir gave maintenance scripts before abstraction, so set-membership checks didn't need shape change.
 	list(dir: string): Promise<string[]>;
-	// Returns whether a file actually existed to remove — purge-deleted-
-	// change-log.ts counts real removals, cleanup-posters.ts and
-	// cleanup-cropped-images.ts both ignore it (they already know the file
-	// exists, from a preceding list()).
+	// Returns whether file existed; cleanup scripts use or ignore.
 	remove(dir: string, filename: string): Promise<boolean>;
 	// null when the file doesn't exist — cleanup-cropped-images.ts's only
 	// caller, to decide whether a listed file has aged past MAX_AGE_MS.
 	statMtimeMs(dir: string, filename: string): Promise<number | null>;
-	// The public URL a browser (or link-preview crawler) can fetch this file
-	// from directly. Local storage serves straight out of Next's `public/`
-	// dir; a real object-store backend would return that store's own CDN
-	// URL instead — either way, this is the one thing every direct-URL
-	// caller (resolveChangelogPosterThumb, saveListThumbnail, cropAndSave)
-	// needs, so they never construct a URL string themselves.
+	// Public URL for browsers/crawlers; unified place so callers don't construct URLs.
 	urlFor(dir: string, filename: string): string;
 }
 
 class LocalImageStorage implements ImageStorage {
 	private absDir(dir: string): string {
-		// turbopackIgnore: dir is always one of the fixed logical-dir
-		// constants declared in poster-resolver.ts / image-crop-resolver.ts /
-		// list-thumbnail-resolver.ts (never request-derived), so this can
-		// never escape public/ — same trace-false-positive Turbopack flags on
-		// the equivalent path.join in image-crop-resolver.ts's cropAndSave,
-		// worked around the same way.
+		// turbopackIgnore: dir is always a fixed logical constant, never request-derived
 		return path.join(
 			/* turbopackIgnore: true */ process.cwd(),
 			"public",
@@ -101,14 +79,7 @@ class LocalImageStorage implements ImageStorage {
 	}
 }
 
-// Selected in production by getImageStorage() below — Cloudflare R2 speaks the S3 API, so
-// this reuses @aws-sdk/client-s3 rather than a Cloudflare-specific package.
-// Every object here is public (posters/banners/crops/thumbnails all get
-// served straight to browsers or link-preview crawlers) and filenames are
-// already content-addressed by the callers in poster-resolver.ts/
-// image-crop-resolver.ts/etc, so writes always pass a public-cacheable key
-// and overwriting an existing key with identical bytes is expected, not an
-// error.
+// Selected in production by getImageStorage() — Cloudflare R2 speaks S3 API. Every object public; filenames content-addressed by callers, so overwriting with identical bytes is expected.
 class R2ImageStorage implements ImageStorage {
 	private client: S3Client | null = null;
 
@@ -234,14 +205,8 @@ let cached: ImageStorage | null = null;
 export function getImageStorage(): ImageStorage {
 	if (cached) return cached;
 
-	// R2 is used only when explicitly opted into via IMAGE_STORAGE_DRIVER=r2
-	// (set in the self-hosted app's own env — see docker-compose.yml's `app`
-	// service, the scheduled GitHub Actions workflows, and .env.example) —
-	// everything else (plain local dev, `next build` run by hand) stays on
-	// local disk by default. This is deliberately opt-in rather than keyed
-	// off NODE_ENV=production: a stray `npm run build` on a laptop already
-	// sets NODE_ENV=production and must not silently start writing to the
-	// real R2 bucket.
+	// R2 opt-in only (IMAGE_STORAGE_DRIVER=r2); default local disk
+	// prevents stray builds from hitting real bucket.
 	cached =
 		process.env.IMAGE_STORAGE_DRIVER === "r2"
 			? new R2ImageStorage()
@@ -249,15 +214,8 @@ export function getImageStorage(): ImageStorage {
 	return cached;
 }
 
-// Cached separately from getImageStorage()'s own instance — always local
-// disk regardless of IMAGE_STORAGE_DRIVER. For data that (unlike posters/
-// banners/crops) is never served directly to a browser and doesn't need a
-// public URL or R2's cross-instance durability: this app now runs as one
-// long-lived self-hosted container rather than many churning Vercel
-// instances (see search-actions.ts's own persisted-index comments, written
-// back when R2 was the only way a cold serverless instance could share that
-// data at all), so a plain local file already outlives everything that
-// actually needs it to.
+	// Cached separately, always local disk; app is long-lived container now.
+	// Local file outlives what actually needs it (not Vercel cold-start issue).
 let cachedLocal: ImageStorage | null = null;
 
 export function getLocalDiskStorage(): ImageStorage {

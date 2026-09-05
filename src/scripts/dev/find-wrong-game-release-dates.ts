@@ -1,7 +1,4 @@
-// Read-only diagnostic: cross-checks every stored GAME releaseDate against IGDB's release_dates
-// array, flagging rows where the stored date is later than the true earliest release (the
-// first_release_date-freezing bug fixed in src/server/igdb/ingest/game.ts). Run with:
-//   npx tsx src/scripts/dev/find-wrong-game-release-dates.ts
+// Diagnostic: cross-checks stored game releaseDates vs IGDB's earliest release
 import { db } from "@/server/db/client";
 import { fetchIgdbGameById } from "@/server/igdb/client";
 import { MediaType } from "@prisma/client";

@@ -14,9 +14,7 @@ const DateFormatter = new Intl.DateTimeFormat("en-GB", {
 
 const MAX_VISIBLE_RUNS = 100;
 
-// Paper trail of host-crontab jobs (see run-and-notify.sh) — one row per
-// CronJobRun, most-recent-first. Replaces the old CRON_JOB_FAILED/
-// CRON_JOB_SUCCEEDED notifications.
+// Paper trail of host-crontab jobs (see run-and-notify.sh), one row per CronJobRun. Replaces old CRON_JOB_FAILED/SUCCEEDED notifications.
 export default async function AdminLogsPage() {
 	const session = await auth();
 	if (session?.user?.role !== "ADMIN") notFound();

@@ -16,9 +16,7 @@ export function useImageEditPopover({
 	// Hands the picked filePath/URL and preview straight to the page-level draft. Purely local:
 	// no DB write until Publish is clicked, so this never fails and never needs awaiting.
 	onStage: (path: string, previewSrc: string | null) => void;
-	// A second element to also treat as "inside" for the outside-click check — for a caller that
-	// portals the popover away from containerRef (see PosterQuickEditButton), so a click inside
-	// the portaled popover doesn't read as an outside click and close it immediately.
+	// Second container for outside-click check (for portaled popover).
 	extraContainerRef?: RefObject<HTMLElement | null>;
 }) {
 	const [isOpen, setIsOpen] = useState(false);

@@ -11,9 +11,7 @@ function daysBetween(a: Date, b: Date): number {
 	return Math.abs(a.getTime() - b.getTime()) / MS_PER_DAY;
 }
 
-// Shared grouping/gap-divider/skip-first-label engine for ActivityFeed and
-// NotificationFeed — entries must already arrive newest-first. `renderRow`
-// returns each entry's <li>, keyed by the caller.
+// Shared engine for ActivityFeed/NotificationFeed; entries must arrive newest-first
 export function TimelineList<
 	T extends { id: string | number; createdAt: Date },
 >({
@@ -23,9 +21,7 @@ export function TimelineList<
 }: {
 	entries: T[];
 	renderRow: (entry: T, index: number) => ReactNode;
-	// Overrides .list's own default gap (--row-gap, see activity-feed.module.sass)
-	// so a caller (NotificationFeed) can tune its row spacing without affecting
-	// ActivityFeed's, despite both sharing this engine/stylesheet.
+	// Overrides .list's default gap (--row-gap) so NotificationFeed can tune row spacing without affecting ActivityFeed, despite shared engine/stylesheet.
 	rowGap?: string;
 }) {
 	const groups = groupByMonth(entries);

@@ -7,9 +7,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { appendJobSummary } from "./job-summary";
 
-// Uploads a pre-made pg_dump (piped in from backup-database.yml) and prunes old ones to a grandfather-father-son rotation:
-// 5 most recent (daily), newest of each of the 3 most recent ISO weeks, newest of each of the 2 most recent months,
-// and newest of every year (kept forever). Sets are unioned before deleting.
+// Grandfather-father-son rotation: 5 daily, 3 weekly, 2 monthly, yearly kept forever
 const SHORT_TERM_KEEP = 5;
 const WEEKLY_KEEP = 3;
 const MONTHLY_KEEP = 2;

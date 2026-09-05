@@ -15,22 +15,14 @@ import styles from "./asset-browser.module.sass";
 type Tab = "banner" | "poster";
 
 type Props = {
-	// Kept mounted by the caller even while closed (see digest-banner-form.tsx)
-	// so search/selection state survives being closed and reopened — this
-	// just controls visibility.
+	// Kept mounted to preserve state even when closed; only controls visibility.
 	isOpen: boolean;
-	// Handed the picked image's previewSrc (a same-origin /api/image-proxy
-	// URL) — the caller decides what to do with it (self-host it, stage it,
-	// etc.), same contract as pasting a URL into a plain text field.
+	// Returns same-origin /api/image-proxy URL; caller decides what to do with it
 	onSelect: (url: string) => void;
 	onClose: () => void;
 };
 
-// Search-then-browse modal: find a title already in the library, then pick
-// one of its posters/banners — reuses the same provider-fetched alternates
-// (getAlternativePosters/getAlternativeBanners) and grid (ImagePicker) as the
-// media editor's own poster/banner pickers, just without a specific media
-// already in context.
+// Search-then-browse modal: find title in library, pick one of its posters/banners. Reuses provider-fetched alternates and grid as media editor's pickers, without specific media context.
 export function AssetBrowser({ isOpen, onSelect, onClose }: Props) {
 	const [query, setQuery] = useState("");
 	const [results, setResults] = useState<AssetBrowserSearchResult[]>([]);

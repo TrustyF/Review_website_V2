@@ -10,9 +10,7 @@ const QUERY: Prisma.MediaWhereInput = {
 	},
 };
 
-// Bulk-adds every movie matching QUERY to a list, for batch curation
-// instead of the site's one-at-a-time AddMediaToList. New items append
-// below the existing ranking, ordered by release date among themselves.
+// Bulk-adds movies matching QUERY, appends below existing ordered by date.
 async function main() {
 	const [, , listIdArg] = process.argv;
 	if (!listIdArg) {

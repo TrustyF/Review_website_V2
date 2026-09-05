@@ -15,10 +15,7 @@ const TYPE_LABELS: Record<MediaType, string> = {
 	[MediaType.BOOK]: "Book",
 };
 
-// One /search result — a poster tile for media, a photo row for people and
-// companies. Kept as its own component (rather than reusing a MediaRecord-
-// based card) since GlobalSearchResult's lightweight shape has none of the
-// fields those cards need (review, genres, watchedDate, ...).
+// One search result component, separate since GlobalSearchResult lacks MediaRecord fields.
 export function SearchResultCard({ result }: { result: GlobalSearchResult }) {
 	if (result.kind === "media") {
 		return (

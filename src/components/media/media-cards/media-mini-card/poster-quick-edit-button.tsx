@@ -11,9 +11,7 @@ import { EditImagePopover } from "@/components/media/media-management/media-deta
 import { getAlternativePosters, updateMediaPoster } from "@/components/media/media-management/media-editor/media-editor-actions";
 
 const POPOVER_WIDTH = 400;
-// No real measurement of the popover's own height (it varies with how many alternates load) —
-// just enough headroom that opening near the bottom of the viewport doesn't run the picker off
-// the bottom edge.
+// Headroom to prevent overflow when opening near bottom.
 const POPOVER_HEIGHT_BUDGET = 480;
 const GAP = 8;
 
@@ -23,18 +21,11 @@ type Props = {
 	// Lets the card show the pick immediately (see media-mini-card-shell.tsx's own comment) —
 	// null reverts to media.posterSrc, e.g. after a failed save.
 	onPosterChange: (previewSrc: string | null) => void;
-	// Smaller than the default 15 when stacked tightly against another admin action (see
-	// media-mini-card-shell.tsx's .admin_actions) — the default's hit area would otherwise
-	// overlap the neighboring button's.
+	// Smaller than default 15 when stacked to avoid overlapping neighboring button.
 	hitboxPadding?: number;
 };
 
-// Same popover the detail page's PosterEditTrigger uses, just triggered from a card in a grid
-// instead of the poster itself — there's no single sensible anchor across a whole grid of cards,
-// so this computes a position: fixed spot next to whichever card's button was clicked, instead of
-// the position: absolute anchoring PosterEditTrigger relies on. Saves immediately via
-// updateMediaPoster, unlike PosterEditTrigger's stage-until-Publish flow — a card has no publish
-// step of its own.
+// Uses position:fixed next to clicked card; saves immediately (no publish flow)
 export function PosterQuickEditButton({
 	media,
 	className,
@@ -68,9 +59,7 @@ export function PosterQuickEditButton({
 			onPosterChange(previewSrc);
 			updateMediaPoster(media.id, path).catch(() => onPosterChange(null));
 		},
-		// The popover is portaled to <body> (see below), so it's no longer a DOM descendant of
-		// containerRef — without this, useImageEditPopover's outside-click check would treat every
-		// click inside the popover as "outside" and close it immediately.
+		// Popover portaled to <body>, so without this extraContainerRef, outside-click check treats popover clicks as "outside" and closes it immediately.
 		extraContainerRef: popoverRef,
 	});
 
@@ -105,11 +94,8 @@ export function PosterQuickEditButton({
 
 			{isOpen &&
 				popoverStyle &&
-				// Portaled straight to <body> — media-mini-card-shell.module.sass's .wrapper uses
-				// content-visibility: auto for perf, which implies contain: paint. That makes the
-				// card a containing block for position: fixed descendants and clips them to its
-				// own tiny box, so a popover rendered in place here would exist but never actually
-				// be visible on screen.
+				// Portaled to <body>; card's contain: paint clips fixed descendants,
+				// so portal sidesteps containment.
 				createPortal(
 					<div ref={popoverRef}>
 						<EditImagePopover

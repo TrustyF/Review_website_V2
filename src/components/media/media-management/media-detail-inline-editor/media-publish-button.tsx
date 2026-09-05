@@ -18,9 +18,8 @@ type Props = {
 	mediaId: number;
 };
 
-// Edits are staged into media-publish-store instead of hitting the DB immediately, so an admin
-// can preview options live. This button commits the staged draft with one shared revalidation,
-// instead of every pick hitting the DB and wiping the ISR cache on its own.
+// Edits stage into media-publish-store instead of hitting the DB, so an admin can preview
+// options live. This button commits the draft with one shared revalidation instead of many.
 export function MediaPublishButton({ mediaId }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();

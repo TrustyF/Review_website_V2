@@ -6,9 +6,7 @@ import { buildUnsubscribeToken } from "@/server/email/unsubscribe-token";
 import { toAbsoluteUrl } from "@/server/email/mailer";
 import LatestActivityEmail from "@/emails/latest-activity-email";
 
-// Renders the real weekly-digest email (current banner override + latest
-// activity) as static HTML, so /admin/digest-banner can preview it in an
-// iframe without actually sending anything.
+// Renders weekly-digest email as static HTML for iframe preview.
 export async function GET() {
 	const session = await auth();
 	if (session?.user?.role !== "ADMIN") {

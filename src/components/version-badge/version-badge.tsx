@@ -2,10 +2,7 @@
 import { useIsAdmin } from "@/lib/use-is-admin";
 import styles from "./version-badge.module.sass";
 
-// Temporary deploy-verification aid — remove once the self-hosting rollout
-// is confirmed stable. NEXT_PUBLIC_BUILD_TIME is inlined at build time (see
-// package.json's build script), so it changes only when a new image is
-// actually built, not on every request.
+// Temporary deploy-verification aid; remove once self-hosting rollout is stable
 export function VersionBadge() {
 	const isAdmin = useIsAdmin();
 	if (!isAdmin) return null;

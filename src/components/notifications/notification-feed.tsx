@@ -40,9 +40,8 @@ function NotificationRow({
 	onRead: (entry: NotificationEntry) => void;
 }) {
 	const { target, action, value } = getNotificationRowContent(entry);
-	// href is null when the linked list has since been deleted (see
-	// getNotificationHref) — TimelineRow still renders a clickable (mark-read)
-	// span rather than dropping the row, so a notification never just vanishes.
+	// href is null when the linked list has since been deleted — TimelineRow still
+	// renders a clickable (mark-read) span so a notification never just vanishes.
 	const href = getNotificationHref(entry);
 	const unread = entry.readAt === null;
 
@@ -67,11 +66,8 @@ export function NotificationFeed({
 }: {
 	notifications: NotificationEntry[];
 }) {
-	// Optimistic local readAt overlay — markNotificationsRead/markAllRead's own
-	// revalidatePath only refreshes this page on its next server render (e.g.
-	// a fresh navigation to it), not the props this client component was
-	// already mounted with, so without this the unread dot/styling would
-	// linger stale until the user left and came back.
+	// Optimistic local readAt overlay — revalidatePath only refreshes this page on
+	// its next server render, not props this client component is already mounted with.
 	const [readOverrides, setReadOverrides] = useState<Set<number>>(new Set());
 	const entries = notifications.map((entry) =>
 		readOverrides.has(entry.id) && entry.readAt === null

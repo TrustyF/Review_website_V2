@@ -30,14 +30,8 @@ export function LoginPage() {
 			return;
 		}
 
-		// A hard navigation, not router.push + router.refresh — the session
-		// cookie is set, but a client-side transition can land on the
-		// destination route before Next's Router Cache has been busted for it
-		// (or before every already-mounted admin-gated component's useSession()
-		// has re-rendered), leaving admin-only nav links/edit buttons stuck
-		// showing the signed-out state until an unrelated refresh happens to
-		// come along. A full reload sidesteps all of that — same as the
-		// Google button's own redirect-based sign-in already does below.
+		// Hard navigation ensures Router Cache busts before new state;
+		// router.push can race with useSession() re-render.
 		window.location.href = callbackUrl;
 	}
 

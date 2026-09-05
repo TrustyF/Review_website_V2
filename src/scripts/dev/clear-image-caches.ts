@@ -10,9 +10,8 @@ import {
 } from "@/server/resolvers/poster-resolver";
 import { getImageStorage } from "@/server/storage/image-storage";
 
-// Only the re-derivable *_DIR caches — deleting is never lossy since the
-// next request just re-fetches/re-encodes. Excludes CROPPED_DIR and
-// LIST_THUMBNAIL_DIR, which hold user-generated content with no source to regenerate from.
+// Only re-derivable *_DIR caches — deleting is never lossy, the next request re-fetches.
+// Excludes CROPPED_DIR/LIST_THUMBNAIL_DIR, which hold user-generated content with no source.
 const CACHE_DIRS = [
 	POSTER_DIR,
 	CHANGELOG_THUMB_DIR,
@@ -22,9 +21,8 @@ const CACHE_DIRS = [
 	LINK_EMBED_DIR,
 ];
 
-// Dev-only: lets a resize/quality/format change in poster-resolver.ts
-// actually take effect — cache files are keyed by source URL, not encode
-// settings, so a stale file would otherwise be served forever.
+// Dev-only: lets a resize/quality/format change in poster-resolver.ts take effect —
+// cache files are keyed by source URL, not encode settings, so a stale file lingers otherwise.
 async function main() {
 	const storage = getImageStorage();
 

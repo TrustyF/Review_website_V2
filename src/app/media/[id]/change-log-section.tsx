@@ -9,10 +9,7 @@ type Props = {
 	review: Review | null | undefined;
 };
 
-// Split into its own component (and <Suspense> boundary, see page.tsx) so
-// the change-log query doesn't gate the rest of the page — type/externalId/
-// review come from page.tsx's own getMediaCore result (already resolved by
-// the time this renders), only the entries themselves are fetched here.
+// Split into own <Suspense> boundary so change-log query doesn't gate rest of page. Type/externalId/review already resolved; only entries fetched here.
 export async function MediaChangeLogSection({
 	mediaId,
 	type,

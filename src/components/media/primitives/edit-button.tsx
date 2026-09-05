@@ -10,9 +10,7 @@ import Image from "next/image";
 type Props = {
 	media: MediaRecord;
 	className?: string | undefined;
-	// Smaller than the default 15 when stacked tightly against another admin action (see
-	// media-mini-card-shell.tsx's .admin_actions) — the default's hit area would otherwise
-	// overlap the neighboring button's.
+	// Smaller than default to avoid overlapping adjacent buttons when stacked
 	hitboxPadding?: number;
 };
 

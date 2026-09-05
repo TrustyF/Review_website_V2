@@ -4,10 +4,7 @@ import { Source } from "@prisma/client";
 import { fetchTmdbPersonById } from "@/server/tmdb/client";
 import { invalidateSearchIndex } from "@/components/search/search-actions";
 
-// One-time catch-up: crew enriched before photoPath storage became
-// unconditional are stuck at null until their next re-enrichment cycle.
-// Queries TMDB's lightweight /person/{id} directly instead of re-running a
-// full enrichment. Non-TMDB sources never supply a photo, so skipped.
+// One-time catch-up: crew enriched before photoPath storage became unconditional
 async function main() {
 	const people = await db.person.findMany({
 		where: { source: Source.TMDB, photoPath: null },
@@ -36,9 +33,7 @@ async function main() {
 
 	console.log(`[person] backfilled ${updated}/${people.length}`);
 
-	// This runs outside any request that would normally invalidate the
-	// search index, so do it explicitly or stale photoPath data lingers for
-	// up to the cache's 1-hour TTL.
+	// Runs outside normal request that would invalidate search index, so do it explicitly or stale photoPath lingers until cache TTL expires.
 	if (updated > 0) await invalidateSearchIndex();
 }
 

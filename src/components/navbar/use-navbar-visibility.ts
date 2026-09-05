@@ -6,9 +6,8 @@ import { useEffect, useRef, useState } from "react";
 const TOP_EXEMPT_PX = 100;
 const REVEAL_THRESHOLD_PX = 100;
 
-// Mirrors the show/hide state directly onto --navbar-offset rather than a
-// class translated by CSS — other elements (e.g. sticky group headers)
-// position against that variable to sit below the navbar correctly.
+// Mirrors show/hide onto --navbar-offset rather than a CSS-translated class —
+// other elements (e.g. sticky group headers) position against that variable.
 export function useNavbarVisibility() {
 	const [hidden, setHidden] = useState(false);
 	// Refs, not state — every scroll frame writes these; re-rendering on each
@@ -24,9 +23,8 @@ export function useNavbarVisibility() {
 			const delta = currentY - lastScrollY.current;
 
 			if (delta > 0) {
-				// Scrolling down — resets the up-streak so a following up-scroll
-				// has to earn the reveal threshold again from scratch, rather
-				// than carrying over progress from before the direction changed.
+				// Scrolling down resets the up-streak so a following up-scroll has to
+				// earn the reveal threshold again from scratch.
 				scrolledUpBy.current = 0;
 				if (currentY > TOP_EXEMPT_PX) setHidden(true);
 			} else if (delta < 0) {

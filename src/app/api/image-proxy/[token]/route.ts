@@ -23,9 +23,8 @@ export async function GET(
 	try {
 		upstream = await fetch(url, {
 			headers: { Accept: "image/*" },
-			// Without this, a slow/hung upstream leaves the request open indefinitely,
-			// which keeps the browser tab's loading spinner going even after the rest
-			// of the page has rendered.
+			// Without timeout, slow upstream leaves request open indefinitely,
+			// keeping browser spinner going even after page renders.
 			signal: AbortSignal.timeout(10_000),
 		});
 	} catch {

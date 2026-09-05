@@ -36,9 +36,7 @@ export async function saveCroppedImageAction(formData: FormData): Promise<string
 	return saveCroppedImage(bytes, shapeId as CropShapeId, crop, vignette);
 }
 
-// Server-side fetch since an arbitrary host won't reliably send CORS headers a
-// browser fetch needs. Returned as a data URL so the client can turn it
-// straight into a File with no CORS concern.
+// Server-side fetch (arbitrary host won't send CORS headers). Returned as data URL so client can turn it straight into File.
 export async function fetchImportedImage(url: string): Promise<string> {
 	await requireAdmin();
 

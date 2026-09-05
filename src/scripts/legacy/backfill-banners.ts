@@ -7,10 +7,7 @@ import { updateTvShowFromTmdb } from "@/server/tmdb/ingest/tv-show";
 import { fetchIgdbGameById } from "@/server/igdb/client";
 import { updateGameFromIgdb } from "@/server/igdb/ingest/game";
 
-// One-time catch-up: bannerPath was null for rows enriched before backdrop
-// support was added. MANGA/COMIC skipped since those sources never have a
-// banner. Reuses regular update*From* ingest, which only fills empty
-// fields, so nothing gets clobbered.
+// One-time backfill for pre-backdrop rows; MANGA/COMIC skipped.
 type BannerType =
 	| typeof MediaType.MOVIE
 	| typeof MediaType.SHORT

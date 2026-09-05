@@ -51,14 +51,9 @@ type Props = {
 const SECTION_LABEL_CLASS =
 	"m-0 mb-2 text-left text-[13px] uppercase tracking-[0.03em] font-bold text-fg-3";
 
-// Real dev-DB data (unfiltered — whatever the latest review/recently-rated
-// happened to be when this was last refreshed), not hand-written placeholders
-// — only used by `npm run email_dev`'s preview server, never by the real
-// send path (send-weekly-digest.ts always passes real props).
+// Real dev-DB data for preview server; never used by actual send path
 LatestActivityEmail.PreviewProps = {
-	// Reuses recentWatches' own (verified-live) Toy Story 5 poster path below
-	// — a real backdrop path isn't available without a TMDB API key, and
-	// background-size:cover crops any aspect ratio to fit the banner anyway.
+	// Reuses recentWatches' Toy Story 5 poster (verified-live). Real backdrop path needs TMDB key; background-size:cover crops any aspect anyway.
 	bannerSrc: "https://image.tmdb.org/t/p/w1280/sfQtVlIHljToOwYjhe21KPGzZWK.jpg",
 	dateLabel: "September 4, 2026",
 	latestReviews: [

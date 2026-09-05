@@ -8,9 +8,7 @@ type Props = {
 	onApplyChange: (newBody: string) => void;
 };
 
-// Read-only word-level diff of the AI suggestion against the current body —
-// added words highlighted (click to apply just that change to the body),
-// removed words hidden, unchanged text plain.
+// Word-level diff: added highlighted (clickable), removed hidden, unchanged plain
 export function ReviewDiff({ before, after, onApplyChange }: Props) {
 	const parts = diffWords(before, after);
 

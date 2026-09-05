@@ -36,9 +36,8 @@ const CurrencyFormatter = new Intl.NumberFormat("en-US", {
 	maximumFractionDigits: 1,
 });
 
-// Covers both a confirmed future release date and a title that's merely
-// announced/in-production at the source with no date yet (e.g. TMDB shows
-// still "In Production" — see tv-show.ts's TV_STATUS_MAP).
+// Covers a confirmed future date and a title merely announced/in-production
+// with no date yet (e.g. TMDB "In Production" — see tv-show.ts's TV_STATUS_MAP).
 function isUpcomingRelease(releaseDate: Date | null, status: MediaStatus): boolean {
 	if (status === MediaStatus.ANNOUNCED || status === MediaStatus.UPCOMING) return true;
 	return releaseDate != null && releaseDate.getTime() > Date.now();
@@ -53,9 +52,8 @@ function Fact({ label, value }: { label: string; value: ReactNode }) {
 	);
 }
 
-// Renders the handful of fields that differ between media types — each type
-// keeps its data on a different relation (media.movie, media.tvShow, ...),
-// so this just picks the right one and lays out whichever fields are set.
+// Renders fields that differ between media types — each keeps its data on a
+// different relation (media.movie, media.tvShow, ...), picked here by type.
 function MediaTypeFacts({ media }: { media: MediaRecord }) {
 	switch (media.type) {
 		// Budget/revenue/ROI render in the financials box beside the review
@@ -122,27 +120,19 @@ export default async function MediaDetailPage({
 	const mediaId = Number(id);
 	if (!Number.isFinite(mediaId)) notFound();
 
-	// auth() is JWT-only (see src/auth.ts) — never hits the DB, so there's no
-	// cost to awaiting it up front alongside the one query the rest of this
-	// page's content actually depends on. AddToListButtonSection/
-	// AddToWatchlistButtonSection/MediaDirectorCredit/MediaCreditsDetails/
-	// MediaChangeLogSection all run their own queries independently, each
-	// wrapped in its own <Suspense> below, so a slow credits or change-log
-	// query no longer blocks the banner/title/facts (which only ever needed
-	// getMediaCore's own result) from rendering.
+	// auth() is JWT-only (src/auth.ts), never hits the DB, so it's free to await
+	// up front. Slower sections below run their own queries in their own <Suspense>.
 	const session = await auth();
 	const raw = await getMediaCore(mediaId);
 	if (!raw) notFound();
-	// Soft-deleted media stays visible to admins only, so the editor's own
-	// restore flow (the isDeleted banner further down) still works — everyone
-	// else gets the same 404 as a nonexistent id.
+	// Soft-deleted media stays visible to admins only (the isDeleted banner's
+	// restore flow); everyone else gets the same 404 as a nonexistent id.
 	if (raw.isDeleted && session?.user?.role !== "ADMIN") notFound();
 
 	const media = toMediaRecord(raw);
 
-	// Only movies/shorts carry a tagline (see MediaTypeFacts) — pulled out
-	// here too since it now sits in the header's meta row, next to the
-	// release date, rather than down in the type-specific facts list.
+	// Only movies/shorts carry a tagline — pulled out here since it now sits
+	// in the header's meta row rather than the type-specific facts list.
 	const tagline =
 		media.type === "MOVIE" || media.type === "SHORT"
 			? media.movie.tagline

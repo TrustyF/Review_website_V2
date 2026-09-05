@@ -34,14 +34,10 @@ const useIsomorphicLayoutEffect =
 
 const VIEWPORT_MARGIN = 8;
 
-// Right-anchored (not left+width) so the dropdown can grow to fit its
-// content instead of being stretched or clamped to the search bar's width,
-// while staying lined up with the search bar's right edge.
+	// Right-anchored so dropdown grows to fit content, stays aligned.
 type DropdownPosition = { top: number; right: number };
 
-// Media-agnostic search reachable from every page via the navbar. Collapsed
-// to a trigger icon by default; clicking it expands the input inline with
-// an animated width, showing live results in a popout below.
+// Media-agnostic navbar search: trigger expands inline with animated width.
 export function NavSearch() {
 	const router = useRouter();
 	const isMobile = useIsMobileViewport();
@@ -65,9 +61,7 @@ export function NavSearch() {
 		enabled: isExpanded,
 	});
 
-	// Dropdown is portaled to document.body (see below) so it can render
-	// wider than the search bar itself instead of being clamped to it — so
-	// its position has to be measured in JS rather than left to CSS.
+	// Portaled to document.body to exceed search bar width; position via JS
 	useIsomorphicLayoutEffect(() => {
 		if (!isExpanded || !isOpen || !overlayRef.current) return;
 
@@ -127,9 +121,7 @@ export function NavSearch() {
 		setIsExpanded(false);
 	}
 
-	// Portaled to document.body (rather than sitting inside .overlay with
-	// position: absolute) so it can render wider than the search bar and
-	// isn't clipped by the navbar's own overflow/stacking context.
+	// Portaled to document.body (not inside .overlay) so can render wider than search bar and isn't clipped by navbar's overflow/stacking context.
 	const dropdown =
 		isExpanded && isOpen && dropdownPos && typeof document !== "undefined"
 			? createPortal(

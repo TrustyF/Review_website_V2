@@ -13,9 +13,8 @@ const MONTH_LABEL = new Intl.DateTimeFormat("en-US", {
 
 const MONTH_ICON_SIZE = 17;
 
-// Buckets entries into one group per calendar month — assumes `entries` already
-// arrives newest-first. Shared by ActivityFeed and NotificationFeed, which both
-// group a differently-shaped entry off its own createdAt.
+// Buckets entries into one group per calendar month, assuming `entries` already
+// arrives newest-first. Shared by ActivityFeed and NotificationFeed.
 export function groupByMonth<T extends { createdAt: Date }>(
 	entries: T[],
 ): TimelineGroup<T>[] {

@@ -150,15 +150,11 @@ function createSemaphore(limit: number) {
 	return { acquire, release };
 }
 
-// Caps how many enrichOne() calls (each its own transaction) can be in flight across all type queues at once, since summed concurrency would otherwise exceed the DB pool size and hit P2028 timeouts.
-// Set high rather than conservative: against a remote DB the wait is mostly network latency (more in-flight items hide it for free), and occasional lock contention from concurrent resolve*Batch
-// upsert races just fails and retries next run (row stays PENDING) rather than corrupting anything — an acceptable tradeoff for real throughput.
+// Caps concurrent enrichOne() calls across all type queues (DB pool size limit). Set high: network latency hidden by more in-flight items; occasional lock contention just retries.
 const GLOBAL_DB_CONCURRENCY = 40;
 const dbSemaphore = createSemaphore(GLOBAL_DB_CONCURRENCY);
 
-// Bounds in-flight items per type only; real rate limiting lives in each source's client (rate-limited-fetch.ts), and dbSemaphore above bounds transactions system-wide.
-// Doesn't need to stay under each source's real request rate — a higher number just means more items waiting on that source's own limiter. Set equal to
-// GLOBAL_DB_CONCURRENCY so a single-type run can use the whole DB budget instead of being capped below it.
+// Bounds in-flight per type; real rate limiting in source clients.
 const QUEUE_CONCURRENCY: Record<MediaType, number> = {
 	[MediaType.MOVIE]: GLOBAL_DB_CONCURRENCY,
 	[MediaType.SHORT]: GLOBAL_DB_CONCURRENCY,

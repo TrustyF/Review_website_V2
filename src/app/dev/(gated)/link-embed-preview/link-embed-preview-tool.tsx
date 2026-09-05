@@ -15,9 +15,7 @@ import styles from "./link-embed-preview-dev.module.sass";
 // Same debounce as image-crop-tool.tsx's own banner search.
 const SEARCH_DEBOUNCE_MS = 200;
 
-// Rough mock of Discord's/WhatsApp's link-unfurl cards, fed by getEmbedPreview
-// so title/description/image can't drift from what generateMediaMetadata
-// actually puts in the real og: tags.
+// Mock of Discord/WhatsApp link cards, fed by getEmbedPreview.
 export function LinkEmbedPreviewTool() {
 	const isAdmin = useIsAdmin();
 	const [query, setQuery] = useState("");
@@ -26,9 +24,7 @@ export function LinkEmbedPreviewTool() {
 	const [selectedId, setSelectedId] = useState<number | null>(null);
 	const [preview, setPreview] = useState<EmbedPreview | null>(null);
 	const [isLoadingPreview, setIsLoadingPreview] = useState(false);
-	// Bumped on refresh to bust the img tag's own cache — imageUrl already
-	// carries ?noCache=1 so the server always recomposites, but an unchanged
-	// <img src> won't re-fetch on its own.
+	// Bumped on refresh to bust img cache—imageUrl has ?noCache=1, but src needs this too.
 	const [refreshNonce, setRefreshNonce] = useState(0);
 	const searchRef = useRef<HTMLDivElement>(null);
 	useOutsideClick(searchRef, () => setResults([]), { enabled: results.length > 0 });

@@ -99,9 +99,7 @@ async function main() {
 		});
 	}
 
-	// Media has no unique constraint beyond id, so re-running this script
-	// would insert duplicates without this check. One upfront query for
-	// every existing (type, externalId) pair instead of 1721 findFirst() calls.
+	// Prevents duplicates on re-run with one upfront query vs. many findFirst() calls.
 	const existing = await db.media.findMany({
 		select: { type: true, externalId: true },
 	});
@@ -131,11 +129,7 @@ async function main() {
 	} as const;
 	type ChildTable = (typeof CHILD_TABLE_BY_TYPE)[keyof typeof CHILD_TABLE_BY_TYPE];
 
-	// One transaction for the whole batch — a Media row without its child
-	// row would be an orphan the idempotency check can't detect on a re-run.
-	// Sequential createMany calls, not Promise.all: concurrent queries on
-	// one interactive transaction session caused a bug before (empty upsert
-	// results); the extra round trips are negligible here.
+	// Single transaction keeps media + child rows together; sequential, not Promise.all
 	const created = await db.$transaction(async (tx) => {
 		// createManyAndReturn preserves `data` order (Prisma guarantee), so
 		// rows[i] is newItems[i] without a re-match, which a null externalId would otherwise make ambiguous.

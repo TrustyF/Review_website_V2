@@ -23,9 +23,7 @@ export function pickEnglishTitle(
 	return pickLocalized(title);
 }
 
-// Romanized Japanese title for display alongside the English one. Only considers "ja-ro", never raw
-// kanji/kana ("ja"), so it stays readable without a Japanese font. Picks the first candidate that
-// isn't a duplicate of the English title; null if none exists or all match it.
+// Romanized Japanese title ("ja-ro", not raw kanji "ja") for display alongside English. Picks first candidate not duplicate of English title; null if none exists.
 export function pickNativeTitle(
 	title: Record<string, string>,
 	altTitles: Record<string, string>[],

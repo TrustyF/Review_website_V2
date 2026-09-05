@@ -45,9 +45,7 @@ const SCREEN_MEDIA_TYPES: MediaType[] = [
 	MediaType.TVSHOW,
 ];
 
-// The other home sections, one recent-releases/recently-watched pair per type — each is lazily
-// fetched client-side (LazyRecentMediaSection) once it scrolls near the viewport, rather than
-// queried up front here alongside the movie sections above.
+// Lazily fetched client-side on scroll via LazyRecentMediaSection
 const OTHER_MEDIA_TYPES: MediaType[] = [
 	MediaType.BOOK,
 	MediaType.COMIC,
@@ -161,10 +159,7 @@ async function getMyWatchlist(excludeIds: number[]) {
 const REVIEWED_REVIEW_WHERE: Prisma.ReviewWhereInput = {
 	AND: [{ body: { not: null } }, { body: { not: "" } }],
 };
-// Book/comic/manga never get a bannerPath (no ingestion source for one), and
-// the hero card looks bare without its backdrop — excluded here rather than
-// filtered client-side so a banner-less review doesn't consume a featured
-// slot.
+// Book/comic/manga never get bannerPath; hero card looks bare. Excluded here so banner-less review doesn't consume featured slot.
 const NO_BANNER_MEDIA_TYPES: MediaType[] = [
 	MediaType.BOOK,
 	MediaType.COMIC,
@@ -211,19 +206,8 @@ function seededShuffle<T>(items: T[], seed: string): T[] {
 	return shuffled;
 }
 
-// Featured reviews (admin-curated, see featured-manager-modal.tsx) take
-// priority over plain recency in the hero. Two independent queries rather
-// than one clever `orderBy` — Prisma can't sort by "is this row featured"
-// ahead of a real column, so this fetches the featured set and a generously
-// overfetched recent set in parallel, then merges in JS: every featured
-// item first (in their own reviewDate order), topped up with recent
-// non-featured items to fill out the rest. Overfetching query B (2x) rather
-// than sizing it exactly is what keeps this a single round trip each,
-// instead of needing query A's ids before deciding how many of B to ask
-// for. The merged pool (minus the newest item, pulled out below) is then
-// shuffled with a seed derived from today's date (UTC) — same order for
-// every visitor/request today, a new order tomorrow — so the picker strip
-// rotates daily instead of reshuffling on every reload.
+// Featured first, then recent non-featured (2x-overfetched); merged
+// then daily-shuffled by date-seed.
 async function getFeaturedReviewItems() {
 	const take = 1 + RECENT_REVIEWS_COUNT;
 	const [featured, recent] = await Promise.all([
@@ -250,11 +234,7 @@ async function getFeaturedReviewItems() {
 		...recent.filter((m) => !featuredIds.has(m.id)),
 	].slice(0, take);
 
-	// A brand-new review always opens the hero (items[0]) regardless of the
-	// shuffle below — it's pulled out here by the same reviewDate/createDate
-	// recency used to order the queries above, then re-prepended after the
-	// rest of the pool is shuffled, so only the picker strip behind it
-	// rotates day to day.
+	// Newest review always in hero (items[0]); re-prepended after shuffle so picker rotates daily.
 	const [newest, ...rest] = [...merged].sort((a, b) =>
 		compareReviewRecency(a, b),
 	);
@@ -264,10 +244,7 @@ async function getFeaturedReviewItems() {
 	return [newest, ...seededShuffle(rest, todaySeed)];
 }
 
-// Same precedence as REVIEWED_ORDER_BY (reviewDate desc, nulls last, then
-// createDate desc) but as a comparator so the merged pool — already only
-// piecewise sorted by the two queries above — can be re-sorted as one list
-// to find its single most-recent item.
+// Comparator to re-sort merged pool with same precedence as REVIEWED_ORDER_BY
 function compareReviewRecency(
 	a: { review: { reviewDate: Date | null; createDate: Date } | null },
 	b: { review: { reviewDate: Date | null; createDate: Date } | null },
@@ -281,11 +258,7 @@ function compareReviewRecency(
 }
 
 export default async function HomePage() {
-	// dbPublic (not db) — soft-deleted media is excluded automatically, see
-	// src/server/db/client.ts. recentMoviesRaw/anticipatedRaw have to resolve
-	// before getRecentlyWatchedMovies/getMyWatchlist can run (they exclude
-	// those ids), so those two are pulled out of the Promise.all below; the
-	// rest still don't depend on each other.
+	// dbPublic excludes soft-deleted media. recentMoviesRaw/anticipatedRaw resolve first since getRecentlyWatchedMovies/getMyWatchlist exclude those ids.
 	const [reviewed, recentMoviesRaw, anticipatedRaw] = await Promise.all([
 		getFeaturedReviewItems(),
 		getRecentMovies(),

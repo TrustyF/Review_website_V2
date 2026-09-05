@@ -22,10 +22,7 @@ const FUSE_OPTIONS = {
 	ignoreLocation: true,
 };
 
-// Unscoped title search across the whole library — unlike list-actions'
-// searchMediaForList, nothing here excludes already-used media, since
-// AssetBrowser is about borrowing a title's art for some other context, not
-// building a list of titles.
+// Unscoped library search; AssetBrowser borrows art, not for lists.
 export async function searchMediaLibrary(
 	query: string,
 ): Promise<AssetBrowserSearchResult[]> {

@@ -86,10 +86,7 @@ export function NavDropdown({
 		setLastActiveLabelKey(activeLabelKey);
 	}
 
-	// previousActiveKey must survive just long enough to play the exit
-	// transition, then reset — otherwise it stays pinned at translateY(-100%)
-	// forever, and next time that variant reactivates it slides down from
-	// above instead of up from below (the "wrong way" bug this avoids).
+	// previousActiveKey must survive exit transition then reset, or stays at translateY(-100%) and slides down from above (wrong way) on next reactivation.
 	useEffect(() => {
 		if (previousActiveKey === activeLabelKey) return;
 		const timeout = setTimeout(() => {
@@ -98,9 +95,7 @@ export function NavDropdown({
 		return () => clearTimeout(timeout);
 	}, [previousActiveKey, activeLabelKey]);
 
-	// Covers a click/keyboard-driven open (native "toggle" event); hover
-	// opens call closeOtherDropdowns directly since script-set .open doesn't
-	// reliably fire "toggle" everywhere.
+	// Handles click/keyboard open; hover calls closeOtherDropdowns.
 	useEffect(() => {
 		const el = detailsRef.current;
 		if (!el) return;
@@ -139,9 +134,7 @@ export function NavDropdown({
 		}, CLOSE_DELAY_MS);
 	}
 
-	// On a no-hover device the panel would only be reachable via the bare
-	// chevron, since preventDefault on the Link also cancels <summary>'s
-	// native toggle for the same click — so toggle it manually here instead.
+	// No-hover devices: prevent default also cancels <summary> toggle, so do it manually.
 	function handleTriggerLinkClick(e: React.MouseEvent<HTMLAnchorElement>) {
 		if (!window.matchMedia("(hover: none)").matches) return;
 		e.preventDefault();
@@ -171,10 +164,7 @@ export function NavDropdown({
 			<summary
 				className={style.trigger}
 				aria-current={activeItem ? "page" : undefined}>
-				{/* A click here navigates straight to the first item (its
-				preventDefault also suppresses <summary>'s toggle); the panel
-				stays reachable via hover, keyboard, or the chevron — except on
-				no-hover devices, where handleTriggerLinkClick opens it instead. */}
+				{/* Click navigates to first item; panel stays reachable via hover/keyboard/chevron */}
 				<Link
 					href={items[0]?.href ?? "#"}
 					className={style.trigger_link}

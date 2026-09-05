@@ -1,14 +1,11 @@
 import type { TailwindConfig } from "@react-email/components";
 
-// A light palette, not a direct lift of globals.sass's dark :root tokens —
-// mail clients auto-invert dark emails, so white is the safer background.
-// Keep in sync by hand if globals.sass's tokens change.
+// Light palette (mail clients auto-invert dark); keep synced with globals.sass
 const colors = {
 	bg: "#ffffff",
 	"bg-2": "#f5f5f5", // --surface — card background
 	fg: "#1a1a1a", // --ticket-ink — doubles as the email's foreground on white
-	"fg-2": "#333333", // darker than --body (#cccccc, tuned for dark bg) for contrast on white
-	"fg-3": "#666666", // --accent1 — unchanged, still reads fine on white
+	"fg-2": "#333333", // darker for white contrast; "fg-3": "#666666", // --accent1, unchanged
 	stroke: "#e0e0e0", // --surface-border
 	brand: "#ff860d", // --brand
 	// --brand at ~2.4:1 contrast fails white text (WCAG needs 3:1+); its own

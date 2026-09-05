@@ -1,13 +1,4 @@
-// Generic reusable image proxy: given any remote URL from an allowlisted
-// host, produces a same-origin path that streams it through our backend
-// instead of hotlinking it directly. Some sources (TMDB) don't mind direct
-// hotlinking, but others (MangaDex, for future manga support) reject it
-// outright — routing everything through this proxy means callers never need
-// to know or care which is which.
-//
-// The remote URL is base64url-encoded directly into the path (not a query
-// string) so next/image's local-pattern matching only needs a plain
-// pathname rule, no query-string allowlisting.
+// Generic proxy for remote URLs from allowlisted hosts; base64url-encoded in path
 
 const ALLOWED_IMAGE_HOSTS = [
 	"image.tmdb.org",

@@ -2,6 +2,7 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import checkFile from "eslint-plugin-check-file";
+import { rules as commentLengthRules } from "./eslint-rules/comment-length.mjs";
 
 const eslintConfig = defineConfig([
 	...nextVitals,
@@ -9,8 +10,12 @@ const eslintConfig = defineConfig([
 	{
 		plugins: {
 			"check-file": checkFile,
+			"comment-length": { rules: commentLengthRules },
 		},
 		rules: {
+			// Both are "warn" for now; bump to "error" once the codebase is clean.
+			"comment-length/flag-long": "warn",
+			"comment-length/no-very-long": "warn",
 			"check-file/filename-naming-convention": [
 				"error",
 				{
@@ -25,12 +30,8 @@ const eslintConfig = defineConfig([
 					"src/**/": "NEXT_JS_APP_ROUTER_CASE",
 				},
 			],
-			// next/link's default prefetch fires a real server-side render for
-			// any dynamic route with a loading.tsx boundary the moment the link
-			// scrolls into the viewport — a grid of many links can silently cost
-			// dozens of invocations before anyone clicks anything (see
-			// components/ui/link.tsx's own comment). Import Link from there
-			// instead — same API, defaults prefetch to false.
+			// next/link's default prefetch can silently cost dozens of SSR
+			// invocations on a grid of links (see components/ui/link.tsx).
 			"no-restricted-imports": [
 				"error",
 				{
@@ -51,11 +52,9 @@ const eslintConfig = defineConfig([
 			"no-restricted-imports": "off",
 		},
 	},
-	// Override default ignores of eslint-config-next.
+	// eslint-config-next's default ignores, made recursive so nested copies
+	// (e.g. .claude/worktrees/*) are excluded too — flat config ignores .gitignore.
 	globalIgnores([
-		// Default ignores of eslint-config-next, made recursive so nested
-		// copies (e.g. inside .claude/worktrees/*) are excluded too — ESLint's
-		// flat config does not read .gitignore on its own.
 		"**/.next/**",
 		"**/out/**",
 		"**/build/**",

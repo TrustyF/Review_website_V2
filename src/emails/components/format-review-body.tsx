@@ -16,9 +16,7 @@ function pushWords(atoms: Atom[], text: string): void {
 	}
 }
 
-// Splits the body into words plus spoiler/link tokens (each an indivisible
-// atom), with paragraph breaks kept as their own atom — lets truncation cut
-// off anywhere, including mid-paragraph, without ever slicing a token in half.
+// Tokenizes into indivisible atoms (words, spoilers, links, paragraphs) for safe truncation
 function tokenizeBody(body: string): Atom[] {
 	const atoms: Atom[] = [];
 	const paragraphs = body.split("\n\n");
@@ -51,11 +49,7 @@ function tokenizeBody(body: string): Atom[] {
 	return atoms;
 }
 
-// Roughly matches featured-review.module.sass's 9rem/~4-line CSS clamp, but
-// as a word budget instead — email has no reliable max-height/overflow
-// clipping (Outlook's Word engine ignores it outright), so the cut has to
-// happen in the text itself before it ever reaches the markup. A spoiler or
-// link token counts as a single word toward the budget.
+// Matches featured-review.module.sass's CSS clamp as word budget. Email has no max-height/overflow clipping, so cut in text. Spoiler/link token = 1 word.
 const MAX_BODY_WORDS = 60;
 
 function truncateAtoms(atoms: Atom[]): { shown: Atom[]; truncated: boolean } {
@@ -101,9 +95,7 @@ function renderParagraphAtoms(atoms: Atom[], paraKey: string): ReactNode {
 	return nodes;
 }
 
-// Same paragraph split as review.tsx's SplitLineBody. Uses fg-2 (email
-// counterpart to review.module.sass's var(--body)), not fg — review text is
-// intentionally a notch dimmer than titles/headings on the site.
+// Same split as review.tsx; uses fg-2 (dimmer than headings).
 export function formatReviewBody(body: string, readMoreUrl: string): ReactNode {
 	const { shown, truncated } = truncateAtoms(tokenizeBody(body));
 

@@ -1,8 +1,6 @@
 import { db } from "@/server/db/client";
 
-// Invoked by run-and-notify.sh on any non-zero exit from a cron job (docker
-// build/run failures included, not just an uncaught exception). Records a
-// CronJobRun row for /admin/logs.
+// Invoked on cron non-zero exit (docker/code failures); records for /admin/logs.
 async function main() {
 	const jobName = process.argv[2];
 	// base64: tsx truncates a multi-line CLI argument to its first line, and this log tail is usually multi-line.

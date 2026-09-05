@@ -18,13 +18,9 @@ export function SignupPage() {
 		setError(null);
 		try {
 			await signUp({ name, email, password });
-			// Signs the browser in immediately (client-side, see auth-actions.ts's
-			// own note on why) so the caller lands signed in instead of bouncing
-			// to /login to re-enter the password they just typed.
+			// Signs in immediately (see auth-actions.ts's note) so they don't bounce to /login.
 			await signIn("credentials", { email, password, redirect: false });
-			// Hard navigation, not router.push + router.refresh — see
-			// login-page.tsx's own comment on why. Lands on the onboarding
-			// wizard (username/avatar/language/newsletter) instead of home.
+			// Hard navigation, not router.push/refresh — see login-page.tsx's comment.
 			window.location.href = "/onboarding";
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to sign up. Try again.");
