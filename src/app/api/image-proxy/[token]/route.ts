@@ -41,28 +41,7 @@ export async function GET(
 		);
 	}
 
-	// Debug-only: tee the body so we can log when the stream to the client
-	// actually finishes/errors, without disturbing the bytes returned below.
-	// Helps confirm/rule out a stream that errors post-headers never cleanly
-	// closing the client connection (see the "infinite tab spinner"
-	// investigation) — remove once the cause is found.
-	const [clientBody, watchBody] = upstream.body.tee();
-	const watchId = Math.random().toString(36).slice(2, 8);
-	console.log(`[proxy:stream-start] ${watchId} ${url.hostname}`);
-	(async () => {
-		const reader = watchBody.getReader();
-		try {
-			for (;;) {
-				const { done } = await reader.read();
-				if (done) break;
-			}
-			console.log(`[proxy:stream-done] ${watchId} ${url.hostname}`);
-		} catch (err) {
-			console.log(`[proxy:stream-error] ${watchId} ${url.hostname}`, err);
-		}
-	})();
-
-	return new NextResponse(clientBody, {
+	return new NextResponse(upstream.body, {
 		headers: {
 			"Content-Type": upstream.headers.get("content-type") ?? "image/jpeg",
 			// s-maxage lets the edge CDN serve repeat requests without re-invoking this function; safe since tokens are content-addressed.

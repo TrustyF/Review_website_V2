@@ -159,11 +159,7 @@ export async function resolvePoster(
 		});
 
 	after(async () => {
-		try {
-			await encode();
-		} catch (err) {
-			console.error(`[after:poster] ${POSTER_DIR}/${filename}`, err);
-		}
+		await encode();
 	});
 
 	return { bytes: source, contentType: sourceContentType, fresh: true };
@@ -352,11 +348,7 @@ export async function resolveBanner(
 		});
 
 	after(async () => {
-		try {
-			await encode();
-		} catch (err) {
-			console.error(`[after:banner] ${BANNER_DIR}/${filename}`, err);
-		}
+		await encode();
 	});
 
 	return { bytes: source, contentType: sourceContentType, fresh: true };
@@ -383,18 +375,14 @@ export async function resolvePersonPhoto(
 	const sourceContentType = res.headers.get("content-type") || "image/jpeg";
 
 	after(async () => {
-		try {
-			await dedupeEncode(`${PERSON_PHOTO_DIR}/${filename}`, async () => {
-				const encoded = await sharp(source)
-					.resize({ width: PERSON_PHOTO_MAX_WIDTH, withoutEnlargement: true })
-					.webp({ quality: PERSON_PHOTO_QUALITY })
-					.toBuffer();
-				await storage.write(PERSON_PHOTO_DIR, filename, encoded);
-				return encoded;
-			});
-		} catch (err) {
-			console.error(`[after:person-photo] ${PERSON_PHOTO_DIR}/${filename}`, err);
-		}
+		await dedupeEncode(`${PERSON_PHOTO_DIR}/${filename}`, async () => {
+			const encoded = await sharp(source)
+				.resize({ width: PERSON_PHOTO_MAX_WIDTH, withoutEnlargement: true })
+				.webp({ quality: PERSON_PHOTO_QUALITY })
+				.toBuffer();
+			await storage.write(PERSON_PHOTO_DIR, filename, encoded);
+			return encoded;
+		});
 	});
 
 	return { bytes: source, contentType: sourceContentType, fresh: true };
