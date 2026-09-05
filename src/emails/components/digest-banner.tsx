@@ -48,7 +48,7 @@ export function DigestBanner({
 					className="rounded-t-[10px] px-6 pt-5 align-top"
 					style={{
 						backgroundImage:
-							"linear-gradient(to bottom, rgb(141, 46, 0) 10%,rgba(64, 21, 0,0.75) 35%, transparent 65%)",
+							"linear-gradient(to bottom, rgba(0, 0, 0,0.85) 0%, transparent 65%)",
 						height: BANNER_HEIGHT,
 						verticalAlign: "top",
 					}}>
@@ -74,10 +74,14 @@ export function DigestBanner({
 							</Row>
 						</Column>
 						<Column className="text-center align-top">
-							<Text className="m-0 mt-2 font-serif text-[50px] font-bold uppercase leading-[1] text-white">
+							<Text
+								className="m-0 mt-2 font-serif text-[50px] font-bold uppercase leading-[1] text-white"
+								style={{ textShadow: "2px 2px 2px rgba(0,0,0,0.75)" }}>
 								{headline || "Weekly Digest"}
 							</Text>
-							<Text className="m-0 mt-2 text-[12px] font-medium text-white">
+							<Text
+								className="m-0 mt-2 text-[12px] font-medium text-white"
+								style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.75)" }}>
 								{subtitle || dateLabel}
 							</Text>
 						</Column>
