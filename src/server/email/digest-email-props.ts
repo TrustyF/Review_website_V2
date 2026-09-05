@@ -76,7 +76,13 @@ function formatDigestDate(date: Date): string {
 	});
 }
 
-export type DigestEmailProps = Parameters<typeof LatestActivityEmail>[0];
+// unsubscribeUrl is per-recipient (signed with that recipient's user id), so
+// it's built by the caller (send-weekly-digest.ts / the admin preview route)
+// rather than here.
+export type DigestEmailProps = Omit<
+	Parameters<typeof LatestActivityEmail>[0],
+	"unsubscribeUrl"
+>;
 
 // Null when there's no rating/review activity in the past week — the digest
 // gets skipped that week (see send-weekly-digest.ts), and the preview route

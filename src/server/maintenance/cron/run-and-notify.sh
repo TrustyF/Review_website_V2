@@ -1,5 +1,6 @@
 #!/bin/bash
 # Usage: run-and-notify.sh <job-name> <command...>
+# See crontab.example (same directory) for the actual schedule these jobs run on.
 # Wraps every host cron job (see the host's crontab) so a failure of any
 # kind — a JS exception inside the job, a `docker compose run`/build
 # failure, pg_dump erroring inside backup-database.sh, anything with a

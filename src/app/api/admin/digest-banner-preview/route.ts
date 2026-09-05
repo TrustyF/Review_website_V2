@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { render } from "@react-email/render";
 import { auth } from "@/auth";
 import { buildDigestEmailProps } from "@/server/email/digest-email-props";
+import { buildUnsubscribeToken } from "@/server/email/unsubscribe-token";
+import { toAbsoluteUrl } from "@/server/email/mailer";
 import LatestActivityEmail from "@/emails/latest-activity-email";
 
 // Renders the real weekly-digest email (current banner override + latest
@@ -21,7 +23,10 @@ export async function GET() {
 		);
 	}
 
-	const html = await render(LatestActivityEmail(props));
+	const unsubscribeUrl = toAbsoluteUrl(
+		`/api/unsubscribe?token=${buildUnsubscribeToken(session.user.id, "newsletterOptIn")}`,
+	);
+	const html = await render(LatestActivityEmail({ ...props, unsubscribeUrl }));
 	return new NextResponse(html, {
 		headers: { "Content-Type": "text/html" },
 	});

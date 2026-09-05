@@ -45,6 +45,7 @@ type Props = {
 	recentWatches: WatchProps[];
 	activityUrl: string;
 	accountUrl: string;
+	unsubscribeUrl: string;
 };
 
 const SECTION_LABEL_CLASS =
@@ -102,6 +103,7 @@ LatestActivityEmail.PreviewProps = {
 	],
 	activityUrl: "https://example.com/activity",
 	accountUrl: "https://example.com/account",
+	unsubscribeUrl: "https://example.com/api/unsubscribe?token=preview",
 } satisfies Props;
 
 export default function LatestActivityEmail({
@@ -114,6 +116,7 @@ export default function LatestActivityEmail({
 	recentWatches,
 	activityUrl,
 	accountUrl,
+	unsubscribeUrl,
 }: Props) {
 	return (
 		<Tailwind config={EMAIL_TAILWIND_CONFIG}>
@@ -177,6 +180,10 @@ export default function LatestActivityEmail({
 								Arthur&apos;s Corner.{" "}
 								<Link href={accountUrl} className="text-fg-3 underline">
 									Manage your subscription
+								</Link>{" "}
+								·{" "}
+								<Link href={unsubscribeUrl} className="text-fg-3 underline">
+									Unsubscribe
 								</Link>
 							</Text>
 						</Section>

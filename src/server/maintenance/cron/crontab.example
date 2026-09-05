@@ -1,0 +1,30 @@
+# Reference schedule for this app's maintenance/digest jobs — install with
+# `crontab crontab.example` after substituting REPO_DIR below (crontab has no
+# variable expansion of its own, so do a literal find/replace first). If the
+# host's actual crontab already differs from this, treat that live crontab as
+# the source of truth and update this file to match it instead of the reverse
+# — this file exists so the schedule has *a* copy in version control, not to
+# silently override what's actually running.
+#
+# Every job here logs through run-and-notify.sh (see that script) except
+# backup-database.sh, which is self-contained and invoked directly.
+
+REPO_DIR=/path/to/review_website_nextjs
+CRON_SH=$REPO_DIR/src/server/maintenance/cron/run-and-notify.sh
+
+# Nightly catalog enrichment (TMDB/IGDB/ComicVine/Google Books sync).
+0 3 * * *  $CRON_SH enrich_db sudo docker compose run --rm maintenance npm run enrich_db
+
+# Nightly cleanup of orphaned poster/cropped-image files.
+15 3 * * * $CRON_SH cleanup_posters sudo docker compose run --rm maintenance npm run cleanup_posters
+30 3 * * * $CRON_SH cleanup_cropped_images sudo docker compose run --rm maintenance npm run cleanup_cropped_images
+
+# Weekly purge of soft-deleted change-log rows past their retention window.
+0 4 * * 0  $CRON_SH purge_deleted_changelogs sudo docker compose run --rm maintenance npm run purge_deleted_changelogs
+
+# Weekly "what I rated and reviewed" digest — Monday morning.
+0 6 * * 1  $CRON_SH weekly_digest sudo docker compose run --rm maintenance npm run weekly_digest
+
+# Nightly database backup, uploaded to R2. No run-and-notify wrapper — the
+# script does its own dump + upload + pruning and isn't a `npm run` cron job.
+0 2 * * *  $REPO_DIR/src/server/maintenance/cron/backup-database.sh >> $REPO_DIR/cron-logs/backup-database.log 2>&1
