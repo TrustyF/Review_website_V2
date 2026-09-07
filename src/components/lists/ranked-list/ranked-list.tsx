@@ -19,6 +19,7 @@ import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useMediaFilter } from "@/components/media/media-grids/media-filter/use-media-filter";
 import { MediaFilterPopover } from "@/components/media/media-grids/media-filter/media-filter-popover";
+import { MediaGridControls } from "@/components/media/media-grids/media-grid-controls/media-grid-controls";
 import { isFilterActive } from "@/components/media/media-grids/media-filter/media-filter";
 import { RankedListRow } from "./ranked-list-row";
 import styles from "./ranked-list.module.sass";
@@ -99,7 +100,9 @@ export function RankedList({ listId, media, seenMediaIds }: Props) {
 
 	return (
 		<div className={styles.wrapper}>
-			<MediaFilterPopover media={media} filter={filter} onChange={setFilter} />
+			<MediaGridControls>
+				<MediaFilterPopover media={media} filter={filter} onChange={setFilter} />
+			</MediaGridControls>
 			{isAdmin && (
 				<div className={styles.controls}>
 					<button

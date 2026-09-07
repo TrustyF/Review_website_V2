@@ -1,9 +1,6 @@
-// Offset left of MediaFilterPopover by its worst-case width so the two triggers sit side by side; fixed value, cheaper than a ResizeObserver.
+// In-flow — the caller groups this with MediaFilterPopover and positions that group, not this wrapper directly. position: relative only anchors .popover below.
 .wrapper
-  position: absolute
-  z-index: 5
-  top: 0
-  right: 3.75rem
+  position: relative
 
 .trigger
   position: relative

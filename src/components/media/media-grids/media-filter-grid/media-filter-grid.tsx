@@ -5,6 +5,7 @@ import { MediaRecord } from "@/components/media/types";
 import { useMediaFilter } from "@/components/media/media-grids/media-filter/use-media-filter";
 import { MediaFilterPopover } from "@/components/media/media-grids/media-filter/media-filter-popover";
 import { MediaSortPopover } from "@/components/media/media-grids/media-sort/media-sort-popover";
+import { MediaGridControls } from "@/components/media/media-grids/media-grid-controls/media-grid-controls";
 import { MediaSortedGrid } from "@/components/media/media-grids/media-sort/media-sorted-grid";
 import { MediaSortOption } from "@/components/media/media-grids/media-sort/media-sort";
 import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
@@ -54,12 +55,14 @@ export function MediaFilterGrid({ media, showRating, showTitle }: Props) {
 	return (
 		<MediaCardDisplayProvider showRating={effectiveShowRating} showTitle={showTitle}>
 			<div className={styles.wrapper}>
-				<MediaSortPopover sort={sort} onChange={setSort} />
-				<MediaFilterPopover
-					media={media}
-					filter={filter}
-					onChange={setFilter}
-				/>
+				<MediaGridControls>
+					<MediaSortPopover sort={sort} onChange={setSort} />
+					<MediaFilterPopover
+						media={media}
+						filter={filter}
+						onChange={setFilter}
+					/>
+				</MediaGridControls>
 				<MediaSortedGrid media={filteredMedia} sort={sort} />
 			</div>
 		</MediaCardDisplayProvider>

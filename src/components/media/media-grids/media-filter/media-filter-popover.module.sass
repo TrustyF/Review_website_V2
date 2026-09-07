@@ -1,9 +1,6 @@
-// Floats over its caller's wrapper; every caller must itself be position: relative for this to anchor correctly.
+// In-flow — the caller groups this with its sibling triggers and positions that group, not this wrapper directly. position: relative only anchors .popover below.
 .wrapper
-  position: absolute
-  z-index: 5
-  top: 0
-  right: 0
+  position: relative
 
 .trigger
   display: flex
