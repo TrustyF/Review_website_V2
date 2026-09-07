@@ -5,4 +5,5 @@ backups
 .fixtures
 .env
 .env.neon
+.env.beszel
 *.log

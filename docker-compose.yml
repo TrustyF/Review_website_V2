@@ -279,18 +279,24 @@ services:
   # own. Docker socket is mounted read-only so it can also report per-container
   # stats (for `app`, `db`, etc.) alongside host-level ones.
   #
-  # BESZEL_AGENT_KEY has no default and can't be filled in ahead of time: it's
-  # a public key beszel-hub generates when you add a new "system" from its web
-  # UI (port 8090 above) — create the system there first, copy the key it
-  # shows you into .env, then start this service.
+  # KEY has no default and can't be filled in ahead of time: it's a public key
+  # beszel-hub generates when you add a new "system" from its web UI (port
+  # 8090 above) — create the system there first, copy the key it shows you
+  # into .env.beszel, then start this service.
+  #
+  # Split into its own env_file (not this file's usual ${VAR} interpolation
+  # from .env) so this monitoring key can be copied/rotated independently of
+  # the app's own secrets — e.g. syncing .env to another host no longer also
+  # touches this.
   beszel-agent:
     image: henrygd/beszel-agent:latest
     restart: unless-stopped
     network_mode: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    env_file:
+      - .env.beszel
     environment:
-      KEY: ${BESZEL_AGENT_KEY}
       HUB_URL: http://127.0.0.1:8090
 
 volumes:
