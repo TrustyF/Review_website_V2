@@ -100,6 +100,7 @@ export async function ListDetailPage({ id }: Props) {
 			<AddMediaToList
 				listId={list.id}
 				excludeMediaIds={media.map((item) => item.id)}
+				seenMediaIds={seenMediaIds}
 			/>
 
 			{media.length === 0 ? (

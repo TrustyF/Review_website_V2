@@ -77,12 +77,23 @@
   &:hover
     background: var(--surface1)
 
+.result_poster_slot
+  position: relative
+  flex-shrink: 0
+
 .result_poster
   width: 2rem
   aspect-ratio: 2 / 3
   object-fit: cover
   border-radius: 0.2rem
-  flex-shrink: 0
+
+// SeenBadge is sized for a card-scale poster; scaled down here to fit this small result thumb.
+.result_seen_badge
+  position: absolute
+  bottom: -0.2rem
+  right: -0.2rem
+  transform: scale(0.7)
+  transform-origin: bottom right
 
 .result_title
   min-width: 0

@@ -12,9 +12,11 @@ type Props = {
 	listId: number;
 	// Already-on-this-list media ids, so the browser doesn't offer duplicates.
 	excludeMediaIds: number[];
+	// Read-only "already seen" badge for a recommendation list's target user — see SeenBadge.
+	seenMediaIds?: Set<number> | undefined;
 };
 
-export function AddMediaToList({ listId, excludeMediaIds }: Props) {
+export function AddMediaToList({ listId, excludeMediaIds, seenMediaIds }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
 	// Mobile admin edits are intentionally unsupported.
@@ -45,6 +47,7 @@ export function AddMediaToList({ listId, excludeMediaIds }: Props) {
 			<MediaBrowser
 				isOpen={isBrowserOpen}
 				excludeMediaIds={excludeMediaIds}
+				seenMediaIds={seenMediaIds}
 				onSelect={handleSelect}
 				onClose={() => setIsBrowserOpen(false)}
 			/>

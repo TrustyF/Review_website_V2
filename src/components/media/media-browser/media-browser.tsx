@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Clickable } from "@/components/ui/clickable";
+import { SeenBadge } from "@/components/watched/seen-badge/seen-badge";
 import {
 	MediaBrowserSearchResult,
 	searchMediaBrowser,
@@ -12,6 +13,8 @@ type Props = {
 	isOpen: boolean;
 	// Excluded from results (e.g. media already on the list being added to).
 	excludeMediaIds?: number[] | undefined;
+	// Read-only "already seen" badge, keyed by media id — see SeenBadge.
+	seenMediaIds?: Set<number> | undefined;
 	// Hands off the full picked media identity; caller decides what to do with it.
 	onSelect: (result: MediaBrowserSearchResult) => void;
 	onClose: () => void;
@@ -22,6 +25,7 @@ type Props = {
 export function MediaBrowser({
 	isOpen,
 	excludeMediaIds,
+	seenMediaIds,
 	onSelect,
 	onClose,
 }: Props) {
@@ -89,13 +93,21 @@ export function MediaBrowser({
 							key={result.id}
 							className={styles.result}
 							onClick={() => handleSelect(result)}>
-							{/* Already-hosted through our own poster route — plain <img>, same reasoning as AssetBrowser's result thumb. */}
-							{/* eslint-disable-next-line @next/next/no-img-element */}
-							<img
-								src={result.posterSrc}
-								alt=""
-								className={styles.result_poster}
-							/>
+							<div className={styles.result_poster_slot}>
+								{/* Already-hosted through our own poster route — plain <img>, same reasoning as AssetBrowser's result thumb. */}
+								{/* eslint-disable-next-line @next/next/no-img-element */}
+								<img
+									src={result.posterSrc}
+									alt=""
+									className={styles.result_poster}
+								/>
+								{seenMediaIds?.has(result.id) && (
+									<SeenBadge
+										type={result.type}
+										className={styles.result_seen_badge}
+									/>
+								)}
+							</div>
 							<span className={styles.result_title}>{result.title}</span>
 						</Clickable>
 					))}
