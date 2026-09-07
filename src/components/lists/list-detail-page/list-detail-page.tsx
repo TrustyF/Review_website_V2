@@ -56,9 +56,9 @@ export async function ListDetailPage({ id }: Props) {
 		.filter((item) => !item.media.isDeleted)
 		.map((item) => toMediaRecord(item.media));
 
-	// Read-only "already seen" badges, only meaningful on a recommendation list — the one
-	// case where the viewer isn't necessarily the person whose watched state matters.
-	const seenMediaIds = list.targetUserId
+	// Read-only "already seen" badges: only meaningful to an admin browsing someone else's
+	// recommendation list — the recipient already knows their own watched state.
+	const seenMediaIds = list.targetUserId && isAdmin
 		? new Set(
 				(
 					await db.watchedItem.findMany({
