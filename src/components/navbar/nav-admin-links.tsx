@@ -35,7 +35,7 @@ export function NavAdminLinks({ pathname }: Props) {
 					Cron logs
 				</NavLink>
 				<NavLink
-					href="/admin/digest-banner"
+					href="/admin/digest"
 					icon={Image}
 					className={barStyle.link}
 					pathname={pathname}>

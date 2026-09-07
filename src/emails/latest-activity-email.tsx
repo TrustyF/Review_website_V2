@@ -37,7 +37,7 @@ type WatchProps = {
 type Props = {
 	bannerSrc: string | null;
 	dateLabel: string;
-	// Admin override from /admin/digest-banner — see send-weekly-digest.ts.
+	// Admin override from /admin/digest — see send-weekly-digest.ts.
 	bannerHeadline?: string | null | undefined;
 	bannerSubtitle?: string | null | undefined;
 	latestReviews: ReviewProps[];
@@ -100,7 +100,7 @@ LatestActivityEmail.PreviewProps = {
 	],
 	anticipatedReleases: [
 		{
-			title: "Dune: Part Three",
+			title: "Dune: Part Three: sunrise on the reaping",
 			mediaUrl: "https://example.com/media/1470",
 			posterSrc:
 				"https://image.tmdb.org/t/p/w500/qymaJhVQFQ0K8AQCQeVhpH1yWKD.jpg",
@@ -155,14 +155,18 @@ export default function LatestActivityEmail({
 							{/*</Text>*/}
 
 							<Section>
-								<Text className={SECTION_LABEL_CLASS}>Latest reviews</Text>
-								{latestReviews.map((review, index) => (
-									<Section
-										key={review.mediaUrl}
-										className={index > 0 ? "mt-2" : undefined}>
-										<MediaReviewCard {...review} />
+								{latestReviews.length > 0 && (
+									<Section>
+										<Text className={SECTION_LABEL_CLASS}>Latest reviews</Text>
+										{latestReviews.map((review, index) => (
+											<Section
+												key={review.mediaUrl}
+												className={index > 0 ? "mt-2" : undefined}>
+												<MediaReviewCard {...review} />
+											</Section>
+										))}
 									</Section>
-								))}
+								)}
 
 								{recentWatches.length > 0 && (
 									<>
@@ -194,7 +198,11 @@ export default function LatestActivityEmail({
 										</Text>
 										<Row align="left" width="auto">
 											{anticipatedReleases.map((movie) => (
-												<MediaMiniCard key={movie.mediaUrl} {...movie} />
+												<MediaMiniCard
+													key={movie.mediaUrl}
+													{...movie}
+													wrapTitle
+												/>
 											))}
 										</Row>
 									</Section>

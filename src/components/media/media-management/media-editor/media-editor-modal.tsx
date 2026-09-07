@@ -242,6 +242,7 @@ export default function MediaEditorModal() {
 				difficulty: prev.review?.difficulty ?? null,
 				body: prev.review?.body ?? null,
 				featured: prev.review?.featured ?? false,
+				inDigest: prev.review?.inDigest ?? false,
 				reviewDate: prev.review?.reviewDate ?? null,
 				createDate: prev.review?.createDate ?? new Date(),
 				updateDate: prev.review?.updateDate ?? null,

@@ -4,7 +4,7 @@ import { emailAssetSrc } from "../lib/email-asset";
 type Props = {
 	bannerSrc: string | null;
 	dateLabel: string;
-	// Admin override from /admin/digest-banner — default to "Weekly Digest"/dateLabel when unset.
+	// Admin override from /admin/digest — default to "Weekly Digest"/dateLabel when unset.
 	headline?: string | null | undefined;
 	subtitle?: string | null | undefined;
 };

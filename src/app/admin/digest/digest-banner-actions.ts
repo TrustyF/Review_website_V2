@@ -45,7 +45,7 @@ export async function updateDigestBannerOverride(
 		update: data,
 	});
 
-	revalidatePath("/admin/digest-banner");
+	revalidatePath("/admin/digest");
 }
 
 // Alternative to pasting a URL: saves a locally-picked file and returns a URL for the same image field.

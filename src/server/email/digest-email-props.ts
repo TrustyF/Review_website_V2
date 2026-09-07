@@ -134,12 +134,17 @@ export async function buildDigestEmailProps(): Promise<DigestEmailProps | null> 
 	const since = new Date(Date.now() - DIGEST_WINDOW_MS);
 
 	const [latestReviewed, recentlyRated] = await Promise.all([
+		// Manually curated via /admin/digest's review picker, not auto-picked
+		// by recency — see rating.prisma's `inDigest` field.
 		db.review.findMany({
 			where: {
-				reviewDate: { gte: since },
+				inDigest: true,
 				media: { isAdult: false, isDeleted: false },
 			},
-			orderBy: { reviewDate: "desc" },
+			orderBy: [
+				{ reviewDate: { sort: "desc", nulls: "last" } },
+				{ createDate: "desc" },
+			],
 			take: MAX_LATEST_REVIEWS,
 			select: {
 				mediaId: true,

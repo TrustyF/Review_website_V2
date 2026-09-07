@@ -2,22 +2,25 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 import { Clickable } from "@/components/ui/clickable";
 import { AssetBrowser } from "@/components/media/asset-browser/asset-browser";
-import styles from "./digest-banner.module.sass";
+import styles from "./digest.module.sass";
 import {
 	DigestBannerOverride,
 	updateDigestBannerOverride,
 	uploadDigestBannerImage,
 } from "./digest-banner-actions";
+import { clearAllDigestReviews } from "./digest-reviews-actions";
 
 type Props = {
 	initial: DigestBannerOverride;
 	// Lets the parent refresh the preview iframe once a save actually lands.
 	onSaved?: () => void;
+	// Lets the parent refresh the preview iframe and the reviews panel once a clear lands.
+	onCleared?: () => void;
 };
 
 // Empty override falls back to send-weekly-digest.ts's automatic per-send
 // behavior (featured media's backdrop, "Weekly Digest" headline, send date).
-export function DigestBannerForm({ initial, onSaved }: Props) {
+export function DigestBannerForm({ initial, onSaved, onCleared }: Props) {
 	const [image, setImage] = useState(initial.image ?? "");
 	const [headline, setHeadline] = useState(initial.headline ?? "");
 	const [subtitle, setSubtitle] = useState(initial.subtitle ?? "");
@@ -65,10 +68,27 @@ export function DigestBannerForm({ initial, onSaved }: Props) {
 		}
 	}
 
-	function handleClear() {
-		setImage("");
-		setHeadline("");
-		setSubtitle("");
+	// Resets both the banner override and the "latest reviews" selection back
+	// to send-weekly-digest.ts's fully-automatic behavior — not just the local form fields.
+	async function handleClear() {
+		setIsSubmitting(true);
+		setError(null);
+		setSaved(false);
+		try {
+			await Promise.all([
+				updateDigestBannerOverride({ image: "", headline: "", subtitle: "" }),
+				clearAllDigestReviews(),
+			]);
+			setImage("");
+			setHeadline("");
+			setSubtitle("");
+			setSaved(true);
+			onCleared?.();
+		} catch {
+			setError("Failed to clear. Try again.");
+		} finally {
+			setIsSubmitting(false);
+		}
 	}
 
 	return (

@@ -28,6 +28,12 @@ model Review {
   // to do the same thing.
   featured Boolean @default(false)
 
+  // Curated by an admin via /admin/digest's review picker — the weekly
+  // digest's "latest reviews" section shows exactly this set instead of
+  // whatever was reviewed in the past week. Same no-expiry rationale as
+  // `featured` above.
+  inDigest Boolean @default(false)
+
   // Set once, the first time body actually goes from unset to set — see
   // saveReview. "Watched on" reads createDate below instead (a rating is
   // required to save at all now, so createDate can never predate one) —

@@ -22,8 +22,9 @@ CRON_SH=$REPO_DIR/src/server/maintenance/cron/run-and-notify.sh
 # Weekly purge of soft-deleted change-log rows past their retention window.
 0 4 * * 0  $CRON_SH purge_deleted_changelogs sudo docker compose run --rm maintenance npm run purge_deleted_changelogs
 
-# Weekly "what I rated and reviewed" digest — Monday morning.
-0 6 * * 1  $CRON_SH weekly_digest sudo docker compose run --rm maintenance npm run weekly_digest
+# No schedule for the weekly digest — it's sent manually from /admin/digest
+# now (see digest-send-actions.ts), not on a cron. `npm run weekly_digest`
+# still exists for a one-off CLI/manual send outside the admin UI.
 
 # Nightly database backup, uploaded to R2. No run-and-notify wrapper — the
 # script does its own dump + upload + pruning and isn't a `npm run` cron job.
