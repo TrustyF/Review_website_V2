@@ -162,7 +162,7 @@ export async function createNotification(input: {
 
 const PAGE_SIZE = 50;
 
-// Most-recent-first, capped not paginated (same tradeoff as searchMediaForList/getActivityFeed). Personal site's per-user volume never needs pagination.
+// Most-recent-first, capped not paginated (same tradeoff as searchMediaBrowser/getActivityFeed). Personal site's per-user volume never needs pagination.
 export async function getNotifications(): Promise<NotificationEntry[]> {
 	const userId = await requireUserId();
 	const notifications = await db.notification.findMany({

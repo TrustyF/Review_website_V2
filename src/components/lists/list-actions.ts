@@ -1,9 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { db, dbPublic } from "@/server/db/client";
-import { EnrichmentStatus, ListSortMode } from "@prisma/client";
-import { toPosterSrc } from "@/server/resolvers/poster-resolver";
-import { fuzzySearch } from "@/lib/fuzzy-search";
+import { db } from "@/server/db/client";
+import { ListSortMode } from "@prisma/client";
 import {
 	isListThumbnailUrl,
 	saveListThumbnail,
@@ -231,48 +229,4 @@ export async function reorderListItems(
 	);
 
 	revalidatePath(`/lists/${listId}`);
-}
-
-export type ListMediaSearchResult = {
-	id: number;
-	title: string;
-	type: string;
-	posterSrc: string;
-};
-
-const SEARCH_LIMIT = 20;
-
-// Same typo tolerance as search-actions.ts's FUSE_OPTIONS.
-const FUSE_OPTIONS = {
-	keys: ["title"],
-	threshold: 0.35,
-	ignoreLocation: true,
-};
-
-// Fuzzy title match scoped away from existing list items; ranks all eligible candidates in memory since Prisma can't do fuzzy matching in-query (fine at this app's scale).
-export async function searchMediaForList(
-	listId: number,
-	query: string,
-): Promise<ListMediaSearchResult[]> {
-	await requireAdmin();
-	const trimmed = query.trim();
-	if (!trimmed) return [];
-
-	const candidates = await dbPublic.media.findMany({
-		where: {
-			enrichmentStatus: EnrichmentStatus.DONE,
-			listItems: { none: { listId } },
-		},
-		select: { id: true, title: true, type: true, posterPath: true },
-		orderBy: { id: "asc" },
-	});
-
-	return fuzzySearch(candidates, FUSE_OPTIONS, trimmed, SEARCH_LIMIT).map(
-		(m) => ({
-			id: m.id,
-			title: m.title,
-			type: m.type,
-			posterSrc: toPosterSrc(m.id, m.posterPath),
-		}),
-	);
 }

@@ -97,7 +97,10 @@ export async function ListDetailPage({ id }: Props) {
 				</div>
 			</div>
 
-			<AddMediaToList listId={list.id} />
+			<AddMediaToList
+				listId={list.id}
+				excludeMediaIds={media.map((item) => item.id)}
+			/>
 
 			{media.length === 0 ? (
 				<p className={styles.empty}>No media in this list yet.</p>

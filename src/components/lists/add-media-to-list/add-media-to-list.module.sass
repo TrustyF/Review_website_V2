@@ -1,56 +1,19 @@
-@use "@/app/styles/variables" as *
-
 .wrapper
   display: flex
   flex-flow: column
-  gap: 0.75rem
+  gap: 0.5rem
   margin-bottom: 1rem
 
-.search_input
-  width: 100%
-  padding: 0.6rem 0.8rem
+.browse_button
+  display: inline-flex
+  align-items: center
+  align-self: flex-start
+  padding: 0.4rem 0.9rem
   border: 1px solid var(--accent1)
   border-radius: 0.4rem
-  background: transparent
   color: var(--foreground)
-  font-family: $font-body
-  font-size: 1rem
+  font-size: 0.85rem
+  cursor: pointer
 
 .error
   color: var(--danger)
-
-.status
-  @include empty-text
-
-// 1fr lets a column exceed the 90px minimum on short result sets; poster width/height is sized past that minimum to match
-.results
-  display: grid
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr))
-  gap: 1rem
-
-.result
-  display: flex
-  flex-flow: column
-  align-items: center
-  gap: 0.3rem
-  text-align: center
-
-.result_poster
-  width: 100%
-  height: auto
-  aspect-ratio: 2/3
-  object-fit: cover
-  border-radius: 0.4rem
-
-.result_title
-  font-size: 0.8rem
-  font-weight: 500
-  white-space: nowrap
-  overflow: hidden
-  text-overflow: ellipsis
-  max-width: 100%
-
-.add_button
-  padding: 0.2rem 0.8rem
-  font-size: 0.8rem
-  cursor: pointer
