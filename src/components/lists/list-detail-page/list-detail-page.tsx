@@ -1,4 +1,3 @@
-import { Link } from "@/components/ui/link";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
@@ -8,6 +7,7 @@ import { RankedList } from "@/components/lists/ranked-list/ranked-list";
 import { ListMediaView } from "@/components/lists/list-media-view/list-media-view";
 import { EditListLink } from "@/components/lists/edit-list-link/edit-list-link";
 import { ListIdBadge } from "@/components/lists/list-id-badge/list-id-badge";
+import { ListWatchedProgress } from "@/components/lists/list-watched-progress/list-watched-progress";
 import { displayName } from "@/lib/display-name";
 import styles from "./list-detail-page.module.sass";
 
@@ -72,9 +72,13 @@ export async function ListDetailPage({ id }: Props) {
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
-				{list.thumbnail && (
+				{list.thumbnail ? (
 					// eslint-disable-next-line @next/next/no-img-element
 					<img src={list.thumbnail} alt="" className={styles.thumbnail} />
+				) : (
+					<div className={styles.thumbnail_placeholder}>
+						{list.title.charAt(0)}
+					</div>
 				)}
 				<div className={styles.header_info}>
 					<div className={styles.title_row}>
@@ -91,10 +95,11 @@ export async function ListDetailPage({ id }: Props) {
 					{list.description && (
 						<p className={styles.description}>{list.description}</p>
 					)}
-					<Link href="/lists" className={styles.back_link}>
-						All lists
-					</Link>
 				</div>
+				<ListWatchedProgress
+					mediaIds={media.map((item) => item.id)}
+					className={styles.watched_progress}
+				/>
 			</div>
 
 			<AddMediaToList

@@ -6,8 +6,6 @@ import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useListItemRemoval } from "@/components/lists/use-list-item-removal";
 import { useMediaFilter } from "@/components/media/media-grids/media-filter/use-media-filter";
-import { MediaFilterPopover } from "@/components/media/media-grids/media-filter/media-filter-popover";
-import { MediaGridControls } from "@/components/media/media-grids/media-grid-controls/media-grid-controls";
 import { SeenBadge } from "@/components/watched/seen-badge/seen-badge";
 import styles from "./list-media-view.module.sass";
 
@@ -26,7 +24,7 @@ export function ListMediaView({ listId, media, sortMode, seenMediaIds }: Props) 
 	// Mobile admin edits are intentionally unsupported.
 	const isAdmin = sessionIsAdmin && !isMobileViewport;
 	const { removingId, handleRemove } = useListItemRemoval(listId);
-	const { filter, setFilter, filteredMedia } = useMediaFilter(media);
+	const { filteredMedia } = useMediaFilter(media);
 
 	const renderOverlay = (item: MediaRecord) => (
 		<>
@@ -49,9 +47,6 @@ export function ListMediaView({ listId, media, sortMode, seenMediaIds }: Props) 
 
 	return (
 		<div className={styles.wrapper}>
-			<MediaGridControls>
-				<MediaFilterPopover media={media} filter={filter} onChange={setFilter} />
-			</MediaGridControls>
 			{filteredMedia.length === 0 ? (
 				<p className={styles.empty}>No media matches the current filter.</p>
 			) : sortMode === "RATED" ? (

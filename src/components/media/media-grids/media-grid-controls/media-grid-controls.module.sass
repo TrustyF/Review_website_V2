@@ -6,3 +6,16 @@
   align-items: center
   justify-content: flex-end
   gap: 0.5rem
+
+// Same look, but floats over the wrapper's top-right corner instead of reserving its own row —
+// use when the very next sibling (e.g. a sticky group header) should render as if this weren't
+// here. Caller's wrapper needs position: relative.
+.group_overlay
+  position: absolute
+  z-index: 6
+  top: 0
+  right: 0
+  display: flex
+  flex-flow: row
+  align-items: center
+  gap: 0.5rem

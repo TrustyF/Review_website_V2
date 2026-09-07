@@ -55,7 +55,7 @@ export function MediaFilterGrid({ media, showRating, showTitle }: Props) {
 	return (
 		<MediaCardDisplayProvider showRating={effectiveShowRating} showTitle={showTitle}>
 			<div className={styles.wrapper}>
-				<MediaGridControls>
+				<MediaGridControls overlay>
 					<MediaSortPopover sort={sort} onChange={setSort} />
 					<MediaFilterPopover
 						media={media}
