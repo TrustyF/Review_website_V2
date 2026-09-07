@@ -1,10 +1,8 @@
-// Anchors to the caller's position: relative wrapper, top-right corner.
+// In-flow row, right-aligned. Render as the caller's first flow child (before any other header/
+// admin row), so nothing above it in the DOM can push it around — the grid follows right after.
 .group
-  position: absolute
-  z-index: 5
-  top: 1.25rem
-  right: 0
   display: flex
   flex-flow: row
   align-items: center
+  justify-content: flex-end
   gap: 0.5rem
