@@ -137,6 +137,14 @@ services:
       COMIC_VINE_KEY: ${COMIC_VINE_KEY}
       GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      # weekly_digest's "send now" (see digest-send-actions.ts) runs as a server
+      # action in this container, not `maintenance` — needs its own copy of
+      # mailer.ts's required vars, not just the ones `maintenance` already has.
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      EMAIL_FROM: ${EMAIL_FROM}
 
   # Cloudflare Tunnel exposing `app` at review.arthursirjacobs.com, so the
   # host needs no inbound port-forwarding. Token-based (created via the
