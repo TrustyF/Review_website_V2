@@ -6,6 +6,7 @@ import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaTitle } from "@/components/media/primitives/title";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { MediaRecord } from "@/components/media/types";
+import { SeenBadge } from "@/components/watched/seen-badge/seen-badge";
 import styles from "./ranked-list.module.sass";
 
 type Props = {
@@ -16,6 +17,8 @@ type Props = {
 	canRemove: boolean;
 	isRemoving: boolean;
 	onRemove: () => void;
+	// Read-only "already seen" badge — see list-detail-page.tsx.
+	seen: boolean;
 };
 
 // Horizontal row, unlike MediaMiniCardShell's vertical layout — a numbered list reads top to bottom, not as tiles.
@@ -26,6 +29,7 @@ export function RankedListRow({
 	canRemove,
 	isRemoving,
 	onRemove,
+	seen,
 }: Props) {
 	const {
 		attributes,
@@ -61,6 +65,7 @@ export function RankedListRow({
 					ratio={posterRatioFor(media.type)}
 					difficulty={media.review?.difficulty}
 				/>
+				{seen && <SeenBadge type={media.type} className={styles.seen_badge} />}
 			</div>
 			<div className={styles.info}>
 				<MediaTitle title={media.title} className={styles.title} />

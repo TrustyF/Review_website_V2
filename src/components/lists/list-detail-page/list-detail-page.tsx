@@ -56,6 +56,19 @@ export async function ListDetailPage({ id }: Props) {
 		.filter((item) => !item.media.isDeleted)
 		.map((item) => toMediaRecord(item.media));
 
+	// Read-only "already seen" badges, only meaningful on a recommendation list — the one
+	// case where the viewer isn't necessarily the person whose watched state matters.
+	const seenMediaIds = list.targetUserId
+		? new Set(
+				(
+					await db.watchedItem.findMany({
+						where: { userId: list.targetUserId },
+						select: { mediaId: true },
+					})
+				).map((item) => item.mediaId),
+			)
+		: undefined;
+
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
@@ -89,12 +102,17 @@ export async function ListDetailPage({ id }: Props) {
 			{media.length === 0 ? (
 				<p className={styles.empty}>No media in this list yet.</p>
 			) : list.sortMode === "RANKED" ? (
-				<RankedList listId={list.id} media={media} />
+				<RankedList
+					listId={list.id}
+					media={media}
+					seenMediaIds={seenMediaIds}
+				/>
 			) : (
 				<ListMediaView
 					listId={list.id}
 					media={media}
 					sortMode={list.sortMode}
+					seenMediaIds={seenMediaIds}
 				/>
 			)}
 		</div>

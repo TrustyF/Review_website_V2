@@ -1,14 +1,11 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { Link } from "@/components/ui/link";
-import { Eye, List } from "lucide-react";
+import { List } from "lucide-react";
 import { db } from "@/server/db/client";
 import { getRecommendationTarget } from "@/components/lists/list-actions";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import { displayName } from "@/lib/display-name";
-import { toMediaRecord } from "@/components/media/types";
-import { MediaPoster } from "@/components/media/primitives/poster";
-import { posterRatioFor } from "@/components/media/poster-ratio";
 import styles from "./user-overview.module.sass";
 
 // Admin's landing page for a specific user: their identity plus a preview of the
@@ -32,28 +29,6 @@ export default async function AdminUserOverviewPage({
 		orderBy: { createDate: "desc" },
 	});
 	const lists = listsAll.slice(0, MAX_VISIBLE_LISTS);
-
-	const watchedItems = await db.watchedItem.findMany({
-		where: { userId: id },
-		orderBy: { watchedAt: "desc" },
-		include: {
-			media: {
-				include: {
-					movie: true,
-					tvShow: true,
-					manga: true,
-					comic: true,
-					game: true,
-					book: true,
-					review: true,
-					mediaGenres: { include: { genre: true } },
-				},
-			},
-		},
-	});
-	const watchedMedia = watchedItems
-		.filter((item) => !item.media.isDeleted)
-		.map((item) => toMediaRecord(item.media));
 
 	const heading = displayName(target);
 
@@ -99,30 +74,6 @@ export default async function AdminUserOverviewPage({
 					</div>
 				)}
 			</Link>
-
-			<div className={styles.watched}>
-				<h2 className={styles.section_title}>
-					<Eye size={18} className={styles.section_icon} />
-					Watched
-				</h2>
-				{watchedMedia.length === 0 ? (
-					<p className={styles.empty}>Nothing marked as watched yet.</p>
-				) : (
-					<div className={styles.watched_grid}>
-						{watchedMedia.map((media) => (
-							<div key={media.id} className={styles.watched_item}>
-								<MediaPoster
-									src={media.posterSrc}
-									title={media.title}
-									mediaId={media.id}
-									ratio={posterRatioFor(media.type)}
-								/>
-								<p className={styles.watched_item_title}>{media.title}</p>
-							</div>
-						))}
-					</div>
-				)}
-			</div>
 		</div>
 	);
 }

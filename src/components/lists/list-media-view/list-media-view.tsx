@@ -7,16 +7,19 @@ import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useListItemRemoval } from "@/components/lists/use-list-item-removal";
 import { useMediaFilter } from "@/components/media/media-grids/media-filter/use-media-filter";
 import { MediaFilterPopover } from "@/components/media/media-grids/media-filter/media-filter-popover";
+import { SeenBadge } from "@/components/watched/seen-badge/seen-badge";
 import styles from "./list-media-view.module.sass";
 
 type Props = {
 	listId: number;
 	media: MediaRecord[];
 	sortMode: "RATED" | "UNSORTED";
+	// Read-only "already seen" badge, keyed by media id — see list-detail-page.tsx.
+	seenMediaIds?: Set<number> | undefined;
 };
 
-// Handles the two non-RANKED sort modes (RankedList covers RANKED); RATED reuses RatedTierGrid, UNSORTED reuses LazyMediaGrid directly. Neither grid has a built-in "remove from list", so it's supplied via renderOverlay.
-export function ListMediaView({ listId, media, sortMode }: Props) {
+// Handles the two non-RANKED sort modes (RankedList covers RANKED); RATED reuses RatedTierGrid, UNSORTED reuses LazyMediaGrid directly. Neither grid has a built-in "remove from list", so it's supplied via renderOverlay — the seen badge rides along in the same slot.
+export function ListMediaView({ listId, media, sortMode, seenMediaIds }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
 	// Mobile admin edits are intentionally unsupported.
@@ -24,8 +27,12 @@ export function ListMediaView({ listId, media, sortMode }: Props) {
 	const { removingId, handleRemove } = useListItemRemoval(listId);
 	const { filter, setFilter, filteredMedia } = useMediaFilter(media);
 
-	const renderOverlay = isAdmin
-		? (item: MediaRecord) => (
+	const renderOverlay = (item: MediaRecord) => (
+		<>
+			{seenMediaIds?.has(item.id) && (
+				<SeenBadge type={item.type} className={styles.seen_badge} />
+			)}
+			{isAdmin && (
 				<button
 					type="button"
 					className={styles.remove_button}
@@ -35,8 +42,9 @@ export function ListMediaView({ listId, media, sortMode }: Props) {
 					onClick={() => handleRemove(item.id)}>
 					×
 				</button>
-			)
-		: undefined;
+			)}
+		</>
+	);
 
 	return (
 		<div className={styles.wrapper}>

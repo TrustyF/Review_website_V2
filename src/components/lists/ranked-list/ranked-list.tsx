@@ -26,10 +26,12 @@ import styles from "./ranked-list.module.sass";
 type Props = {
 	listId: number;
 	media: MediaRecord[];
+	// Read-only "already seen" badge, keyed by media id — see list-detail-page.tsx.
+	seenMediaIds?: Set<number> | undefined;
 };
 
 // Single-column, top-to-bottom (drag to reorder) — a wrapping grid has no unambiguous drop target once items wrap across columns. Reordering is disabled via each row's useSortable `disabled` option (not by unmounting DnD) whenever a filter is active or the viewer isn't an admin.
-export function RankedList({ listId, media }: Props) {
+export function RankedList({ listId, media, seenMediaIds }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
 	// Mobile admin edits are intentionally unsupported.
@@ -132,6 +134,7 @@ export function RankedList({ listId, media }: Props) {
 									canRemove={isAdmin}
 									isRemoving={removingId === item.id}
 									onRemove={() => handleRemove(item.id)}
+									seen={seenMediaIds?.has(item.id) ?? false}
 								/>
 							))}
 						</div>

@@ -7,6 +7,13 @@
 .empty
   @include empty-text
 
+// Opposite corner from .remove_button, always visible (not hover-gated) — this is
+// information, not an action.
+.seen_badge
+  position: absolute
+  top: 0.25rem
+  left: 0.25rem
+
 // Corner badge positioned against LazyMediaGrid's .item wrapper; hover-to-reveal comes from its [data-reveal-on-hover] rule, not this file.
 .remove_button
   position: absolute
