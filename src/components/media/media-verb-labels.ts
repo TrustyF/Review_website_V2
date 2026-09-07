@@ -43,3 +43,13 @@ export function rewatchedVerb(type: MediaType): string {
 export function recentlyWatchedTitle(type: MediaType): string {
 	return `Recently ${WATCHED_VERB_BY_TYPE[type].toLowerCase()}`;
 }
+
+// "Mark as watched"/"Mark as read"/"Mark as played" — the per-user watched toggle's label.
+export function markAsWatchedLabel(type: MediaType): string {
+	return `Mark as ${WATCHED_VERB_BY_TYPE[type].toLowerCase()}`;
+}
+
+// "Already watched"/"Already read"/"Already played" — the toggle's active-state label.
+export function alreadyWatchedLabel(type: MediaType): string {
+	return `Already ${WATCHED_VERB_BY_TYPE[type].toLowerCase()}`;
+}

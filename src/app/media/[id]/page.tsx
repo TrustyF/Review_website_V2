@@ -15,6 +15,7 @@ import { MediaPublishButton } from "@/components/media/media-management/media-de
 import { ReviewBodyEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/review-body-edit-trigger";
 import { AddToListButtonSection } from "@/components/lists/add-to-list-button/add-to-list-button-section";
 import { AddToWatchlistButtonSection } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-button-section";
+import { WatchedButtonSection } from "@/components/watched/watched-button/watched-button-section";
 import { auth } from "@/auth";
 import { BANNER_GRAIN_OPACITY } from "@/server/resolvers/poster-resolver";
 import { MediaDirectorCredit, MediaCreditsDetails } from "./credits-section";
@@ -215,6 +216,15 @@ export default async function MediaDetailPage({
 										<Suspense fallback={null}>
 											<AddToWatchlistButtonSection
 												mediaId={media.id}
+												userId={session.user.id}
+											/>
+										</Suspense>
+									)}
+									{session?.user && (
+										<Suspense fallback={null}>
+											<WatchedButtonSection
+												mediaId={media.id}
+												type={media.type}
 												userId={session.user.id}
 											/>
 										</Suspense>

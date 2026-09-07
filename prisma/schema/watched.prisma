@@ -1,0 +1,15 @@
+// Direct mirror of WatchlistItem (see watchlist.prisma) — "I've already
+// consumed this" instead of "I want to". watchedAt (newest first) is the
+// only sort a page needs, same reasoning as addedAt there.
+model WatchedItem {
+  userId  String
+  mediaId Int
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  watchedAt DateTime @default(now())
+
+  @@id([userId, mediaId])
+  @@index([mediaId])
+}

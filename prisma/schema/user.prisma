@@ -35,6 +35,7 @@ model User {
   accounts            Account[]
   sessions            Session[]
   watchlistItems      WatchlistItem[]
+  watchedItems        WatchedItem[]
   // Recommendation lists an admin has deposited into this account — see
   // List.targetUserId's own comment.
   recommendationLists List[]

@@ -10,6 +10,7 @@ import { AuthSessionProvider } from "@/components/auth/session-provider";
 import { VersionBadge } from "@/components/version-badge/version-badge";
 import { AvatarProvider } from "@/components/account/avatar-context";
 import { WatchlistProvider } from "@/components/watchlist/watchlist-context";
+import { WatchedProvider } from "@/components/watched/watched-context";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -32,13 +33,15 @@ export default function RootLayout({
 				<AuthSessionProvider>
 					<AvatarProvider>
 						<WatchlistProvider>
-							<Navbar />
-							<DevMenu />
-							<MobileViewportListener />
-							<MediaEditorModal />
-							<FeaturedManagerModal />
-							<VersionBadge />
-							<main>{children}</main>
+							<WatchedProvider>
+								<Navbar />
+								<DevMenu />
+								<MobileViewportListener />
+								<MediaEditorModal />
+								<FeaturedManagerModal />
+								<VersionBadge />
+								<main>{children}</main>
+							</WatchedProvider>
 						</WatchlistProvider>
 					</AvatarProvider>
 				</AuthSessionProvider>

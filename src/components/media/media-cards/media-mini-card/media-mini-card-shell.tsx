@@ -9,8 +9,9 @@ import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { ReviewIcon } from "@/components/media/icons/review-icon";
 import { useMediaCardDisplay } from "@/components/media/media-card-display-context";
 import { AddToWatchlistHoverButton } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-hover-button";
-import { MarkAsSeenHoverButton } from "@/components/media/media-cards/media-mini-card/mark-as-seen-hover-button";
+import { MarkAsWatchedHoverButton } from "@/components/media/media-cards/media-mini-card/mark-as-watched-hover-button";
 import { PosterQuickEditButton } from "@/components/media/media-cards/media-mini-card/poster-quick-edit-button";
+import { useWatched } from "@/components/watched/watched-context";
 
 type Props = {
 	media: MediaRecord;
@@ -21,6 +22,7 @@ type Props = {
 // Poster + title + rating only, for dense grid listings where full MediaCardShell is too much; per-type cards supply only the differing secondary info.
 export function MediaMiniCardShell({ media, children }: Props) {
 	const { showRating, showTitle, showReviewIcon } = useMediaCardDisplay();
+	const { isWatched } = useWatched();
 	// Set optimistically when an alternate is picked — resolvePoster defers its resize/encode
 	// to after(), so the picker's own previewSrc (already resolved) stands in until it's ready.
 	const [posterOverrideSrc, setPosterOverrideSrc] = useState<string | null>(
@@ -28,7 +30,12 @@ export function MediaMiniCardShell({ media, children }: Props) {
 	);
 
 	return (
-		<div className={styles.wrapper}>
+		<div
+			className={
+				isWatched(media.id)
+					? `${styles.wrapper} ${styles.watched}`
+					: styles.wrapper
+			}>
 			<MediaPoster
 				src={posterOverrideSrc ?? media.posterSrc}
 				title={media.title}
@@ -55,7 +62,7 @@ export function MediaMiniCardShell({ media, children }: Props) {
 			</div>
 			<div className={styles.status_buttons}>
 				<AddToWatchlistHoverButton mediaId={media.id} />
-				{/*<MarkAsSeenHoverButton mediaId={media.id} />*/}
+				<MarkAsWatchedHoverButton mediaId={media.id} type={media.type} />
 			</div>
 			<div className={styles.admin_actions}>
 				<MediaEditButton media={media} hitboxPadding={6} />

@@ -73,3 +73,26 @@
 
 .empty
   @include empty-text
+
+.watched
+  display: flex
+  flex-flow: column
+  gap: 1rem
+  min-width: 0
+
+.watched_grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr))
+  gap: 1rem
+
+.watched_item
+  display: flex
+  flex-flow: column
+  gap: 0.4rem
+
+.watched_item_title
+  font-size: 0.8rem
+  white-space: nowrap
+  overflow: hidden
+  text-overflow: ellipsis
+  color: var(--body)

@@ -91,3 +91,13 @@
     opacity: 1
     transition-delay: 0s
 
+// Marked-watched state: dims the whole card so a "read"/scanned grid stands out from
+// what's left unwatched. brightness() (not opacity) keeps the card fully opaque, so
+// nothing behind it in the grid can show through at the edges.
+.watched
+  filter: brightness(0.2) grayscale(0.75)
+  transition: filter 0.2s ease
+
+  &:hover
+    filter: brightness(1) grayscale(0.1)
+
