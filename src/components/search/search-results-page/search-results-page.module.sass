@@ -22,7 +22,11 @@
 .media_grid
   display: grid
   grid-template-columns: repeat(auto-fill, minmax($mini-card-min-width, 1fr))
-  gap: 1.25rem
+  gap: $mini-card-gap
+
+  @media (max-width: $mobile-breakpoint)
+    grid-template-columns: repeat(4, 1fr)
+    gap: $mini-card-gap-mobile
 
 .entity_list
   display: flex

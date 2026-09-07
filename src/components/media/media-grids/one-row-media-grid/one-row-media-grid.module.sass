@@ -5,7 +5,6 @@
 $max-columns: 14
 // Highest `rows` prop value supported — raise if a caller needs more.
 $max-rows: 3
-$gap: 1.25rem
 
 // Container must be an ancestor of the element it sizes (.grid) — an element can't query its own
 // size to style itself.
@@ -15,24 +14,36 @@ $gap: 1.25rem
 .grid
   display: grid
   grid-template-columns: 1fr
-  gap: $gap
+  gap: $mini-card-gap
   padding: 1rem 0 1.25rem
   overflow: hidden
+
+  @media (max-width: $mobile-breakpoint)
+    gap: $mini-card-gap-mobile
 
 .item
   display: none
 
 // Visible count at n columns is n * rows; the data-rows attribute selects which multiple to use.
-@for $rows from 1 through $max-rows
-  .wrapper[data-rows="#{$rows}"]
-    .item:nth-child(-n + #{$rows})
-      display: block
+// Emits the data-rows/column-count rules for one card min-width/gap pair; called once for the
+// desktop floor and again (scoped to $mobile-breakpoint) for the narrower mobile floor, so a
+// phone-width container gets more columns instead of being stuck at the desktop floor.
+@mixin mini-card-columns($min-width, $gap)
+  @for $rows from 1 through $max-rows
+    .wrapper[data-rows="#{$rows}"]
+      .item:nth-child(-n + #{$rows})
+        display: block
 
-    @for $n from 2 through $max-columns
-      // Width at which n cards of $mini-card-min-width fit edge-to-edge with (n-1) gaps between them.
-      @container (min-width: calc(#{$mini-card-min-width} * #{$n} + #{$gap} * #{$n - 1}))
-        .grid
-          grid-template-columns: repeat($n, 1fr)
+      @for $n from 2 through $max-columns
+        // Width at which n cards of $min-width fit edge-to-edge with (n-1) gaps between them.
+        @container (min-width: calc(#{$min-width} * #{$n} + #{$gap} * #{$n - 1}))
+          .grid
+            grid-template-columns: repeat($n, 1fr)
 
-        .item:nth-child(-n + #{$n * $rows})
-          display: block
+          .item:nth-child(-n + #{$n * $rows})
+            display: block
+
+@include mini-card-columns($mini-card-min-width, $mini-card-gap)
+
+@media (max-width: $mobile-breakpoint)
+  @include mini-card-columns($mini-card-min-width-mobile, $mini-card-gap-mobile)

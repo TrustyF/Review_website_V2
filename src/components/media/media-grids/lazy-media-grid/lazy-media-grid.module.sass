@@ -3,8 +3,14 @@
 .grid
   display: grid
   grid-template-columns: repeat(auto-fill, minmax($mini-card-min-width, 1fr))
-  gap: 1.25rem
+  gap: $mini-card-gap
   padding: 1rem 0 1.25rem
+
+  // Fixed 4 columns rather than auto-fill's minmax — keeps the column count from drifting to
+  // 3 or 5 across the phone-width range instead of landing on a predictable 4.
+  @media (max-width: $mobile-breakpoint)
+    grid-template-columns: repeat(4, 1fr)
+    gap: $mini-card-gap-mobile
 
 // Positioning anchor for renderOverlay (e.g. a list's remove button).
 .item

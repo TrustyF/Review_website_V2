@@ -5,6 +5,9 @@
 .wrapper
   content-visibility: auto
   contain-intrinsic-height: $mini-card-min-width * 1.5 + 60px
+
+  @media (max-width: $mobile-breakpoint)
+    contain-intrinsic-height: $mini-card-min-width-mobile * 1.5 + 60px
   position: relative
   display: flex
   flex-flow: column
