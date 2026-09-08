@@ -16,6 +16,7 @@ import { MediaReviewCard } from "./components/media-review-card";
 import { MediaMiniCard } from "./components/media-mini-card";
 import { EMAIL_TAILWIND_CONFIG } from "./theme";
 import { EmailFonts } from "./theme-fonts";
+import previewData from "./preview-data/latest-activity-email.json";
 
 type ReviewProps = {
 	title: string;
@@ -51,73 +52,9 @@ type Props = {
 const SECTION_LABEL_CLASS =
 	"m-0 mb-2 text-left text-[13px] uppercase tracking-[0.03em] font-bold text-fg-3";
 
-// Real dev-DB data for preview server; never used by actual send path
-LatestActivityEmail.PreviewProps = {
-	// Reuses recentWatches' Toy Story 5 poster (verified-live). Real backdrop path needs TMDB key; background-size:cover crops any aspect anyway.
-	bannerSrc: "https://image.tmdb.org/t/p/w1280/sfQtVlIHljToOwYjhe21KPGzZWK.jpg",
-	dateLabel: "September 4, 2026",
-	latestReviews: [
-		{
-			title: "The Odyssey",
-			mediaUrl: "https://example.com/media/1457",
-			posterSrc:
-				"https://image.tmdb.org/t/p/w500/krVa7rKCQb4OBfsr2LTJv4rTz5q.jpg",
-			releaseYear: "2026",
-			rating: 7,
-			watchedDateLabel: "Aug 12, 2026",
-			body: "This was a very fun ride!\n\nInitially I found the number of famous actors somewhat distracting, but I ended up settling into it. The performances were very strong overall.\n\nThe first third of the movie seems to want to rush a lot, and the editing felt frantic, which might just be a side-effect of how much ground it needs to cover.\nI did find myself enjoying it more once we started making the trip back, the movie slows down a lot and takes more time to appreciate the beautiful views and tortured feeling of the characters.\n\nThe suitors plotline I found to be the least interesting of the bunch. The mystical/spiritual adventure was much more engaging, I really enjoyed the weird lands and creatures they would run into. The \"sailing into hell\" sequence being a standout.\n\nWhile I saw it in IMAX, I don't believe we actually got the full frame version. Which is a shame since the nice framing seems to have been lost in the cropped version. \nIt was also very loud for some reason, which seems to be a common complaint. Sharp sounds like swords clashing forced me to cover my ears.\n\nI very much appreciated the practical effects as well. The cyclops felt a little goofy, but all other scenes benefited from it; Any of the sailing scenes in particular felt really grounded and gritty as a result.\n\nA strong addition to the Nolan library, but I can't see myself watching it again.",
-		},
-	],
-	recentWatches: [
-		{
-			title: "Toy Story 5",
-			mediaUrl: "https://example.com/media/1463",
-			posterSrc:
-				"https://image.tmdb.org/t/p/w500/sfQtVlIHljToOwYjhe21KPGzZWK.jpg",
-			rating: 8,
-		},
-		{
-			title: "The Book of Life",
-			mediaUrl: "https://example.com/media/1456",
-			posterSrc:
-				"https://image.tmdb.org/t/p/w500/aotTZos5KswgCryEzx2rlOjFsm1.jpg",
-			rating: 7,
-		},
-		{
-			title: "Neon Genesis Evangelion: The End of Evangelion",
-			mediaUrl: "https://example.com/media/1455",
-			posterSrc:
-				"https://image.tmdb.org/t/p/w500/mZOAWRKbeQw5ZoXd9N6GChT2NSO.jpg",
-			rating: 9,
-		},
-		{
-			title: "The Invite",
-			mediaUrl: "https://example.com/media/1454",
-			posterSrc:
-				"https://image.tmdb.org/t/p/w500/b7Dr8Chzse8VagexAporUu2RtLx.jpg",
-			rating: 8,
-		},
-	],
-	anticipatedReleases: [
-		{
-			title: "Dune: Part Three: sunrise on the reaping",
-			mediaUrl: "https://example.com/media/1470",
-			posterSrc:
-				"https://image.tmdb.org/t/p/w500/qymaJhVQFQ0K8AQCQeVhpH1yWKD.jpg",
-			rating: null,
-		},
-		{
-			title: "Avatar 4",
-			mediaUrl: "https://example.com/media/1471",
-			posterSrc:
-				"https://image.tmdb.org/t/p/w500/qymaJhVQFQ0K8AQCQeVhpH1yWKD.jpg",
-			rating: null,
-		},
-	],
-	activityUrl: "https://example.com/activity",
-	accountUrl: "https://example.com/account",
-	unsubscribeUrl: "https://example.com/api/unsubscribe?token=preview",
-} satisfies Props;
+// Real current data, refreshed on demand via `npm run seed_email_preview`
+// (see src/scripts/dev/seed-email-preview.ts) — never used by actual send path.
+LatestActivityEmail.PreviewProps = previewData as Props;
 
 export default function LatestActivityEmail({
 	bannerSrc,
