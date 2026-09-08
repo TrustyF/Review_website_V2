@@ -33,7 +33,7 @@ export const BANNER_QUALITY = 60;
 export const BANNER_GRAIN_OPACITY = 0.5;
 export const POSTER_QUALITY = 50;
 
-			// Vignette darkens edges/corners, leaves center clear.
+// Vignette darkens edges/corners, leaves center clear.
 export const EMAIL_BANNER_DIR = "banners/email-cache";
 export const EMAIL_BANNER_MAX_WIDTH = 900;
 export const EMAIL_BANNER_QUALITY = 65;
@@ -41,6 +41,12 @@ export const EMAIL_BANNER_QUALITY = 65;
 // Admin-uploaded override for the digest's banner (see Settings.digestBannerImage) — separate
 // from EMAIL_BANNER_DIR since it's content-addressed by uploaded bytes, not a mediaId+sourcePath.
 export const DIGEST_BANNER_OVERRIDE_DIR = "banners/digest-override";
+
+// Own dir — /api/poster's by-id lookup re-resolves against whatever DB the
+// live site has *right now*, which an email can't depend on staying in sync.
+export const EMAIL_POSTER_DIR = "posters/email-cache";
+// Tune to taste — bump toward 90 for less compression, lower for smaller emails.
+export const EMAIL_POSTER_QUALITY = 10;
 
 export type CacheFormat = "webp" | "avif" | "jpeg";
 

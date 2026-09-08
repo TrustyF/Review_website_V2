@@ -1,7 +1,7 @@
 import { db } from "@/server/db/client";
 import {
-	resolveChangelogPosterThumb,
 	resolveEmailBanner,
+	resolveEmailPoster,
 } from "@/server/resolvers/poster-resolver";
 import { toAbsoluteUrl } from "@/server/email/mailer";
 import type LatestActivityEmail from "@/emails/latest-activity-email";
@@ -51,7 +51,7 @@ const PLACEHOLDER_POSTER_SRC = "/posters/placeholder.jpg";
 
 async function toPosterSrc(media: MediaSelection): Promise<string> {
 	if (!media.posterPath) return toAbsoluteUrl(PLACEHOLDER_POSTER_SRC);
-	const src = await resolveChangelogPosterThumb(
+	const src = await resolveEmailPoster(
 		media.id,
 		media.type,
 		media.externalId,

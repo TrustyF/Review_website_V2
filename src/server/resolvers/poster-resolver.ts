@@ -14,6 +14,8 @@ import {
 	EMAIL_BANNER_DIR,
 	EMAIL_BANNER_MAX_WIDTH,
 	EMAIL_BANNER_QUALITY,
+	EMAIL_POSTER_DIR,
+	EMAIL_POSTER_QUALITY,
 	LINK_EMBED_DIR,
 	PERSON_PHOTO_DIR,
 	PERSON_PHOTO_MAX_WIDTH,
@@ -378,6 +380,28 @@ export async function resolveEmailBanner(
 	);
 
 	return getImageStorage().urlFor(EMAIL_BANNER_DIR, filename);
+}
+
+// Full-size, no resize — same direct-from-CDN caching as resolveEmailBanner,
+// not /api/poster's by-id lookup (see EMAIL_POSTER_DIR).
+export async function resolveEmailPoster(
+	mediaId: number,
+	type: MediaType,
+	externalId: string | null,
+	posterPath: string,
+): Promise<string> {
+	const filename = mediaAssetFilename(mediaId, posterPath, "jpeg");
+
+	await cacheOrDownload(
+		EMAIL_POSTER_DIR,
+		filename,
+		posterUrlFor(type, externalId, posterPath, "full"),
+		{},
+		EMAIL_POSTER_QUALITY,
+		"jpeg",
+	);
+
+	return getImageStorage().urlFor(EMAIL_POSTER_DIR, filename);
 }
 
 // Same content-addressable caching as resolveChangelogPosterThumb, but for a
