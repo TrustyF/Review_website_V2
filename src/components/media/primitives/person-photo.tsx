@@ -1,15 +1,24 @@
 "use client";
 import { useEffect, useState } from "react";
-import { UserRound } from "lucide-react";
+import { UserRound, Building2 } from "lucide-react";
 import styles from "./person-photo.module.sass";
 
-// Shared photo-or-placeholder branching for anywhere a Person's photo shows up. photoClassName/placeholderClassName append on top of the shared default look rather than reliably overriding it — CSS Modules give no guarantee which of two same-specificity classes wins.
+// Same placeholder icon convention as search-result-card.tsx's own company/person split.
+const PLACEHOLDER_ICON = {
+	person: UserRound,
+	company: Building2,
+};
+
+// Shared photo-or-placeholder branching (Person by default, Company via `kind`).
+// `kind` is a plain string, not a passed-in icon component, so a Server
+// Component caller can pass it across the RSC boundary.
 export function PersonPhoto({
 	src,
 	alt,
 	photoClassName,
 	placeholderClassName,
 	iconSize = 18,
+	kind = "person",
 }: {
 	src: string | null;
 	alt: string;
@@ -17,7 +26,9 @@ export function PersonPhoto({
 	photoClassName?: string | undefined;
 	placeholderClassName?: string | undefined;
 	iconSize?: number;
+	kind?: "person" | "company";
 }) {
+	const Icon = PLACEHOLDER_ICON[kind];
 	// Preloaded off-DOM rather than tracking the visible <img>'s onLoad — otherwise the browser's alt-text fallback would show while loading instead of this component's placeholder tile.
 	const [isLoaded, setIsLoaded] = useState(false);
 	// Resets on src change via the render-phase pattern — same convention as use-lazy-reveal.ts's itemsKey reset.
@@ -53,7 +64,7 @@ export function PersonPhoto({
 		/>
 	) : (
 		<span className={`${styles.placeholder} ${placeholderClassName ?? ""}`}>
-			<UserRound size={iconSize} />
+			<Icon size={iconSize} />
 		</span>
 	);
 }

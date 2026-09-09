@@ -202,15 +202,14 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
-				{(photoSrc || kind === "person") && (
-					<PersonPhoto
-						src={photoSrc}
-						alt={entity.name}
-						photoClassName={styles.photo}
-						placeholderClassName={styles.photo_placeholder}
-						iconSize={32}
-					/>
-				)}
+				<PersonPhoto
+					src={photoSrc}
+					alt={entity.name}
+					photoClassName={styles.photo}
+					placeholderClassName={styles.photo_placeholder}
+					iconSize={32}
+					kind={kind}
+				/>
 				<div className={styles.header_text}>
 					<span className={styles.entity_name}>{entity.name}</span>
 					{(avgPersonalRating != null || avgPublicRating != null) && (

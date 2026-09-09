@@ -13,7 +13,7 @@ export function AnticipatedReleasesSection({ items }: Props) {
 	return (
 		<section className={styles.wrapper}>
 			<h2 className={styles.title}>Anticipated releases</h2>
-			<MediaCardDisplayProvider showTitle={false}>
+			<MediaCardDisplayProvider showTitle={false} showReleaseDate>
 				<OneRowMediaGrid items={items} />
 			</MediaCardDisplayProvider>
 		</section>
