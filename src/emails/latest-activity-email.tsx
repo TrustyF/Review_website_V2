@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "fs";
+import path from "path";
 import {
 	Body,
 	Button,
@@ -16,7 +18,6 @@ import { MediaReviewCard } from "./components/media-review-card";
 import { MediaMiniCard } from "./components/media-mini-card";
 import { EMAIL_TAILWIND_CONFIG } from "./theme";
 import { EmailFonts } from "./theme-fonts";
-import previewData from "./preview-data/latest-activity-email.json";
 
 type ReviewProps = {
 	title: string;
@@ -52,9 +53,17 @@ type Props = {
 const SECTION_LABEL_CLASS =
 	"m-0 mb-2 text-left text-[13px] uppercase tracking-[0.03em] font-bold text-fg-3";
 
-// Real current data, refreshed on demand via `npm run seed_email_preview`
-// (see src/scripts/dev/seed-email-preview.ts) — never used by actual send path.
-LatestActivityEmail.PreviewProps = previewData as Props;
+// Real current data, refreshed via `npm run seed_email_preview` — never used by the actual
+// send path. Gitignored, so read at runtime, not statically imported (a prod build has no such file).
+const PREVIEW_DATA_PATH = path.join(
+	process.cwd(),
+	"src/emails/preview-data/latest-activity-email.json",
+);
+if (existsSync(PREVIEW_DATA_PATH)) {
+	LatestActivityEmail.PreviewProps = JSON.parse(
+		readFileSync(PREVIEW_DATA_PATH, "utf-8"),
+	) as Props;
+}
 
 export default function LatestActivityEmail({
 	bannerSrc,
