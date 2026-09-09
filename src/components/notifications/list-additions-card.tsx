@@ -43,7 +43,7 @@ export function ListAdditionsCard<T extends ListGroupEntry>({
 
 	return (
 		<li
-			className={styles.card}
+			className={`${styles.card} ${unread ? styles.unread : ""}`}
 			style={{ "--stagger-index": index } as CSSProperties}>
 			<Link
 				href={`/lists/${list.id}`}

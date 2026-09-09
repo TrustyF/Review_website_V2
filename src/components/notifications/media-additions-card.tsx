@@ -43,7 +43,7 @@ export function MediaAdditionsCard<T extends MediaGroupEntry>({
 
 	return (
 		<li
-			className={styles.card}
+			className={`${styles.card} ${unread ? styles.unread : ""}`}
 			style={{ "--stagger-index": index } as CSSProperties}>
 			<Link
 				href={`/media/${media.id}`}

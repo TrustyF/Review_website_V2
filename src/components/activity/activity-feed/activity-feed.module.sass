@@ -32,25 +32,12 @@
   list-style: none
 
 // Mount-only fade+slide, keyed by entry.id so it never replays on a later batch.
-@keyframes entry-enter
-  0%
-    opacity: 0
-    transform: translateY(1rem)
-  100%
-    opacity: 1
-    transform: translateY(0)
+@include feed-entry-keyframes
 
 // li wrapper: stagger animation + .unread_dot anchor; layout on .entry_link
 .entry
-  position: relative
-  border-radius: 0.5rem
-  transition: background 0.15s ease
-  // --stagger-index staggers entrance; min() caps a long group's delay at 300ms.
-  animation: entry-enter 300ms ease both
-  animation-delay: min(calc(var(--stagger-index, 0) * 70ms),1000ms)
-
-  @media (prefers-reduced-motion: reduce)
-    animation: none
+  @include feed-entry-shell
+  @include feed-unread-background
 
 // Two columns (poster/icon, content); Link if clickable, span otherwise
 .entry_link
@@ -80,13 +67,7 @@
   min-width: 0
 
 .unread_dot
-  position: absolute
-  top: 0
-  right: 0
-  width: 0.5rem
-  height: 0.5rem
-  border-radius: 50%
-  background: var(--brand)
+  @include feed-unread-dot
 
 // Same sizing/fit as change-log-list.module.sass's own .poster_value.
 // justify-self centers it since icon (16px) and poster width vary.
@@ -97,6 +78,11 @@
   justify-self: center
   height: 100%
   width: auto
+  // Caps width at the grid column: a source image whose real (loaded) aspect
+  // ratio is wider than the usual poster shape would otherwise overflow past
+  // the 4rem column via width:auto, since that's computed from the actual
+  // image once loaded, not the width/height hint passed to next/image.
+  max-width: 100%
   object-fit: contain
   border-radius: 0.2rem
 
@@ -106,21 +92,11 @@
 
 // Two-line text block next to the poster, vertically centered (poster sets row height).
 .content
-  min-width: 0
-  height: 100%
-  display: flex
-  flex-flow: column
-  justify-content: center
-  gap: 0.3rem
+  @include feed-entry-content
 
 // Title line: target, date pushed to the far right of the same line.
 .title_row
-  display: flex
-  flex-flow: row
-  align-items: baseline
-  justify-content: space-between
-  gap: 0.75rem
-  min-width: 0
+  @include feed-entry-title-row
 
 // Subtitle line: action verb + value, reading like a caption under the title.
 .meta
@@ -136,12 +112,7 @@
 
 // Clipped to one line — wrapping would grow the row past its fixed height.
 .target
-  min-width: 0
-  overflow: hidden
-  white-space: nowrap
-  text-overflow: ellipsis
-  font-size: 1rem
-  line-height: normal
+  @include feed-entry-title-text
 
 .title_link
   color: var(--foreground)
@@ -193,9 +164,7 @@
   color: var(--danger)
 
 .date
-  color: var(--accent1)
-  font-family: $font-mono
-  font-size: 0.8rem
+  @include feed-entry-date
 
 // Posters under a same-day type-group row (TypeGroupRow) — indented to align under the
 // title text (past .group_title's 16px icon + 0.4rem gap), no connector unlike ListAdditionsCard.

@@ -79,6 +79,88 @@ $mobile-icon-size: 2.25rem
   gap: 0.75rem
   margin-bottom: 2rem
 
+// Feed-entry mount animation — @keyframes are scoped per CSS Module file, so this
+// must be @include'd at each file's top level (not nested in a selector) to give
+// that file its own local "entry-enter" name matching feed-entry-shell's reference.
+@mixin feed-entry-keyframes
+  @keyframes entry-enter
+    0%
+      opacity: 0
+      transform: translateY(1rem)
+    100%
+      opacity: 1
+      transform: translateY(0)
+
+// Shared row/card shell — was hand-copied across activity-feed/list-additions-card/
+// media-additions-card (as .entry/.card), now centralized. Pair with feed-entry-keyframes.
+@mixin feed-entry-shell
+  position: relative
+  border-radius: 0.5rem
+  transition: background 0.15s ease
+  // --stagger-index staggers entrance; min() caps a long group's delay at 300ms.
+  animation: entry-enter 300ms ease both
+  animation-delay: min(calc(var(--stagger-index, 0) * 70ms), 1000ms)
+
+  @media (prefers-reduced-motion: reduce)
+    animation: none
+
+// Unread background tint, bled past the row's own box via a ::before (rather than
+// growing the row itself, which would open a gap in the list's row gap). isolation
+// contains the ::before's negative z-index to this row alone, not the whole list.
+@mixin feed-unread-background
+  isolation: isolate
+
+  &.unread::before
+    content: ""
+    position: absolute
+    inset: -0.8rem
+    z-index: -1
+    border-radius: 0.5rem
+    background: color-mix(in srgb, var(--brand) 8%, transparent)
+
+// Small unread indicator, anchored to a feed-entry-shell ancestor (position: relative).
+@mixin feed-unread-dot
+  position: absolute
+  top: 0
+  right: 0
+  width: 0.5rem
+  height: 0.5rem
+  border-radius: 50%
+  background: var(--brand)
+
+// Vertically centered text block next to a row's poster/thumbnail.
+@mixin feed-entry-content
+  min-width: 0
+  height: 100%
+  display: flex
+  flex-flow: column
+  justify-content: center
+  gap: 0.3rem
+
+// Title line: main text, date pushed to the far right of the same line.
+@mixin feed-entry-title-row
+  display: flex
+  flex-flow: row
+  align-items: baseline
+  justify-content: space-between
+  gap: 0.75rem
+  min-width: 0
+
+// Clipped to one line — wrapping would grow the row past its fixed height.
+@mixin feed-entry-title-text
+  min-width: 0
+  overflow: hidden
+  white-space: nowrap
+  text-overflow: ellipsis
+  font-size: 1rem
+  line-height: normal
+
+@mixin feed-entry-date
+  flex-shrink: 0
+  color: var(--accent1)
+  font-family: $font-mono
+  font-size: 0.8rem
+
 // Shared top-level nav item look — was 2 hand-copied blocks that drifted; layout bits stay with callers
 @mixin nav-item-look
   position: relative

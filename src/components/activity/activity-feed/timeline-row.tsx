@@ -64,7 +64,7 @@ export function TimelineRow({
 
 	return (
 		<li
-			className={styles.entry}
+			className={`${styles.entry} ${unread ? styles.unread : ""}`}
 			style={{ "--stagger-index": index } as CSSProperties}>
 			{href === undefined ? (
 				<span className={styles.entry_link}>{body}</span>
