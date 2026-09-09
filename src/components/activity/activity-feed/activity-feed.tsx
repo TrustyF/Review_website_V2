@@ -1,11 +1,21 @@
 "use client";
-import { ArrowRight, IterationCw, ListPlus, PenLine, RotateCcw } from "lucide-react";
+import { type CSSProperties } from "react";
+import Image from "next/image";
+import {
+	ArrowRight,
+	IterationCw,
+	ListPlus,
+	PenLine,
+	RotateCcw,
+} from "lucide-react";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { WatchlistIcon } from "@/components/icons/watchlist-icon";
 import { rewatchedVerb } from "@/components/media/media-verb-labels";
 import type { ActivityFeedEntry } from "@/components/activity/activity-actions";
 import { useLazyReveal } from "@/components/media/media-grids/lazy-media-grid/use-lazy-reveal";
 import { Link } from "@/components/ui/link";
+import { ListAdditionsCard } from "@/components/notifications/list-additions-card";
+import { MediaAdditionsCard } from "@/components/notifications/media-additions-card";
 import { TimelineList } from "./timeline-list";
 import { TimelineRow } from "./timeline-row";
 import styles from "./activity-feed.module.sass";
@@ -148,7 +158,28 @@ function activityLabel(entry: ActivityFeedEntry): {
 	}
 }
 
-function ActivityRow({ entry, index }: { entry: ActivityFeedEntry; index: number }) {
+// Header verb for a same-day RATED/REVIEWED/WATCHLIST_ADDED/REWATCHED group — REWATCHED's
+// verb depends on media type, so it falls back to the group's representative entry.
+const GROUP_LABEL: Partial<Record<ActivityFeedEntry["type"], string>> = {
+	RATED: "Rated",
+	REVIEWED: "Reviewed",
+	WATCHLIST_ADDED: "Watchlisted",
+};
+
+function typeGroupLabel(entry: ActivityFeedEntry): string {
+	if (entry.type === "REWATCHED") {
+		return entry.media ? rewatchedVerb(entry.media.type) : "Rewatched";
+	}
+	return GROUP_LABEL[entry.type] ?? entry.type;
+}
+
+function ActivityRow({
+	entry,
+	index,
+}: {
+	entry: ActivityFeedEntry;
+	index: number;
+}) {
 	const { action, target, value } = activityLabel(entry);
 
 	return (
@@ -161,6 +192,56 @@ function ActivityRow({ entry, index }: { entry: ActivityFeedEntry; index: number
 			action={action}
 			value={value}
 		/>
+	);
+}
+
+// Compact row for a same-day RATED/REVIEWED/WATCHLIST_ADDED/REWATCHED group — icon-only
+// header, posters listed below (each links to its own media, no single shared destination).
+function TypeGroupRow({
+	entry,
+	index,
+}: {
+	entry: ActivityFeedEntry;
+	index: number;
+}) {
+	const Icon = TYPE_ICON[entry.type];
+	const groupedMedia = entry.groupedMedia ?? [];
+
+	return (
+		<li
+			className={styles.entry}
+			style={{ "--stagger-index": index } as CSSProperties}>
+			<div className={styles.group_content}>
+				<span className={styles.title_row}>
+					<span className={styles.group_title}>
+						<Icon size={16} className={styles.type_icon} />
+						<span className={styles.target}>{typeGroupLabel(entry)}</span>
+					</span>
+					<span className={styles.date}>{DateFormatter.format(entry.createdAt)}</span>
+				</span>
+				<div className={styles.group_posters}>
+					{groupedMedia.map((media) => (
+						<Link
+							key={media.id}
+							href={`/media/${media.id}`}
+							className={styles.group_poster_link}>
+							<Image
+								className={styles.group_poster}
+								src={media.posterSrc}
+								alt=""
+								width={93}
+								height={140}
+							/>
+							{media.value !== null && (
+								<span className={styles.group_poster_value}>
+									<RatingValue value={media.value} />
+								</span>
+							)}
+						</Link>
+					))}
+				</div>
+			</div>
+		</li>
 	);
 }
 
@@ -193,9 +274,24 @@ export function ActivityFeed({
 			<TimelineList
 				entries={visibleEntries}
 				{...(rowGap ? { rowGap } : {})}
-				renderRow={(entry, index) => (
-					<ActivityRow key={entry.id} entry={entry} index={index} />
-				)}
+				renderRow={(entry, index) => {
+					if (entry.groupedMedia && entry.groupedMedia.length > 0) {
+						// LIST_ITEM_ADDED grouping carries a list; the type-based grouping
+						// (RATED/REVIEWED/WATCHLIST_ADDED/REWATCHED) never does.
+						if (entry.list) {
+							return (
+								<ListAdditionsCard key={entry.id} entry={entry} index={index} />
+							);
+						}
+						return <TypeGroupRow key={entry.id} entry={entry} index={index} />;
+					}
+					if (entry.groupedLists && entry.groupedLists.length > 0) {
+						return (
+							<MediaAdditionsCard key={entry.id} entry={entry} index={index} />
+						);
+					}
+					return <ActivityRow key={entry.id} entry={entry} index={index} />;
+				}}
 			/>
 			{visibleCount < entries.length && (
 				<div className={styles.sentinel} ref={sentinelRef} />

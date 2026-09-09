@@ -25,7 +25,15 @@ export type ActivityFeedEntry = {
 		type: MediaType;
 		posterSrc: string;
 	} | null;
-	list: { id: number; title: string } | null;
+	list: { id: number; title: string; thumbnail: string | null } | null;
+	// LIST_ITEM_ADDED row standing in for same-day additions (see notification-actions.ts's
+	// own grouping, mirrored here). id/media/list/createdAt are from the most recent one.
+	groupedIds?: string[];
+	// Same list, or same RATED/REVIEWED/WATCHLIST_ADDED/REWATCHED type, on the same day.
+	// `value` is that member's own newValue — only set for RATED/REVIEWED, null otherwise.
+	groupedMedia?: (NonNullable<ActivityFeedEntry["media"]> & { value: string | null })[];
+	// Same media added to multiple lists same day; only for entries unclaimed by list-grouping.
+	groupedLists?: NonNullable<ActivityFeedEntry["list"]>[];
 };
 
 const PAGE_SIZE = 100;
@@ -80,6 +88,112 @@ async function toMediaEntry(
 		type: media.type,
 		posterSrc: posterSrc ? await posterSrc : PLACEHOLDER_POSTER_SRC,
 	};
+}
+
+type RawActivityEntry = Omit<ActivityFeedEntry, "media"> & { media: MediaSelection };
+
+// Same-day entries sharing a list, media item, or activity type, newest-first (members[0]
+// is representative). List/media mirrors notification-actions.ts's own grouping.
+type ActivityGroup = {
+	members: RawActivityEntry[];
+	axis?: "list" | "media" | "type";
+};
+
+// Groups same-list additions by day; reads as one card, not flood.
+function groupSameDayListAdditions(entries: RawActivityEntry[]): ActivityGroup[] {
+	const grouped: ActivityGroup[] = [];
+	const groupByKey = new Map<string, ActivityGroup>();
+
+	for (const entry of entries) {
+		const key =
+			entry.type === "LIST_ITEM_ADDED" && entry.list
+				? `${entry.list.id}-${entry.createdAt.toDateString()}`
+				: null;
+		const existing = key ? groupByKey.get(key) : undefined;
+
+		if (existing) {
+			existing.members.push(entry);
+			existing.axis = "list";
+			continue;
+		}
+
+		const group: ActivityGroup = { members: [entry] };
+		grouped.push(group);
+		if (key) groupByKey.set(key, group);
+	}
+
+	return grouped;
+}
+
+// Inverse of list-grouping: same media to multiple lists. Runs second over unclaimed groups.
+function groupSameDayMediaAdditions(groups: ActivityGroup[]): ActivityGroup[] {
+	const result: ActivityGroup[] = [];
+	const groupByKey = new Map<string, ActivityGroup>();
+
+	for (const group of groups) {
+		if (group.members.length > 1) {
+			result.push(group);
+			continue;
+		}
+
+		const entry = group.members[0]!;
+		const key =
+			entry.type === "LIST_ITEM_ADDED" && entry.media && entry.list
+				? `${entry.media.id}-${entry.createdAt.toDateString()}`
+				: null;
+		const existing = key ? groupByKey.get(key) : undefined;
+
+		if (existing) {
+			existing.members.push(entry);
+			existing.axis = "media";
+			continue;
+		}
+
+		result.push(group);
+		if (key) groupByKey.set(key, group);
+	}
+
+	return result;
+}
+
+// Types that read fine as an anonymous poster grid (no per-item value shown once grouped) —
+// RATING_CHANGED's old→new pair and LIST_ITEM_ADDED's own list already handle themselves.
+const TYPE_GROUPABLE = new Set<ActivityType>([
+	"RATED",
+	"REVIEWED",
+	"WATCHLIST_ADDED",
+	"REWATCHED",
+]);
+
+// Same-day entries of the same activity type; runs last over whatever list/media-grouping
+// didn't claim (those only ever match LIST_ITEM_ADDED, so nothing here overlaps them).
+function groupSameDayByType(groups: ActivityGroup[]): ActivityGroup[] {
+	const result: ActivityGroup[] = [];
+	const groupByKey = new Map<string, ActivityGroup>();
+
+	for (const group of groups) {
+		if (group.members.length > 1) {
+			result.push(group);
+			continue;
+		}
+
+		const entry = group.members[0]!;
+		const key = TYPE_GROUPABLE.has(entry.type)
+			? `${entry.type}-${entry.createdAt.toDateString()}`
+			: null;
+		const existing = key ? groupByKey.get(key) : undefined;
+
+		if (existing) {
+			existing.members.push(entry);
+			existing.axis = "type";
+			continue;
+		}
+
+		result.push(group);
+		if (key) groupByKey.set(key, group);
+	}
+
+	return result;
 }
 
 // Most-recent-first, capped not paginated. Each source query is capped/sorted independently,
@@ -164,7 +278,7 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 				where: { targetUserId: null },
 				orderBy: { createDate: "desc" },
 				take: PAGE_SIZE,
-				select: { id: true, title: true, createDate: true },
+				select: { id: true, title: true, thumbnail: true, createDate: true },
 			}),
 			db.listItem.findMany({
 				where: {
@@ -176,7 +290,7 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 				select: {
 					listId: true,
 					addedAt: true,
-					list: { select: { id: true, title: true } },
+					list: { select: { id: true, title: true, thumbnail: true } },
 					media: { select: MEDIA_SELECT },
 				},
 			}),
@@ -203,7 +317,7 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 			.map((review) => review.mediaId),
 	);
 
-	const entries: (Omit<ActivityFeedEntry, "media"> & { media: MediaSelection })[] = [
+	const entries: RawActivityEntry[] = [
 		...ratedReviews
 			.filter((review) => !sameDayReviewedMediaIds.has(review.mediaId))
 			.map((review) => {
@@ -259,7 +373,7 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 			oldValue: null,
 			newValue: null,
 			media: null,
-			list: { id: list.id, title: list.title },
+			list: { id: list.id, title: list.title, thumbnail: list.thumbnail },
 		})),
 		...listItems.map((item) => ({
 			id: `listitem-${item.listId}-${item.media.id}`,
@@ -283,11 +397,51 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 
 	entries.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
+	const groups = groupSameDayByType(
+		groupSameDayMediaAdditions(groupSameDayListAdditions(entries)),
+	);
+
 	const posterSrcCache = new Map<number, Promise<string>>();
 	return Promise.all(
-		entries.map(async (entry) => ({
-			...entry,
-			media: await toMediaEntry(entry.media, posterSrcCache),
-		})),
+		groups.map(async ({ members, axis }): Promise<ActivityFeedEntry> => {
+			// members is always non-empty (grouping always starts a group with
+			// the entry that created it).
+			const [representative, ...rest] = members as [
+				RawActivityEntry,
+				...RawActivityEntry[],
+			];
+			const media = await toMediaEntry(representative.media, posterSrcCache);
+
+			if (rest.length === 0) {
+				return { ...representative, media };
+			}
+
+			if (axis === "list" || axis === "type") {
+				const groupedMedia = (
+					await Promise.all(
+						members.map(async (m) => {
+							const mediaEntry = await toMediaEntry(m.media, posterSrcCache);
+							if (!mediaEntry) return null;
+							const value = m.type === "RATED" || m.type === "REVIEWED" ? m.newValue : null;
+							return { ...mediaEntry, value };
+						}),
+					)
+				).filter((m) => m !== null);
+				return {
+					...representative,
+					media,
+					groupedIds: rest.map((m) => m.id),
+					groupedMedia,
+				};
+			}
+
+			const groupedLists = members.map((m) => m.list).filter((l) => l !== null);
+			return {
+				...representative,
+				media,
+				groupedIds: rest.map((m) => m.id),
+				groupedLists,
+			};
+		}),
 	);
 }

@@ -2,7 +2,6 @@
 import { type CSSProperties } from "react";
 import Image from "next/image";
 import { Link } from "@/components/ui/link";
-import type { NotificationEntry } from "@/components/notifications/notification-actions";
 import styles from "./media-additions-card.module.sass";
 
 const DateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -13,15 +12,25 @@ const DateFormatter = new Intl.DateTimeFormat("en-GB", {
 	minute: "2-digit",
 });
 
+// Shared shape between NotificationEntry and ActivityFeedEntry — readAt/onRead are
+// notification-only (activity feed has no read state, so `unread` there is always false).
+type MediaGroupEntry = {
+	id: string | number;
+	createdAt: Date;
+	readAt?: Date | null;
+	media: { id: number; title: string; posterSrc: string } | null;
+	groupedLists?: { id: number; title: string; thumbnail: string | null }[];
+};
+
 // Inverse of ListAdditionsCard: one media item added to multiple lists same day
-export function MediaAdditionsCard({
+export function MediaAdditionsCard<T extends MediaGroupEntry>({
 	entry,
 	index,
 	onRead,
 }: {
-	entry: NotificationEntry;
+	entry: T;
 	index: number;
-	onRead: (entry: NotificationEntry) => void;
+	onRead?: (entry: T) => void;
 }) {
 	const media = entry.media;
 	const groupedLists = entry.groupedLists ?? [];
@@ -36,7 +45,7 @@ export function MediaAdditionsCard({
 			<Link
 				href={`/media/${media.id}`}
 				className={styles.card_link}
-				{...(unread ? { onClick: () => onRead(entry) } : {})}>
+				{...(unread ? { onClick: () => onRead?.(entry) } : {})}>
 				<div className={styles.header}>
 					<Image
 						className={styles.poster}

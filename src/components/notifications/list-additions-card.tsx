@@ -2,7 +2,6 @@
 import { type CSSProperties } from "react";
 import Image from "next/image";
 import { Link } from "@/components/ui/link";
-import type { NotificationEntry } from "@/components/notifications/notification-actions";
 import styles from "./list-additions-card.module.sass";
 
 const DateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -13,15 +12,25 @@ const DateFormatter = new Intl.DateTimeFormat("en-GB", {
 	minute: "2-digit",
 });
 
+// Shared shape between NotificationEntry and ActivityFeedEntry — readAt/onRead are
+// notification-only (activity feed has no read state, so `unread` there is always false).
+type ListGroupEntry = {
+	id: string | number;
+	createdAt: Date;
+	readAt?: Date | null;
+	list: { id: number; title: string; thumbnail: string | null } | null;
+	groupedMedia?: { id: number; title: string; posterSrc: string }[];
+};
+
 // Renders LIST_ITEM_ADDED group with header and poster grid; requires groupedMedia.
-export function ListAdditionsCard({
+export function ListAdditionsCard<T extends ListGroupEntry>({
 	entry,
 	index,
 	onRead,
 }: {
-	entry: NotificationEntry;
+	entry: T;
 	index: number;
-	onRead: (entry: NotificationEntry) => void;
+	onRead?: (entry: T) => void;
 }) {
 	const list = entry.list;
 	const groupedMedia = entry.groupedMedia ?? [];
@@ -36,7 +45,7 @@ export function ListAdditionsCard({
 			<Link
 				href={`/lists/${list.id}`}
 				className={styles.card_link}
-				{...(unread ? { onClick: () => onRead(entry) } : {})}>
+				{...(unread ? { onClick: () => onRead?.(entry) } : {})}>
 				<div className={styles.header}>
 					{list.thumbnail ? (
 						// eslint-disable-next-line @next/next/no-img-element -- arbitrary pasted URL, same as list-preview-card.tsx

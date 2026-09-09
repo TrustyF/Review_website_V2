@@ -11,6 +11,8 @@ $page-padding: 1.25rem
 
 .wrapper
   position: relative
+  // one-off margin cancel so the featured review banner can sit tight at the top
+  margin-top: -2rem
 
 // Admin-only "manage featured reviews" trigger, same corner convention as MediaEditButton. Positioned against .wrapper, not the card's own <Link>, which it deliberately sits outside of. z-index above hero content so the banner/gradient never paints over it.
 .manage_featured_button
