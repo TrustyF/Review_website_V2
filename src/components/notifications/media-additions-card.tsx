@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Link } from "@/components/ui/link";
 import styles from "./media-additions-card.module.sass";
 
+// Default keeps notifications' time-of-day; activity feed passes its own compact formatter.
 const DateFormatter = new Intl.DateTimeFormat("en-GB", {
 	year: "numeric",
 	month: "short",
@@ -27,10 +28,12 @@ export function MediaAdditionsCard<T extends MediaGroupEntry>({
 	entry,
 	index,
 	onRead,
+	dateFormatter = DateFormatter,
 }: {
 	entry: T;
 	index: number;
 	onRead?: (entry: T) => void;
+	dateFormatter?: Intl.DateTimeFormat;
 }) {
 	const media = entry.media;
 	const groupedLists = entry.groupedLists ?? [];
@@ -40,12 +43,12 @@ export function MediaAdditionsCard<T extends MediaGroupEntry>({
 
 	return (
 		<li
-			className={`${styles.card} ${unread ? styles.unread : ""}`}
+			className={styles.card}
 			style={{ "--stagger-index": index } as CSSProperties}>
 			<Link
 				href={`/media/${media.id}`}
 				className={styles.card_link}
-				{...(unread ? { onClick: () => onRead?.(entry) } : {})}>
+				{...(unread ? { onMouseEnter: () => onRead?.(entry) } : {})}>
 				<div className={styles.header}>
 					<Image
 						className={styles.poster}
@@ -58,7 +61,7 @@ export function MediaAdditionsCard<T extends MediaGroupEntry>({
 						<div className={styles.title_row}>
 							<span className={styles.title}>{media.title}</span>
 							<span className={styles.date}>
-								{DateFormatter.format(entry.createdAt)}
+								{dateFormatter.format(entry.createdAt)}
 							</span>
 						</div>
 						<span className={styles.caption}>

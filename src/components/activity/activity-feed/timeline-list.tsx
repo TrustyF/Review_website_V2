@@ -18,11 +18,15 @@ export function TimelineList<
 	entries,
 	renderRow,
 	rowGap,
+	monthSpacer,
 }: {
 	entries: T[];
 	renderRow: (entry: T, index: number) => ReactNode;
 	// Overrides .list's default gap (--row-gap) so NotificationFeed can tune row spacing without affecting ActivityFeed, despite shared engine/stylesheet.
 	rowGap?: string;
+	// ActivityFeed-only: adds a spacer element after each month's list, before the
+	// next month's sticky header.
+	monthSpacer?: boolean;
 }) {
 	const groups = groupByMonth(entries);
 
@@ -72,9 +76,18 @@ export function TimelineList<
 					</ul>
 				);
 
+				const spacer = monthSpacer && (
+					<div className={styles.month_spacer} aria-hidden="true" />
+				);
+
 				// The first group ("this month") is self-evident, so it skips the label.
 				if (groupIndex === 0) {
-					return <Fragment key={group.key}>{list}</Fragment>;
+					return (
+						<Fragment key={group.key}>
+							{list}
+							{spacer}
+						</Fragment>
+					);
 				}
 
 				return (
@@ -82,6 +95,7 @@ export function TimelineList<
 						<summary className={styles.group_header}>{group.label}</summary>
 						<hr className={styles.group_divider} />
 						{list}
+						{spacer}
 					</details>
 				);
 			})}

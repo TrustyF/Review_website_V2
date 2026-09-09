@@ -18,7 +18,7 @@ export function TimelineRow({
 	action,
 	value,
 	href,
-	onClick,
+	onMouseEnter,
 	unread,
 }: {
 	index: number;
@@ -29,7 +29,7 @@ export function TimelineRow({
 	action?: ReactNode;
 	value?: ReactNode;
 	href?: string | null;
-	onClick?: (() => void) | undefined;
+	onMouseEnter?: (() => void) | undefined;
 	unread?: boolean | undefined;
 }) {
 	const body = (
@@ -64,7 +64,7 @@ export function TimelineRow({
 
 	return (
 		<li
-			className={`${styles.entry} ${unread ? styles.unread : ""}`}
+			className={styles.entry}
 			style={{ "--stagger-index": index } as CSSProperties}>
 			{href === undefined ? (
 				<span className={styles.entry_link}>{body}</span>
@@ -72,11 +72,13 @@ export function TimelineRow({
 				<Link
 					href={href}
 					className={styles.entry_link}
-					{...(onClick ? { onClick } : {})}>
+					{...(onMouseEnter ? { onMouseEnter } : {})}>
 					{body}
 				</Link>
 			) : (
-				<span className={styles.entry_link} {...(onClick ? { onClick } : {})}>
+				<span
+					className={styles.entry_link}
+					{...(onMouseEnter ? { onMouseEnter } : {})}>
 					{body}
 				</span>
 			)}

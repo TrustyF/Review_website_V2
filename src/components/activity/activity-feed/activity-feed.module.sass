@@ -52,9 +52,6 @@
   @media (prefers-reduced-motion: reduce)
     animation: none
 
-.entry.unread
-  background: color-mix(in srgb, var(--brand) 8%, transparent)
-
 // Two columns (poster/icon, content); Link if clickable, span otherwise
 .entry_link
   display: grid
@@ -84,7 +81,7 @@
 
 .unread_dot
   position: absolute
-  top: 0.6rem
+  top: 0
   right: 0
   width: 0.5rem
   height: 0.5rem
@@ -230,6 +227,11 @@
 
 .group_poster_value
   font-size: 0.75rem
+
+// Sits after each month's <ul>, before the next month's sticky header (see
+// TimelineList's monthSpacer prop).
+.month_spacer
+  height: 2rem
 
 // A short vertical tick between entries at least TIMELINE_GAP_DAYS apart.
 .timeline_gap

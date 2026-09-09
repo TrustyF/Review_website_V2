@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Link } from "@/components/ui/link";
 import styles from "./list-additions-card.module.sass";
 
+// Default keeps notifications' time-of-day; activity feed passes its own compact formatter.
 const DateFormatter = new Intl.DateTimeFormat("en-GB", {
 	year: "numeric",
 	month: "short",
@@ -27,10 +28,12 @@ export function ListAdditionsCard<T extends ListGroupEntry>({
 	entry,
 	index,
 	onRead,
+	dateFormatter = DateFormatter,
 }: {
 	entry: T;
 	index: number;
 	onRead?: (entry: T) => void;
+	dateFormatter?: Intl.DateTimeFormat;
 }) {
 	const list = entry.list;
 	const groupedMedia = entry.groupedMedia ?? [];
@@ -40,12 +43,12 @@ export function ListAdditionsCard<T extends ListGroupEntry>({
 
 	return (
 		<li
-			className={`${styles.card} ${unread ? styles.unread : ""}`}
+			className={styles.card}
 			style={{ "--stagger-index": index } as CSSProperties}>
 			<Link
 				href={`/lists/${list.id}`}
 				className={styles.card_link}
-				{...(unread ? { onClick: () => onRead?.(entry) } : {})}>
+				{...(unread ? { onMouseEnter: () => onRead?.(entry) } : {})}>
 				<div className={styles.header}>
 					{list.thumbnail ? (
 						// eslint-disable-next-line @next/next/no-img-element -- arbitrary pasted URL, same as list-preview-card.tsx
@@ -59,7 +62,7 @@ export function ListAdditionsCard<T extends ListGroupEntry>({
 						<div className={styles.title_row}>
 							<span className={styles.title}>{list.title}</span>
 							<span className={styles.date}>
-								{DateFormatter.format(entry.createdAt)}
+								{dateFormatter.format(entry.createdAt)}
 							</span>
 						</div>
 						<span className={styles.caption}>

@@ -55,7 +55,7 @@ function NotificationRow({
 			action={action}
 			value={value}
 			href={href}
-			{...(unread ? { onClick: () => onRead(entry) } : {})}
+			{...(unread ? { onMouseEnter: () => onRead(entry) } : {})}
 			unread={unread}
 		/>
 	);
@@ -119,6 +119,7 @@ export function NotificationFeed({
 			<TimelineList
 				entries={visibleEntries}
 				rowGap="3rem"
+				monthSpacer
 				renderRow={(entry, index) => {
 					if (entry.groupedMedia && entry.groupedMedia.length > 0) {
 						return (

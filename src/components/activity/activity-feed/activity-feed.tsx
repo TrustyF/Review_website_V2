@@ -21,11 +21,8 @@ import { TimelineRow } from "./timeline-row";
 import styles from "./activity-feed.module.sass";
 
 const DateFormatter = new Intl.DateTimeFormat("en-GB", {
-	year: "numeric",
 	month: "short",
 	day: "numeric",
-	hour: "2-digit",
-	minute: "2-digit",
 });
 
 // One icon per ActivityType — RATING_CHANGED reuses the star rating value's own icon.
@@ -217,7 +214,9 @@ function TypeGroupRow({
 						<Icon size={16} className={styles.type_icon} />
 						<span className={styles.target}>{typeGroupLabel(entry)}</span>
 					</span>
-					<span className={styles.date}>{DateFormatter.format(entry.createdAt)}</span>
+					<span className={styles.date}>
+						{DateFormatter.format(entry.createdAt)}
+					</span>
 				</span>
 				<div className={styles.group_posters}>
 					{groupedMedia.map((media) => (
@@ -274,20 +273,31 @@ export function ActivityFeed({
 			<TimelineList
 				entries={visibleEntries}
 				{...(rowGap ? { rowGap } : {})}
+				monthSpacer
 				renderRow={(entry, index) => {
 					if (entry.groupedMedia && entry.groupedMedia.length > 0) {
 						// LIST_ITEM_ADDED grouping carries a list; the type-based grouping
 						// (RATED/REVIEWED/WATCHLIST_ADDED/REWATCHED) never does.
 						if (entry.list) {
 							return (
-								<ListAdditionsCard key={entry.id} entry={entry} index={index} />
+								<ListAdditionsCard
+									key={entry.id}
+									entry={entry}
+									index={index}
+									dateFormatter={DateFormatter}
+								/>
 							);
 						}
 						return <TypeGroupRow key={entry.id} entry={entry} index={index} />;
 					}
 					if (entry.groupedLists && entry.groupedLists.length > 0) {
 						return (
-							<MediaAdditionsCard key={entry.id} entry={entry} index={index} />
+							<MediaAdditionsCard
+								key={entry.id}
+								entry={entry}
+								index={index}
+								dateFormatter={DateFormatter}
+							/>
 						);
 					}
 					return <ActivityRow key={entry.id} entry={entry} index={index} />;

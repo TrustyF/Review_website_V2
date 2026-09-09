@@ -26,9 +26,16 @@ export function GroupedMediaList({ groups }: Props) {
 					</div>
 				);
 
+				const spacer = <div className={styles.month_spacer} aria-hidden="true" />;
+
 				// First group ("this month") is self-evident, so it skips the label/details wrapper; only earlier groups get one.
 				if (groupIndex === 0) {
-					return <Fragment key={group.key}>{list}</Fragment>;
+					return (
+						<Fragment key={group.key}>
+							{list}
+							{spacer}
+						</Fragment>
+					);
 				}
 
 				return (
@@ -36,6 +43,7 @@ export function GroupedMediaList({ groups }: Props) {
 						<summary className={styles.group_header}>{group.label}</summary>
 						<hr className={styles.group_divider} />
 						{list}
+						{spacer}
 					</details>
 				);
 			})}
