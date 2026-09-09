@@ -21,6 +21,9 @@ type ListGroupEntry = {
 	readAt?: Date | null;
 	list: { id: number; title: string; thumbnail: string | null } | null;
 	groupedMedia?: { id: number; title: string; posterSrc: string }[];
+	// The list's own creation folded into this same-day group — see
+	// activity-actions.ts/notification-actions.ts's own groupSameDayListAdditions.
+	listCreated?: boolean;
 };
 
 // Renders LIST_ITEM_ADDED group with header and poster grid; requires groupedMedia.
@@ -66,7 +69,8 @@ export function ListAdditionsCard<T extends ListGroupEntry>({
 							</span>
 						</div>
 						<span className={styles.caption}>
-							Added {groupedMedia.length} items
+							{entry.listCreated ? "Created and added" : "Added"}{" "}
+							{groupedMedia.length} items
 						</span>
 					</div>
 				</div>

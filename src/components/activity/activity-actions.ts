@@ -34,6 +34,9 @@ export type ActivityFeedEntry = {
 	groupedMedia?: (NonNullable<ActivityFeedEntry["media"]> & { value: string | null })[];
 	// Same media added to multiple lists same day; only for entries unclaimed by list-grouping.
 	groupedLists?: NonNullable<ActivityFeedEntry["list"]>[];
+	// True when this list's own LIST_CREATED entry folded into the same-day group
+	// (see groupSameDayListAdditions) — caption reads "Created and added" instead of "Added".
+	listCreated?: boolean;
 };
 
 const PAGE_SIZE = 100;
@@ -99,14 +102,16 @@ type ActivityGroup = {
 	axis?: "list" | "media" | "type";
 };
 
-// Groups same-list additions by day; reads as one card, not flood.
+// Groups same-list additions by day; also folds in that list's own
+// LIST_CREATED entry when it lands the same day, so it reads as one moment.
 function groupSameDayListAdditions(entries: RawActivityEntry[]): ActivityGroup[] {
 	const grouped: ActivityGroup[] = [];
 	const groupByKey = new Map<string, ActivityGroup>();
 
 	for (const entry of entries) {
 		const key =
-			entry.type === "LIST_ITEM_ADDED" && entry.list
+			(entry.type === "LIST_ITEM_ADDED" || entry.type === "LIST_CREATED") &&
+			entry.list
 				? `${entry.list.id}-${entry.createdAt.toDateString()}`
 				: null;
 		const existing = key ? groupByKey.get(key) : undefined;
@@ -427,11 +432,13 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 						}),
 					)
 				).filter((m) => m !== null);
+				const listCreated = members.some((m) => m.type === "LIST_CREATED");
 				return {
 					...representative,
 					media,
 					groupedIds: rest.map((m) => m.id),
 					groupedMedia,
+					...(listCreated ? { listCreated } : {}),
 				};
 			}
 

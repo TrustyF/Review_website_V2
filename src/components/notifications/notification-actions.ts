@@ -18,6 +18,9 @@ export type NotificationEntry = {
 	groupedMedia?: NonNullable<NotificationEntry["media"]>[];
 	// Same media added to multiple lists same day; only for rows unclaimed by list-grouping.
 	groupedLists?: NonNullable<NotificationEntry["list"]>[];
+	// True when this list's own LIST_CREATED row folded into the same-day group
+	// (see groupSameDayListAdditions) — caption reads "Created and added" instead of "Added".
+	listCreated?: boolean;
 };
 
 // Same fallback as asset-paths.ts's toPosterSrc for a posterPath-less media row.
@@ -83,7 +86,8 @@ type NotificationGroup = {
 	axis?: "list" | "media";
 };
 
-// Groups same-list additions by day; reads as one card, not flood.
+// Groups same-list additions by day; also folds in that list's own
+// LIST_CREATED row when it lands the same day, so it reads as one moment.
 function groupSameDayListAdditions(
 	entries: RawNotification[],
 ): NotificationGroup[] {
@@ -92,7 +96,8 @@ function groupSameDayListAdditions(
 
 	for (const entry of entries) {
 		const key =
-			entry.type === "LIST_ITEM_ADDED" && entry.list
+			(entry.type === "LIST_ITEM_ADDED" || entry.type === "LIST_CREATED") &&
+			entry.list
 				? `${entry.list.id}-${entry.createdAt.toDateString()}`
 				: null;
 		const existing = key ? groupByKey.get(key) : undefined;
@@ -197,12 +202,14 @@ export async function getNotifications(): Promise<NotificationEntry[]> {
 				const groupedMedia = (
 					await Promise.all(members.map((m) => toMediaEntry(m.media)))
 				).filter((m) => m !== null);
+				const listCreated = members.some((m) => m.type === "LIST_CREATED");
 				return {
 					...representative,
 					media,
 					readAt,
 					groupedIds: rest.map((m) => m.id),
 					groupedMedia,
+					...(listCreated ? { listCreated } : {}),
 				};
 			}
 
