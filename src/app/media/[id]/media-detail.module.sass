@@ -16,7 +16,7 @@ $var_banner_width: 110%
 
   // Mobile only: cancels main's padding-top since short banner makes gap noticeable
   @media (max-width: $mobile-breakpoint)
-    margin-top: calc(-1 * var(--navbar-height))
+    margin-top: calc(-1 * (var(--navbar-height) + var(--content-gap)))
 
 .details_wrapper
   display: flex
@@ -35,7 +35,7 @@ $var_banner_width: 110%
   width: 100%
   left: auto
   // Cancels main padding-top so banner reaches true viewport top
-  top: calc(-1 * var(--navbar-height))
+  top: calc(-1 * (var(--navbar-height) + var(--content-gap)))
 
   // Mobile: don't double-cancel .wrapper's own cancel
   @media (max-width: $mobile-breakpoint)

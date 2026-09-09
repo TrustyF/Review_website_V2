@@ -3,11 +3,11 @@
 
 .wrapper
   @include content-wrapper
-  margin: 2rem auto 5rem auto
+  margin: 0 auto 5rem auto
   display: flex
   flex-flow: column
   gap: 3rem
 
   // Cancels main's navbar padding-top so the hero banner starts flush at the viewport top; keyed to $mobile-breakpoint (navbar's own), not FeaturedReview's breakpoint.
   @media (max-width: $mobile-breakpoint)
-    margin-top: calc(-1 * var(--navbar-height))
+    margin-top: calc(-1 * (var(--navbar-height) + var(--content-gap)))

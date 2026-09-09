@@ -63,6 +63,8 @@
   --footer-margin: 3rem
   // Navbar offset for sticky elements; useNavbarVisibility overrides it on <html> once navbar hide effect mounts
   --navbar-offset: var(--navbar-height)
+  // Extra breathing room below the navbar, on top of --navbar-height; was previously duplicated per-page as inconsistent .wrapper top margins (2rem/3rem)
+  --content-gap: 4rem
 
 
 html
@@ -94,7 +96,7 @@ body
 
 
 main
-  padding-top: var(--navbar-height)
+  padding-top: calc(var(--navbar-height) + var(--content-gap))
   padding-bottom: var(--footer-margin)
 
 
