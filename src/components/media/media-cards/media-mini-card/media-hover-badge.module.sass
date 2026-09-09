@@ -1,9 +1,14 @@
+// Tooltip wraps .badge in its own trigger div — this is the actual flex item in .status_buttons now, so .badge's own flex:1 still fills the full share instead of shrinking to icon size.
+.trigger
+  flex: 1
+  display: flex
+
 // Shared style for the small icon toggles over a mini card's poster on hover. No background of their own — the shared pill surface belongs to .status_buttons in media-mini-card-shell.module.sass.
 .badge
   // Positioning context for the svg's absolute centering below (the group itself is what's positioned over the poster).
   position: relative
-  width: 1.5rem
-  height: 1.5rem
+  flex: 1
+  height: 2rem
   color: white
   cursor: pointer
 

@@ -36,13 +36,19 @@ export function MediaMiniCardShell({ media, children }: Props) {
 					? `${styles.wrapper} ${styles.watched}`
 					: styles.wrapper
 			}>
-			<MediaPoster
-				src={posterOverrideSrc ?? media.posterSrc}
-				title={media.title}
-				mediaId={media.id}
-				ratio={posterRatioFor(media.type)}
-				difficulty={media.review?.difficulty}
-			/>
+			<div className={styles.poster_container}>
+				<MediaPoster
+					src={posterOverrideSrc ?? media.posterSrc}
+					title={media.title}
+					mediaId={media.id}
+					ratio={posterRatioFor(media.type)}
+					difficulty={media.review?.difficulty}
+				/>
+				<div className={styles.status_buttons}>
+					<AddToWatchlistHoverButton mediaId={media.id} />
+					<MarkAsWatchedHoverButton mediaId={media.id} type={media.type} />
+				</div>
+			</div>
 			<div className={styles.info_group}>
 				{showTitle && (
 					<MediaTitle title={media.title} className={styles.title} />
@@ -59,10 +65,6 @@ export function MediaMiniCardShell({ media, children }: Props) {
 					)}
 					{children}
 				</div>
-			</div>
-			<div className={styles.status_buttons}>
-				<AddToWatchlistHoverButton mediaId={media.id} />
-				<MarkAsWatchedHoverButton mediaId={media.id} type={media.type} />
 			</div>
 			<div className={styles.admin_actions}>
 				<MediaEditButton media={media} hitboxPadding={6} />

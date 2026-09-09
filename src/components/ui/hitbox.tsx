@@ -5,6 +5,7 @@ type Props = {
 	onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
 	onMouseEnter?: () => void;
 	onMouseLeave?: () => void;
+	onMouseMove?: () => void;
 	children: ReactNode;
 	/** Extra hit margin around the child, in px. */
 	padding?: number;
@@ -17,6 +18,7 @@ export function Hitbox({
 	onClick,
 	onMouseEnter,
 	onMouseLeave,
+	onMouseMove,
 	children,
 	padding = 0,
 	className,
@@ -33,6 +35,7 @@ export function Hitbox({
 					onClick={onClick}
 					onMouseEnter={onMouseEnter}
 					onMouseLeave={onMouseLeave}
+					onMouseMove={onMouseMove}
 				/>
 			) : (
 				<div
@@ -40,6 +43,7 @@ export function Hitbox({
 					style={{ inset: -padding }}
 					onMouseEnter={onMouseEnter}
 					onMouseLeave={onMouseLeave}
+					onMouseMove={onMouseMove}
 				/>
 			)}
 		</div>

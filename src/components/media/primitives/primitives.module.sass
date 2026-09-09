@@ -37,6 +37,8 @@
   right: 0
   width: 10px
   height: 10px
+  // Above .status_buttons (mini-card-shell), which paints later in DOM order and would otherwise cover this corner.
+  z-index: 1
 
 .difficulty_notch_svg
   display: block

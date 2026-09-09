@@ -29,6 +29,9 @@ const ARROW_SIDE_CLASS: Record<Side, string | undefined> = {
 // CSS-relative `calc(100% + 8px)` used, just applied in JS now.
 const GAP = 8;
 
+// Hover must hold still this long before the tooltip appears, so a cursor just passing over the trigger doesn't flash it.
+const SHOW_DELAY = 500;
+
 type Position = { top: number; left: number };
 
 function positionFor(rect: DOMRect, side: Side): Position {
@@ -71,6 +74,7 @@ export function Tooltip({
 	const [isVisible, setIsVisible] = useState(false);
 	const triggerRef = useRef<HTMLDivElement>(null);
 	const [position, setPosition] = useState<Position | null>(null);
+	const showTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	// Measured once on open, not tracked continuously — a hover tooltip closes via
 	// mouseleave the moment the trigger scrolls out from under the cursor anyway.
@@ -79,8 +83,23 @@ export function Tooltip({
 		setPosition(positionFor(triggerRef.current.getBoundingClientRect(), side));
 	}, [isVisible, side]);
 
-	const show = () => setIsVisible(true);
-	const hide = () => setIsVisible(false);
+	// Clears any pending show on unmount so it can't fire after the trigger is gone.
+	useEffect(() => {
+		return () => {
+			if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current);
+		};
+	}, []);
+
+	// Also used as the mousemove handler — restarting the timer on every move means
+	// the cursor has to actually stop, not just stay within the trigger, before it shows.
+	const show = () => {
+		if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current);
+		showTimeoutRef.current = setTimeout(() => setIsVisible(true), SHOW_DELAY);
+	};
+	const hide = () => {
+		if (showTimeoutRef.current) clearTimeout(showTimeoutRef.current);
+		setIsVisible(false);
+	};
 
 	const popup =
 		isVisible && position && typeof document !== "undefined"
@@ -105,6 +124,7 @@ export function Tooltip({
 				<Hitbox
 					padding={hitboxPadding}
 					onMouseEnter={show}
+					onMouseMove={show}
 					onMouseLeave={hide}
 					style={{ width: "100%", height: "100%" }}>
 					{children}
@@ -119,6 +139,7 @@ export function Tooltip({
 			ref={triggerRef}
 			className={[styles.wrapper, className].filter(Boolean).join(" ")}
 			onMouseEnter={show}
+			onMouseMove={show}
 			onMouseLeave={hide}>
 			{children}
 			{popup}

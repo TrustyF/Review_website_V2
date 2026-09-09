@@ -3,6 +3,7 @@ import { Clock } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useWatchlist } from "@/components/watchlist/watchlist-context";
 import { Clickable } from "@/components/ui/clickable";
+import { Tooltip } from "@/components/ui/tooltip";
 import styles from "@/components/media/media-cards/media-mini-card/media-hover-badge.module.sass";
 
 type Props = {
@@ -22,13 +23,14 @@ export function AddToWatchlistHoverButton({ mediaId, className }: Props) {
 	const label = inWatchlist ? "In watchlist" : "Add to watchlist";
 
 	return (
-		<Clickable
-			className={className ? `${styles.badge} ${className}` : styles.badge}
-			aria-pressed={inWatchlist}
-			title={label}
-			aria-label={label}
-			onClick={() => toggle(mediaId)}>
-			<Clock size={13} />
-		</Clickable>
+		<Tooltip content={label} className={styles.trigger}>
+			<Clickable
+				className={className ? `${styles.badge} ${className}` : styles.badge}
+				aria-pressed={inWatchlist}
+				aria-label={label}
+				onClick={() => toggle(mediaId)}>
+				<Clock size={16} />
+			</Clickable>
+		</Tooltip>
 	);
 }

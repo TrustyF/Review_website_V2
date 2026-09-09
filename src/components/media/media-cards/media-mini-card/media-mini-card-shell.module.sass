@@ -60,8 +60,8 @@
 .status_buttons
   opacity: 0
   visibility: hidden
-  // Delays visibility:hidden until the opacity fade finishes, so it stays hoverable throughout the fade-out.
-  transition: opacity 0.3s ease, visibility 0s linear 0.3s
+  // Delays visibility:hidden until the opacity/transform fade finishes, so it stays hoverable throughout the fade-out.
+  transition: opacity 0.15s ease, transform 0.1s, visibility 0s linear 0.1s
 
 // Groups MediaEditButton and PosterQuickEditButton into one corner stack instead of each
 // separately absolute-positioned — new admin actions just join this flex column.
@@ -74,24 +74,35 @@
   // Wider gap (items' Hitbox padding overlaps); narrower would eat into poster art
   gap: 0.5rem
 
-// Groups the watchlist/seen toggles into one pill surface; border-radius keeps a full stadium shape regardless of how tall the column grows as toggles are added.
+// Sized to the poster only (not the whole card) so .status_buttons below can pin to the poster's own bottom edge instead of the card's.
+.poster_container
+  position: relative
+  width: 100%
+  // Clips status_buttons (and anything else layered here) to the poster's own rounded-rect footprint, so its corners can never poke past the artwork underneath.
+  clip-path: inset(0 round 0.2rem)
+
+// Full-width strip flush against the poster's bottom edge; slides up from below on hover instead of just fading.
 .status_buttons
   position: absolute
-  top: 0.15rem
-  right: 0.15rem
+  bottom: 0
+  left: 0
+  right: 0
   display: flex
-  flex-flow: column
+  flex-flow: row
   align-items: center
-  gap: 0.2rem
-  padding: 0.1rem
-  border-radius: 999px
-  background: var(--surface)
+  justify-content: space-around
+  transform: translateY(5px)
+  background: var(--ticket-red-dark)
+  //border-radius: 0.25rem 0.25rem 0 0
+  //box-shadow: 1px 0 3px var(--background)
 
 .wrapper:hover
   .admin_actions,
   .status_buttons
     visibility: visible
     opacity: 1
+    transform: translateY(0)
+
     transition-delay: 0s
 
 // Marked-watched state: dims the whole card so a "read"/scanned grid stands out from

@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { MediaType } from "@prisma/client";
 import { useWatched } from "@/components/watched/watched-context";
 import { Clickable } from "@/components/ui/clickable";
+import { Tooltip } from "@/components/ui/tooltip";
 import {
 	alreadyWatchedLabel,
 	markAsWatchedLabel,
@@ -28,13 +29,14 @@ export function MarkAsWatchedHoverButton({ mediaId, type, className }: Props) {
 	const label = watched ? alreadyWatchedLabel(type) : markAsWatchedLabel(type);
 
 	return (
-		<Clickable
-			className={className ? `${styles.badge} ${className}` : styles.badge}
-			aria-pressed={watched}
-			title={label}
-			aria-label={label}
-			onClick={() => toggle(mediaId)}>
-			<Eye size={13} />
-		</Clickable>
+		<Tooltip content={label} className={styles.trigger}>
+			<Clickable
+				className={className ? `${styles.badge} ${className}` : styles.badge}
+				aria-pressed={watched}
+				aria-label={label}
+				onClick={() => toggle(mediaId)}>
+				<Eye size={16} />
+			</Clickable>
+		</Tooltip>
 	);
 }
