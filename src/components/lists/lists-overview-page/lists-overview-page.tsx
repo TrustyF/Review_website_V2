@@ -4,18 +4,20 @@ import { db } from "@/server/db/client";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import { NewListLink } from "@/components/lists/new-list-link/new-list-link";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { getLocale } from "@/lib/i18n/get-locale";
 import styles from "./lists-overview-page.module.sass";
 
 // Server Component for /lists: every list, newest first.
 export async function ListsOverviewPage() {
 	// targetUserId: null excludes recommendation lists — those are private to whoever they're for.
-	const [lists, dict] = await Promise.all([
+	const [lists, dict, locale] = await Promise.all([
 		db.list.findMany({
 			where: { targetUserId: null },
 			include: { _count: { select: { items: true } } },
 			orderBy: { createDate: "desc" },
 		}),
 		getDictionary(),
+		getLocale(),
 	]);
 
 	return (
@@ -39,8 +41,13 @@ export async function ListsOverviewPage() {
 							style={{ "--stagger-index": index } as CSSProperties}>
 							<ListPreviewCard
 								id={list.id}
-								title={list.title}
-								description={list.description}
+								// Falls back to English when untranslated, like Review.bodyFr.
+								title={locale === "fr" ? (list.titleFr ?? list.title) : list.title}
+								description={
+									locale === "fr"
+										? (list.descriptionFr ?? list.description)
+										: list.description
+								}
 								thumbnail={list.thumbnail}
 								itemCount={list._count.items}
 							/>

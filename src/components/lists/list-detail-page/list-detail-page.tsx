@@ -10,6 +10,7 @@ import { ListIdBadge } from "@/components/lists/list-id-badge/list-id-badge";
 import { ListWatchedProgress } from "@/components/lists/list-watched-progress/list-watched-progress";
 import { displayName } from "@/lib/display-name";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { getLocale } from "@/lib/i18n/get-locale";
 import styles from "./list-detail-page.module.sass";
 
 type Props = {
@@ -44,8 +45,16 @@ export async function ListDetailPage({ id }: Props) {
 	});
 	if (!list) notFound();
 
-	const [session, dict] = await Promise.all([auth(), getDictionary()]);
+	const [session, dict, locale] = await Promise.all([
+		auth(),
+		getDictionary(),
+		getLocale(),
+	]);
 	const isAdmin = session?.user?.role === "ADMIN";
+	// Falls back to English when untranslated, like Review.bodyFr.
+	const title = locale === "fr" ? (list.titleFr ?? list.title) : list.title;
+	const description =
+		locale === "fr" ? (list.descriptionFr ?? list.description) : list.description;
 
 	// A recommendation list is only visible to its recipient and admins; notFound() (not a login redirect) so a probing visitor can't tell "no such list" from "not yours."
 	if (list.targetUserId) {
@@ -78,12 +87,12 @@ export async function ListDetailPage({ id }: Props) {
 					<img src={list.thumbnail} alt="" className={styles.thumbnail} />
 				) : (
 					<div className={styles.thumbnail_placeholder}>
-						{list.title.charAt(0)}
+						{title.charAt(0)}
 					</div>
 				)}
 				<div className={styles.header_info}>
 					<div className={styles.title_row}>
-						<h1>{list.title}</h1>
+						<h1>{title}</h1>
 						<ListIdBadge listId={list.id} />
 						{/* Admin-only: lets an admin browsing by id/link see at a glance who a recommendation list is for. */}
 						{isAdmin && list.targetUser && (
@@ -93,9 +102,7 @@ export async function ListDetailPage({ id }: Props) {
 						)}
 						<EditListLink listId={list.id} />
 					</div>
-					{list.description && (
-						<p className={styles.description}>{list.description}</p>
-					)}
+					{description && <p className={styles.description}>{description}</p>}
 				</div>
 				<ListWatchedProgress
 					mediaIds={media.map((item) => item.id)}

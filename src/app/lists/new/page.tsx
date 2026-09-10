@@ -13,7 +13,9 @@ export default function NewListPage() {
 			<ListForm
 				initial={{
 					title: "",
+					titleFr: "",
 					description: "",
+					descriptionFr: "",
 					thumbnailUrl: "",
 					sortMode: "RANKED",
 					targetUserId: null,
@@ -21,14 +23,18 @@ export default function NewListPage() {
 				submitLabel="Create"
 				onSubmit={async ({
 					title,
+					titleFr,
 					description,
+					descriptionFr,
 					thumbnailUrl,
 					sortMode,
 					targetUserId,
 				}) => {
 					const id = await createList({
 						title,
+						titleFr: titleFr.trim() || null,
 						description: description.trim() || null,
+						descriptionFr: descriptionFr.trim() || null,
 						thumbnailUrl: thumbnailUrl.trim() || null,
 						sortMode,
 						targetUserId,

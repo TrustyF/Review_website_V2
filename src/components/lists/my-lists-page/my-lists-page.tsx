@@ -3,13 +3,14 @@ import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { getLocale } from "@/lib/i18n/get-locale";
 import styles from "./my-lists-page.module.sass";
 
 // Server Component for /account/lists: every recommendation list targeting the signed-in user; the click-through for account/page.tsx's recommendations panel.
 export async function MyListsPage() {
 	const session = await auth();
 	if (!session?.user?.id) redirect("/login");
-	const dict = await getDictionary();
+	const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
 
 	const lists = await db.list.findMany({
 		where: { targetUserId: session.user.id },
@@ -31,8 +32,13 @@ export async function MyListsPage() {
 						<ListPreviewCard
 							key={list.id}
 							id={list.id}
-							title={list.title}
-							description={list.description}
+							// Falls back to English when untranslated, like Review.bodyFr.
+							title={locale === "fr" ? (list.titleFr ?? list.title) : list.title}
+							description={
+								locale === "fr"
+									? (list.descriptionFr ?? list.description)
+									: list.description
+							}
 							thumbnail={list.thumbnail}
 							itemCount={list._count.items}
 						/>

@@ -219,9 +219,9 @@ export const fr = {
 		anticipatedReleases: "Sorties attendues",
 		readFullReview: "Lire la critique complète →",
 		showFeaturedReview: (title: string) =>
-			`Afficher la critique mise en avant : ${title}`,
-		eyebrowFeatured: "Critique mise en avant",
-		eyebrowNew: "Nouvelle critique",
+			`Afficher la critique en vedette : ${title}`,
+		eyebrowFeatured: "Mis en avant",
+		eyebrowNew: "Nouveau",
 	},
 	watchlist: {
 		title: "Ma liste à voir",

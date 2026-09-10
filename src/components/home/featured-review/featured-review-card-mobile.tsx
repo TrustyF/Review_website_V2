@@ -10,7 +10,7 @@ import {
 	ReviewSpoilerProvider,
 } from "@/components/media/media-cards/media-card/review-body";
 import { eyebrowFor } from "./featured-review-shared";
-import { useDictionary } from "@/lib/i18n/i18n-context";
+import { useDictionary, useLocale } from "@/lib/i18n/i18n-context";
 import styles from "./featured-review-card-mobile.module.sass";
 
 type Props = {
@@ -22,6 +22,7 @@ type Props = {
 // Mobile-width counterpart to FeaturedReviewCard — desktop's fixed 180px poster squeezes .info to nothing below ~450px, so this uses a smaller grid cell instead. Swapped in via CSS breakpoint, not matchMedia, since FeaturedReview already re-renders both on every transition.
 export function FeaturedReviewCardMobile({ media, direction, exiting = false }: Props) {
 	const dict = useDictionary();
+	const locale = useLocale();
 	const [settled, setSettled] = useState(exiting);
 	useEffect(() => {
 		const frame = requestAnimationFrame(() => setSettled(!exiting));
@@ -44,6 +45,9 @@ export function FeaturedReviewCardMobile({ media, direction, exiting = false }: 
 	const review = media.review;
 	const eyebrow = eyebrowFor(review, dict);
 	const EyebrowIcon = eyebrow.icon;
+	// Falls back to English when untranslated, like MediaReviewBody/MediaTitle.
+	const title = locale === "fr" ? (media.titleFr ?? media.title) : media.title;
+	const body = locale === "fr" ? (review.bodyFr ?? review.body) : review.body;
 
 	const offset = exiting ? 0 : direction * 2;
 
@@ -91,7 +95,7 @@ export function FeaturedReviewCardMobile({ media, direction, exiting = false }: 
 							)}
 							{eyebrow.label}
 						</div>
-						<h1 className={styles.title}>{media.title}</h1>
+						<h1 className={styles.title}>{title}</h1>
 						<div className={styles.meta_row}>
 							<MediaReleaseDate date={media.releaseDate} />
 							{review.rating != null && (
@@ -105,7 +109,7 @@ export function FeaturedReviewCardMobile({ media, direction, exiting = false }: 
 					<div className={styles.excerpt} ref={excerptRef}>
 						<ReviewSpoilerProvider>
 							<ReviewBody
-								text={review.body!}
+								text={body!}
 								paragraphClassName={styles.excerpt_line}
 								spoilersInteractive={false}
 							/>

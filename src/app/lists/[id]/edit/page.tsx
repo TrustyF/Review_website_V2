@@ -22,7 +22,9 @@ export default async function EditListPage({
 				listId={list.id}
 				initial={{
 					title: list.title,
+					titleFr: list.titleFr ?? "",
 					description: list.description ?? "",
+					descriptionFr: list.descriptionFr ?? "",
 					thumbnailUrl: list.thumbnail ?? "",
 					sortMode: list.sortMode,
 					targetUserId: list.targetUserId,

@@ -21,17 +21,28 @@ export default function NewUserListPage({
 			<ListForm
 				initial={{
 					title: "",
+					titleFr: "",
 					description: "",
+					descriptionFr: "",
 					thumbnailUrl: "",
 					sortMode: "RANKED",
 					targetUserId: id,
 				}}
 				submitLabel="Create"
 				hideRecommendTo
-				onSubmit={async ({ title, description, thumbnailUrl, sortMode }) => {
+				onSubmit={async ({
+					title,
+					titleFr,
+					description,
+					descriptionFr,
+					thumbnailUrl,
+					sortMode,
+				}) => {
 					await createList({
 						title,
+						titleFr: titleFr.trim() || null,
 						description: description.trim() || null,
+						descriptionFr: descriptionFr.trim() || null,
 						thumbnailUrl: thumbnailUrl.trim() || null,
 						sortMode,
 						targetUserId: id,

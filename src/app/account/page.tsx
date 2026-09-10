@@ -12,12 +12,13 @@ import { WatchlistIcon } from "@/components/icons/watchlist-icon";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import { displayName } from "@/lib/display-name";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { getLocale } from "@/lib/i18n/get-locale";
 import styles from "./account.module.sass";
 
 export default async function AccountPage() {
 	const session = await auth();
 	if (!session?.user?.id) redirect("/login");
-	const dict = await getDictionary();
+	const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
 
 	// image/username read from DB (not session) since avatar/settings updates write DB directly without refreshing the JWT.
 	const user = await db.user.findUnique({
@@ -112,8 +113,13 @@ export default async function AccountPage() {
 								<ListPreviewCard
 									key={list.id}
 									id={list.id}
-									title={list.title}
-									description={list.description}
+									// Falls back to English when untranslated, like Review.bodyFr.
+									title={locale === "fr" ? (list.titleFr ?? list.title) : list.title}
+									description={
+										locale === "fr"
+											? (list.descriptionFr ?? list.description)
+											: list.description
+									}
 									thumbnail={list.thumbnail}
 									itemCount={list._count.items}
 									linked={false}

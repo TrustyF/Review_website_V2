@@ -37,14 +37,18 @@ export function EditListForm({ listId, initial }: Props) {
 			submitLabel="Save"
 			onSubmit={async ({
 				title,
+				titleFr,
 				description,
+				descriptionFr,
 				thumbnailUrl,
 				sortMode,
 				targetUserId,
 			}) => {
 				await updateList(listId, {
 					title,
+					titleFr: titleFr.trim() || null,
 					description: description.trim() || null,
+					descriptionFr: descriptionFr.trim() || null,
 					thumbnailUrl: thumbnailUrl.trim() || null,
 					sortMode,
 					targetUserId,

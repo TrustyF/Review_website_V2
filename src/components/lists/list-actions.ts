@@ -13,7 +13,9 @@ import { createNotification } from "@/components/notifications/notification-acti
 
 type ListInput = {
 	title: string;
+	titleFr: string | null;
 	description: string | null;
+	descriptionFr: string | null;
 	thumbnailUrl: string | null;
 	sortMode: ListSortMode;
 	// null = normal public list; a user id makes this a recommendation list for that account.
@@ -41,7 +43,9 @@ export async function createList(input: ListInput): Promise<number> {
 	const list = await db.list.create({
 		data: {
 			title: input.title.trim(),
+			titleFr: input.titleFr?.trim() || null,
 			description: input.description?.trim() || null,
+			descriptionFr: input.descriptionFr?.trim() || null,
 			thumbnail: await resolveThumbnailUrl(input.thumbnailUrl),
 			sortMode: input.sortMode,
 			targetUserId: input.targetUserId,
@@ -71,7 +75,9 @@ export async function updateList(id: number, input: ListInput): Promise<void> {
 		where: { id },
 		data: {
 			title: input.title.trim(),
+			titleFr: input.titleFr?.trim() || null,
 			description: input.description?.trim() || null,
+			descriptionFr: input.descriptionFr?.trim() || null,
 			thumbnail: await resolveThumbnailUrl(input.thumbnailUrl),
 			sortMode: input.sortMode,
 			targetUserId: input.targetUserId,

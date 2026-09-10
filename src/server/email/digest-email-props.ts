@@ -32,6 +32,7 @@ const SCREEN_MEDIA_TYPES: MediaType[] = [
 const MEDIA_SELECT = {
 	id: true,
 	title: true,
+	titleFr: true,
 	type: true,
 	posterPath: true,
 	bannerPath: true,
@@ -42,12 +43,18 @@ const MEDIA_SELECT = {
 type MediaSelection = {
 	id: number;
 	title: string;
+	titleFr: string | null;
 	type: MediaType;
 	posterPath: string | null;
 	bannerPath: string | null;
 	externalId: string | null;
 	releaseDate: Date | null;
 };
+
+// Falls back to English silently when untranslated — see Review.bodyFr.
+function localizedTitle(media: MediaSelection, locale: Locale): string {
+	return locale === "fr" ? (media.titleFr ?? media.title) : media.title;
+}
 
 const PLACEHOLDER_POSTER_SRC = "/posters/placeholder.jpg";
 
@@ -181,7 +188,7 @@ export async function buildDigestEmailProps(
 	const anticipatedReleasesRaw = await getAnticipatedReleases();
 	const anticipatedReleases = await Promise.all(
 		anticipatedReleasesRaw.map(async (media) => ({
-			title: media.title,
+			title: localizedTitle(media, locale),
 			mediaUrl: toAbsoluteUrl(`/media/${media.id}`),
 			posterSrc: await toPosterSrc(media),
 			rating: null,
@@ -190,7 +197,7 @@ export async function buildDigestEmailProps(
 
 	const latestReviews = await Promise.all(
 		latestReviewed.map(async (review) => ({
-			title: review.media.title,
+			title: localizedTitle(review.media, locale),
 			mediaUrl: toAbsoluteUrl(`/media/${review.mediaId}`),
 			posterSrc: await toPosterSrc(review.media),
 			releaseYear: review.media.releaseDate
@@ -211,7 +218,7 @@ export async function buildDigestEmailProps(
 			.filter((review) => !latestReviewedMediaIds.has(review.mediaId))
 			.slice(0, MAX_RECENT_WATCHES)
 			.map(async (review) => ({
-				title: review.media.title,
+				title: localizedTitle(review.media, locale),
 				mediaUrl: toAbsoluteUrl(`/media/${review.mediaId}`),
 				posterSrc: await toPosterSrc(review.media),
 				rating: review.initialRating ?? review.rating,

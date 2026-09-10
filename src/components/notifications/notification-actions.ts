@@ -10,8 +10,13 @@ export type NotificationEntry = {
 	type: NotificationType;
 	createdAt: Date;
 	readAt: Date | null;
-	list: { id: number; title: string; thumbnail: string | null } | null;
-	media: { id: number; title: string; posterSrc: string } | null;
+	list: {
+		id: number;
+		title: string;
+		titleFr: string | null;
+		thumbnail: string | null;
+	} | null;
+	media: { id: number; title: string; titleFr: string | null; posterSrc: string } | null;
 	// LIST_ITEM_ADDED row standing in for same-day notifications. id/media/list/createdAt are from most recent one.
 	groupedIds?: number[];
 	// Same list, items added same day (see groupSameDayListAdditions).
@@ -31,11 +36,14 @@ const NOTIFICATION_SELECT = {
 	type: true,
 	createdAt: true,
 	readAt: true,
-	list: { select: { id: true, title: true, thumbnail: true } },
+	list: {
+		select: { id: true, title: true, titleFr: true, thumbnail: true },
+	},
 	media: {
 		select: {
 			id: true,
 			title: true,
+			titleFr: true,
 			type: true,
 			posterPath: true,
 			externalId: true,
@@ -48,6 +56,7 @@ async function toMediaEntry(
 	media: {
 		id: number;
 		title: string;
+		titleFr: string | null;
 		type: MediaType;
 		posterPath: string | null;
 		externalId: string | null;
@@ -62,7 +71,7 @@ async function toMediaEntry(
 				media.posterPath,
 			)
 		: PLACEHOLDER_POSTER_SRC;
-	return { id: media.id, title: media.title, posterSrc };
+	return { id: media.id, title: media.title, titleFr: media.titleFr, posterSrc };
 }
 
 type RawNotification = {
@@ -70,10 +79,16 @@ type RawNotification = {
 	type: NotificationType;
 	createdAt: Date;
 	readAt: Date | null;
-	list: { id: number; title: string; thumbnail: string | null } | null;
+	list: {
+		id: number;
+		title: string;
+		titleFr: string | null;
+		thumbnail: string | null;
+	} | null;
 	media: {
 		id: number;
 		title: string;
+		titleFr: string | null;
 		type: MediaType;
 		posterPath: string | null;
 		externalId: string | null;

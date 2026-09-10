@@ -7,6 +7,7 @@ import { EnrichmentStatus, MediaType } from "@prisma/client";
 import { toPersonPhotoSrc, toPosterSrc } from "@/server/resolvers/asset-paths";
 import { getLocalDiskStorage } from "@/server/storage/image-storage";
 import { hasPhotoEligibleRole } from "@/server/resolvers/person-photo-eligibility";
+import { getLocale } from "@/lib/i18n/get-locale";
 
 export type GlobalSearchResult =
 	| {
@@ -46,6 +47,9 @@ const FUSE_OPTIONS = {
 	keys: [
 		{ name: "title", weight: 0.7 },
 		{ name: "alternateTitle", weight: 0.3 },
+		// Lets a French title be searched by even though display priority
+		// (English vs. French) is decided later, per-request, in searchAllMedia.
+		{ name: "titleFr", weight: 0.3 },
 	],
 	threshold: 0.35,
 	ignoreLocation: true,
@@ -57,6 +61,7 @@ type SearchableMedia = {
 	kind: "media";
 	id: number;
 	title: string;
+	titleFr: string | null;
 	alternateTitle: string | null;
 	type: MediaType;
 	posterPath: string | null;
@@ -123,7 +128,7 @@ const PERSISTED_INDEX_FILENAME = "media.json";
 
 // Bumped on SearchableEntry or payload shape change; prevents silent
 // corruption from stale blobs (e.g., missing `kind` field).
-const PERSISTED_INDEX_VERSION = 5;
+const PERSISTED_INDEX_VERSION = 6;
 
 // JSON serialization: releaseDate becomes ISO string; person/company entries pass through.
 type PersistedSearchEntry =
@@ -233,6 +238,7 @@ async function fetchSearchEntriesFromDb(): Promise<SearchableEntry[]> {
 			select: {
 				id: true,
 				title: true,
+				titleFr: true,
 				alternateTitle: true,
 				type: true,
 				posterPath: true,
@@ -386,6 +392,9 @@ export async function searchAllMedia(
 	const trimmed = query.trim();
 	if (!trimmed) return [];
 
+	// Falls back to English when untranslated, like Review.bodyFr/MediaTitle.
+	const locale = await getLocale();
+
 	// Brackets whole action; helps diagnose perf (inside vs. outside function).
 	const actionStartedAt = performance.now();
 
@@ -444,7 +453,8 @@ export async function searchAllMedia(
 					return {
 						kind: "media",
 						id: item.id,
-						title: item.title,
+						title:
+							locale === "fr" ? (item.titleFr ?? item.title) : item.title,
 						type: item.type,
 						releaseDate: item.releaseDate,
 						posterSrc: toPosterSrc(item.id, item.posterPath),

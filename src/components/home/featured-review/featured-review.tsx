@@ -17,7 +17,7 @@ import { useFeaturedManagerStore } from "@/components/home/featured-review/featu
 import { FeaturedReviewCardMobile } from "./featured-review-card-mobile";
 import { FeaturedReviewPicker } from "./featured-review-picker";
 import { eyebrowFor } from "./featured-review-shared";
-import { useDictionary } from "@/lib/i18n/i18n-context";
+import { useDictionary, useLocale } from "@/lib/i18n/i18n-context";
 import styles from "./featured-review.module.sass";
 
 // Must match $card-transition-duration (outgoing fade-out, not the faster $card-enter-opacity-duration) — JS can't read a sass variable at runtime.
@@ -168,6 +168,7 @@ type CardProps = {
 
 function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 	const dict = useDictionary();
+	const locale = useLocale();
 	// Entering cards start offset/transparent, flip to .settled a frame after mount. Exiting cards run this backwards (start settled, then flip off) to play the fade-and-slide-out. requestAnimationFrame ensures a real paint happens between the two states, or the transition gets coalesced away.
 	const [settled, setSettled] = useState(exiting);
 	useEffect(() => {
@@ -191,6 +192,9 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 	const review = media.review;
 	const eyebrow = eyebrowFor(review, dict);
 	const EyebrowIcon = eyebrow.icon;
+	// Falls back to English when untranslated, like MediaReviewBody/MediaTitle.
+	const title = locale === "fr" ? (media.titleFr ?? media.title) : media.title;
+	const body = locale === "fr" ? (review.bodyFr ?? review.body) : review.body;
 
 	// Only the incoming card slides; outgoing just fades in place, so they don't read as sliding past each other.
 	const offset = exiting ? 0 : direction * 2;
@@ -240,7 +244,7 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 						)}
 						{eyebrow.label}
 					</div>
-					<h1 className={styles.title}>{media.title}</h1>
+					<h1 className={styles.title}>{title}</h1>
 					<div className={styles.meta_row}>
 						<MediaReleaseDate date={media.releaseDate} />
 						{review.rating != null && (
@@ -253,7 +257,7 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 					<div className={styles.excerpt} ref={excerptRef}>
 						<ReviewSpoilerProvider>
 							<ReviewBody
-								text={review.body!}
+								text={body!}
 								paragraphClassName={styles.excerpt_line}
 								// The whole card is already a Link — a spoiler's click-to-reveal would fight that navigation, so clicks fall through untouched.
 								spoilersInteractive={false}

@@ -78,17 +78,23 @@ function MediaLink({
 }: {
 	media: NonNullable<ActivityFeedEntry["media"]>;
 }) {
+	const locale = useLocale();
+	// Falls back to English when untranslated, like MediaTitle.
+	const title = locale === "fr" ? (media.titleFr ?? media.title) : media.title;
 	return (
 		<Link href={`/media/${media.id}`} className={styles.title_link}>
-			{media.title}
+			{title}
 		</Link>
 	);
 }
 
 function ListLink({ list }: { list: NonNullable<ActivityFeedEntry["list"]> }) {
+	const locale = useLocale();
+	// Falls back to English when untranslated, like MediaTitle.
+	const title = locale === "fr" ? (list.titleFr ?? list.title) : list.title;
 	return (
 		<Link href={`/lists/${list.id}`} className={styles.title_link}>
-			{list.title}
+			{title}
 		</Link>
 	);
 }

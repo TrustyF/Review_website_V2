@@ -22,7 +22,7 @@ type ListGroupEntry = {
 	id: string | number;
 	createdAt: Date;
 	readAt?: Date | null;
-	list: { id: number; title: string; thumbnail: string | null } | null;
+	list: { id: number; title: string; titleFr: string | null; thumbnail: string | null } | null;
 	groupedMedia?: { id: number; title: string; posterSrc: string }[];
 	// The list's own creation folded into this same-day group — see
 	// activity-actions.ts/notification-actions.ts's own groupSameDayListAdditions.
@@ -49,6 +49,8 @@ export function ListAdditionsCard<T extends ListGroupEntry>({
 	if (!list) return null;
 
 	const unread = entry.readAt === null;
+	// Falls back to English when untranslated, like MediaTitle.
+	const title = locale === "fr" ? (list.titleFr ?? list.title) : list.title;
 
 	return (
 		<li
@@ -64,12 +66,12 @@ export function ListAdditionsCard<T extends ListGroupEntry>({
 						<img src={list.thumbnail} alt="" className={styles.thumbnail} />
 					) : (
 						<div className={styles.thumbnail_placeholder}>
-							{list.title.charAt(0)}
+							{title.charAt(0)}
 						</div>
 					)}
 					<div className={styles.content}>
 						<div className={styles.title_row}>
-							<span className={styles.title}>{list.title}</span>
+							<span className={styles.title}>{title}</span>
 							<span className={styles.date}>
 								{formatter.format(entry.createdAt)}
 							</span>

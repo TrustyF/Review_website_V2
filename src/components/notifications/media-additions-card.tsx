@@ -22,7 +22,7 @@ type MediaGroupEntry = {
 	id: string | number;
 	createdAt: Date;
 	readAt?: Date | null;
-	media: { id: number; title: string; posterSrc: string } | null;
+	media: { id: number; title: string; titleFr: string | null; posterSrc: string } | null;
 	groupedLists?: { id: number; title: string; thumbnail: string | null }[];
 };
 
@@ -46,6 +46,8 @@ export function MediaAdditionsCard<T extends MediaGroupEntry>({
 	if (!media) return null;
 
 	const unread = entry.readAt === null;
+	// Falls back to English when untranslated, like MediaTitle.
+	const title = locale === "fr" ? (media.titleFr ?? media.title) : media.title;
 
 	return (
 		<li
@@ -65,7 +67,7 @@ export function MediaAdditionsCard<T extends MediaGroupEntry>({
 					/>
 					<div className={styles.content}>
 						<div className={styles.title_row}>
-							<span className={styles.title}>{media.title}</span>
+							<span className={styles.title}>{title}</span>
 							<span className={styles.date}>
 								{formatter.format(entry.createdAt)}
 							</span>

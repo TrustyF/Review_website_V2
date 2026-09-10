@@ -11,13 +11,18 @@ enum ListSortMode {
 }
 
 model List {
-  id          Int          @id @default(autoincrement())
-  title       String
-  description String?
-  thumbnail   String?
-  sortMode    ListSortMode @default(RANKED)
-  createDate  DateTime     @default(now())
-  updateDate  DateTime     @updatedAt
+  id            Int          @id @default(autoincrement())
+  title         String
+  // Manually entered by whichever admin writes the list — lists are
+  // hand-authored, not ingested, so there's no source to pull a translation
+  // from. Null falls back to English, same convention as Review.bodyFr.
+  titleFr       String?
+  description   String?
+  descriptionFr String?
+  thumbnail     String?
+  sortMode      ListSortMode @default(RANKED)
+  createDate    DateTime     @default(now())
+  updateDate    DateTime     @updatedAt
 
   // Null for a normal, publicly-listed list (the common case, and the only
   // kind that existed before this field) — set only for an admin-curated
@@ -30,7 +35,7 @@ model List {
   // its recipient; once they're gone it just falls back to a normal public
   // list instead of being deleted with them.
   targetUserId String?
-  targetUser   User?  @relation(fields: [targetUserId], references: [id], onDelete: SetNull)
+  targetUser   User?   @relation(fields: [targetUserId], references: [id], onDelete: SetNull)
 
   items         ListItem[]
   notifications Notification[]

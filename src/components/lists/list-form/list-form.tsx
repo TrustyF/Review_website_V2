@@ -13,7 +13,9 @@ import { AssetBrowser } from "@/components/media/asset-browser/asset-browser";
 
 export type ListFormValues = {
 	title: string;
+	titleFr: string;
 	description: string;
+	descriptionFr: string;
 	thumbnailUrl: string;
 	sortMode: ListSortMode;
 	// null = a normal, publicly-listed list.
@@ -45,7 +47,9 @@ export function ListForm({
 	hideRecommendTo,
 }: Props) {
 	const [title, setTitle] = useState(initial.title);
+	const [titleFr, setTitleFr] = useState(initial.titleFr);
 	const [description, setDescription] = useState(initial.description);
+	const [descriptionFr, setDescriptionFr] = useState(initial.descriptionFr);
 	const [thumbnailUrl, setThumbnailUrl] = useState(initial.thumbnailUrl);
 	const [sortMode, setSortMode] = useState(initial.sortMode);
 	const [targetUserId, setTargetUserId] = useState(initial.targetUserId);
@@ -69,7 +73,9 @@ export function ListForm({
 		try {
 			await onSubmit({
 				title,
+				titleFr,
 				description,
+				descriptionFr,
 				thumbnailUrl,
 				sortMode,
 				targetUserId,
@@ -100,25 +106,46 @@ export function ListForm({
 
 	return (
 		<form className={styles.form} onSubmit={handleSubmit}>
-			<label className={styles.field}>
-				Title
-				<input
-					className={styles.input}
-					type="text"
-					value={title}
-					onChange={(e) => setTitle(e.target.value)}
-					required
-					autoFocus
-				/>
-			</label>
-			<label className={styles.field}>
-				Description
-				<textarea
-					className={styles.textarea}
-					value={description}
-					onChange={(e) => setDescription(e.target.value)}
-				/>
-			</label>
+			<div className={styles.field_row}>
+				<label className={styles.field}>
+					Title
+					<input
+						className={styles.input}
+						type="text"
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+						required
+						autoFocus
+					/>
+				</label>
+				<label className={styles.field}>
+					Title (French)
+					<input
+						className={styles.input}
+						type="text"
+						value={titleFr}
+						onChange={(e) => setTitleFr(e.target.value)}
+					/>
+				</label>
+			</div>
+			<div className={styles.field_row}>
+				<label className={styles.field}>
+					Description
+					<textarea
+						className={styles.textarea}
+						value={description}
+						onChange={(e) => setDescription(e.target.value)}
+					/>
+				</label>
+				<label className={styles.field}>
+					Description (French)
+					<textarea
+						className={styles.textarea}
+						value={descriptionFr}
+						onChange={(e) => setDescriptionFr(e.target.value)}
+					/>
+				</label>
+			</div>
 			<label className={styles.field}>
 				Thumbnail URL
 				<input

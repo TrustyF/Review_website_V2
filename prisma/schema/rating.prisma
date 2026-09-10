@@ -18,7 +18,7 @@ model Review {
   // medium, 2 is hard.
   difficulty    Int?
 
-  body String?
+  body   String?
   // French translation of `body`, written directly by the reviewer (no
   // admin-UI editor for this yet) — falls back to `body` when unset.
   bodyFr String?

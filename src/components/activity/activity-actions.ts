@@ -22,10 +22,16 @@ export type ActivityFeedEntry = {
 	media: {
 		id: number;
 		title: string;
+		titleFr: string | null;
 		type: MediaType;
 		posterSrc: string;
 	} | null;
-	list: { id: number; title: string; thumbnail: string | null } | null;
+	list: {
+		id: number;
+		title: string;
+		titleFr: string | null;
+		thumbnail: string | null;
+	} | null;
 	// LIST_ITEM_ADDED row standing in for same-day additions (see notification-actions.ts's
 	// own grouping, mirrored here). id/media/list/createdAt are from the most recent one.
 	groupedIds?: string[];
@@ -52,6 +58,7 @@ function isSameCalendarDay(a: Date, b: Date): boolean {
 const MEDIA_SELECT = {
 	id: true,
 	title: true,
+	titleFr: true,
 	type: true,
 	posterPath: true,
 	externalId: true,
@@ -60,6 +67,7 @@ const MEDIA_SELECT = {
 type MediaSelection = {
 	id: number;
 	title: string;
+	titleFr: string | null;
 	type: MediaType;
 	posterPath: string | null;
 	externalId: string | null;
@@ -88,6 +96,7 @@ async function toMediaEntry(
 	return {
 		id: media.id,
 		title: media.title,
+		titleFr: media.titleFr,
 		type: media.type,
 		posterSrc: posterSrc ? await posterSrc : PLACEHOLDER_POSTER_SRC,
 	};
@@ -283,7 +292,13 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 				where: { targetUserId: null },
 				orderBy: { createDate: "desc" },
 				take: PAGE_SIZE,
-				select: { id: true, title: true, thumbnail: true, createDate: true },
+				select: {
+					id: true,
+					title: true,
+					titleFr: true,
+					thumbnail: true,
+					createDate: true,
+				},
 			}),
 			db.listItem.findMany({
 				where: {
@@ -295,7 +310,9 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 				select: {
 					listId: true,
 					addedAt: true,
-					list: { select: { id: true, title: true, thumbnail: true } },
+					list: {
+						select: { id: true, title: true, titleFr: true, thumbnail: true },
+					},
 					media: { select: MEDIA_SELECT },
 				},
 			}),
@@ -378,7 +395,12 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 			oldValue: null,
 			newValue: null,
 			media: null,
-			list: { id: list.id, title: list.title, thumbnail: list.thumbnail },
+			list: {
+				id: list.id,
+				title: list.title,
+				titleFr: list.titleFr,
+				thumbnail: list.thumbnail,
+			},
 		})),
 		...listItems.map((item) => ({
 			id: `listitem-${item.listId}-${item.media.id}`,
