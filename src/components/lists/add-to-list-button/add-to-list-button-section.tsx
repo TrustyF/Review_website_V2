@@ -12,33 +12,23 @@ export async function AddToListButtonSection({ mediaId, className }: Props) {
 	const session = await auth();
 	if (session?.user?.role !== "ADMIN") {
 		return (
-			<AddToListButton
-				mediaId={mediaId}
-				allLists={[]}
-				memberListIds={[]}
-				className={className}
-			/>
+			<AddToListButton mediaId={mediaId} memberLists={[]} className={className} />
 		);
 	}
 
-	// Every list plus current membership, so the popover renders pre-checked without a second round trip.
-	const allLists = await db.list.findMany({
-		select: {
-			id: true,
-			title: true,
-			items: { where: { mediaId }, select: { mediaId: true } },
-		},
-		orderBy: { createDate: "desc" },
+	// Only the lists this media is already in, via the indexed reverse lookup — the
+	// full list catalog is fetched on demand by search instead (see list-actions.ts's searchLists).
+	const memberships = await db.listItem.findMany({
+		where: { mediaId },
+		select: { list: { select: { id: true, title: true } } },
+		orderBy: { list: { createDate: "desc" } },
 	});
-	const memberListIds = allLists
-		.filter((list) => list.items.length > 0)
-		.map((list) => list.id);
+	const memberLists = memberships.map((m) => m.list);
 
 	return (
 		<AddToListButton
 			mediaId={mediaId}
-			allLists={allLists}
-			memberListIds={memberListIds}
+			memberLists={memberLists}
 			className={className}
 		/>
 	);

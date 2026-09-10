@@ -10,6 +10,7 @@ import {
 import { readCroppedFile } from "@/server/resolvers/image-crop-resolver";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createNotification } from "@/components/notifications/notification-actions";
+import { fuzzySearch } from "@/lib/fuzzy-search";
 
 type ListInput = {
 	title: string;
@@ -166,6 +167,39 @@ export async function deleteList(id: number): Promise<void> {
 	await requireAdmin();
 	await db.list.delete({ where: { id } });
 	revalidatePath("/lists");
+}
+
+export type ListSearchResult = { id: number; title: string; isMember: boolean };
+
+const LIST_SEARCH_LIMIT = 20;
+// Same typo tolerance as media-browser-actions.ts's FUSE_OPTIONS.
+const LIST_FUSE_OPTIONS = {
+	keys: ["title"],
+	threshold: 0.35,
+	ignoreLocation: true,
+};
+
+// Powers AddToListButton's picker once list counts get too large to render flat.
+export async function searchLists(
+	query: string,
+	mediaId: number,
+): Promise<ListSearchResult[]> {
+	await requireAdmin();
+	const trimmed = query.trim();
+	if (!trimmed) return [];
+
+	const [candidates, memberships] = await Promise.all([
+		db.list.findMany({
+			select: { id: true, title: true },
+			orderBy: { id: "asc" },
+		}),
+		db.listItem.findMany({ where: { mediaId }, select: { listId: true } }),
+	]);
+	const memberIds = new Set(memberships.map((m) => m.listId));
+
+	return fuzzySearch(candidates, LIST_FUSE_OPTIONS, trimmed, LIST_SEARCH_LIMIT).map(
+		(l) => ({ id: l.id, title: l.title, isMember: memberIds.has(l.id) }),
+	);
 }
 
 export async function addMediaToList(

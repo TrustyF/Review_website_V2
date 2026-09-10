@@ -21,15 +21,34 @@
   z-index: 20
   padding: 0.6rem
   min-width: 12rem
+  max-height: 20rem
+  display: flex
+  flex-flow: column
+  gap: 0.4rem
   background: var(--surface)
   border: 1px solid var(--surface-border)
   border-radius: 0.5rem
+
+.search_input
+  padding: 0.3rem 0.5rem
+  font-size: 0.85rem
+  border: 1px solid var(--surface-border)
+  border-radius: 0.3rem
+  background: var(--background)
+  color: var(--foreground)
+
+.status
+  font-size: 0.85rem
+  color: var(--accent3)
 
 .list
   display: flex
   flex-flow: column
   gap: 0.4rem
   list-style: none
+  overflow-y: auto
+  flex: 1
+  min-height: 0
 
 .label
   display: flex
