@@ -14,8 +14,6 @@ const SETTINGS_ID = 1;
 
 export type DigestBannerOverride = {
 	image: string | null;
-	headline: string | null;
-	subtitle: string | null;
 };
 
 // Normalizes image input (URL or pasted link) to self-hosted digest-override URL.
@@ -35,8 +33,6 @@ export async function updateDigestBannerOverride(
 	await requireAdmin();
 	const data = {
 		digestBannerImage: await resolveOverrideImageUrl(input.image),
-		digestBannerHeadline: input.headline?.trim() || null,
-		digestBannerSubtitle: input.subtitle?.trim() || null,
 	};
 
 	await db.settings.upsert({

@@ -1,12 +1,11 @@
 import { Column, Img, Row, Section, Text } from "@react-email/components";
 import { emailAssetSrc } from "../lib/email-asset";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 
 type Props = {
+	dict: Dictionary;
 	bannerSrc: string | null;
 	dateLabel: string;
-	// Admin override from /admin/digest — default to "Weekly Digest"/dateLabel when unset.
-	headline?: string | null | undefined;
-	subtitle?: string | null | undefined;
 };
 
 // Tall, closer to the reference screenshot's proportions relative to a
@@ -14,12 +13,7 @@ type Props = {
 const BANNER_HEIGHT = 220;
 
 // Two stacked CSS backgrounds; lets logo/date sit in normal flow.
-export function DigestBanner({
-	bannerSrc,
-	dateLabel,
-	headline,
-	subtitle,
-}: Props) {
+export function DigestBanner({ dict, bannerSrc, dateLabel }: Props) {
 	return (
 		<Section
 			className=""
@@ -68,12 +62,12 @@ export function DigestBanner({
 							<Text
 								className="m-0 mt-9 font-serif text-[50px] font-bold uppercase leading-[1] text-white"
 								style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.85)" }}>
-								{headline || "Weekly Digest"}
+								{dict.digest.weeklyDigestFallbackHeadline}
 							</Text>
 							<Text
 								className="m-0 mt-2 text-[12px] font-medium text-white"
 								style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.95)" }}>
-								{subtitle || dateLabel}
+								{dateLabel}
 							</Text>
 						</Column>
 						<Column className="w-[170px] align-top" />

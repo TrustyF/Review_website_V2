@@ -11,6 +11,8 @@ import {
 	MediaType,
 	UserRole,
 } from "@prisma/client";
+import type { Locale } from "@/lib/i18n/get-locale";
+import { getDictionaryForLocale } from "@/lib/i18n/get-dictionary";
 
 // Shared by send-weekly-digest.ts (real send) and admin preview route — same query/prop logic, so preview always matches what gets mailed.
 
@@ -71,8 +73,8 @@ async function toBannerSrc(media: MediaSelection): Promise<string | null> {
 	return src ? toAbsoluteUrl(src) : null;
 }
 
-function formatWatchedDate(date: Date): string {
-	return date.toLocaleDateString("en-US", {
+function formatWatchedDate(date: Date, locale: Locale): string {
+	return date.toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US", {
 		month: "short",
 		day: "numeric",
 		year: "numeric",
@@ -81,8 +83,8 @@ function formatWatchedDate(date: Date): string {
 
 // Long month, matching the banner's "WEEKLY DIGEST · <date>" subtitle —
 // distinct from formatWatchedDate's shorter "Aug 12, 2026" review byline.
-function formatDigestDate(date: Date): string {
-	return date.toLocaleDateString("en-US", {
+function formatDigestDate(date: Date, locale: Locale): string {
+	return date.toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US", {
 		month: "long",
 		day: "numeric",
 		year: "numeric",
@@ -130,7 +132,9 @@ export type DigestEmailProps = Omit<
 >;
 
 // null when no rating/review activity past week (digest skipped; preview has nothing real to render). Same admin-content scope as activity-actions.ts's getActivityFeed.
-export async function buildDigestEmailProps(): Promise<DigestEmailProps | null> {
+export async function buildDigestEmailProps(
+	locale: Locale,
+): Promise<DigestEmailProps | null> {
 	const since = new Date(Date.now() - DIGEST_WINDOW_MS);
 
 	const [latestReviewed, recentlyRated] = await Promise.all([
@@ -152,6 +156,7 @@ export async function buildDigestEmailProps(): Promise<DigestEmailProps | null> 
 				initialRating: true,
 				reviewDate: true,
 				body: true,
+				bodyFr: true,
 				media: { select: MEDIA_SELECT },
 			},
 		}),
@@ -192,8 +197,9 @@ export async function buildDigestEmailProps(): Promise<DigestEmailProps | null> 
 				? String(review.media.releaseDate.getFullYear())
 				: null,
 			rating: review.initialRating ?? review.rating,
-			watchedDateLabel: formatWatchedDate(review.reviewDate!),
-			body: review.body,
+			watchedDateLabel: formatWatchedDate(review.reviewDate!, locale),
+			// Falls back to English silently when untranslated — see Review.bodyFr.
+			body: locale === "fr" ? (review.bodyFr ?? review.body) : review.body,
 		})),
 	);
 
@@ -223,10 +229,9 @@ export async function buildDigestEmailProps(): Promise<DigestEmailProps | null> 
 			: null;
 
 	return {
+		dict: getDictionaryForLocale(locale),
 		bannerSrc,
-		dateLabel: formatDigestDate(new Date()),
-		bannerHeadline: settings?.digestBannerHeadline,
-		bannerSubtitle: settings?.digestBannerSubtitle,
+		dateLabel: formatDigestDate(new Date(), locale),
 		latestReviews,
 		recentWatches,
 		anticipatedReleases,

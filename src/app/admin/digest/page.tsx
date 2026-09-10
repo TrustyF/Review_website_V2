@@ -13,11 +13,7 @@ export default async function DigestPage() {
 
 	return (
 		<DigestPageClient
-			initial={{
-				image: settings?.digestBannerImage ?? null,
-				headline: settings?.digestBannerHeadline ?? null,
-				subtitle: settings?.digestBannerSubtitle ?? null,
-			}}
+			initial={{ image: settings?.digestBannerImage ?? null }}
 		/>
 	);
 }

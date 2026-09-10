@@ -321,6 +321,18 @@ export const en = {
 		gapMonthsLater: (n: number) => `${n} month${n === 1 ? "" : "s"} later`,
 		gapYearsLater: (n: number) => `${n} year${n === 1 ? "" : "s"} later`,
 	},
+	digest: {
+		subject: "What I've been watching",
+		previewText: "My latest review, plus what I've been watching this week",
+		weeklyDigestFallbackHeadline: "Weekly Digest",
+		latestReviews: "Latest reviews",
+		recentActivity: "Recent activity",
+		seeMore: "See more",
+		subscribedFooter:
+			"You're getting this because you signed up for updates from Arthur's Corner.",
+		manageSubscription: "Manage your subscription",
+		unsubscribe: "Unsubscribe",
+	},
 };
 
 export type Dictionary = typeof en;

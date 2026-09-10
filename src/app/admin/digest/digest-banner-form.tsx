@@ -22,8 +22,6 @@ type Props = {
 // behavior (featured media's backdrop, "Weekly Digest" headline, send date).
 export function DigestBannerForm({ initial, onSaved, onCleared }: Props) {
 	const [image, setImage] = useState(initial.image ?? "");
-	const [headline, setHeadline] = useState(initial.headline ?? "");
-	const [subtitle, setSubtitle] = useState(initial.subtitle ?? "");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -36,11 +34,7 @@ export function DigestBannerForm({ initial, onSaved, onCleared }: Props) {
 		setError(null);
 		setSaved(false);
 		try {
-			await updateDigestBannerOverride({
-				image,
-				headline,
-				subtitle,
-			});
+			await updateDigestBannerOverride({ image });
 			setSaved(true);
 			onSaved?.();
 		} catch {
@@ -76,12 +70,10 @@ export function DigestBannerForm({ initial, onSaved, onCleared }: Props) {
 		setSaved(false);
 		try {
 			await Promise.all([
-				updateDigestBannerOverride({ image: "", headline: "", subtitle: "" }),
+				updateDigestBannerOverride({ image: "" }),
 				clearAllDigestReviews(),
 			]);
 			setImage("");
-			setHeadline("");
-			setSubtitle("");
 			setSaved(true);
 			onCleared?.();
 		} catch {
@@ -119,26 +111,6 @@ export function DigestBannerForm({ initial, onSaved, onCleared }: Props) {
 				Browse posters &amp; banners…
 			</Clickable>
 			{isUploading && <div className={styles.uploading}>Uploading…</div>}
-			<label className={styles.field}>
-				Headline
-				<input
-					className={styles.input}
-					type="text"
-					placeholder="Weekly Digest"
-					value={headline}
-					onChange={(e) => setHeadline(e.target.value)}
-				/>
-			</label>
-			<label className={styles.field}>
-				Subtitle
-				<input
-					className={styles.input}
-					type="text"
-					placeholder="Defaults to the send date"
-					value={subtitle}
-					onChange={(e) => setSubtitle(e.target.value)}
-				/>
-			</label>
 			{error && <div className={styles.error}>{error}</div>}
 			{saved && !error && <div className={styles.saved}>Saved.</div>}
 			<div className={styles.button_row}>

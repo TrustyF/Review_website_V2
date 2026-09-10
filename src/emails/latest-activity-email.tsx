@@ -18,6 +18,8 @@ import { MediaReviewCard } from "./components/media-review-card";
 import { MediaMiniCard } from "./components/media-mini-card";
 import { EMAIL_TAILWIND_CONFIG } from "./theme";
 import { EmailFonts } from "./theme-fonts";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+import { getDictionaryForLocale } from "@/lib/i18n/get-dictionary";
 
 type ReviewProps = {
 	title: string;
@@ -37,11 +39,9 @@ type WatchProps = {
 };
 
 type Props = {
+	dict: Dictionary;
 	bannerSrc: string | null;
 	dateLabel: string;
-	// Admin override from /admin/digest — see send-weekly-digest.ts.
-	bannerHeadline?: string | null | undefined;
-	bannerSubtitle?: string | null | undefined;
 	latestReviews: ReviewProps[];
 	recentWatches: WatchProps[];
 	anticipatedReleases: WatchProps[];
@@ -60,16 +60,18 @@ const PREVIEW_DATA_PATH = path.join(
 	"src/emails/preview-data/latest-activity-email.json",
 );
 if (existsSync(PREVIEW_DATA_PATH)) {
-	LatestActivityEmail.PreviewProps = JSON.parse(
-		readFileSync(PREVIEW_DATA_PATH, "utf-8"),
-	) as Props;
+	// `dict` isn't in the JSON (its functions wouldn't survive serialization) —
+	// seed-email-preview.ts omits it, so it's filled in fresh here instead.
+	LatestActivityEmail.PreviewProps = {
+		...(JSON.parse(readFileSync(PREVIEW_DATA_PATH, "utf-8")) as Omit<Props, "dict">),
+		dict: getDictionaryForLocale("en"),
+	};
 }
 
 export default function LatestActivityEmail({
+	dict,
 	bannerSrc,
 	dateLabel,
-	bannerHeadline,
-	bannerSubtitle,
 	latestReviews,
 	recentWatches,
 	anticipatedReleases,
@@ -83,17 +85,10 @@ export default function LatestActivityEmail({
 				<Head>
 					<EmailFonts />
 				</Head>
-				<Preview>
-					My latest review, plus what I&apos;ve been watching this week
-				</Preview>
+				<Preview>{dict.digest.previewText}</Preview>
 				<Body className="m-0 bg-bg-2 font-sans">
 					<Container className="mx-auto w-full max-w-[600px]">
-						<DigestBanner
-							bannerSrc={bannerSrc}
-							dateLabel={dateLabel}
-							headline={bannerHeadline}
-							subtitle={bannerSubtitle}
-						/>
+						<DigestBanner dict={dict} bannerSrc={bannerSrc} dateLabel={dateLabel} />
 
 						<Section className="bg-bg p-6">
 							{/*<Text className="m-2 mb-5 text-center text-[15px] text-fg-2">*/}
@@ -103,7 +98,9 @@ export default function LatestActivityEmail({
 							<Section>
 								{latestReviews.length > 0 && (
 									<Section>
-										<Text className={SECTION_LABEL_CLASS}>Latest reviews</Text>
+										<Text className={SECTION_LABEL_CLASS}>
+											{dict.digest.latestReviews}
+										</Text>
 										{latestReviews.map((review, index) => (
 											<Section
 												key={review.mediaUrl}
@@ -121,7 +118,7 @@ export default function LatestActivityEmail({
 												latestReviews.length > 0 ? "mt-12" : undefined
 											}>
 											<Text className={`${SECTION_LABEL_CLASS}`}>
-												Recent activity
+												{dict.digest.recentActivity}
 											</Text>
 											<Row align="left" width="auto">
 												{recentWatches.map((movie) => (
@@ -140,7 +137,7 @@ export default function LatestActivityEmail({
 												: undefined
 										}>
 										<Text className={SECTION_LABEL_CLASS}>
-											Anticipated releases
+											{dict.home.anticipatedReleases}
 										</Text>
 										<Row align="left" width="auto">
 											{anticipatedReleases.map((movie) => (
@@ -159,7 +156,7 @@ export default function LatestActivityEmail({
 								<Button
 									href={activityUrl}
 									className="inline-block rounded-lg bg-brand px-6 py-3 text-[14px] font-semibold text-brand-ink">
-									See more
+									{dict.digest.seeMore}
 								</Button>
 							</Section>
 						</Section>
@@ -167,14 +164,13 @@ export default function LatestActivityEmail({
 						<Section className="mt-6 text-center">
 							{/*<Text className="m-0 mb-2 text-[13px] text-fg-2">— Arthur</Text>*/}
 							<Text className="m-0 text-[11px] text-fg-3">
-								You&apos;re getting this because you signed up for updates from
-								Arthur&apos;s Corner.{" "}
+								{dict.digest.subscribedFooter}{" "}
 								<Link href={accountUrl} className="text-fg-3 underline">
-									Manage your subscription
+									{dict.digest.manageSubscription}
 								</Link>{" "}
 								·{" "}
 								<Link href={unsubscribeUrl} className="text-fg-3 underline">
-									Unsubscribe
+									{dict.digest.unsubscribe}
 								</Link>
 							</Text>
 						</Section>

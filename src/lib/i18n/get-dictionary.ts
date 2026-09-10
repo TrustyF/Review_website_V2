@@ -9,4 +9,10 @@ export async function getDictionary(): Promise<Dictionary> {
 	return dictionaries[locale];
 }
 
+// For contexts with no cookies/session (the digest cron script) but an
+// explicit locale already in hand — e.g. from a User row.
+export function getDictionaryForLocale(locale: Locale): Dictionary {
+	return dictionaries[locale];
+}
+
 export type { Dictionary } from "@/lib/i18n/dictionaries/en";

@@ -46,7 +46,7 @@ export const DIGEST_BANNER_OVERRIDE_DIR = "banners/digest-override";
 // live site has *right now*, which an email can't depend on staying in sync.
 export const EMAIL_POSTER_DIR = "posters/email-cache";
 // Tune to taste — bump toward 90 for less compression, lower for smaller emails.
-export const EMAIL_POSTER_QUALITY = 10;
+export const EMAIL_POSTER_QUALITY = 65;
 
 export type CacheFormat = "webp" | "avif" | "jpeg";
 

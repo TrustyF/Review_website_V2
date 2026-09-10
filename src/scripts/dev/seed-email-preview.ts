@@ -11,7 +11,7 @@ const OUT_PATH = path.join(
 );
 
 async function main() {
-	const props = await buildDigestEmailProps();
+	const props = await buildDigestEmailProps("en");
 	if (!props) {
 		console.error(
 			"No rating/review activity in the past week — nothing to seed, left the existing preview data as-is.",
@@ -23,7 +23,9 @@ async function main() {
 		OUT_PATH,
 		JSON.stringify(
 			{ ...props, unsubscribeUrl: "https://example.com/api/unsubscribe?token=preview" },
-			null,
+			// dict omitted — its functions wouldn't survive JSON serialization;
+			// latest-activity-email.tsx fills a fresh one in when it reads this file.
+			(key, value) => (key === "dict" ? undefined : value),
 			"\t",
 		) + "\n",
 	);

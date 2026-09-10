@@ -145,7 +145,8 @@ export const fr = {
 				`${count} noté${count === 1 ? "" : "s"} ${tier}`,
 			unratedAriaLabel: (count: number) =>
 				`${count} ${count === 1 ? "titre non noté" : "titres non notés"}`,
-			unratedTooltip: (count: number) => `${count} non noté${count === 1 ? "" : "s"}`,
+			unratedTooltip: (count: number) =>
+				`${count} non noté${count === 1 ? "" : "s"}`,
 		},
 		credits: {
 			avgLabel: "moy.",
@@ -217,16 +218,19 @@ export const fr = {
 		recentlyWatched: "Vu récemment",
 		anticipatedReleases: "Sorties attendues",
 		readFullReview: "Lire la critique complète →",
-		showFeaturedReview: (title: string) => `Afficher la critique mise en avant : ${title}`,
+		showFeaturedReview: (title: string) =>
+			`Afficher la critique mise en avant : ${title}`,
 		eyebrowFeatured: "Critique mise en avant",
 		eyebrowNew: "Nouvelle critique",
 	},
 	watchlist: {
 		title: "Ma liste à voir",
-		empty: "Votre liste à voir est vide — ajoutez quelque chose depuis sa page média.",
+		empty:
+			"Votre liste à voir est vide — ajoutez quelque chose depuis sa page média.",
 		inWatchlist: "Dans la liste à voir",
 		addToWatchlist: "Ajouter à la liste à voir",
-		removeFromWatchlist: (title: string) => `Retirer ${title} de la liste à voir`,
+		removeFromWatchlist: (title: string) =>
+			`Retirer ${title} de la liste à voir`,
 	},
 	unsubscribed: {
 		title: "Vous êtes désabonné",
@@ -253,7 +257,8 @@ export const fr = {
 		unreadAriaLabel: (count: number) =>
 			`Notifications (${count} non lue${count === 1 ? "" : "s"})`,
 		backToAccount: "← Compte",
-		empty: "Rien pour l'instant — vous verrez ici quand un admin crée une liste pour vous ou ajoute quelque chose à l'une de vos listes.",
+		empty:
+			"Rien pour l'instant — vous verrez ici quand un admin crée une liste pour vous ou ajoute quelque chose à l'une de vos listes.",
 		markAllRead: "Tout marquer comme lu",
 		newListForYou: "Une nouvelle liste a été créée pour vous",
 		createdListForYou: "Liste créée pour vous",
@@ -322,5 +327,17 @@ export const fr = {
 		gapDaysLater: (n: number) => `${n} jour${n === 1 ? "" : "s"} plus tard`,
 		gapMonthsLater: (n: number) => `${n} mois plus tard`,
 		gapYearsLater: (n: number) => `${n} an${n === 1 ? "" : "s"} plus tard`,
+	},
+	digest: {
+		subject: "Ce que j'ai regardé",
+		previewText: "Ma dernière critique, et ce que j'ai regardé cette semaine",
+		weeklyDigestFallbackHeadline: "Résumé hebdo",
+		latestReviews: "Dernières critiques",
+		recentActivity: "Activité récente",
+		seeMore: "Voir plus",
+		subscribedFooter:
+			"Vous recevez cet e-mail car vous êtes abonné aux mises à jour d'Arthur's Corner.",
+		manageSubscription: "Gérer votre abonnement",
+		unsubscribe: "Se désabonner",
 	},
 } satisfies Dictionary;
