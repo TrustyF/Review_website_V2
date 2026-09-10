@@ -102,7 +102,10 @@ export async function saveReview(
 
 	const [existing, media] = await Promise.all([
 		db.review.findUnique({ where: { mediaId } }),
-		db.media.findUniqueOrThrow({ where: { id: mediaId }, select: { type: true } }),
+		db.media.findUniqueOrThrow({
+			where: { id: mediaId },
+			select: { type: true },
+		}),
 	]);
 
 	// Set once, the first time body goes from unset to set. Keyed off reviewDate's presence
@@ -151,7 +154,10 @@ export async function logRewatch(mediaId: number) {
 		db.mediaChangeLog.create({
 			data: { mediaId, field: "rewatched", oldValue: null, newValue: "true" },
 		}),
-		db.media.findUniqueOrThrow({ where: { id: mediaId }, select: { type: true } }),
+		db.media.findUniqueOrThrow({
+			where: { id: mediaId },
+			select: { type: true },
+		}),
 	]);
 	revalidateMediaPaths(mediaId, media.type);
 	revalidatePath("/activity");
@@ -272,6 +278,48 @@ function restoreMarkup(text: string, spans: string[]): string {
 	});
 }
 
+// Unlike extractMarkup above, keeps span text inline (sentinel-wrapped) so
+// translation reaches it. URLs are pulled out entirely, never shown to the model.
+const SPOILER_OPEN = "⟦SPOILER_OPEN⟧";
+const SPOILER_CLOSE = "⟦SPOILER_CLOSE⟧";
+const LINK_OPEN = "⟦LINK_OPEN⟧";
+const LINK_CLOSE_PREFIX = "⟦LINK_CLOSE";
+const LINK_CLOSE_REGEX = new RegExp(
+	`${LINK_OPEN}([\\s\\S]*?)${LINK_CLOSE_PREFIX}(\\d+)⟧`,
+	"g",
+);
+
+function markMarkupForTranslation(body: string): {
+	marked: string;
+	urls: string[];
+} {
+	const urls: string[] = [];
+	const marked = body.replace(
+		REVIEW_MARKUP_REGEX,
+		(_match, spoilerText, linkText, url) => {
+			if (spoilerText !== undefined) {
+				return `${SPOILER_OPEN}${spoilerText}${SPOILER_CLOSE}`;
+			}
+			const index = urls.push(url) - 1;
+			return `${LINK_OPEN}${linkText}${LINK_CLOSE_PREFIX}${index}⟧`;
+		},
+	);
+	return { marked, urls };
+}
+
+function unmarkTranslatedMarkup(text: string, urls: string[]): string {
+	const withSpoilers = text
+		.replaceAll(SPOILER_OPEN, "||")
+		.replaceAll(SPOILER_CLOSE, "||");
+	return withSpoilers.replace(
+		LINK_CLOSE_REGEX,
+		(full, linkText: string, indexStr: string) => {
+			const url = urls[Number(indexStr)];
+			return url ? `[${linkText}](${url})` : full;
+		},
+	);
+}
+
 // Read-only — returns a suggested rewrite; the caller decides what to copy in.
 export async function suggestReviewCorrection(body: string): Promise<string> {
 	await requireAdmin();
@@ -284,14 +332,50 @@ export async function suggestReviewCorrection(body: string): Promise<string> {
 		model: "claude-opus-5",
 		max_tokens: 2048,
 		output_config: { effort: "low" },
-		system:
-			"You proofread review text for a personal movie/TV/manga/game log. Fix grammar, spelling, clarity issues and repetitive wording. It should read like an essay. Preserve the reviewer's opinions. The text may contain placeholder tokens like ⟦MARKUP0⟧ — leave every one exactly as it is: don't add, remove, rename, translate, or explain them. Reply with only the corrected text: no preamble, no explanation, no surrounding quotes.",
+		// Below the ~1024-token minimum this prompt won't actually get cached
+		// today, but marking it costs nothing and covers it if it ever grows.
+		system: [
+			{
+				type: "text",
+				text: "You proofread review text for a personal movie/TV/manga/game log. Fix grammar, spelling, clarity issues and repetitive wording. It should read like an essay. Preserve the reviewer's opinions. The text may contain placeholder tokens like ⟦MARKUP0⟧ — leave every one exactly as it is: don't add, remove, rename, translate, or explain them. Reply with only the corrected text: no preamble, no explanation, no surrounding quotes.",
+				cache_control: { type: "ephemeral" },
+			},
+		],
 		messages: [{ role: "user", content: stripped }],
 	});
 
 	const textBlock = response.content.find((block) => block.type === "text");
 	const corrected = textBlock?.type === "text" ? textBlock.text : "";
 	return restoreMarkup(corrected, spans);
+}
+
+// Read-only — suggested French translation, for the caller to copy into
+// Review.bodyFr. Uses markMarkupForTranslation, not extractMarkup — see there.
+export async function suggestReviewTranslation(body: string): Promise<string> {
+	await requireAdmin();
+	if (!body.trim()) return "";
+
+	const { marked, urls } = markMarkupForTranslation(body);
+
+	const client = new Anthropic();
+	const response = await client.messages.create({
+		model: "claude-opus-5",
+		max_tokens: 2048,
+		output_config: { effort: "max" },
+		// See suggestReviewCorrection's own comment on cache_control here.
+		system: [
+			{
+				type: "text",
+				text: `You translate review text for a personal movie/TV/manga/game log from English to French. Keep the reviewer's tone, opinions, and level of formality — a natural translation, not a literal one. The text contains marker tokens in pairs, e.g. ${SPOILER_OPEN}some phrase${SPOILER_CLOSE} or ${LINK_OPEN}some phrase${LINK_CLOSE_PREFIX}0⟧ — translate the phrase inside a pair normally, as part of the surrounding sentence, but leave the marker tokens themselves exactly as they are, immediately before/after the translated phrase: don't add, remove, rename, reorder, or explain them. Reply with only the translated text: no preamble, no explanation, no surrounding quotes.`,
+				cache_control: { type: "ephemeral" },
+			},
+		],
+		messages: [{ role: "user", content: marked }],
+	});
+
+	const textBlock = response.content.find((block) => block.type === "text");
+	const translated = textBlock?.type === "text" ? textBlock.text : "";
+	return unmarkTranslatedMarkup(translated, urls);
 }
 
 export async function getAlternativePosters(
@@ -409,7 +493,12 @@ export async function updateMediaPoster(
 
 	// resolvePoster returns as soon as the source downloads and defers the resize/encode/write
 	// to after(), so this Server Action doesn't tie up the instance and block others behind it.
-	await resolvePoster(mediaId, existing!.type, existing!.externalId, posterPath);
+	await resolvePoster(
+		mediaId,
+		existing!.type,
+		existing!.externalId,
+		posterPath,
+	);
 	if (revalidate) revalidateMediaPaths(mediaId, existing!.type);
 	return `/api/poster/${mediaId}/${mediaAssetFilename(mediaId, posterPath)}`;
 }
@@ -442,7 +531,9 @@ export async function getAlternativeBanners(
 					thumbSrc: buildProxiedImageUrl(
 						`https://images.igdb.com/igdb/image/upload/t_screenshot_med/${artwork.image_id}.jpg`,
 					),
-					previewSrc: buildProxiedImageUrl(bannerUrlFor(type, artwork.image_id)),
+					previewSrc: buildProxiedImageUrl(
+						bannerUrlFor(type, artwork.image_id),
+					),
 				})),
 			offset,
 			limit,
@@ -459,7 +550,9 @@ export async function getAlternativeBanners(
 				thumbSrc: buildProxiedImageUrl(
 					`https://image.tmdb.org/t/p/w300${backdrop.file_path}`,
 				),
-				previewSrc: buildProxiedImageUrl(bannerUrlFor(type, backdrop.file_path)),
+				previewSrc: buildProxiedImageUrl(
+					bannerUrlFor(type, backdrop.file_path),
+				),
 			})),
 		offset,
 		limit,

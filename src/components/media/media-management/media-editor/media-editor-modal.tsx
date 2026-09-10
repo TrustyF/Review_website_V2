@@ -188,6 +188,7 @@ export default function MediaEditorModal() {
 								liked: draft.review.liked,
 								difficulty: draft.review.difficulty,
 								body: draft.review.body,
+								bodyFr: draft.review.bodyFr,
 							},
 							{ revalidate: false },
 						)
@@ -550,6 +551,8 @@ export default function MediaEditorModal() {
 				<ReviewBodyModal
 					body={draft.review?.body ?? ""}
 					onChange={(body) => patchReview({ body })}
+					bodyFr={draft.review?.bodyFr ?? ""}
+					onChangeFr={(bodyFr) => patchReview({ bodyFr })}
 					onClose={() => setIsBodyModalOpen(false)}
 				/>
 			)}

@@ -39,10 +39,10 @@ export function ReviewBodyEditTrigger({ media, isUpcoming }: Props) {
 
 	const draft = useMediaPublishStore((s) => s.draft);
 	const stageReview = useMediaPublishStore((s) => s.stageReview);
-	const draftBody =
-		draft?.mediaId === media.id ? draft.pendingReview?.body : undefined;
+	const pendingReview = draft?.mediaId === media.id ? draft.pendingReview : undefined;
 
-	const [body, setBody] = useState(draftBody ?? review?.body ?? "");
+	const [body, setBody] = useState(pendingReview?.body ?? review?.body ?? "");
+	const [bodyFr, setBodyFr] = useState(pendingReview?.bodyFr ?? review?.bodyFr ?? "");
 	const [isOpen, setIsOpen] = useState(false);
 
 	if (!review && isUpcoming) {
@@ -67,6 +67,7 @@ export function ReviewBodyEditTrigger({ media, isUpcoming }: Props) {
 			liked: review!.liked,
 			difficulty: review!.difficulty,
 			body,
+			bodyFr,
 		});
 	}
 
@@ -87,6 +88,8 @@ export function ReviewBodyEditTrigger({ media, isUpcoming }: Props) {
 				<ReviewBodyModal
 					body={body}
 					onChange={setBody}
+					bodyFr={bodyFr}
+					onChangeFr={setBodyFr}
 					onClose={handleClose}
 				/>
 			)}

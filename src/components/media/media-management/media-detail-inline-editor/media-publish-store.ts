@@ -7,6 +7,7 @@ export type PendingReview = {
 	liked: boolean;
 	difficulty: number | null;
 	body: string;
+	bodyFr: string;
 };
 
 export type MediaEditDraft = {
