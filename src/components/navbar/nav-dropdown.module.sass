@@ -35,11 +35,10 @@
   //.wrapper[open] &
   //  transform: rotate(180deg)
 
-// All label variants overlap in the same grid cell (sized to the widest),
-// so the box's width never changes as the active one switches via a slide.
+// Only the active label is in normal flow, so width matches what's shown
+// instead of reserving room for every variant's widest translation.
 .label_stack
   position: relative
-  display: grid
   overflow: hidden
   // Global line-height:1 clips descenders (e.g. "g") given this box's
   // overflow: hidden; loosened locally rather than raised globally.
@@ -49,10 +48,12 @@
 .nav_icon.nav_icon_always
   @include nav-icon-brighten
 
-// Inactive variants wait a line below (slide up when activated); .exiting
-// sits a line above so leaving is always an upward exit.
+// Inactive variants sit absolutely atop the active (in-flow) one, waiting a
+// line below until activated; .exiting sits a line above for an upward exit.
 .label
-  grid-area: 1 / 1
+  position: absolute
+  top: 0
+  left: 0
   white-space: nowrap
   opacity: 0
   transform: translateY(100%)
@@ -60,6 +61,7 @@
   pointer-events: none
 
   &.active
+    position: relative
     opacity: 1
     transform: translateY(0)
 
