@@ -98,9 +98,17 @@ export const fr = {
 	},
 	onboarding: {
 		steps: {
+			language: "Langue",
 			username: "Nom d'utilisateur",
 			avatar: "Avatar",
-			preferences: "Préférences",
+			preferences: "Newsletter",
+		},
+		languageStep: {
+			title: "Choisissez votre langue",
+			subtitle:
+				"Vous pourrez le modifier à tout moment dans les paramètres du compte.",
+			notice:
+				"Certains contenus comme les jeux vidéo et mangas ne sont pas traduits. Ils seront disponibles en anglais",
 		},
 		usernameStep: {
 			title: "Choisissez un nom d'utilisateur",
@@ -113,7 +121,7 @@ export const fr = {
 			subtitle: "Cliquez sur l'avatar pour en choisir un.",
 		},
 		preferencesStep: {
-			title: "Langue et newsletter",
+			title: "Newsletter",
 		},
 		finish: "Terminer",
 	},

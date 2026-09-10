@@ -7,6 +7,27 @@ import { isLocale } from "@/lib/i18n/get-locale";
 
 // Saved per-step so incomplete wizard sessions retain earlier progress
 
+export async function saveOnboardingLanguage(preferredLanguage: string): Promise<void> {
+	const session = await auth();
+	if (!session?.user?.id) throw new Error("Not signed in");
+
+	await db.user.update({
+		where: { id: session.user.id },
+		data: { preferredLanguage },
+	});
+
+	// See updateAccountSettings — the cookie is what makes the rest of the wizard
+	// switch language immediately, rather than waiting for next sign-in.
+	if (isLocale(preferredLanguage)) {
+		(await cookies()).set("locale", preferredLanguage, {
+			path: "/",
+			maxAge: 60 * 60 * 24 * 365,
+		});
+	}
+
+	revalidatePath("/account");
+}
+
 export async function saveOnboardingUsername(username: string | null): Promise<void> {
 	const session = await auth();
 	if (!session?.user?.id) throw new Error("Not signed in");
@@ -19,33 +40,16 @@ export async function saveOnboardingUsername(username: string | null): Promise<v
 	revalidatePath("/account");
 }
 
-export type OnboardingPreferences = {
-	preferredLanguage: string;
-	newsletterOptIn: boolean;
-};
-
-export async function saveOnboardingPreferences(
-	input: OnboardingPreferences,
+export async function saveOnboardingNewsletterOptIn(
+	newsletterOptIn: boolean,
 ): Promise<void> {
 	const session = await auth();
 	if (!session?.user?.id) throw new Error("Not signed in");
 
 	await db.user.update({
 		where: { id: session.user.id },
-		data: {
-			preferredLanguage: input.preferredLanguage,
-			newsletterOptIn: input.newsletterOptIn,
-		},
+		data: { newsletterOptIn },
 	});
-
-	// See updateAccountSettings — the session JWT won't pick this up until
-	// next sign-in, so the cookie is what makes onboarding's choice stick.
-	if (isLocale(input.preferredLanguage)) {
-		(await cookies()).set("locale", input.preferredLanguage, {
-			path: "/",
-			maxAge: 60 * 60 * 24 * 365,
-		});
-	}
 
 	revalidatePath("/account");
 }

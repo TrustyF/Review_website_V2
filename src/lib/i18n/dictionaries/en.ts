@@ -98,9 +98,16 @@ export const en = {
 	},
 	onboarding: {
 		steps: {
+			language: "Language",
 			username: "Username",
 			avatar: "Avatar",
-			preferences: "Preferences",
+			preferences: "Newsletter",
+		},
+		languageStep: {
+			title: "Choose your language",
+			subtitle: "You can change this any time in account settings.",
+			notice:
+				"English is the site's primary language — some content isn't available in French yet.",
 		},
 		usernameStep: {
 			title: "Pick a username",
@@ -113,7 +120,7 @@ export const en = {
 			subtitle: "Click the avatar to choose one.",
 		},
 		preferencesStep: {
-			title: "Language & newsletter",
+			title: "Newsletter",
 		},
 		finish: "Finish",
 	},

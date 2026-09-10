@@ -1,13 +1,15 @@
 "use client";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Languages } from "lucide-react";
 import { Clickable } from "@/components/ui/clickable";
 import { AvatarPicker } from "@/components/account/avatar-picker/avatar-picker";
 import { AvatarGroup } from "@/lib/avatars";
 import { LANGUAGE_OPTIONS } from "@/lib/languages";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import {
-	saveOnboardingPreferences,
+	saveOnboardingLanguage,
+	saveOnboardingNewsletterOptIn,
 	saveOnboardingUsername,
 } from "@/components/onboarding/onboarding-actions";
 import styles from "./onboarding-wizard.module.sass";
@@ -23,17 +25,70 @@ type Props = {
 	avatarGroups: AvatarGroup[];
 };
 
+type StepAction = { label: string; onClick: () => void; disabled?: boolean };
+
+type StepProps = {
+	title: string;
+	subtitle?: string;
+	children: ReactNode;
+	leftAction?: StepAction;
+	rightAction: StepAction;
+};
+
+// Fixed-height shell every step renders into, so the action row lands in the
+// same spot regardless of how tall a given step's own content is.
+function OnboardingStep({
+	title,
+	subtitle,
+	children,
+	leftAction,
+	rightAction,
+}: StepProps) {
+	return (
+		<div className={styles.step}>
+			<div className={styles.header}>
+				<h1 className={styles.title}>{title}</h1>
+				{subtitle && <p className={styles.subtitle}>{subtitle}</p>}
+			</div>
+			<div className={styles.content}>{children}</div>
+			<div
+				className={`${styles.actions} ${leftAction ? "" : styles.actions_end}`}>
+				{leftAction && (
+					<Clickable
+						className={styles.skip_button}
+						onClick={leftAction.onClick}>
+						{leftAction.label}
+					</Clickable>
+				)}
+				<Clickable
+					className={styles.next_button}
+					disabled={rightAction.disabled ?? false}
+					onClick={rightAction.onClick}>
+					{rightAction.label}
+				</Clickable>
+			</div>
+		</div>
+	);
+}
+
 export function OnboardingWizard({ initial, avatarGroups }: Props) {
 	const dict = useDictionary();
 	const router = useRouter();
 	const [step, setStep] = useState(0);
 	// Falls back to `name` (from signup) only when no username yet (same order as display-name.ts). Editable here so user can confirm/change before save.
-	const [username, setUsername] = useState(initial.username ?? initial.name ?? "");
-	const [preferredLanguage, setPreferredLanguage] = useState(initial.preferredLanguage);
-	const [newsletterOptIn, setNewsletterOptIn] = useState(initial.newsletterOptIn);
+	const [username, setUsername] = useState(
+		initial.username ?? initial.name ?? "",
+	);
+	const [preferredLanguage, setPreferredLanguage] = useState(
+		initial.preferredLanguage,
+	);
+	const [newsletterOptIn, setNewsletterOptIn] = useState(
+		initial.newsletterOptIn,
+	);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const STEPS = [
+		dict.onboarding.steps.language,
 		dict.onboarding.steps.username,
 		dict.onboarding.steps.avatar,
 		dict.onboarding.steps.preferences,
@@ -43,11 +98,19 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 		router.push("/account");
 	}
 
+	async function handleLanguageChange(value: string) {
+		setPreferredLanguage(value);
+		await saveOnboardingLanguage(value);
+		// Picks up the just-saved locale cookie so the rest of the wizard
+		// (and the site) renders in the chosen language right away.
+		router.refresh();
+	}
+
 	async function handleUsernameNext() {
 		setIsSubmitting(true);
 		try {
 			await saveOnboardingUsername(username.trim() || null);
-			setStep(1);
+			setStep(2);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -56,7 +119,7 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 	async function handleFinish() {
 		setIsSubmitting(true);
 		try {
-			await saveOnboardingPreferences({ preferredLanguage, newsletterOptIn });
+			await saveOnboardingNewsletterOptIn(newsletterOptIn);
 			finish();
 		} finally {
 			setIsSubmitting(false);
@@ -75,9 +138,42 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 			</div>
 
 			{step === 0 && (
-				<div className={styles.step}>
-					<h1 className={styles.title}>{dict.onboarding.usernameStep.title}</h1>
-					<p className={styles.subtitle}>{dict.onboarding.usernameStep.subtitle}</p>
+				<OnboardingStep
+					title={dict.onboarding.languageStep.title}
+					subtitle={dict.onboarding.languageStep.subtitle}
+					rightAction={{ label: dict.common.continue, onClick: () => setStep(1) }}>
+					<label className={styles.field}>
+						{dict.account.preferredLanguage}
+						<select
+							className={styles.input}
+							value={preferredLanguage}
+							onChange={(e) => handleLanguageChange(e.target.value)}>
+							{LANGUAGE_OPTIONS.map((option) => (
+								<option key={option.value} value={option.value}>
+									{option.label}
+								</option>
+							))}
+						</select>
+					</label>
+					{preferredLanguage !== "en" && (
+						<div className={styles.language_notice}>
+							<Languages size={16} />
+							<span>{dict.onboarding.languageStep.notice}</span>
+						</div>
+					)}
+				</OnboardingStep>
+			)}
+
+			{step === 1 && (
+				<OnboardingStep
+					title={dict.onboarding.usernameStep.title}
+					subtitle={dict.onboarding.usernameStep.subtitle}
+					leftAction={{ label: dict.common.back, onClick: () => setStep(0) }}
+					rightAction={{
+						label: dict.common.continue,
+						onClick: handleUsernameNext,
+						disabled: isSubmitting,
+					}}>
 					<input
 						className={styles.input}
 						type="text"
@@ -86,54 +182,30 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 						onChange={(e) => setUsername(e.target.value)}
 						autoFocus
 					/>
-					<div className={styles.actions}>
-						<Clickable className={styles.skip_button} onClick={() => setStep(1)}>
-							{dict.common.skip}
-						</Clickable>
-						<Clickable
-							className={styles.next_button}
-							disabled={isSubmitting}
-							onClick={handleUsernameNext}>
-							{dict.common.continue}
-						</Clickable>
-					</div>
-				</div>
-			)}
-
-			{step === 1 && (
-				<div className={styles.step}>
-					<h1 className={styles.title}>{dict.onboarding.avatarStep.title}</h1>
-					<p className={styles.subtitle}>{dict.onboarding.avatarStep.subtitle}</p>
-					<div className={styles.avatar_picker}>
-						<AvatarPicker initialSrc={initial.image} groups={avatarGroups} />
-					</div>
-					<div className={styles.actions}>
-						<Clickable className={styles.skip_button} onClick={() => setStep(0)}>
-							{dict.common.back}
-						</Clickable>
-						<Clickable className={styles.next_button} onClick={() => setStep(2)}>
-							{dict.common.continue}
-						</Clickable>
-					</div>
-				</div>
+				</OnboardingStep>
 			)}
 
 			{step === 2 && (
-				<div className={styles.step}>
-					<h1 className={styles.title}>{dict.onboarding.preferencesStep.title}</h1>
-					<label className={styles.field}>
-						{dict.account.preferredLanguage}
-						<select
-							className={styles.input}
-							value={preferredLanguage}
-							onChange={(e) => setPreferredLanguage(e.target.value)}>
-							{LANGUAGE_OPTIONS.map((option) => (
-								<option key={option.value} value={option.value}>
-									{option.label}
-								</option>
-							))}
-						</select>
-					</label>
+				<OnboardingStep
+					title={dict.onboarding.avatarStep.title}
+					subtitle={dict.onboarding.avatarStep.subtitle}
+					leftAction={{ label: dict.common.back, onClick: () => setStep(1) }}
+					rightAction={{ label: dict.common.continue, onClick: () => setStep(3) }}>
+					<div className={styles.avatar_picker}>
+						<AvatarPicker initialSrc={initial.image} groups={avatarGroups} />
+					</div>
+				</OnboardingStep>
+			)}
+
+			{step === 3 && (
+				<OnboardingStep
+					title={dict.onboarding.preferencesStep.title}
+					leftAction={{ label: dict.common.skip, onClick: finish }}
+					rightAction={{
+						label: isSubmitting ? dict.common.saving : dict.onboarding.finish,
+						onClick: handleFinish,
+						disabled: isSubmitting,
+					}}>
 					<label className={styles.checkbox_field}>
 						<input
 							type="checkbox"
@@ -142,18 +214,7 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 						/>
 						{dict.account.newsletterOptIn}
 					</label>
-					<div className={styles.actions}>
-						<Clickable className={styles.skip_button} onClick={finish}>
-							{dict.common.skip}
-						</Clickable>
-						<Clickable
-							className={styles.next_button}
-							disabled={isSubmitting}
-							onClick={handleFinish}>
-							{isSubmitting ? dict.common.saving : dict.onboarding.finish}
-						</Clickable>
-					</div>
-				</div>
+				</OnboardingStep>
 			)}
 		</div>
 	);
