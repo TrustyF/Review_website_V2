@@ -23,6 +23,16 @@ export function pickEnglishTitle(
 	return pickLocalized(title);
 }
 
+// French title, if MangaDex has one — checked in title then altTitles, same
+// order as pickEnglishTitle. Null when absent, no fallback to another locale.
+export function pickFrenchTitle(
+	title: Record<string, string>,
+	altTitles: Record<string, string>[],
+): string | null {
+	if (title.fr) return title.fr;
+	return altTitles.find((alt) => alt.fr)?.fr ?? null;
+}
+
 // Romanized Japanese title ("ja-ro", not raw kanji "ja") for display alongside English. Picks first candidate not duplicate of English title; null if none exists.
 export function pickNativeTitle(
 	title: Record<string, string>,

@@ -12,6 +12,7 @@ export function BookMiniCard({ media }: Props) {
 		<MediaMiniCardShell media={media}>
 			<MediaTitle
 				title={media.title}
+				titleFr={media.titleFr}
 				className={styles.title}
 			/>
 		</MediaMiniCardShell>

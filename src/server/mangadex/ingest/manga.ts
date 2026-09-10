@@ -14,6 +14,7 @@ import { resolveCountry } from "@/server/resolvers/entity-resolver";
 import { syncMangaCreditsAndGenres } from "@/server/mangadex/ingest/manga-credits";
 import {
 	pickEnglishTitle,
+	pickFrenchTitle,
 	pickLocalized,
 	pickNativeTitle,
 } from "@/server/mangadex/localized";
@@ -58,8 +59,10 @@ async function buildMediaFields(
 	statistics: MangaDexStatisticsEntry | null,
 	existing?: {
 		title: string;
+		titleFr: string | null;
 		alternateTitle: string | null;
 		overview: string | null;
+		overviewFr: string | null;
 		releaseDate: Date | null;
 		posterPath: string | null;
 		countryId: number | null;
@@ -76,10 +79,14 @@ async function buildMediaFields(
 
 	return {
 		title: existing?.title ?? title,
+		titleFr:
+			existing?.titleFr ??
+			pickFrenchTitle(manga.attributes.title, manga.attributes.altTitles),
 		alternateTitle:
 			existing?.alternateTitle ??
 			pickNativeTitle(manga.attributes.title, manga.attributes.altTitles, title),
 		overview: existing?.overview ?? pickLocalized(manga.attributes.description),
+		overviewFr: existing?.overviewFr ?? (manga.attributes.description.fr || null),
 		releaseDate:
 			existing?.releaseDate ??
 			(manga.attributes.year ? new Date(manga.attributes.year, 0, 1) : null),

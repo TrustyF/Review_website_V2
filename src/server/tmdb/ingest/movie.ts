@@ -3,7 +3,11 @@ import { TmdbMovieResponse } from "@/server/tmdb/schema";
 import { db } from "@/server/db/client";
 import { resolveCountry } from "@/server/resolvers/entity-resolver";
 import { syncMovieCreditsAndGenres } from "@/server/tmdb/ingest/movie-credits";
-import { fetchTmdbImages, pickBestBackdrop } from "@/server/tmdb/client";
+import {
+	fetchTmdbFrenchTranslation,
+	fetchTmdbImages,
+	pickBestBackdrop,
+} from "@/server/tmdb/client";
 
 // Anything unrecognized (including missing) falls back to RELEASED rather than guessed at.
 const MOVIE_STATUS_MAP: Record<string, MediaStatus> = {
@@ -37,13 +41,16 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 
 		const images = await fetchTmdbImages(externalId, MediaType.MOVIE);
 		const bannerPath = pickBestBackdrop(images.backdrops) ?? data.backdrop_path;
+		const french = await fetchTmdbFrenchTranslation(externalId, MediaType.MOVIE);
 
 		const media = await tx.media.create({
 			data: {
 				title: data.title,
+				titleFr: french.title,
 				type: MediaType.MOVIE,
 				isAdult: data.adult,
 				overview: data.overview,
+				overviewFr: french.overview,
 				externalId,
 				releaseDate: data.release_date ? new Date(data.release_date) : null,
 				status: resolveMovieStatus(data),
@@ -98,6 +105,11 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 				(await fetchTmdbImages(externalId, MediaType.MOVIE)).backdrops,
 			) ??
 			data.backdrop_path;
+		// Same fill-once-if-still-empty treatment as title/overview below.
+		const french =
+			existing.titleFr && existing.overviewFr
+				? null
+				: await fetchTmdbFrenchTranslation(externalId, MediaType.MOVIE);
 
 		// Re-enrichment only fills in still-empty fields; budget/revenue/publicRating/popularity/status
 		// genuinely change over time at the source, so those always refresh.
@@ -105,10 +117,12 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 			where: { id: existing.id },
 			data: {
 				title: existing.title ?? data.title,
+				titleFr: existing.titleFr ?? french?.title ?? null,
 				// TMDB's adult flag can turn this on but never off — it's unreliable in practice (only
 				// true for hardcore listings), so a manual correction in the editor always wins.
 				isAdult: existing.isAdult || data.adult,
 				overview: existing.overview ?? data.overview,
+				overviewFr: existing.overviewFr ?? french?.overview ?? null,
 				status: resolveMovieStatus(data),
 				releaseDate:
 					existing.releaseDate ??

@@ -30,7 +30,7 @@ export function MediaCardShellMobile({ media, children }: Props) {
 			</div>
 			<div className={styles.top}>
 				<div className={styles.header_info}>
-					<MediaTitle title={media.title} />
+					<MediaTitle title={media.title} titleFr={media.titleFr} />
 				</div>
 				{children && <div className={styles.secondary_info}>{children}</div>}
 				<MediaReviewMeta

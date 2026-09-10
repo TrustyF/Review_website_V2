@@ -68,7 +68,11 @@ export function RankedListRow({
 				{seen && <SeenBadge type={media.type} className={styles.seen_badge} />}
 			</div>
 			<div className={styles.info}>
-				<MediaTitle title={media.title} className={styles.title} />
+				<MediaTitle
+					title={media.title}
+					titleFr={media.titleFr}
+					className={styles.title}
+				/>
 				{media.review && (
 					<div className={styles.rating}>
 						{media.review.rating}

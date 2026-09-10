@@ -154,6 +154,22 @@ export const TmdbTvSearchResponseSchema = type({
 	results: TmdbTvSearchResultSchema.array(),
 });
 
+// Movies use data.title, TV shows use data.name — both optional since a
+// translation entry commonly has one field filled and not the other.
+export const TmdbTranslationsResponseSchema = type({
+	translations: type({
+		iso_639_1: "string",
+		iso_3166_1: "string",
+		data: type({
+			"title?": "string",
+			"name?": "string",
+			"overview?": "string",
+		}),
+	}).array(),
+});
+
+export type TmdbTranslationsResponse = typeof TmdbTranslationsResponseSchema.infer;
+
 export const TmdbImagesResponseSchema = type({
 	id: "number",
 	posters: type({

@@ -26,6 +26,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { generateMediaMetadata } from "./metadata";
 import { MediaStatus } from "@prisma/client";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { getLocale } from "@/lib/i18n/get-locale";
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 
 // See metadata.ts — kept there rather than inlined here so this file stays
@@ -125,6 +126,7 @@ export default async function MediaDetailPage({
 	if (!Number.isFinite(mediaId)) notFound();
 
 	const dict = await getDictionary();
+	const locale = await getLocale();
 	// auth() is JWT-only (src/auth.ts), never hits the DB, so it's free to await
 	// up front. Slower sections below run their own queries in their own <Suspense>.
 	const session = await auth();
@@ -135,6 +137,11 @@ export default async function MediaDetailPage({
 	if (raw.isDeleted && session?.user?.role !== "ADMIN") notFound();
 
 	const media = toMediaRecord(raw);
+
+	// Falls back to English when untranslated, like Review.bodyFr — see
+	// Media.overviewFr. Title is localized inside MediaTitle instead.
+	const overview =
+		locale === "fr" ? (media.overviewFr ?? media.overview) : media.overview;
 
 	// Only movies/shorts carry a tagline — pulled out here since it now sits
 	// in the header's meta row rather than the type-specific facts list.
@@ -249,7 +256,11 @@ export default async function MediaDetailPage({
 						<div className={styles.header_info}>
 							<div className={styles.title_row}>
 								<div className={styles.title_group}>
-									<MediaTitle title={media.title} className={styles.title} />
+									<MediaTitle
+										title={media.title}
+										titleFr={media.titleFr}
+										className={styles.title}
+									/>
 									<Suspense fallback={null}>
 										<MediaDirectorCredit mediaId={media.id} type={media.type} />
 									</Suspense>
@@ -344,9 +355,7 @@ export default async function MediaDetailPage({
 					<section className={styles.section}>
 						<h2 className={styles.section_title}>{dict.mediaDetail.detailsHeading}</h2>
 						{tagline && <p className={styles.tagline}>{tagline}</p>}
-						{media.overview && (
-							<p className={styles.overview}>{media.overview}</p>
-						)}
+						{overview && <p className={styles.overview}>{overview}</p>}
 
 						<MediaTypeFacts media={media} dict={dict} />
 

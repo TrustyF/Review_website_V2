@@ -51,7 +51,11 @@ export function MediaMiniCardShell({ media, children }: Props) {
 			</div>
 			<div className={styles.info_group}>
 				{showTitle && (
-					<MediaTitle title={media.title} className={styles.title} />
+					<MediaTitle
+						title={media.title}
+						titleFr={media.titleFr}
+						className={styles.title}
+					/>
 				)}
 				<div className={styles.subtitle}>
 					{showRating && media.review && (

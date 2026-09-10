@@ -18,6 +18,7 @@ export function ComicMiniCard({ media }: Props) {
 		<MediaMiniCardShell media={media}>
 			<MediaTitle
 				title={media.title}
+				titleFr={media.titleFr}
 				className={styles.title}
 			/>
 			{/*{volumeInfo && <div className={styles.info}>{volumeInfo}</div>}*/}
