@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Clock } from "lucide-react";
 import { addToWatchlist, removeFromWatchlist } from "@/components/watchlist/watchlist-actions";
 import { Clickable } from "@/components/ui/clickable";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./add-to-watchlist-button.module.sass";
 
 type Props = {
@@ -18,6 +19,7 @@ export function AddToWatchlistButton({
 	initialIsInWatchlist,
 	className,
 }: Props) {
+	const dict = useDictionary();
 	const [isInWatchlist, setIsInWatchlist] = useState(initialIsInWatchlist);
 	const [isPending, setIsPending] = useState(false);
 
@@ -35,7 +37,7 @@ export function AddToWatchlistButton({
 		}
 	}
 
-	const label = isInWatchlist ? "In watchlist" : "Add to watchlist";
+	const label = isInWatchlist ? dict.watchlist.inWatchlist : dict.watchlist.addToWatchlist;
 
 	return (
 		<Clickable

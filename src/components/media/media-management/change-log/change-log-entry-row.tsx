@@ -2,6 +2,7 @@
 import { ReactNode, useState, useTransition } from "react";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import { deleteChangeLogEntry } from "./change-log-actions";
 import styles from "./change-log-list.module.sass";
 
@@ -16,6 +17,7 @@ type Props = {
 // Row content stays server-rendered (children pre-built by ChangeLogList); this wrapper just owns
 // the delete button and greyed-out state so a click doesn't need a full page refetch.
 export function ChangeLogEntryRow({ id, initialDeletedAt, children, alt }: Props) {
+	const dict = useDictionary();
 	const [deletedAt, setDeletedAt] = useState(initialDeletedAt);
 	const [isPending, startTransition] = useTransition();
 	const sessionIsAdmin = useIsAdmin();
@@ -40,14 +42,14 @@ export function ChangeLogEntryRow({ id, initialDeletedAt, children, alt }: Props
 			{children}
 			{isAdmin &&
 				(deletedAt ? (
-					<span className={styles.deleted_label}>Deleted</span>
+					<span className={styles.deleted_label}>{dict.changeLog.deleted}</span>
 				) : (
 					<button
 						type="button"
 						className={styles.delete_button}
 						onClick={handleDelete}
 						disabled={isPending}
-						aria-label="Delete change log entry"
+						aria-label={dict.changeLog.deleteEntryAriaLabel}
 					>
 						×
 					</button>

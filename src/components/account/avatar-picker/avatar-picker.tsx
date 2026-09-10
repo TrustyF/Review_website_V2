@@ -6,6 +6,7 @@ import { useOutsideClick } from "@/lib/use-outside-click";
 import { AvatarGroup } from "@/lib/avatars";
 import { updateAvatar } from "@/components/account/account-actions";
 import { useAvatar } from "@/components/account/avatar-context";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./avatar-picker.module.sass";
 
 type Props = {
@@ -14,6 +15,7 @@ type Props = {
 };
 
 export function AvatarPicker({ initialSrc, groups }: Props) {
+	const dict = useDictionary();
 	const { setAvatarSrc } = useAvatar();
 	const [currentSrc, setCurrentSrc] = useState(initialSrc);
 	// Falls back to the placeholder if a saved src 404s (e.g. stale/deleted file);
@@ -48,7 +50,7 @@ export function AvatarPicker({ initialSrc, groups }: Props) {
 			{/* Same no-photo stand-in PersonPhoto uses for cast/crew. */}
 			<Clickable
 				className={styles.current}
-				aria-label="Change profile picture"
+				aria-label={dict.account.changeProfilePicture}
 				onClick={() => setIsOpen(true)}>
 				{currentSrc && !imageFailed ? (
 					// eslint-disable-next-line @next/next/no-img-element
@@ -72,10 +74,10 @@ export function AvatarPicker({ initialSrc, groups }: Props) {
 				<div className={styles.modal_backdrop}>
 					<div className={styles.modal_panel} ref={panelRef}>
 						<div className={styles.modal_header}>
-							<span>Choose a profile picture</span>
+							<span>{dict.account.chooseProfilePicture}</span>
 							<Clickable
 								className={styles.close_button}
-								aria-label="Close"
+								aria-label={dict.common.close}
 								onClick={() => setIsOpen(false)}>
 								<X size={16} />
 							</Clickable>
@@ -92,7 +94,7 @@ export function AvatarPicker({ initialSrc, groups }: Props) {
 												key={option.id}
 												className={`${styles.option} ${option.src === currentSrc ? styles.option_selected : ""}`}
 												disabled={savingSrc !== null}
-												aria-label="Use this profile picture"
+												aria-label={dict.account.useThisProfilePicture}
 												aria-pressed={option.src === currentSrc}
 												onClick={() => handlePick(option.src)}>
 												{/* eslint-disable-next-line @next/next/no-img-element */}

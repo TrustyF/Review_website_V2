@@ -10,6 +10,7 @@ import {
 	ReviewSpoilerProvider,
 } from "@/components/media/media-cards/media-card/review-body";
 import { eyebrowFor } from "./featured-review-shared";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./featured-review-card-mobile.module.sass";
 
 type Props = {
@@ -20,6 +21,7 @@ type Props = {
 
 // Mobile-width counterpart to FeaturedReviewCard — desktop's fixed 180px poster squeezes .info to nothing below ~450px, so this uses a smaller grid cell instead. Swapped in via CSS breakpoint, not matchMedia, since FeaturedReview already re-renders both on every transition.
 export function FeaturedReviewCardMobile({ media, direction, exiting = false }: Props) {
+	const dict = useDictionary();
 	const [settled, setSettled] = useState(exiting);
 	useEffect(() => {
 		const frame = requestAnimationFrame(() => setSettled(!exiting));
@@ -40,7 +42,7 @@ export function FeaturedReviewCardMobile({ media, direction, exiting = false }: 
 	}, []);
 
 	const review = media.review;
-	const eyebrow = eyebrowFor(review);
+	const eyebrow = eyebrowFor(review, dict);
 	const EyebrowIcon = eyebrow.icon;
 
 	const offset = exiting ? 0 : direction * 2;
@@ -113,7 +115,7 @@ export function FeaturedReviewCardMobile({ media, direction, exiting = false }: 
 					<span
 						className={`${styles.read_more} ${!isOverflowing ? styles.read_more_hidden : ""}`}
 						aria-hidden={!isOverflowing || undefined}>
-						Read full review →
+						{dict.home.readFullReview}
 					</span>
 				</div>
 			</div>

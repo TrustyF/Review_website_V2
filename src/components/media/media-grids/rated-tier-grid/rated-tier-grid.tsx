@@ -6,6 +6,7 @@ import {
 	MediaGroup,
 } from "@/components/media/media-grids/grouped-media-grid/grouped-media-grid";
 import { StarIcon } from "@/components/media/icons/star-icon";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 
 // Whole-point tiers, not half-point, to avoid twenty collapsible sections. Unrated media get their own tier at the end.
 function ratingTierOf(media: MediaRecord): number | null {
@@ -14,8 +15,8 @@ function ratingTierOf(media: MediaRecord): number | null {
 	return Math.floor(rating);
 }
 
-function tierLabel(tier: number | null): string {
-	if (tier === null) return "Unrated";
+function tierLabel(tier: number | null, unratedLabel: string): string {
+	if (tier === null) return unratedLabel;
 	if (tier >= 10) return "10";
 	return `${tier}`;
 }
@@ -31,6 +32,7 @@ export const RatedTierGrid = memo(function RatedTierGrid({
 	media,
 	renderOverlay,
 }: Props) {
+	const dict = useDictionary();
 	const groups = useMemo((): MediaGroup[] => {
 		const sorted = [...media].sort(
 			(a, b) => (b.review?.rating ?? -1) - (a.review?.rating ?? -1),
@@ -54,12 +56,12 @@ export const RatedTierGrid = memo(function RatedTierGrid({
 			label: (
 				<>
 					<StarIcon size={17} />
-					{tierLabel(tier)}
+					{tierLabel(tier, dict.media.unrated)}
 				</>
 			),
 			items,
 		}));
-	}, [media]);
+	}, [media, dict.media.unrated]);
 
 	return <GroupedMediaGrid groups={groups} renderOverlay={renderOverlay} />;
 });

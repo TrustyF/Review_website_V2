@@ -3,6 +3,7 @@ import { useState } from "react";
 import { MediaRecord } from "@/components/media/types";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
 import { removeFromWatchlist } from "@/components/watchlist/watchlist-actions";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./watchlist-grid.module.sass";
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
 
 // No isAdmin gate needed — being signed in and viewing /watchlist is itself the permission.
 export function WatchlistGrid({ media }: Props) {
+	const dict = useDictionary();
 	const [removingId, setRemovingId] = useState<number | null>(null);
 
 	async function handleRemove(mediaId: number) {
@@ -30,7 +32,7 @@ export function WatchlistGrid({ media }: Props) {
 					type="button"
 					className={styles.remove_button}
 					data-reveal-on-hover
-					aria-label={`Remove ${item.title} from watchlist`}
+					aria-label={dict.watchlist.removeFromWatchlist(item.title)}
 					disabled={removingId === item.id}
 					onClick={() => handleRemove(item.id)}>
 					×

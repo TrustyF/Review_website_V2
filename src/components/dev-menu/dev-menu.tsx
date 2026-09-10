@@ -3,6 +3,7 @@ import { useTransition } from "react";
 import { Link } from "@/components/ui/link";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import { forceRevalidateAll } from "./dev-menu-actions";
 import styles from "./dev-menu.module.sass";
 
@@ -11,6 +12,7 @@ const isDev = process.env.NODE_ENV === "development";
 // Fixed-to-viewport sibling in root layout, not nested (nav's transform would contain it).
 // Dev routes dev-only; Tools work in production for admins.
 export function DevMenu() {
+	const dict = useDictionary();
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
 	// Mobile admin edits are intentionally unsupported (see nav-admin-links.tsx
@@ -22,7 +24,7 @@ export function DevMenu() {
 
 	return (
 		<details className={styles.wrapper}>
-			<summary className={styles.button} aria-label="Dev menu">
+			<summary className={styles.button} aria-label={dict.nav.devMenuAriaLabel}>
 				⚙
 			</summary>
 			<div className={styles.panel}>

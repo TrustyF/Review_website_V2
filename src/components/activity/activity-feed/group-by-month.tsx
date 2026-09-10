@@ -6,18 +6,18 @@ export type TimelineGroup<T> = {
 	entries: T[];
 };
 
-const MONTH_LABEL = new Intl.DateTimeFormat("en-US", {
-	month: "long",
-	year: "numeric",
-});
-
 const MONTH_ICON_SIZE = 17;
 
 // Buckets entries into one group per calendar month, assuming `entries` already
 // arrives newest-first. Shared by ActivityFeed and NotificationFeed.
 export function groupByMonth<T extends { createdAt: Date }>(
 	entries: T[],
+	locale: string,
 ): TimelineGroup<T>[] {
+	const monthLabel = new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-US", {
+		month: "long",
+		year: "numeric",
+	});
 	const groups: TimelineGroup<T>[] = [];
 	for (const entry of entries) {
 		const date = entry.createdAt;
@@ -31,7 +31,7 @@ export function groupByMonth<T extends { createdAt: Date }>(
 				label: (
 					<>
 						<Calendar size={MONTH_ICON_SIZE} />
-						{MONTH_LABEL.format(date)}
+						{monthLabel.format(date)}
 					</>
 				),
 				entries: [entry],

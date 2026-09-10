@@ -16,14 +16,18 @@ import { useLazyReveal } from "@/components/media/media-grids/lazy-media-grid/us
 import { Link } from "@/components/ui/link";
 import { ListAdditionsCard } from "@/components/notifications/list-additions-card";
 import { MediaAdditionsCard } from "@/components/notifications/media-additions-card";
+import { useDictionary, useLocale } from "@/lib/i18n/i18n-context";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 import { TimelineList } from "./timeline-list";
 import { TimelineRow } from "./timeline-row";
 import styles from "./activity-feed.module.sass";
 
-const DateFormatter = new Intl.DateTimeFormat("en-GB", {
-	month: "short",
-	day: "numeric",
-});
+function dateFormatterFor(locale: string) {
+	return new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-GB", {
+		month: "short",
+		day: "numeric",
+	});
+}
 
 // One icon per ActivityType — RATING_CHANGED reuses the star rating value's own icon.
 const TYPE_ICON = {
@@ -91,7 +95,10 @@ function ListLink({ list }: { list: NonNullable<ActivityFeedEntry["list"]> }) {
 
 // Returns "verb + target(s) [+ value]" as three separate pieces (not one joined
 // ReactNode) so ActivityRow can lay them out on two lines next to the poster.
-function activityLabel(entry: ActivityFeedEntry): {
+function activityLabel(
+	entry: ActivityFeedEntry,
+	dict: Dictionary,
+): {
 	action: string | null;
 	target: React.ReactNode;
 	value: React.ReactNode;
@@ -105,13 +112,15 @@ function activityLabel(entry: ActivityFeedEntry): {
 			};
 		case "REVIEWED":
 			return {
-				action: "Reviewed",
+				action: dict.activity.reviewed,
 				target: entry.media && <MediaLink media={entry.media} />,
 				value: <RatingValue value={entry.newValue} />,
 			};
 		case "REWATCHED":
 			return {
-				action: entry.media ? rewatchedVerb(entry.media.type) : "Rewatched",
+				action: entry.media
+					? rewatchedVerb(entry.media.type, dict)
+					: dict.mediaVerb.rewatchedVerb.MOVIE,
 				target: entry.media && <MediaLink media={entry.media} />,
 				// REWATCHED always carries media, so the poster wins over TYPE_ICON's
 				// RotateCcw — shown in the value spot instead, like WATCHLIST_ADDED's icon.
@@ -136,19 +145,19 @@ function activityLabel(entry: ActivityFeedEntry): {
 		}
 		case "WATCHLIST_ADDED":
 			return {
-				action: "Watchlisted",
+				action: dict.activity.watchlisted,
 				target: entry.media && <MediaLink media={entry.media} />,
 				value: <WatchlistIcon size={14} className={styles.value_icon} />,
 			};
 		case "LIST_CREATED":
 			return {
-				action: "Created list",
+				action: dict.activity.createdList,
 				target: entry.list && <ListLink list={entry.list} />,
 				value: null,
 			};
 		case "LIST_ITEM_ADDED":
 			return {
-				action: "Added to",
+				action: dict.activity.addedTo,
 				target: entry.media && <MediaLink media={entry.media} />,
 				value: entry.list && <ListLink list={entry.list} />,
 			};
@@ -157,27 +166,37 @@ function activityLabel(entry: ActivityFeedEntry): {
 
 // Header verb for a same-day RATED/REVIEWED/WATCHLIST_ADDED/REWATCHED group — REWATCHED's
 // verb depends on media type, so it falls back to the group's representative entry.
-const GROUP_LABEL: Partial<Record<ActivityFeedEntry["type"], string>> = {
-	RATED: "Rated",
-	REVIEWED: "Reviewed",
-	WATCHLIST_ADDED: "Watchlisted",
-};
+function groupLabel(
+	type: ActivityFeedEntry["type"],
+	dict: Dictionary,
+): string | undefined {
+	if (type === "RATED") return dict.activity.rated;
+	if (type === "REVIEWED") return dict.activity.reviewed;
+	if (type === "WATCHLIST_ADDED") return dict.activity.watchlisted;
+	return undefined;
+}
 
-function typeGroupLabel(entry: ActivityFeedEntry): string {
+function typeGroupLabel(entry: ActivityFeedEntry, dict: Dictionary): string {
 	if (entry.type === "REWATCHED") {
-		return entry.media ? rewatchedVerb(entry.media.type) : "Rewatched";
+		return entry.media
+			? rewatchedVerb(entry.media.type, dict)
+			: dict.mediaVerb.rewatchedVerb.MOVIE;
 	}
-	return GROUP_LABEL[entry.type] ?? entry.type;
+	return groupLabel(entry.type, dict) ?? entry.type;
 }
 
 function ActivityRow({
 	entry,
 	index,
+	dict,
+	dateFormatter,
 }: {
 	entry: ActivityFeedEntry;
 	index: number;
+	dict: Dictionary;
+	dateFormatter: Intl.DateTimeFormat;
 }) {
-	const { action, target, value } = activityLabel(entry);
+	const { action, target, value } = activityLabel(entry, dict);
 
 	return (
 		<TimelineRow
@@ -185,7 +204,7 @@ function ActivityRow({
 			icon={TYPE_ICON[entry.type]}
 			posterSrc={entry.media?.posterSrc}
 			target={target}
-			date={DateFormatter.format(entry.createdAt)}
+			date={dateFormatter.format(entry.createdAt)}
 			action={action}
 			value={value}
 		/>
@@ -197,9 +216,13 @@ function ActivityRow({
 function TypeGroupRow({
 	entry,
 	index,
+	dict,
+	dateFormatter,
 }: {
 	entry: ActivityFeedEntry;
 	index: number;
+	dict: Dictionary;
+	dateFormatter: Intl.DateTimeFormat;
 }) {
 	const Icon = TYPE_ICON[entry.type];
 	const groupedMedia = entry.groupedMedia ?? [];
@@ -212,10 +235,10 @@ function TypeGroupRow({
 				<span className={styles.title_row}>
 					<span className={styles.group_title}>
 						<Icon size={16} className={styles.type_icon} />
-						<span className={styles.target}>{typeGroupLabel(entry)}</span>
+						<span className={styles.target}>{typeGroupLabel(entry, dict)}</span>
 					</span>
 					<span className={styles.date}>
-						{DateFormatter.format(entry.createdAt)}
+						{dateFormatter.format(entry.createdAt)}
 					</span>
 				</span>
 				<div className={styles.group_posters}>
@@ -255,6 +278,9 @@ export function ActivityFeed({
 	entries: ActivityFeedEntry[];
 	rowGap?: string;
 }) {
+	const dict = useDictionary();
+	const locale = useLocale();
+	const dateFormatter = dateFormatterFor(locale);
 	// Same reveal-more-on-scroll pattern as LazyMediaGrid/LazyMediaList — avoids
 	// mounting up to ~700 rows (each with its own poster Image) up front.
 	const { visibleCount, sentinelRef } = useLazyReveal(
@@ -265,7 +291,7 @@ export function ActivityFeed({
 	const visibleEntries = entries.slice(0, visibleCount);
 
 	if (entries.length === 0) {
-		return <div className={styles.empty}>No activity recorded yet.</div>;
+		return <div className={styles.empty}>{dict.activity.empty}</div>;
 	}
 
 	return (
@@ -284,11 +310,19 @@ export function ActivityFeed({
 									key={entry.id}
 									entry={entry}
 									index={index}
-									dateFormatter={DateFormatter}
+									dateFormatter={dateFormatter}
 								/>
 							);
 						}
-						return <TypeGroupRow key={entry.id} entry={entry} index={index} />;
+						return (
+							<TypeGroupRow
+								key={entry.id}
+								entry={entry}
+								index={index}
+								dict={dict}
+								dateFormatter={dateFormatter}
+							/>
+						);
 					}
 					if (entry.groupedLists && entry.groupedLists.length > 0) {
 						return (
@@ -296,11 +330,19 @@ export function ActivityFeed({
 								key={entry.id}
 								entry={entry}
 								index={index}
-								dateFormatter={DateFormatter}
+								dateFormatter={dateFormatter}
 							/>
 						);
 					}
-					return <ActivityRow key={entry.id} entry={entry} index={index} />;
+					return (
+						<ActivityRow
+							key={entry.id}
+							entry={entry}
+							index={index}
+							dict={dict}
+							dateFormatter={dateFormatter}
+						/>
+					);
 				}}
 			/>
 			{visibleCount < entries.length && (

@@ -3,29 +3,33 @@ import { List } from "lucide-react";
 import { db } from "@/server/db/client";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import { NewListLink } from "@/components/lists/new-list-link/new-list-link";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./lists-overview-page.module.sass";
 
 // Server Component for /lists: every list, newest first.
 export async function ListsOverviewPage() {
 	// targetUserId: null excludes recommendation lists — those are private to whoever they're for.
-	const lists = await db.list.findMany({
-		where: { targetUserId: null },
-		include: { _count: { select: { items: true } } },
-		orderBy: { createDate: "desc" },
-	});
+	const [lists, dict] = await Promise.all([
+		db.list.findMany({
+			where: { targetUserId: null },
+			include: { _count: { select: { items: true } } },
+			orderBy: { createDate: "desc" },
+		}),
+		getDictionary(),
+	]);
 
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				<h1 className={styles.title}>
 					<List size={20} className={styles.title_icon} />
-					Lists
+					{dict.nav.lists}
 				</h1>
 				<NewListLink />
 			</div>
 
 			{lists.length === 0 ? (
-				<p className={styles.empty}>No lists yet.</p>
+				<p className={styles.empty}>{dict.lists.empty}</p>
 			) : (
 				<div className={styles.grid}>
 					{lists.map((list, index) => (

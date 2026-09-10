@@ -75,6 +75,9 @@ export async function saveReview(
 		liked: boolean;
 		difficulty: number | null;
 		body: string | null;
+		// No editor UI for this yet — written directly (e.g. via Prisma Studio).
+		// Optional so existing callers (the editor modal) are unaffected.
+		bodyFr?: string | null;
 	},
 	{ revalidate = true }: { revalidate?: boolean } = {},
 ) {

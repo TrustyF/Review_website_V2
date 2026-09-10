@@ -1,7 +1,9 @@
 "use client";
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { updateAccountSettings } from "@/components/account/account-actions";
 import { LANGUAGE_OPTIONS } from "@/lib/languages";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./account-settings-form.module.sass";
 
 type Props = {
@@ -14,6 +16,8 @@ type Props = {
 };
 
 export function AccountSettingsForm({ initial }: Props) {
+	const dict = useDictionary();
+	const router = useRouter();
 	const [preferredLanguage, setPreferredLanguage] = useState(
 		initial.preferredLanguage,
 	);
@@ -38,6 +42,9 @@ export function AccountSettingsForm({ initial }: Props) {
 				username: username.trim() || null,
 			});
 			setSaved(true);
+			// Picks up the just-saved locale cookie immediately, instead of
+			// waiting for the next full navigation.
+			router.refresh();
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -46,12 +53,12 @@ export function AccountSettingsForm({ initial }: Props) {
 	return (
 		<form className={styles.form} onSubmit={handleSubmit}>
 			<label className={styles.field}>
-				Username
+				{dict.account.username}
 				<input
 					className={styles.input}
 					type="text"
 					value={username}
-					placeholder="Shown instead of your name if set"
+					placeholder={dict.account.usernamePlaceholder}
 					onChange={(e) => {
 						setUsername(e.target.value);
 						setSaved(false);
@@ -59,7 +66,7 @@ export function AccountSettingsForm({ initial }: Props) {
 				/>
 			</label>
 			<label className={styles.field}>
-				Preferred language
+				{dict.account.preferredLanguage}
 				<select
 					className={styles.input}
 					value={preferredLanguage}
@@ -83,7 +90,7 @@ export function AccountSettingsForm({ initial }: Props) {
 						setSaved(false);
 					}}
 				/>
-				Subscribe to the newsletter
+				{dict.account.newsletterOptIn}
 			</label>
 			<label className={styles.checkbox_field}>
 				<input
@@ -94,14 +101,14 @@ export function AccountSettingsForm({ initial }: Props) {
 						setSaved(false);
 					}}
 				/>
-				Email me when media is added to my lists
+				{dict.account.listAddEmailOptIn}
 			</label>
-			{saved && <div className={styles.saved}>Saved.</div>}
+			{saved && <div className={styles.saved}>{dict.common.saved}</div>}
 			<button
 				type="submit"
 				className={styles.submit_button}
 				disabled={isSubmitting}>
-				{isSubmitting ? "Saving…" : "Save"}
+				{isSubmitting ? dict.common.saving : dict.common.save}
 			</button>
 		</form>
 	);

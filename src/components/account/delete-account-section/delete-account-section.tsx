@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { Clickable } from "@/components/ui/clickable";
 import { useOutsideClick } from "@/lib/use-outside-click";
 import { deleteAccount } from "@/components/account/account-actions";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./delete-account-section.module.sass";
 
 const CONFIRM_PHRASE = "DELETE";
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export function DeleteAccountSection({ hasPassword }: Props) {
+	const dict = useDictionary();
 	const [isOpen, setIsOpen] = useState(false);
 	const [confirmText, setConfirmText] = useState("");
 	const [password, setPassword] = useState("");
@@ -44,41 +46,35 @@ export function DeleteAccountSection({ hasPassword }: Props) {
 			await deleteAccount(hasPassword ? password : null);
 			await signOut({ callbackUrl: "/" });
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to delete account.");
+			setError(err instanceof Error ? err.message : dict.account.deleteAccountFailed);
 			setIsSubmitting(false);
 		}
 	}
 
 	return (
 		<div className={styles.wrapper}>
-			<h2 className={styles.title}>Danger zone</h2>
-			<p className={styles.subtitle}>
-				Permanently delete your account, watchlist, and lists. This can&apos;t
-				be undone.
-			</p>
+			<h2 className={styles.title}>{dict.account.dangerZoneTitle}</h2>
+			<p className={styles.subtitle}>{dict.account.dangerZoneSubtitle}</p>
 			<Clickable className={styles.delete_button} onClick={openModal}>
-				Delete account
+				{dict.account.deleteAccount}
 			</Clickable>
 
 			{isOpen && (
 				<div className={styles.modal_backdrop}>
 					<div className={styles.modal_panel} ref={panelRef}>
 						<div className={styles.modal_header}>
-							<span>Delete account</span>
+							<span>{dict.account.deleteAccount}</span>
 							<Clickable
 								className={styles.close_button}
-								aria-label="Close"
+								aria-label={dict.common.close}
 								disabled={isSubmitting}
 								onClick={() => setIsOpen(false)}>
 								<X size={16} />
 							</Clickable>
 						</div>
-						<p className={styles.warning}>
-							This permanently deletes your account, watchlist, and lists.
-							There is no undo.
-						</p>
+						<p className={styles.warning}>{dict.account.deleteAccountWarning}</p>
 						<label className={styles.field}>
-							Type {CONFIRM_PHRASE} to confirm
+							{dict.account.typeToConfirm(CONFIRM_PHRASE)}
 							<input
 								className={styles.input}
 								type="text"
@@ -89,7 +85,7 @@ export function DeleteAccountSection({ hasPassword }: Props) {
 						</label>
 						{hasPassword && (
 							<label className={styles.field}>
-								Password
+								{dict.auth.password}
 								<input
 									className={styles.input}
 									type="password"
@@ -103,7 +99,7 @@ export function DeleteAccountSection({ hasPassword }: Props) {
 							className={styles.confirm_button}
 							disabled={!canSubmit || isSubmitting}
 							onClick={handleDelete}>
-							{isSubmitting ? "Deleting…" : "Permanently delete account"}
+							{isSubmitting ? dict.account.deleting : dict.account.permanentlyDeleteAccount}
 						</Clickable>
 					</div>
 				</div>

@@ -11,6 +11,7 @@ import {
 	MediaSortOption,
 } from "@/components/media/media-grids/media-sort/media-sort";
 import { MediaSortIcon } from "@/components/media/media-grids/media-sort/media-sort-icon";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 
 type Props = {
 	media: MediaRecord[];
@@ -19,6 +20,7 @@ type Props = {
 
 // Picks the grid matching the current sort: RatedTierGrid for the default "rating", otherwise groups by year through the same GroupedMediaGrid.
 export function MediaSortedGrid({ media, sort }: Props) {
+	const dict = useDictionary();
 	const groups = useMemo((): MediaGroup[] => {
 		if (sort === "rating") return [];
 		return groupMediaByYear(media, sort).map(({ year, items }) => ({
@@ -26,12 +28,12 @@ export function MediaSortedGrid({ media, sort }: Props) {
 			label: (
 				<>
 					<MediaSortIcon option={sort} size={17} />
-					{year ?? "Unknown"}
+					{year ?? dict.media.unknownYear}
 				</>
 			),
 			items,
 		}));
-	}, [media, sort]);
+	}, [media, sort, dict.media.unknownYear]);
 
 	if (sort === "rating") return <RatedTierGrid media={media} />;
 	return <GroupedMediaGrid groups={groups} />;

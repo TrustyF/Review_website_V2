@@ -4,6 +4,7 @@ import { MediaRecord } from "@/components/media/types";
 import { GroupedMediaList } from "@/components/media/media-grids/grouped-media-list/grouped-media-list";
 import { groupMediaByReviewMonth } from "./group-by-review-month";
 import { loadMoreReviews } from "./all-reviews-actions";
+import { useDictionary, useLocale } from "@/lib/i18n/i18n-context";
 import styles from "./all-reviews-feed.module.sass";
 
 type Props = {
@@ -13,12 +14,17 @@ type Props = {
 
 // Fetches each page after the first as the sentinel scrolls into view, appending and re-grouping by month. Unlike useLazyReveal, there's no hidden tail — every item here was fetched because it's about to show.
 export function AllReviewsFeed({ initialMedia, initialHasMore }: Props) {
+	const dict = useDictionary();
+	const locale = useLocale();
 	const [media, setMedia] = useState(initialMedia);
 	const [hasMore, setHasMore] = useState(initialHasMore);
 	const [loading, setLoading] = useState(false);
 	const sentinelRef = useRef<HTMLDivElement>(null);
 
-	const groups = useMemo(() => groupMediaByReviewMonth(media), [media]);
+	const groups = useMemo(
+		() => groupMediaByReviewMonth(media, locale, dict.media.unknownMonth),
+		[media, locale, dict.media.unknownMonth],
+	);
 
 	useEffect(() => {
 		if (!hasMore) return;

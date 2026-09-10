@@ -4,6 +4,7 @@ import { toPersonPhotoSrc } from "@/server/resolvers/poster-resolver";
 import { MAX_BILLED_CAST } from "@/server/tmdb/ingest/credit-limits";
 import { getMediaCredits } from "./get-media";
 import { CastPhotos } from "./cast-photos";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./media-detail.module.sass";
 
 // Known roles get priority rank; rest sort alphabetically.
@@ -150,12 +151,15 @@ export async function MediaDirectorCredit({
 	mediaId: number;
 	type: MediaType;
 }) {
-	const { directorEntries } = await groupCredits(mediaId, type);
+	const [{ directorEntries }, dict] = await Promise.all([
+		groupCredits(mediaId, type),
+		getDictionary(),
+	]);
 	if (directorEntries.length === 0) return null;
 
 	return (
 		<span className={styles.title_director}>
-			by <CreditNames entries={directorEntries} />
+			{dict.mediaDetail.byCreditPrefix} <CreditNames entries={directorEntries} />
 		</span>
 	);
 }
@@ -168,16 +172,16 @@ export async function MediaCreditsDetails({
 	mediaId: number;
 	type: MediaType;
 }) {
-	const { studioEntries, actorEntries, otherRoles } = await groupCredits(
-		mediaId,
-		type,
-	);
+	const [{ studioEntries, actorEntries, otherRoles }, dict] = await Promise.all([
+		groupCredits(mediaId, type),
+		getDictionary(),
+	]);
 
 	return (
 		<>
 			{actorEntries.length > 0 && (
 				<div className={styles.cast_group}>
-					<span className={styles.fact_label}>Cast</span>
+					<span className={styles.fact_label}>{dict.mediaDetail.cast}</span>
 					<CastPhotos entries={actorEntries} />
 				</div>
 			)}
@@ -185,7 +189,7 @@ export async function MediaCreditsDetails({
 			{studioEntries.length > 0 && (
 				<dl className={styles.facts}>
 					<div className={styles.fact}>
-						<dt className={styles.fact_label}>Studio</dt>
+						<dt className={styles.fact_label}>{dict.mediaDetail.studio}</dt>
 						<dd className={styles.fact_value}>
 							<CreditNames entries={studioEntries} flex />
 						</dd>
@@ -196,7 +200,7 @@ export async function MediaCreditsDetails({
 			{otherRoles.length > 0 && (
 				<details className={styles.credits}>
 					<summary className={styles.credits_summary}>
-						Credits
+						{dict.mediaDetail.creditsHeading}
 						<span className={styles.credits_count}>{otherRoles.length}</span>
 					</summary>
 					<div className={styles.credits_list}>

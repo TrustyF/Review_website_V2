@@ -1,4 +1,5 @@
 import { Link } from "@/components/ui/link";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./unsubscribed.module.sass";
 
 type Props = {
@@ -6,19 +7,15 @@ type Props = {
 };
 
 export default async function UnsubscribedPage({ searchParams }: Props) {
-	const { status } = await searchParams;
+	const [{ status }, dict] = await Promise.all([searchParams, getDictionary()]);
 	const ok = status === "ok";
 
 	return (
 		<div className={styles.wrapper}>
-			<h1>{ok ? "You're unsubscribed" : "Link invalid or expired"}</h1>
-			<p>
-				{ok
-					? "You won't get this email again. You can turn it back on any time from account settings."
-					: "This unsubscribe link couldn't be verified. You can manage your email preferences from account settings."}
-			</p>
+			<h1>{ok ? dict.unsubscribed.title : dict.unsubscribed.titleInvalid}</h1>
+			<p>{ok ? dict.unsubscribed.body : dict.unsubscribed.bodyInvalid}</p>
 			<Link href="/account/settings" className={styles.back_link}>
-				Account settings
+				{dict.unsubscribed.accountSettings}
 			</Link>
 		</div>
 	);

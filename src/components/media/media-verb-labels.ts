@@ -1,55 +1,33 @@
 import { MediaType } from "@prisma/client";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 
-// Single source of truth for "watched"'s verb, which depends on the media's type —
-// screen media is "watched", print media is "read", games are "played".
-const WATCHED_VERB_BY_TYPE: Record<MediaType, string> = {
-	[MediaType.MOVIE]: "Watched",
-	[MediaType.SHORT]: "Watched",
-	[MediaType.TVSHOW]: "Watched",
-	[MediaType.MANGA]: "Read",
-	[MediaType.COMIC]: "Read",
-	[MediaType.BOOK]: "Read",
-	[MediaType.GAME]: "Played",
-};
-
-// "Rewatched" doesn't just re-prefix the verb above ("Reread"/"Replayed" aren't "Re" + "Read"/"Played").
-const REWATCHED_VERB_BY_TYPE: Record<MediaType, string> = {
-	[MediaType.MOVIE]: "Rewatched",
-	[MediaType.SHORT]: "Rewatched",
-	[MediaType.TVSHOW]: "Rewatched",
-	[MediaType.MANGA]: "Reread",
-	[MediaType.COMIC]: "Reread",
-	[MediaType.BOOK]: "Reread",
-	[MediaType.GAME]: "Replayed",
-};
-
-// "Watched on 12 Jan 2026", "Read on ...", "Played on ..." — the date-line label used on
-// change-log rows and review cards.
-export function watchedOnLabel(type: MediaType): string {
-	return `${WATCHED_VERB_BY_TYPE[type]} on`;
+// "Watched on 12 Jan 2026", "Read on ...", "Played on ..." — full phrases per type/locale
+// (not composed from a bare verb + " on"), since word order isn't the same across languages.
+export function watchedOnLabel(type: MediaType, dict: Dictionary): string {
+	return dict.mediaVerb.onLabel[type];
 }
 
 // "Rewatched on ...", "Reread on ...", "Replayed on ..." — the change-log milestone label.
-export function rewatchedOnLabel(type: MediaType): string {
-	return `${REWATCHED_VERB_BY_TYPE[type]} on`;
+export function rewatchedOnLabel(type: MediaType, dict: Dictionary): string {
+	return dict.mediaVerb.rewatchedOnLabel[type];
 }
 
 // "Rewatched", "Reread", "Replayed" — the activity feed's bare action verb.
-export function rewatchedVerb(type: MediaType): string {
-	return REWATCHED_VERB_BY_TYPE[type];
+export function rewatchedVerb(type: MediaType, dict: Dictionary): string {
+	return dict.mediaVerb.rewatchedVerb[type];
 }
 
 // "Recently watched", "Recently read", "Recently played" — home page section titles.
-export function recentlyWatchedTitle(type: MediaType): string {
-	return `Recently ${WATCHED_VERB_BY_TYPE[type].toLowerCase()}`;
+export function recentlyWatchedTitle(type: MediaType, dict: Dictionary): string {
+	return dict.mediaVerb.recentlyLabel[type];
 }
 
 // "Mark as watched"/"Mark as read"/"Mark as played" — the per-user watched toggle's label.
-export function markAsWatchedLabel(type: MediaType): string {
-	return `Mark as ${WATCHED_VERB_BY_TYPE[type].toLowerCase()}`;
+export function markAsWatchedLabel(type: MediaType, dict: Dictionary): string {
+	return dict.mediaVerb.markAsLabel[type];
 }
 
 // "Already watched"/"Already read"/"Already played" — the toggle's active-state label.
-export function alreadyWatchedLabel(type: MediaType): string {
-	return `Already ${WATCHED_VERB_BY_TYPE[type].toLowerCase()}`;
+export function alreadyWatchedLabel(type: MediaType, dict: Dictionary): string {
+	return dict.mediaVerb.alreadyLabel[type];
 }

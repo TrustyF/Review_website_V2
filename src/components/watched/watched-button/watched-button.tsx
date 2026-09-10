@@ -8,6 +8,7 @@ import {
 	alreadyWatchedLabel,
 	markAsWatchedLabel,
 } from "@/components/media/media-verb-labels";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./watched-button.module.sass";
 
 type Props = {
@@ -24,6 +25,7 @@ export function WatchedButton({
 	initialIsWatched,
 	className,
 }: Props) {
+	const dict = useDictionary();
 	const [isWatched, setIsWatched] = useState(initialIsWatched);
 	const [isPending, setIsPending] = useState(false);
 
@@ -41,7 +43,9 @@ export function WatchedButton({
 		}
 	}
 
-	const label = isWatched ? alreadyWatchedLabel(type) : markAsWatchedLabel(type);
+	const label = isWatched
+		? alreadyWatchedLabel(type, dict)
+		: markAsWatchedLabel(type, dict);
 
 	return (
 		<Clickable

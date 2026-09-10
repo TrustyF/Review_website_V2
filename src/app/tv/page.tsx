@@ -1,10 +1,12 @@
 import { MediaTypeListPage } from "@/components/media/media-pages/media-type-list-page/media-type-list-page";
 import { MediaType } from "@prisma/client";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export default function TvPage() {
+export default async function TvPage() {
+	const dict = await getDictionary();
 	return (
 		<MediaTypeListPage
-			title="TV"
+			title={dict.nav.tv}
 			type={MediaType.TVSHOW}
 			include={{ tvShow: true }}
 		/>

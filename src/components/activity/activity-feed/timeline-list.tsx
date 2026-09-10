@@ -1,6 +1,7 @@
 "use client";
 import { Fragment, type CSSProperties, type ReactNode } from "react";
 import { groupByMonth } from "./group-by-month";
+import { useLocale } from "@/lib/i18n/i18n-context";
 import styles from "./activity-feed.module.sass";
 
 // A gap at least this long between consecutive entries in the same month group gets a divider.
@@ -28,7 +29,8 @@ export function TimelineList<
 	// next month's sticky header.
 	monthSpacer?: boolean;
 }) {
-	const groups = groupByMonth(entries);
+	const locale = useLocale();
+	const groups = groupByMonth(entries, locale);
 
 	return (
 		<div className={styles.groups}>

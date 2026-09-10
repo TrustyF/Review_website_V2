@@ -9,6 +9,7 @@ import {
 	alreadyWatchedLabel,
 	markAsWatchedLabel,
 } from "@/components/media/media-verb-labels";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./media-hover-badge.module.sass";
 
 type Props = {
@@ -20,13 +21,16 @@ type Props = {
 // Quick toggle for media cards in a grid; signed-out visitors never see this.
 // Reads/writes through WatchedProvider so every card for the same media stays in sync.
 export function MarkAsWatchedHoverButton({ mediaId, type, className }: Props) {
+	const dict = useDictionary();
 	const { data: session } = useSession();
 	const { isWatched, toggle } = useWatched();
 
 	if (!session?.user?.id) return null;
 
 	const watched = isWatched(mediaId);
-	const label = watched ? alreadyWatchedLabel(type) : markAsWatchedLabel(type);
+	const label = watched
+		? alreadyWatchedLabel(type, dict)
+		: markAsWatchedLabel(type, dict);
 
 	return (
 		<Tooltip content={label} className={styles.trigger}>

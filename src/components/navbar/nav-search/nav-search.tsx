@@ -13,17 +13,8 @@ import {
 } from "@/components/search/search-actions";
 import { useOutsideClick } from "@/lib/use-outside-click";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./nav-search.module.sass";
-
-const TYPE_LABELS: Record<MediaType, string> = {
-	[MediaType.MOVIE]: "Movie",
-	[MediaType.SHORT]: "Short",
-	[MediaType.TVSHOW]: "TV Show",
-	[MediaType.MANGA]: "Manga",
-	[MediaType.COMIC]: "Comic",
-	[MediaType.GAME]: "Game",
-	[MediaType.BOOK]: "Book",
-};
 
 // Wait after the last keystroke before querying, so the input stays responsive.
 const DEBOUNCE_MS = 500;
@@ -39,6 +30,16 @@ type DropdownPosition = { top: number; right: number };
 
 // Media-agnostic navbar search: trigger expands inline with animated width.
 export function NavSearch() {
+	const dict = useDictionary();
+	const typeLabels: Record<MediaType, string> = {
+		[MediaType.MOVIE]: dict.nav.search.typeLabels.movie,
+		[MediaType.SHORT]: dict.nav.search.typeLabels.short,
+		[MediaType.TVSHOW]: dict.nav.search.typeLabels.tvShow,
+		[MediaType.MANGA]: dict.nav.search.typeLabels.manga,
+		[MediaType.COMIC]: dict.nav.search.typeLabels.comic,
+		[MediaType.GAME]: dict.nav.search.typeLabels.game,
+		[MediaType.BOOK]: dict.nav.search.typeLabels.book,
+	};
 	const router = useRouter();
 	const isMobile = useIsMobileViewport();
 	const [input, setInput] = useState("");
@@ -96,11 +97,11 @@ export function NavSearch() {
 			setError(null);
 			searchAllMedia(input)
 				.then(setResults)
-				.catch(() => setError("Search failed. Try again."))
+				.catch(() => setError(dict.nav.search.searchFailed))
 				.finally(() => setIsSearching(false));
 		}, DEBOUNCE_MS);
 		return () => clearTimeout(timeout);
-	}, [input]);
+	}, [input, dict.nav.search.searchFailed]);
 
 	function handleQueryChange(value: string) {
 		setInput(value);
@@ -179,7 +180,7 @@ export function NavSearch() {
 										<div className={styles.result_meta}>
 											{result.kind === "media" ? (
 												<>
-													{TYPE_LABELS[result.type]}
+													{typeLabels[result.type]}
 													{result.releaseDate && (
 														<>
 															{" "}
@@ -190,7 +191,9 @@ export function NavSearch() {
 											) : (
 												<>
 													{result.mainRole} - {result.creditCount}{" "}
-													{result.creditCount === 1 ? "credit" : "credits"}
+													{result.creditCount === 1
+														? dict.nav.search.credit
+														: dict.nav.search.credits}
 												</>
 											)}
 										</div>
@@ -199,7 +202,7 @@ export function NavSearch() {
 							))
 						) : (
 							<div className={styles.status}>
-								{isSearching ? "Searching…" : "No matches."}
+								{isSearching ? dict.nav.search.searching : dict.nav.search.noMatches}
 							</div>
 						)}
 					</div>,
@@ -218,7 +221,7 @@ export function NavSearch() {
 					ref={inputRef}
 					type="text"
 					className={styles.input}
-					placeholder="Search…"
+					placeholder={dict.nav.search.placeholder}
 					value={input}
 					tabIndex={isExpanded ? 0 : -1}
 					aria-hidden={!isExpanded}
@@ -238,7 +241,7 @@ export function NavSearch() {
 			</div>
 			<Clickable
 				className={styles.trigger}
-				aria-label="Search"
+				aria-label={dict.nav.search.ariaLabel}
 				aria-pressed={isExpanded}
 				onClick={() => {
 					// Mobile has no room for the dropdown, so send it to the

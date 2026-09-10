@@ -1,6 +1,7 @@
 import { searchAllMedia } from "@/components/search/search-actions";
 import { SearchResultCard } from "@/components/search/search-result-card";
 import { SearchPageInput } from "@/components/search/search-page-input";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./search-results-page.module.sass";
 
 // Full page beats the old navbar dropdown once matches grow — 8 was the most
@@ -24,20 +25,21 @@ export async function SearchResultsPage({ query }: { query: string }) {
 	const entityResults = results
 		.filter((result) => result.kind !== "media")
 		.slice(0, ENTITY_DISPLAY_LIMIT);
+	const dict = await getDictionary();
 
 	return (
 		<div className={styles.wrapper}>
 			<SearchPageInput initialQuery={query} />
 
 			{trimmed === "" ? (
-				<p className={styles.empty}>Search for a title, person, or company.</p>
+				<p className={styles.empty}>{dict.searchPage.promptEmpty}</p>
 			) : results.length === 0 ? (
-				<p className={styles.empty}>No matches for “{trimmed}”.</p>
+				<p className={styles.empty}>{dict.searchPage.noMatches(trimmed)}</p>
 			) : (
 				<>
 					{mediaResults.length > 0 && (
 						<section className={styles.section}>
-							<h2 className={styles.section_title}>Titles</h2>
+							<h2 className={styles.section_title}>{dict.searchPage.titlesSection}</h2>
 							<div className={styles.media_grid}>
 								{mediaResults.map((result) => (
 									<SearchResultCard key={`media-${result.id}`} result={result} />
@@ -47,7 +49,9 @@ export async function SearchResultsPage({ query }: { query: string }) {
 					)}
 					{entityResults.length > 0 && (
 						<section className={styles.section}>
-							<h2 className={styles.section_title}>People &amp; Companies</h2>
+							<h2 className={styles.section_title}>
+								{dict.searchPage.peopleCompaniesSection}
+							</h2>
 							<div className={styles.entity_list}>
 								{entityResults.map((result) => (
 									<SearchResultCard

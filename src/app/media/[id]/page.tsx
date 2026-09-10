@@ -25,6 +25,8 @@ import { CircularGauge } from "@/components/ui/circular-gauge";
 import { Tooltip } from "@/components/ui/tooltip";
 import { generateMediaMetadata } from "./metadata";
 import { MediaStatus } from "@prisma/client";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 
 // See metadata.ts — kept there rather than inlined here so this file stays
 // about rendering the page, not also building link-preview tags.
@@ -55,7 +57,8 @@ function Fact({ label, value }: { label: string; value: ReactNode }) {
 
 // Renders fields that differ between media types — each keeps its data on a
 // different relation (media.movie, media.tvShow, ...), picked here by type.
-function MediaTypeFacts({ media }: { media: MediaRecord }) {
+function MediaTypeFacts({ media, dict }: { media: MediaRecord; dict: Dictionary }) {
+	const facts = dict.mediaDetail.facts;
 	switch (media.type) {
 		// Budget/revenue/ROI render in the financials box beside the review
 		// instead — nothing left here for movies/shorts.
@@ -66,12 +69,12 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 			const { seasonCount, episodeCount, network } = media.tvShow;
 			return (
 				<dl className={styles.facts}>
-					{network && <Fact label="Network" value={network} />}
+					{network && <Fact label={facts.network} value={network} />}
 					{seasonCount != null && (
-						<Fact label="Seasons" value={String(seasonCount)} />
+						<Fact label={facts.seasons} value={String(seasonCount)} />
 					)}
 					{episodeCount != null && (
-						<Fact label="Episodes" value={String(episodeCount)} />
+						<Fact label={facts.episodes} value={String(episodeCount)} />
 					)}
 				</dl>
 			);
@@ -82,10 +85,10 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 			return (
 				<dl className={styles.facts}>
 					{source.volumeCount != null && (
-						<Fact label="Volumes" value={String(source.volumeCount)} />
+						<Fact label={facts.volumes} value={String(source.volumeCount)} />
 					)}
 					{source.chapterCount != null && (
-						<Fact label="Chapters" value={String(source.chapterCount)} />
+						<Fact label={facts.chapters} value={String(source.chapterCount)} />
 					)}
 				</dl>
 			);
@@ -94,7 +97,7 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 			const { platform } = media.game;
 			return (
 				<dl className={styles.facts}>
-					{platform && <Fact label="Platform" value={platform} />}
+					{platform && <Fact label={facts.platform} value={platform} />}
 				</dl>
 			);
 		}
@@ -103,9 +106,9 @@ function MediaTypeFacts({ media }: { media: MediaRecord }) {
 			return (
 				<dl className={styles.facts}>
 					{pageCount != null && (
-						<Fact label="Pages" value={String(pageCount)} />
+						<Fact label={facts.pages} value={String(pageCount)} />
 					)}
-					{isbn && <Fact label="ISBN" value={isbn} />}
+					{isbn && <Fact label={facts.isbn} value={isbn} />}
 				</dl>
 			);
 		}
@@ -121,6 +124,7 @@ export default async function MediaDetailPage({
 	const mediaId = Number(id);
 	if (!Number.isFinite(mediaId)) notFound();
 
+	const dict = await getDictionary();
 	// auth() is JWT-only (src/auth.ts), never hits the DB, so it's free to await
 	// up front. Slower sections below run their own queries in their own <Suspense>.
 	const session = await auth();
@@ -175,8 +179,7 @@ export default async function MediaDetailPage({
 			<div className={styles.wrapper}>
 				{raw.isDeleted && (
 					<div className={styles.deleted_banner}>
-						This item is soft-deleted — hidden from every list. Open the editor to
-						restore it or delete it permanently.
+						{dict.mediaDetail.deletedBanner}
 					</div>
 				)}
 				{media.bannerSrc && (
@@ -235,8 +238,8 @@ export default async function MediaDetailPage({
 											target="_blank"
 											rel="noopener noreferrer"
 											className={styles.source_link_button}
-											title="Open original source"
-											aria-label="Open original source">
+											title={dict.mediaDetail.openOriginalSource}
+											aria-label={dict.mediaDetail.openOriginalSource}>
 											<ExternalLink size={15} />
 										</a>
 									)}
@@ -275,7 +278,7 @@ export default async function MediaDetailPage({
 										{runtimeLabel != null && (
 											<div className={styles.finance_group}>
 												<dl className={styles.financials_facts}>
-													<Fact label="Runtime" value={runtimeLabel} />
+													<Fact label={dict.mediaDetail.facts.runtime} value={runtimeLabel} />
 												</dl>
 											</div>
 										)}
@@ -289,14 +292,14 @@ export default async function MediaDetailPage({
 											<Tooltip
 												content={
 													difficulty === 1
-														? "Medium difficulty"
-														: "Hard difficulty"
+														? dict.mediaDetail.mediumDifficulty
+														: dict.mediaDetail.hardDifficulty
 												}>
 												<div className={styles.difficulty}>
 													<span
 														className={`${styles.difficulty_dot} ${difficulty === 1 ? styles.difficulty_dot_medium : styles.difficulty_dot_hard}`}
 													/>
-													{difficulty === 1 ? "Medium" : "Hard"}
+													{difficulty === 1 ? dict.mediaDetail.medium : dict.mediaDetail.hard}
 												</div>
 											</Tooltip>
 										)}
@@ -305,19 +308,19 @@ export default async function MediaDetailPage({
 												<dl className={styles.financials_facts}>
 													{budget != null && (
 														<Fact
-															label="Budget"
+															label={dict.mediaDetail.facts.budget}
 															value={CurrencyFormatter.format(budget)}
 														/>
 													)}
 													{revenue != null && (
 														<Fact
-															label="Revenue"
+															label={dict.mediaDetail.facts.revenue}
 															value={CurrencyFormatter.format(revenue)}
 														/>
 													)}
 												</dl>
 												{roi != null && (
-													<Tooltip content="Return on investment">
+													<Tooltip content={dict.mediaDetail.returnOnInvestment}>
 														<CircularGauge
 															value={roi}
 															size={40}
@@ -339,21 +342,21 @@ export default async function MediaDetailPage({
 					</div>
 	
 					<section className={styles.section}>
-						<h2 className={styles.section_title}>Details</h2>
+						<h2 className={styles.section_title}>{dict.mediaDetail.detailsHeading}</h2>
 						{tagline && <p className={styles.tagline}>{tagline}</p>}
 						{media.overview && (
 							<p className={styles.overview}>{media.overview}</p>
 						)}
-	
-						<MediaTypeFacts media={media} />
-	
+
+						<MediaTypeFacts media={media} dict={dict} />
+
 						<Suspense fallback={null}>
 							<MediaCreditsDetails mediaId={media.id} type={media.type} />
 						</Suspense>
 					</section>
-	
+
 					<section className={styles.section}>
-						<h2 className={styles.section_title}>Change log</h2>
+						<h2 className={styles.section_title}>{dict.mediaDetail.changeLogHeading}</h2>
 						<Suspense fallback={null}>
 							<MediaChangeLogSection
 								mediaId={media.id}

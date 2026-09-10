@@ -1,7 +1,9 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { db } from "@/server/db/client";
 import { auth } from "@/auth";
+import { isLocale } from "@/lib/i18n/get-locale";
 
 // Saved per-step so incomplete wizard sessions retain earlier progress
 
@@ -35,6 +37,15 @@ export async function saveOnboardingPreferences(
 			newsletterOptIn: input.newsletterOptIn,
 		},
 	});
+
+	// See updateAccountSettings — the session JWT won't pick this up until
+	// next sign-in, so the cookie is what makes onboarding's choice stick.
+	if (isLocale(input.preferredLanguage)) {
+		(await cookies()).set("locale", input.preferredLanguage, {
+			path: "/",
+			maxAge: 60 * 60 * 24 * 365,
+		});
+	}
 
 	revalidatePath("/account");
 }

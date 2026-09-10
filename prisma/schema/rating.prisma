@@ -19,6 +19,9 @@ model Review {
   difficulty    Int?
 
   body String?
+  // French translation of `body`, written directly by the reviewer (no
+  // admin-UI editor for this yet) — falls back to `body` when unset.
+  bodyFr String?
 
   // Curated by an admin via the homepage's "manage featured reviews" modal
   // (featured-manager-modal.tsx) — takes priority over plain recency in

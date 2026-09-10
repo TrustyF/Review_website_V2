@@ -11,11 +11,13 @@ import { WatchlistStack } from "@/components/watchlist/watchlist-stack/watchlist
 import { WatchlistIcon } from "@/components/icons/watchlist-icon";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import { displayName } from "@/lib/display-name";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./account.module.sass";
 
 export default async function AccountPage() {
 	const session = await auth();
 	if (!session?.user?.id) redirect("/login");
+	const dict = await getDictionary();
 
 	// image/username read from DB (not session) since avatar/settings updates write DB directly without refreshing the JWT.
 	const user = await db.user.findUnique({
@@ -78,7 +80,7 @@ export default async function AccountPage() {
 					<Link
 						href="/account/settings"
 						className={styles.settings_link}
-						aria-label="Account settings">
+						aria-label={dict.account.settingsAriaLabel}>
 						<Settings size={18} />
 					</Link>
 					<SignOutButton />
@@ -89,12 +91,10 @@ export default async function AccountPage() {
 				<Link href="/watchlist" className={styles.watchlist}>
 					<h2 className={styles.section_title}>
 						<WatchlistIcon size={18} className={styles.section_icon} />
-						Watchlist
+						{dict.account.watchlistCard}
 					</h2>
 					{watchlistMedia.length === 0 ? (
-						<p className={styles.empty}>
-							Your watchlist is empty — add something from its media page.
-						</p>
+						<p className={styles.empty}>{dict.watchlist.empty}</p>
 					) : (
 						<WatchlistStack media={watchlistMedia} />
 					)}
@@ -102,13 +102,10 @@ export default async function AccountPage() {
 				<Link href="/account/lists" className={styles.lists}>
 					<h2 className={styles.section_title}>
 						<List size={18} className={styles.section_icon} />
-						Recommendations
+						{dict.account.recommendations}
 					</h2>
 					{recommendationLists.length === 0 ? (
-						<p className={styles.empty}>
-							Nothing recommended yet — lists an admin curates for you
-							specifically will show up here.
-						</p>
+						<p className={styles.empty}>{dict.account.recommendationsEmpty}</p>
 					) : (
 						<div className={styles.lists_stack}>
 							{recommendationLists.map((list) => (

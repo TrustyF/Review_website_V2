@@ -7,6 +7,7 @@ import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useListItemRemoval } from "@/components/lists/use-list-item-removal";
 import { useMediaFilter } from "@/components/media/media-grids/media-filter/use-media-filter";
 import { SeenBadge } from "@/components/watched/seen-badge/seen-badge";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./list-media-view.module.sass";
 
 type Props = {
@@ -19,6 +20,7 @@ type Props = {
 
 // Handles the two non-RANKED sort modes (RankedList covers RANKED); RATED reuses RatedTierGrid, UNSORTED reuses LazyMediaGrid directly. Neither grid has a built-in "remove from list", so it's supplied via renderOverlay — the seen badge rides along in the same slot.
 export function ListMediaView({ listId, media, sortMode, seenMediaIds }: Props) {
+	const dict = useDictionary();
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
 	// Mobile admin edits are intentionally unsupported.
@@ -48,7 +50,7 @@ export function ListMediaView({ listId, media, sortMode, seenMediaIds }: Props) 
 	return (
 		<div className={styles.wrapper}>
 			{filteredMedia.length === 0 ? (
-				<p className={styles.empty}>No media matches the current filter.</p>
+				<p className={styles.empty}>{dict.media.filter.noMatches}</p>
 			) : sortMode === "RATED" ? (
 				<RatedTierGrid media={filteredMedia} renderOverlay={renderOverlay} />
 			) : (

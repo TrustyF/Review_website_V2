@@ -9,6 +9,7 @@ import { EditListLink } from "@/components/lists/edit-list-link/edit-list-link";
 import { ListIdBadge } from "@/components/lists/list-id-badge/list-id-badge";
 import { ListWatchedProgress } from "@/components/lists/list-watched-progress/list-watched-progress";
 import { displayName } from "@/lib/display-name";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./list-detail-page.module.sass";
 
 type Props = {
@@ -43,7 +44,7 @@ export async function ListDetailPage({ id }: Props) {
 	});
 	if (!list) notFound();
 
-	const session = await auth();
+	const [session, dict] = await Promise.all([auth(), getDictionary()]);
 	const isAdmin = session?.user?.role === "ADMIN";
 
 	// A recommendation list is only visible to its recipient and admins; notFound() (not a login redirect) so a probing visitor can't tell "no such list" from "not yours."
@@ -109,7 +110,7 @@ export async function ListDetailPage({ id }: Props) {
 			/>
 
 			{media.length === 0 ? (
-				<p className={styles.empty}>No media in this list yet.</p>
+				<p className={styles.empty}>{dict.lists.emptyMedia}</p>
 			) : list.sortMode === "RANKED" ? (
 				<RankedList
 					listId={list.id}

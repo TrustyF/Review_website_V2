@@ -1,13 +1,11 @@
+"use client";
 import { MediaType } from "@prisma/client";
 import { MediaRecord } from "@/components/media/types";
 import { recentlyWatchedTitle } from "@/components/media/media-verb-labels";
 import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
 import { OneRowMediaGrid } from "@/components/media/media-grids/one-row-media-grid/one-row-media-grid";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./recent-media-sections.module.sass";
-
-const RELEASES_TITLE_BY_TYPE: Partial<Record<MediaType, string>> = {
-	[MediaType.GAME]: "Recent games",
-};
 
 type Props = {
 	type: MediaType;
@@ -21,23 +19,23 @@ export function RecentMediaSections({
 	recentReleases,
 	recentlyWatched,
 }: Props) {
+	const dict = useDictionary();
 	if (recentReleases.length === 0 && recentlyWatched.length === 0) return null;
+
+	const releasesTitle =
+		type === MediaType.GAME ? dict.home.recentGames : dict.home.recentReleases;
 
 	return (
 		<MediaCardDisplayProvider showTitle={false}>
 			{recentReleases.length > 0 && (
 				<section className={styles.wrapper}>
-					<h2 className={styles.title}>
-						{RELEASES_TITLE_BY_TYPE[type] ?? "Recent releases"}
-					</h2>
+					<h2 className={styles.title}>{releasesTitle}</h2>
 					<OneRowMediaGrid items={recentReleases} />
 				</section>
 			)}
 			{recentlyWatched.length > 0 && (
 				<section className={styles.wrapper}>
-					<h2 className={styles.title}>
-						{recentlyWatchedTitle(type)}
-					</h2>
+					<h2 className={styles.title}>{recentlyWatchedTitle(type, dict)}</h2>
 					<OneRowMediaGrid items={recentlyWatched} />
 				</section>
 			)}

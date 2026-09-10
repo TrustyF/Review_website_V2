@@ -3,6 +3,7 @@ import { dbPublic } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
 import { EnrichmentStatus, MediaType, Prisma } from "@prisma/client";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./recent-media-list-page.module.sass";
 
 type Props = {
@@ -33,13 +34,14 @@ export async function RecentMediaListPage({
 		orderBy: { releaseDate: "desc" },
 	});
 	const mediaList = rawList.map(toMediaRecord);
+	const dict = await getDictionary();
 
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				<h1>{title}</h1>
 				<Link href={backHref} className={styles.back_link}>
-					By rating
+					{dict.media.recentBackToRating}
 				</Link>
 			</div>
 			<LazyMediaGrid items={mediaList} />

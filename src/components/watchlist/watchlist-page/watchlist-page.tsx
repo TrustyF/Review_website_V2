@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
 import { WatchlistGrid } from "@/components/watchlist/watchlist-grid/watchlist-grid";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./watchlist-page.module.sass";
 
 // Same shape as ListDetailPage, but scoped to the signed-in user and always
@@ -10,6 +11,7 @@ import styles from "./watchlist-page.module.sass";
 export async function WatchlistPage() {
 	const session = await auth();
 	if (!session?.user) redirect("/login");
+	const dict = await getDictionary();
 
 	const items = await db.watchlistItem.findMany({
 		where: { userId: session.user.id },
@@ -36,11 +38,9 @@ export async function WatchlistPage() {
 
 	return (
 		<div className={styles.wrapper}>
-			<h1>My watchlist</h1>
+			<h1>{dict.watchlist.title}</h1>
 			{media.length === 0 ? (
-				<p className={styles.empty}>
-					Your watchlist is empty — add something from its media page.
-				</p>
+				<p className={styles.empty}>{dict.watchlist.empty}</p>
 			) : (
 				<WatchlistGrid media={media} />
 			)}

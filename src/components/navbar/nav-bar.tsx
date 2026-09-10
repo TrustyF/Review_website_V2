@@ -24,10 +24,12 @@ import { useMobileDrawer } from "@/components/navbar/use-mobile-drawer";
 import { useAvatarImage } from "@/components/navbar/use-avatar-image";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useAvatar } from "@/components/account/avatar-context";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import style from "./nav-bar.module.sass";
 import { LogoImage } from "@/components/logo/logo-image";
 
 export default function Navbar() {
+	const dict = useDictionary();
 	const { data: session } = useSession();
 	// Fetched client-side since the session JWT only refreshes at sign-in.
 	const { avatarSrc } = useAvatar();
@@ -51,7 +53,7 @@ export default function Navbar() {
 				<Link
 					href="/"
 					className={style.title}
-					aria-label="arthur's corner home">
+					aria-label={dict.nav.homeAriaLabel}>
 					<LogoImage />
 				</Link>
 
@@ -71,21 +73,21 @@ export default function Navbar() {
 
 						<div className={style.nav_group}>
 							<NavDropdown
-								label="Media"
+								label={dict.nav.media}
 								icon={MovieIcon}
 								items={[
-									{ href: "/movies", label: "Movies" },
-									{ href: "/tv", label: "TV" },
-									{ href: "/shorts", label: "Shorts" },
+									{ href: "/movies", label: dict.nav.movies },
+									{ href: "/tv", label: dict.nav.tv },
+									{ href: "/shorts", label: dict.nav.shorts },
 								]}
 							/>
 							<NavDropdown
-								label="Reading"
+								label={dict.nav.reading}
 								icon={BookOpen}
 								items={[
-									{ href: "/manga", label: "Manga" },
-									{ href: "/comics", label: "Comics" },
-									{ href: "/books", label: "Books" },
+									{ href: "/manga", label: dict.nav.manga },
+									{ href: "/comics", label: dict.nav.comics },
+									{ href: "/books", label: dict.nav.books },
 								]}
 							/>
 							<NavLink
@@ -93,7 +95,7 @@ export default function Navbar() {
 								icon={GamepadDirectional}
 								className={style.link}
 								pathname={pathname}>
-								Games
+								{dict.nav.games}
 							</NavLink>
 						</div>
 
@@ -106,7 +108,7 @@ export default function Navbar() {
 								// Static-ish, safe to prefetch eagerly, unlike /account below.
 								iconOnly
 								prefetch>
-								Activity
+								{dict.nav.activity}
 							</NavLink>
 							<NavLink
 								href="/reviews"
@@ -115,7 +117,7 @@ export default function Navbar() {
 								pathname={pathname}
 								iconOnly
 								prefetch>
-								Reviews
+								{dict.nav.reviews}
 							</NavLink>
 							<NavLink
 								href="/lists"
@@ -124,7 +126,7 @@ export default function Navbar() {
 								pathname={pathname}
 								iconOnly
 								prefetch>
-								Lists
+								{dict.nav.lists}
 							</NavLink>
 						</div>
 

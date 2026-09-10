@@ -13,27 +13,14 @@ import {
 } from "@/server/resolvers/poster-resolver";
 import { ChangeLogEntryRow } from "./change-log-entry-row";
 import { ChangeLogEmptyGate } from "./change-log-empty-gate";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
+import { getLocale } from "@/lib/i18n/get-locale";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 import styles from "./change-log-list.module.sass";
 
-const DateFormatter = new Intl.DateTimeFormat("en-GB", {
-	year: "numeric",
-	month: "short",
-	day: "numeric",
-	hour: "2-digit",
-	minute: "2-digit",
-});
-
-const FIELD_LABELS: Record<string, string> = {
-	rating: "Rating",
-	liked: "Liked",
-	difficulty: "Difficulty",
-	body: "Review",
-	posterPath: "Poster",
-	bannerPath: "Banner",
-	// Milestones (see MILESTONE_FIELDS) skip old/new/arrow; "watched"/"rewatched" are omitted
-	// here since their wording depends on media type (see media-verb-labels.ts).
-	reviewed: "Reviewed on",
-};
+// Locale-keyed since a fixed "en-GB" formatter would render month names in
+// English even when the rest of the page is in French.
+const DATE_FORMAT_LOCALE: Record<string, string> = { en: "en-GB", fr: "fr-FR" };
 
 // Rows for these fields are date-only markers — oldValue/newValue is just a "true" placeholder.
 const MILESTONE_FIELDS = new Set(["watched", "reviewed", "rewatched"]);
@@ -59,17 +46,13 @@ function daysBetween(a: Date, b: Date): number {
 
 // Steps up to the largest unit that reads naturally, using average month/year lengths
 // since only a day count is available, not the actual calendar dates.
-function formatGap(days: number): string {
+function formatGap(days: number, dict: Dictionary): string {
 	const rounded = Math.round(days);
-	if (rounded < 30) {
-		return `${rounded} day${rounded === 1 ? "" : "s"} later`;
-	}
+	if (rounded < 30) return dict.changeLog.gapDaysLater(rounded);
 	const months = Math.round(days / 30.44);
-	if (months < 12) {
-		return `${months} month${months === 1 ? "" : "s"} later`;
-	}
+	if (months < 12) return dict.changeLog.gapMonthsLater(months);
 	const years = Math.round(days / 365.25);
-	return `${years} year${years === 1 ? "" : "s"} later`;
+	return dict.changeLog.gapYearsLater(years);
 }
 
 // Long free-text values (review bodies) would blow out the log — show a
@@ -88,6 +71,7 @@ async function ChangeValue({
 	externalId: string | null;
 }) {
 	if (value === null) return null;
+	const dict = await getDictionary();
 
 	if (field === "posterPath") {
 		// Content-addressed by mediaId + historical posterPath, so it keeps working after the current poster changes.
@@ -101,7 +85,7 @@ async function ChangeValue({
 			<Image
 				className={styles.poster_value}
 				src={thumbSrc}
-				alt="Poster"
+				alt={dict.changeLog.posterAlt}
 				width={46}
 				height={69}
 			/>
@@ -115,7 +99,7 @@ async function ChangeValue({
 			<Image
 				className={styles.banner_value}
 				src={thumbSrc}
-				alt="Banner"
+				alt={dict.changeLog.bannerAlt}
 				width={80}
 				height={34}
 			/>
@@ -131,7 +115,9 @@ async function ChangeValue({
 		);
 	}
 
-	if (field === "liked") return <>{value === "true" ? "Yes" : "No"}</>;
+	if (field === "liked") {
+		return <>{value === "true" ? dict.changeLog.yes : dict.changeLog.no}</>;
+	}
 
 	if (field === "body") {
 		return <>{value.length > 60 ? `${value.slice(0, 60)}…` : value}</>;
@@ -140,7 +126,7 @@ async function ChangeValue({
 	return <>{value}</>;
 }
 
-export function ChangeLogList({
+export async function ChangeLogList({
 	entries,
 	type,
 	externalId,
@@ -153,6 +139,25 @@ export function ChangeLogList({
 	// Review.createDate/reviewDate and merged in at display time instead.
 	review: Review | null | undefined;
 }) {
+	const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
+	const dateFormatter = new Intl.DateTimeFormat(DATE_FORMAT_LOCALE[locale], {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
+	const fieldLabels: Record<string, string> = {
+		rating: dict.changeLog.fields.rating,
+		liked: dict.changeLog.fields.liked,
+		difficulty: dict.changeLog.fields.difficulty,
+		body: dict.changeLog.fields.body,
+		posterPath: dict.changeLog.fields.posterPath,
+		bannerPath: dict.changeLog.fields.bannerPath,
+		// Milestones (see MILESTONE_FIELDS) skip old/new/arrow; "watched"/"rewatched" are omitted
+		// here since their wording depends on media type (see media-verb-labels.ts).
+		reviewed: dict.changeLog.fields.reviewedOn,
+	};
 	// Belt-and-suspenders: drops any real "watched"/"reviewed" row before merging synthetic ones,
 	// in case a stale row from before they moved off MediaChangeLog slips through.
 	const realEntries = entries.filter(
@@ -193,7 +198,7 @@ export function ChangeLogList({
 	);
 
 	if (allEntries.length === 0) {
-		return <div className={styles.empty}>No changes recorded yet.</div>;
+		return <div className={styles.empty}>{dict.changeLog.empty}</div>;
 	}
 	const visibleCount = allEntries.filter(
 		(entry) => entry.deletedAt === null,
@@ -217,10 +222,10 @@ export function ChangeLogList({
 						<>
 							<span className={styles.field}>
 								{entry.field === "watched"
-									? watchedOnLabel(type)
+									? watchedOnLabel(type, dict)
 									: entry.field === "rewatched"
-										? rewatchedOnLabel(type)
-										: (FIELD_LABELS[entry.field] ?? entry.field)}
+										? rewatchedOnLabel(type, dict)
+										: (fieldLabels[entry.field] ?? entry.field)}
 							</span>
 							{/* Milestone fields skip the value diff, but the empty span keeps .date right-aligned. */}
 							<span className={styles.change}>
@@ -249,7 +254,7 @@ export function ChangeLogList({
 								)}
 							</span>
 							<span className={styles.date}>
-								{DateFormatter.format(entry.createdAt)}
+								{dateFormatter.format(entry.createdAt)}
 							</span>
 						</>
 					);
@@ -258,7 +263,7 @@ export function ChangeLogList({
 						<li className={styles.timeline_gap} aria-hidden="true">
 							<span className={styles.timeline_gap_line} />
 							<span className={styles.timeline_gap_label}>
-								{formatGap(gapDays)}
+								{formatGap(gapDays, dict)}
 							</span>
 						</li>
 					);

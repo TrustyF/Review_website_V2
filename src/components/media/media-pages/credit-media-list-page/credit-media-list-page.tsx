@@ -13,6 +13,7 @@ import { toPersonPhotoSrc } from "@/server/resolvers/asset-paths";
 import { hasPhotoEligibleRole } from "@/server/resolvers/person-photo-eligibility";
 import styles from "./credit-media-list-page.module.sass";
 import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 
 type Props = {
 	kind: "person" | "company";
@@ -113,6 +114,7 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 		loadRoleMediaByRole(kind, id),
 	]);
 	if (!entity) notFound();
+	const dict = await getDictionary();
 
 	// Every role this entity has a credit under. Actor sorts first (gets the avg-rating row), rest alphabetically. Computed before photoSrc since it also decides that.
 	const roleNames = [...mediaByRole.keys()].sort((a, b) => {
@@ -220,7 +222,7 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 									<span className={styles.role_rating_number}>
 										{avgPersonalRating.toFixed(1)}
 									</span>{" "}
-									<span>avg</span>
+									<span>{dict.media.credits.avgLabel}</span>
 								</span>
 							)}
 							{avgPublicRating != null && (
@@ -229,7 +231,7 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 									<span className={styles.role_rating_number}>
 										{avgPublicRating.toFixed(1)}
 									</span>{" "}
-									<span>public avg</span>
+									<span>{dict.media.credits.publicAvgLabel}</span>
 								</span>
 							)}
 						</div>
@@ -237,14 +239,14 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 				</div>
 			</div>
 			{roleGroups.length === 0 ? (
-				<p className={styles.empty}>No credited media in the collection.</p>
+				<p className={styles.empty}>{dict.media.credits.noCreditedMedia}</p>
 			) : (
 				<>
 					{topGroup && (
 						<div className={styles.other_role_group}>
 							<h2 className={styles.other_role_title}>
 								{topGroup.names.length === 1 && topGroup.names[0] === "Actor"
-									? "Starring in"
+									? dict.media.credits.starringIn
 									: joinNames(topGroup.names)}
 							</h2>
 							<MediaCardDisplayProvider showTitle={false}>
@@ -254,7 +256,9 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 					)}
 					{otherMedia.length > 0 && (
 						<div className={styles.other_role_group}>
-							<h2 className={styles.other_role_title}>Also involved in</h2>
+							<h2 className={styles.other_role_title}>
+								{dict.media.credits.alsoInvolvedIn}
+							</h2>
 							<MediaCardDisplayProvider showTitle={false}>
 								<LazyMediaGrid items={otherMedia} />
 							</MediaCardDisplayProvider>

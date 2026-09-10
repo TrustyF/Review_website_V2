@@ -1,5 +1,7 @@
+"use client";
 import { CSSProperties } from "react";
 import { MediaRecord } from "@/components/media/types";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./featured-review-picker.module.sass";
 
 type Props = {
@@ -20,6 +22,7 @@ export function FeaturedReviewPicker({
 	autoAdvanceMs,
 	onSelect,
 }: Props) {
+	const dict = useDictionary();
 	if (items.length <= 1) return null;
 
 	// The dot auto-advance will land on next — its countdown ring should be filling now.
@@ -35,7 +38,7 @@ export function FeaturedReviewPicker({
 						type="button"
 						className={styles.picker_dot}
 						aria-current={i === activeIndex ? "true" : undefined}
-						aria-label={`Show featured review: ${item.title}`}
+						aria-label={dict.home.showFeaturedReview(item.title)}
 						onClick={() => onSelect(i)}
 					/>
 				</div>

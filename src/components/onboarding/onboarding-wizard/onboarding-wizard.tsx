@@ -5,6 +5,7 @@ import { Clickable } from "@/components/ui/clickable";
 import { AvatarPicker } from "@/components/account/avatar-picker/avatar-picker";
 import { AvatarGroup } from "@/lib/avatars";
 import { LANGUAGE_OPTIONS } from "@/lib/languages";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import {
 	saveOnboardingPreferences,
 	saveOnboardingUsername,
@@ -22,9 +23,8 @@ type Props = {
 	avatarGroups: AvatarGroup[];
 };
 
-const STEPS = ["Username", "Avatar", "Preferences"] as const;
-
 export function OnboardingWizard({ initial, avatarGroups }: Props) {
+	const dict = useDictionary();
 	const router = useRouter();
 	const [step, setStep] = useState(0);
 	// Falls back to `name` (from signup) only when no username yet (same order as display-name.ts). Editable here so user can confirm/change before save.
@@ -32,6 +32,12 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 	const [preferredLanguage, setPreferredLanguage] = useState(initial.preferredLanguage);
 	const [newsletterOptIn, setNewsletterOptIn] = useState(initial.newsletterOptIn);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	const STEPS = [
+		dict.onboarding.steps.username,
+		dict.onboarding.steps.avatar,
+		dict.onboarding.steps.preferences,
+	];
 
 	function finish() {
 		router.push("/account");
@@ -70,28 +76,25 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 
 			{step === 0 && (
 				<div className={styles.step}>
-					<h1 className={styles.title}>Pick a username</h1>
-					<p className={styles.subtitle}>
-						Shown instead of your name around the site. You can change this
-						any time in account settings.
-					</p>
+					<h1 className={styles.title}>{dict.onboarding.usernameStep.title}</h1>
+					<p className={styles.subtitle}>{dict.onboarding.usernameStep.subtitle}</p>
 					<input
 						className={styles.input}
 						type="text"
 						value={username}
-						placeholder="Your username"
+						placeholder={dict.onboarding.usernameStep.placeholder}
 						onChange={(e) => setUsername(e.target.value)}
 						autoFocus
 					/>
 					<div className={styles.actions}>
 						<Clickable className={styles.skip_button} onClick={() => setStep(1)}>
-							Skip
+							{dict.common.skip}
 						</Clickable>
 						<Clickable
 							className={styles.next_button}
 							disabled={isSubmitting}
 							onClick={handleUsernameNext}>
-							Continue
+							{dict.common.continue}
 						</Clickable>
 					</div>
 				</div>
@@ -99,17 +102,17 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 
 			{step === 1 && (
 				<div className={styles.step}>
-					<h1 className={styles.title}>Pick a profile picture</h1>
-					<p className={styles.subtitle}>Click the avatar to choose one.</p>
+					<h1 className={styles.title}>{dict.onboarding.avatarStep.title}</h1>
+					<p className={styles.subtitle}>{dict.onboarding.avatarStep.subtitle}</p>
 					<div className={styles.avatar_picker}>
 						<AvatarPicker initialSrc={initial.image} groups={avatarGroups} />
 					</div>
 					<div className={styles.actions}>
 						<Clickable className={styles.skip_button} onClick={() => setStep(0)}>
-							Back
+							{dict.common.back}
 						</Clickable>
 						<Clickable className={styles.next_button} onClick={() => setStep(2)}>
-							Continue
+							{dict.common.continue}
 						</Clickable>
 					</div>
 				</div>
@@ -117,9 +120,9 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 
 			{step === 2 && (
 				<div className={styles.step}>
-					<h1 className={styles.title}>Language & newsletter</h1>
+					<h1 className={styles.title}>{dict.onboarding.preferencesStep.title}</h1>
 					<label className={styles.field}>
-						Preferred language
+						{dict.account.preferredLanguage}
 						<select
 							className={styles.input}
 							value={preferredLanguage}
@@ -137,17 +140,17 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 							checked={newsletterOptIn}
 							onChange={(e) => setNewsletterOptIn(e.target.checked)}
 						/>
-						Subscribe to the newsletter
+						{dict.account.newsletterOptIn}
 					</label>
 					<div className={styles.actions}>
 						<Clickable className={styles.skip_button} onClick={finish}>
-							Skip
+							{dict.common.skip}
 						</Clickable>
 						<Clickable
 							className={styles.next_button}
 							disabled={isSubmitting}
 							onClick={handleFinish}>
-							{isSubmitting ? "Saving…" : "Finish"}
+							{isSubmitting ? dict.common.saving : dict.onboarding.finish}
 						</Clickable>
 					</div>
 				</div>

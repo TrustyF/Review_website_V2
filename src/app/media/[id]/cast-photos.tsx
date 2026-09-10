@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "@/components/ui/link";
 import { PersonPhoto } from "@/components/media/primitives/person-photo";
 import { Clickable } from "@/components/ui/clickable";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import type { CreditLink } from "./credits-section";
 import styles from "./media-detail.module.sass";
 
@@ -11,6 +12,7 @@ const VISIBLE_WITHOUT_SCROLL = 9;
 
 // Cast as tiles with placeholders for missing photos; collapsed to one row by default
 export function CastPhotos({ entries }: { entries: CreditLink[] }) {
+	const dict = useDictionary();
 	const [expanded, setExpanded] = useState(false);
 	const hasMore = entries.length > VISIBLE_WITHOUT_SCROLL;
 	const visibleEntries = expanded
@@ -42,7 +44,7 @@ export function CastPhotos({ entries }: { entries: CreditLink[] }) {
 					onClick={() => setExpanded((v) => !v)}>
 					<span className={styles.cast_expand_line} />
 					<span className={styles.cast_expand_label}>
-						{expanded ? "Show less" : `Show all ${entries.length}`}
+						{expanded ? dict.castPhotos.showLess : dict.castPhotos.showAll(entries.length)}
 					</span>
 					<span className={styles.cast_expand_line} />
 				</Clickable>

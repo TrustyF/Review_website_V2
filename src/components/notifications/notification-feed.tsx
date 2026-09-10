@@ -16,15 +16,19 @@ import { TimelineRow } from "@/components/activity/activity-feed/timeline-row";
 import { ListAdditionsCard } from "@/components/notifications/list-additions-card";
 import { MediaAdditionsCard } from "@/components/notifications/media-additions-card";
 import { Clickable } from "@/components/ui/clickable";
+import { useDictionary, useLocale } from "@/lib/i18n/i18n-context";
+import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 import styles from "./notification-feed.module.sass";
 
-const DateFormatter = new Intl.DateTimeFormat("en-GB", {
-	year: "numeric",
-	month: "short",
-	day: "numeric",
-	hour: "2-digit",
-	minute: "2-digit",
-});
+function dateFormatterFor(locale: string) {
+	return new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-GB", {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
+}
 
 // Dialed separately from useLazyReveal's own 24-item default, same reasoning
 // as ACTIVITY_BATCH_SIZE — a notification row is a different shape than a grid card.
@@ -34,12 +38,16 @@ function NotificationRow({
 	entry,
 	index,
 	onRead,
+	dict,
+	dateFormatter,
 }: {
 	entry: NotificationEntry;
 	index: number;
 	onRead: (entry: NotificationEntry) => void;
+	dict: Dictionary;
+	dateFormatter: Intl.DateTimeFormat;
 }) {
-	const { target, action, value } = getNotificationRowContent(entry);
+	const { target, action, value } = getNotificationRowContent(entry, dict);
 	// href is null when the linked list has since been deleted — TimelineRow still
 	// renders a clickable (mark-read) span so a notification never just vanishes.
 	const href = getNotificationHref(entry);
@@ -51,7 +59,7 @@ function NotificationRow({
 			icon={NOTIFICATION_TYPE_ICON[entry.type]}
 			posterSrc={entry.media?.posterSrc}
 			target={target}
-			date={DateFormatter.format(entry.createdAt)}
+			date={dateFormatter.format(entry.createdAt)}
 			action={action}
 			value={value}
 			href={href}
@@ -66,6 +74,9 @@ export function NotificationFeed({
 }: {
 	notifications: NotificationEntry[];
 }) {
+	const dict = useDictionary();
+	const locale = useLocale();
+	const dateFormatter = dateFormatterFor(locale);
 	// Optimistic local readAt overlay — revalidatePath only refreshes this page on
 	// its next server render, not props this client component is already mounted with.
 	const [readOverrides, setReadOverrides] = useState<Set<number>>(new Set());
@@ -101,19 +112,14 @@ export function NotificationFeed({
 	}
 
 	if (entries.length === 0) {
-		return (
-			<p className={styles.empty}>
-				Nothing yet — you&apos;ll see it here when an admin makes a list for you
-				or adds something to one of your lists.
-			</p>
-		);
+		return <p className={styles.empty}>{dict.notifications.empty}</p>;
 	}
 
 	return (
 		<>
 			{hasUnread && (
 				<Clickable className={styles.mark_all} onClick={markAllRead}>
-					Mark all as read
+					{dict.notifications.markAllRead}
 				</Clickable>
 			)}
 			<TimelineList
@@ -147,6 +153,8 @@ export function NotificationFeed({
 							entry={entry}
 							index={index}
 							onRead={markRead}
+							dict={dict}
+							dateFormatter={dateFormatter}
 						/>
 					);
 				}}

@@ -1,9 +1,11 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { db } from "@/server/db/client";
 import { auth } from "@/auth";
 import { isValidAvatarSrc } from "@/server/avatars/avatar-catalog";
 import { comparePassword } from "@/lib/password";
+import { isLocale } from "@/lib/i18n/get-locale";
 
 export type AccountSettingsInput = {
 	preferredLanguage: string;
@@ -28,6 +30,15 @@ export async function updateAccountSettings(
 			username: input.username,
 		},
 	});
+
+	// Session.user.preferredLanguage is JWT-backed and only refreshes at
+	// sign-in — this cookie is what makes the new language take effect now.
+	if (isLocale(input.preferredLanguage)) {
+		(await cookies()).set("locale", input.preferredLanguage, {
+			path: "/",
+			maxAge: 60 * 60 * 24 * 365,
+		});
+	}
 
 	revalidatePath("/account");
 }

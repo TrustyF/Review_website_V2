@@ -17,6 +17,7 @@ import { useFeaturedManagerStore } from "@/components/home/featured-review/featu
 import { FeaturedReviewCardMobile } from "./featured-review-card-mobile";
 import { FeaturedReviewPicker } from "./featured-review-picker";
 import { eyebrowFor } from "./featured-review-shared";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./featured-review.module.sass";
 
 // Must match $card-transition-duration (outgoing fade-out, not the faster $card-enter-opacity-duration) — JS can't read a sass variable at runtime.
@@ -166,6 +167,7 @@ type CardProps = {
 };
 
 function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
+	const dict = useDictionary();
 	// Entering cards start offset/transparent, flip to .settled a frame after mount. Exiting cards run this backwards (start settled, then flip off) to play the fade-and-slide-out. requestAnimationFrame ensures a real paint happens between the two states, or the transition gets coalesced away.
 	const [settled, setSettled] = useState(exiting);
 	useEffect(() => {
@@ -187,7 +189,7 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 	}, []);
 
 	const review = media.review;
-	const eyebrow = eyebrowFor(review);
+	const eyebrow = eyebrowFor(review, dict);
 	const EyebrowIcon = eyebrow.icon;
 
 	// Only the incoming card slides; outgoing just fades in place, so they don't read as sliding past each other.
@@ -259,7 +261,7 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 						</ReviewSpoilerProvider>
 					</div>
 					{isOverflowing && (
-						<span className={styles.read_more}>Read full review →</span>
+						<span className={styles.read_more}>{dict.home.readFullReview}</span>
 					)}
 				</div>
 			</div>

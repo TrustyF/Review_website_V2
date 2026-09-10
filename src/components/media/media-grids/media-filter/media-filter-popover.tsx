@@ -14,6 +14,7 @@ import { DualRangeSlider } from "@/components/media/media-grids/media-filter/dua
 import { formatRuntime } from "@/components/media/primitives/runtime";
 import { useOutsideClick } from "@/lib/use-outside-click";
 import { Hitbox } from "@/components/ui/hitbox";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./media-filter-popover.module.sass";
 
 type Props = {
@@ -44,6 +45,7 @@ function formatRuntimeLabel(value: number): string {
 
 // Generic filter trigger + popover for any media grid; the caller owns filter state and applies matchesMediaFilter itself.
 export function MediaFilterPopover({ media, filter, onChange }: Props) {
+	const dict = useDictionary();
 	const [isOpen, setIsOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 
@@ -88,7 +90,7 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 				<div className={styles.popover}>
 					{availableFields.has("rating") && (
 						<div className={styles.section}>
-							<div className={styles.section_title}>Rating</div>
+							<div className={styles.section_title}>{dict.media.filter.rating}</div>
 							<DualRangeSlider
 								min={RATING_MIN}
 								max={RATING_MAX}
@@ -111,7 +113,7 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 
 					{availableFields.has("runtime") && (
 						<div className={styles.section}>
-							<div className={styles.section_title}>Runtime</div>
+							<div className={styles.section_title}>{dict.media.filter.runtime}</div>
 							<DualRangeSlider
 								min={RUNTIME_MIN}
 								max={RUNTIME_MAX}
@@ -134,7 +136,7 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 
 					{availableFields.has("genre") && availableGenres.length > 0 && (
 						<div className={styles.section}>
-							<div className={styles.section_title}>Genres</div>
+							<div className={styles.section_title}>{dict.media.filter.genres}</div>
 							<ul className={styles.checkbox_list}>
 								{availableGenres.map((genre) => (
 									<li key={genre}>
@@ -154,7 +156,7 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 
 					{availableFields.has("difficulty") && (
 						<div className={styles.section}>
-							<div className={styles.section_title}>Difficulty</div>
+							<div className={styles.section_title}>{dict.media.filter.difficulty}</div>
 							<ul className={styles.checkbox_list}>
 								{DIFFICULTY_LEVELS.map((level) => (
 									<li key={level.value}>
@@ -164,7 +166,13 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 												checked={filter.includedDifficulties.has(level.value)}
 												onChange={() => toggleDifficulty(level.value)}
 											/>
-											{level.label}
+											{
+												[
+													dict.media.filter.difficultyLevels.easy,
+													dict.media.filter.difficultyLevels.medium,
+													dict.media.filter.difficultyLevels.hard,
+												][level.value]
+											}
 										</label>
 									</li>
 								))}
@@ -177,7 +185,7 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 							type="button"
 							className={styles.clear_button}
 							onClick={() => onChange(EMPTY_MEDIA_FILTER)}>
-							Clear filters
+							{dict.media.filter.clearFilters}
 						</button>
 					)}
 				</div>

@@ -3,9 +3,11 @@ import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Link } from "@/components/ui/link";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./login-page.module.sass";
 
 export function LoginPage() {
+	const dict = useDictionary();
 	const searchParams = useSearchParams();
 	const callbackUrl = searchParams.get("callbackUrl") || "/";
 
@@ -25,7 +27,7 @@ export function LoginPage() {
 			redirect: false,
 		});
 		if (result?.error) {
-			setError("Invalid email or password");
+			setError(dict.auth.invalidCredentials);
 			setIsSubmitting(false);
 			return;
 		}
@@ -37,17 +39,17 @@ export function LoginPage() {
 
 	return (
 		<div className={styles.wrapper}>
-			<h1>Sign in</h1>
+			<h1>{dict.auth.signIn}</h1>
 			<button
 				type="button"
 				className={styles.google_button}
 				onClick={() => signIn("google", { callbackUrl })}>
-				Sign in with Google
+				{dict.auth.signInWithGoogle}
 			</button>
-			<div className={styles.divider}>or</div>
+			<div className={styles.divider}>{dict.auth.orDivider}</div>
 			<form className={styles.form} onSubmit={handleSubmit}>
 				<label className={styles.field}>
-					Email
+					{dict.auth.email}
 					<input
 						className={styles.input}
 						type="email"
@@ -58,7 +60,7 @@ export function LoginPage() {
 					/>
 				</label>
 				<label className={styles.field}>
-					Password
+					{dict.auth.password}
 					<input
 						className={styles.input}
 						type="password"
@@ -72,11 +74,11 @@ export function LoginPage() {
 					type="submit"
 					className={styles.submit_button}
 					disabled={isSubmitting}>
-					{isSubmitting ? "Signing in…" : "Sign in"}
+					{isSubmitting ? dict.auth.signingIn : dict.auth.signIn}
 				</button>
 			</form>
 			<Link href="/signup" className={styles.switch_link}>
-				Need an account? Sign up
+				{dict.auth.needAccount}
 			</Link>
 		</div>
 	);

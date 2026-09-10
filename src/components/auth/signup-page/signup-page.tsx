@@ -3,9 +3,11 @@ import { FormEvent, useState } from "react";
 import { signIn } from "next-auth/react";
 import { Link } from "@/components/ui/link";
 import { signUp } from "@/components/auth/auth-actions";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./signup-page.module.sass";
 
 export function SignupPage() {
+	const dict = useDictionary();
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -23,17 +25,17 @@ export function SignupPage() {
 			// Hard navigation, not router.push/refresh — see login-page.tsx's comment.
 			window.location.href = "/onboarding";
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to sign up. Try again.");
+			setError(err instanceof Error ? err.message : dict.auth.signupFailed);
 			setIsSubmitting(false);
 		}
 	}
 
 	return (
 		<div className={styles.wrapper}>
-			<h1>Create an account</h1>
+			<h1>{dict.auth.createAccountTitle}</h1>
 			<form className={styles.form} onSubmit={handleSubmit}>
 				<label className={styles.field}>
-					Name
+					{dict.auth.name}
 					<input
 						className={styles.input}
 						type="text"
@@ -43,7 +45,7 @@ export function SignupPage() {
 					/>
 				</label>
 				<label className={styles.field}>
-					Email
+					{dict.auth.email}
 					<input
 						className={styles.input}
 						type="email"
@@ -53,7 +55,7 @@ export function SignupPage() {
 					/>
 				</label>
 				<label className={styles.field}>
-					Password
+					{dict.auth.password}
 					<input
 						className={styles.input}
 						type="password"
@@ -68,11 +70,11 @@ export function SignupPage() {
 					type="submit"
 					className={styles.submit_button}
 					disabled={isSubmitting}>
-					{isSubmitting ? "Creating account…" : "Create account"}
+					{isSubmitting ? dict.auth.creatingAccount : dict.auth.createAccountButton}
 				</button>
 			</form>
 			<Link href="/login" className={styles.switch_link}>
-				Already have an account? Sign in
+				{dict.auth.haveAccount}
 			</Link>
 		</div>
 	);

@@ -2,16 +2,19 @@
 import { type CSSProperties } from "react";
 import Image from "next/image";
 import { Link } from "@/components/ui/link";
+import { useDictionary, useLocale } from "@/lib/i18n/i18n-context";
 import styles from "./list-additions-card.module.sass";
 
 // Default keeps notifications' time-of-day; activity feed passes its own compact formatter.
-const DateFormatter = new Intl.DateTimeFormat("en-GB", {
-	year: "numeric",
-	month: "short",
-	day: "numeric",
-	hour: "2-digit",
-	minute: "2-digit",
-});
+function defaultDateFormatter(locale: string) {
+	return new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-GB", {
+		year: "numeric",
+		month: "short",
+		day: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
+	});
+}
 
 // Shared shape between NotificationEntry and ActivityFeedEntry — readAt/onRead are
 // notification-only (activity feed has no read state, so `unread` there is always false).
@@ -31,13 +34,16 @@ export function ListAdditionsCard<T extends ListGroupEntry>({
 	entry,
 	index,
 	onRead,
-	dateFormatter = DateFormatter,
+	dateFormatter,
 }: {
 	entry: T;
 	index: number;
 	onRead?: (entry: T) => void;
 	dateFormatter?: Intl.DateTimeFormat;
 }) {
+	const dict = useDictionary();
+	const locale = useLocale();
+	const formatter = dateFormatter ?? defaultDateFormatter(locale);
 	const list = entry.list;
 	const groupedMedia = entry.groupedMedia ?? [];
 	if (!list) return null;
@@ -65,12 +71,14 @@ export function ListAdditionsCard<T extends ListGroupEntry>({
 						<div className={styles.title_row}>
 							<span className={styles.title}>{list.title}</span>
 							<span className={styles.date}>
-								{dateFormatter.format(entry.createdAt)}
+								{formatter.format(entry.createdAt)}
 							</span>
 						</div>
 						<span className={styles.caption}>
-							{entry.listCreated ? "Created and added" : "Added"}{" "}
-							{groupedMedia.length} items
+							{dict.notifications.listAdditionsCaption(
+								entry.listCreated ?? false,
+								groupedMedia.length,
+							)}
 						</span>
 					</div>
 				</div>

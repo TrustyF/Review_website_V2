@@ -1,6 +1,8 @@
+"use client";
 import { Menu, X } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { NavAccountAvatar } from "@/components/navbar/nav-account-avatar";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import style from "./nav-mobile-controls.module.sass";
 
 type Props = {
@@ -24,6 +26,8 @@ export function NavMobileControls({
 	mobileOpen,
 	onToggle,
 }: Props) {
+	const dict = useDictionary();
+
 	return (
 		<div className={style.mobile_controls}>
 			{/* Also in drawer (NavAccountMenu), stays visible in bar. .account_identity hidden at this width (no duplication). Skipped when signed out. */}
@@ -48,7 +52,7 @@ export function NavMobileControls({
 				data-mobile-toggle
 				className={style.mobile_toggle}
 				aria-expanded={mobileOpen}
-				aria-label={mobileOpen ? "Close menu" : "Open menu"}
+				aria-label={mobileOpen ? dict.nav.closeMenu : dict.nav.openMenu}
 				onClick={onToggle}>
 				{mobileOpen ? <X size={20} /> : <Menu size={20} />}
 			</button>

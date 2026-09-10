@@ -19,6 +19,7 @@ import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useMediaFilter } from "@/components/media/media-grids/media-filter/use-media-filter";
 import { isFilterActive } from "@/components/media/media-grids/media-filter/media-filter";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import { RankedListRow } from "./ranked-list-row";
 import styles from "./ranked-list.module.sass";
 
@@ -31,6 +32,7 @@ type Props = {
 
 // Single-column, top-to-bottom (drag to reorder) — a wrapping grid has no unambiguous drop target once items wrap across columns. Reordering is disabled via each row's useSortable `disabled` option (not by unmounting DnD) whenever a filter is active or the viewer isn't an admin.
 export function RankedList({ listId, media, seenMediaIds }: Props) {
+	const dict = useDictionary();
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
 	// Mobile admin edits are intentionally unsupported.
@@ -116,7 +118,7 @@ export function RankedList({ listId, media, seenMediaIds }: Props) {
 			)}
 			{reorderError && <div className={styles.error}>{reorderError}</div>}
 			{orderedMedia.length === 0 ? (
-				<p className={styles.empty}>No media matches the current filter.</p>
+				<p className={styles.empty}>{dict.media.filter.noMatches}</p>
 			) : (
 				<DndContext sensors={sensors} onDragEnd={handleDragEnd}>
 					<SortableContext

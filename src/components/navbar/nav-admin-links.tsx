@@ -1,5 +1,7 @@
+"use client";
 import { CirclePlus, Crop, Image, ScrollText, Users } from "lucide-react";
 import { NavLink } from "@/components/navbar/nav-link";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import barStyle from "./nav-bar.module.sass";
 import style from "./nav-admin-links.module.sass";
 
@@ -10,6 +12,8 @@ type Props = {
 // Pinned to its own corner, but still a child of <nav> so it hides/reveals
 // with the rest of the navbar on scroll. Hidden on mobile.
 export function NavAdminLinks({ pathname }: Props) {
+	const dict = useDictionary();
+
 	return (
 		<div className={style.add_media_link}>
 			<NavLink
@@ -17,7 +21,7 @@ export function NavAdminLinks({ pathname }: Props) {
 				icon={CirclePlus}
 				className={barStyle.link}
 				pathname={pathname}>
-				Add media
+				{dict.nav.addMedia}
 			</NavLink>
 			<div className={style.group}>
 				<NavLink
@@ -25,21 +29,21 @@ export function NavAdminLinks({ pathname }: Props) {
 					icon={Users}
 					className={barStyle.link}
 					pathname={pathname}>
-					User lists
+					{dict.nav.userLists}
 				</NavLink>
 				<NavLink
 					href="/admin/logs"
 					icon={ScrollText}
 					className={barStyle.link}
 					pathname={pathname}>
-					Cron logs
+					{dict.nav.cronLogs}
 				</NavLink>
 				<NavLink
 					href="/admin/digest"
 					icon={Image}
 					className={barStyle.link}
 					pathname={pathname}>
-					Digest
+					{dict.nav.digest}
 				</NavLink>
 				<NavLink
 					href="/dev/image-crop"
@@ -47,7 +51,7 @@ export function NavAdminLinks({ pathname }: Props) {
 					className={barStyle.link}
 					pathname={pathname}
 					target="_blank">
-					Image crop
+					{dict.nav.imageCrop}
 				</NavLink>
 			</div>
 		</div>
