@@ -8,8 +8,11 @@
 
   // Fixed 4 columns rather than auto-fill's minmax — keeps the column count from drifting to
   // 3 or 5 across the phone-width range instead of landing on a predictable 4.
+  // minmax(0, 1fr), not bare 1fr — a bare 1fr track defaults to minmax(auto, 1fr), so a column
+  // holding a long unbreakable title gets floored at that title's width instead of shrinking,
+  // leaving the columns uneven and the grid overflowing its container on narrow screens.
   @media (max-width: $mobile-breakpoint)
-    grid-template-columns: repeat(4, 1fr)
+    grid-template-columns: repeat(4, minmax(0, 1fr))
     gap: $mini-card-gap-mobile
 
 // Positioning anchor for renderOverlay (e.g. a list's remove button).
