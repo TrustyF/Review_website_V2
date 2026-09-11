@@ -84,26 +84,27 @@ $var_banner_width: 110%
   height: 5rem
   pointer-events: none
 
+// Desktop only — see media-detail-header-mobile.tsx/.module.sass for the
+// mobile counterpart, rendered as a sibling and swapped in via this same
+// breakpoint (both always in the DOM, like MediaCardShell/MediaCardShellMobile).
 .header
-  //margin-top: 2rem
-  display: flex
-  gap: 2rem
+  display: grid
+  grid-template-columns: 220px 1fr auto
+  grid-template-areas: "poster headtext headtext" "poster review facts"
+  column-gap: 2rem
+  row-gap: 0.75rem
+  align-items: start
 
   @media (max-width: 640px)
-    flex-flow: column
+    display: none
 
-// align-self centers poster only, leaves header_info's stretch (don't use align-items)
 .poster_column
+  grid-area: poster
   display: flex
   flex-flow: column
   align-items: center
   gap: 0.6rem
-  flex-shrink: 0
-  width: 220px
-  max-width: 100%
-
-  @media (max-width: 640px)
-    align-self: center
+  width: 100%
 
 .poster
   position: relative
@@ -116,9 +117,9 @@ $var_banner_width: 110%
   z-index: 5
 
 .header_info
+  grid-area: headtext
   display: flex
   flex-flow: column
-  flex: 1
   gap: 0.75rem
   min-width: 0
 
@@ -201,27 +202,17 @@ $var_banner_width: 110%
   text-decoration: underline
   text-underline-offset: 0.15rem
 
-.review_row
-  display: flex
-  flex-flow: row
-  align-items: flex-start
-  gap: 1.5rem
-  margin-top: 0.5rem
-
-  @media (max-width: 640px)
-    flex-flow: column
-
 .review_col
-  flex: 1
+  grid-area: review
   min-width: 0
 
 // Public rating + budget/revenue/ROI gauge, sitting beside the review
 // instead of down in the type-specific facts list.
 .secondary_facts
+  grid-area: facts
   display: flex
   flex-flow: column
   gap: 0.75rem
-  flex-shrink: 0
   padding: 0.75rem 1rem
   border: 1px solid var(--surface-border)
   border-radius: 0.5rem
@@ -276,6 +267,12 @@ $var_banner_width: 110%
   color: var(--body)
   font-family: $font-body
   line-height: 1.5rem
+
+// This section's overview duplicates media-detail-header-mobile.tsx's own copy
+// (right after the tagline there), so it's hidden here once that takes over.
+.overview_details
+  @media (max-width: 640px)
+    display: none
 
 .facts
   display: flex
@@ -381,6 +378,9 @@ $var_banner_width: 110%
   gap: 0.5rem
   max-width: 100%
 
+  @media (max-width: 640px)
+    gap: 0.4rem
+
 // overflow-x so row scrolls on narrow (not off-viewport); "Show all" still exists
 .cast_photos_clipped
   flex-flow: row
@@ -430,11 +430,21 @@ $var_banner_width: 110%
   opacity: 0.85
   transition: opacity 0.15s
 
+  @media (max-width: 640px)
+    width: 4.5rem
+
   &:hover
     opacity: 1
 
-// The photo/placeholder's own shape and look now live in PersonPhoto itself
-// (see person-photo.module.sass) — nothing to declare here anymore.
+// Overrides PersonPhoto's own default 6rem (person-photo.module.sass) to match
+// .cast_photo_link's own mobile width above — desktop keeps that same 6rem, so
+// nothing to declare here except the mobile case. !important since two separate
+// CSS Modules files land in the same bundle in an unpredictable order — see the
+// same note on .review_rating/.review_date/.review_body in
+// media-detail-header-mobile.module.sass.
+.cast_photo_image
+  @media (max-width: 640px)
+    width: 4.5rem !important
 
 .cast_photo_name
   font-size: 0.7rem
@@ -443,12 +453,18 @@ $var_banner_width: 110%
   // Wrap long names rather than truncate (no tooltip fallback)
   overflow-wrap: break-word
 
+  @media (max-width: 640px)
+    font-size: 0.65rem
+
 .cast_photo_character
   font-size: 0.65rem
   text-align: center
   line-height: 1.1
   color: var(--body)
   overflow-wrap: break-word
+
+  @media (max-width: 640px)
+    font-size: 0.6rem
 
 .section
   display: flex

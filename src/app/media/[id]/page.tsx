@@ -19,6 +19,7 @@ import { auth } from "@/auth";
 import { BANNER_GRAIN_OPACITY } from "@/server/resolvers/poster-resolver";
 import { MediaDirectorCredit, MediaCreditsDetails } from "./credits-section";
 import { MediaChangeLogSection } from "./change-log-section";
+import { MediaDetailHeaderMobile } from "./media-detail-header-mobile";
 import styles from "./media-detail.module.sass";
 import { CircularGauge } from "@/components/ui/circular-gauge";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -280,124 +281,131 @@ export default async function MediaDetailPage({
 							{media.alternateTitle && (
 								<div className={styles.alt_title}>{media.alternateTitle}</div>
 							)}
+						</div>
 
-							<div className={styles.review_row}>
-								<div className={styles.review_col}>
-									<ReviewBodyEditTrigger
-										media={media}
-										isUpcoming={isUpcoming}
-									/>
-								</div>
+						{(media.releaseDate != null ||
+							runtimeLabel != null ||
+							publicRating != null ||
+							difficulty === 1 ||
+							difficulty === 2 ||
+							budget != null ||
+							revenue != null ||
+							roi != null) && (
+							<div className={styles.secondary_facts}>
 								{(media.releaseDate != null ||
 									runtimeLabel != null ||
 									publicRating != null ||
 									difficulty === 1 ||
-									difficulty === 2 ||
-									budget != null ||
-									revenue != null ||
-									roi != null) && (
-									<div className={styles.secondary_facts}>
-										{(media.releaseDate != null ||
-											runtimeLabel != null ||
-											publicRating != null ||
-											difficulty === 1 ||
-											difficulty === 2) && (
-											<div className={styles.fact_group}>
-												<dl className={styles.fact_group_list}>
-													{media.releaseDate != null && (
-														<Fact
-															label={dict.mediaDetail.facts.releaseDate}
-															value={media.releaseDate.getFullYear()}
-														/>
-													)}
-													{runtimeLabel != null && (
-														<Fact
-															label={dict.mediaDetail.facts.runtime}
-															value={runtimeLabel}
-														/>
-													)}
-													{publicRating != null && (
-														<Fact
-															label={dict.mediaDetail.facts.rating}
-															value={
-																<span className={styles.public_rating}>
-																	{publicRating.toFixed(1)}
-																	<StarIcon
-																		style={{ color: "var(--link)" }}
-																	/>
-																</span>
-															}
-														/>
-													)}
-													{(difficulty === 1 || difficulty === 2) && (
-														<Fact
-															label={dict.mediaDetail.facts.difficulty}
-															value={
-																<Tooltip
-																	content={
-																		difficulty === 1
-																			? dict.mediaDetail.mediumDifficulty
-																			: dict.mediaDetail.hardDifficulty
-																	}>
-																	<span className={styles.difficulty}>
-																		<span
-																			className={`${styles.difficulty_dot} ${difficulty === 1 ? styles.difficulty_dot_medium : styles.difficulty_dot_hard}`}
-																		/>
-																		{difficulty === 1
-																			? dict.mediaDetail.medium
-																			: dict.mediaDetail.hard}
-																	</span>
-																</Tooltip>
-															}
-														/>
-													)}
-												</dl>
-											</div>
-										)}
-										{(budget != null || revenue != null || roi != null) && (
-											<div className={styles.fact_group}>
-												<dl className={styles.fact_group_list}>
-													{budget != null && (
-														<Fact
-															label={dict.mediaDetail.facts.budget}
-															value={CurrencyFormatter.format(budget)}
-														/>
-													)}
-													{revenue != null && (
-														<Fact
-															label={dict.mediaDetail.facts.revenue}
-															value={CurrencyFormatter.format(revenue)}
-														/>
-													)}
-												</dl>
-												{roi != null && (
-													<Tooltip
-														content={dict.mediaDetail.returnOnInvestment}>
-														<CircularGauge
-															value={roi}
-															size={40}
-															strokeWidth={3}
-															max={1}
-															unit={"x"}
-															textScaling={0.35}
-														/>
-													</Tooltip>
-												)}
-											</div>
+									difficulty === 2) && (
+									<div className={styles.fact_group}>
+										<dl className={styles.fact_group_list}>
+											{media.releaseDate != null && (
+												<Fact
+													label={dict.mediaDetail.facts.releaseDate}
+													value={media.releaseDate.getFullYear()}
+												/>
+											)}
+											{runtimeLabel != null && (
+												<Fact
+													label={dict.mediaDetail.facts.runtime}
+													value={runtimeLabel}
+												/>
+											)}
+											{publicRating != null && (
+												<Fact
+													label={dict.mediaDetail.facts.rating}
+													value={
+														<span className={styles.public_rating}>
+															{publicRating.toFixed(1)}
+															<StarIcon style={{ color: "var(--link)" }} />
+														</span>
+													}
+												/>
+											)}
+											{(difficulty === 1 || difficulty === 2) && (
+												<Fact
+													label={dict.mediaDetail.facts.difficulty}
+													value={
+														<Tooltip
+															content={
+																difficulty === 1
+																	? dict.mediaDetail.mediumDifficulty
+																	: dict.mediaDetail.hardDifficulty
+															}>
+															<span className={styles.difficulty}>
+																<span
+																	className={`${styles.difficulty_dot} ${difficulty === 1 ? styles.difficulty_dot_medium : styles.difficulty_dot_hard}`}
+																/>
+																{difficulty === 1
+																	? dict.mediaDetail.medium
+																	: dict.mediaDetail.hard}
+															</span>
+														</Tooltip>
+													}
+												/>
+											)}
+										</dl>
+									</div>
+								)}
+								{(budget != null || revenue != null || roi != null) && (
+									<div className={styles.fact_group}>
+										<dl className={styles.fact_group_list}>
+											{budget != null && (
+												<Fact
+													label={dict.mediaDetail.facts.budget}
+													value={CurrencyFormatter.format(budget)}
+												/>
+											)}
+											{revenue != null && (
+												<Fact
+													label={dict.mediaDetail.facts.revenue}
+													value={CurrencyFormatter.format(revenue)}
+												/>
+											)}
+										</dl>
+										{roi != null && (
+											<Tooltip content={dict.mediaDetail.returnOnInvestment}>
+												<CircularGauge
+													value={roi}
+													size={40}
+													strokeWidth={3}
+													max={1}
+													unit={"x"}
+													textScaling={0.35}
+												/>
+											</Tooltip>
 										)}
 									</div>
 								)}
 							</div>
+						)}
+
+						<div className={styles.review_col}>
+							<ReviewBodyEditTrigger media={media} isUpcoming={isUpcoming} />
 						</div>
 
 						<MediaEditButton media={media} className={styles.edit_button} />
 					</div>
 
+					<MediaDetailHeaderMobile
+						media={media}
+						dict={dict}
+						session={session}
+						tagline={tagline}
+						overview={overview}
+						runtimeLabel={runtimeLabel}
+						isUpcoming={isUpcoming}
+					/>
+
 					<section className={styles.section}>
 						<h2 className={styles.section_title}>
 							{dict.mediaDetail.detailsHeading}
 						</h2>
-						{overview && <p className={styles.overview}>{overview}</p>}
+						{overview && (
+							<p className={`${styles.overview} ${styles.overview_details}`}>
+								{overview}
+							</p>
+						)}
 
 						<MediaTypeFacts media={media} dict={dict} />
 

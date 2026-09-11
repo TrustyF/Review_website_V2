@@ -1,11 +1,3 @@
-// Fades in over the placeholder background instead of popping in the instant it's decoded.
-.image
-  opacity: 0
-  transition: opacity 0.25s ease
-
-.image_loaded
-  opacity: 1
-
 // No z-index needed — a positioned element always paints above non-positioned in-flow
 // content, and .banner_backdrop's own z-index lives one stacking context down.
 .click_target
@@ -36,23 +28,3 @@
 
   &:hover, &:focus-visible
     opacity: 1
-
-// Matches .banner_image's geometry so it lines up with the image; z-index sits between the
-// image and the backdrop's z-index: 1, painting over the image but under the edge-fade gradient.
-.grain
-  display: block
-  position: absolute
-  width: 100%
-  height: 370px
-  top: 0
-  z-index: 0
-  pointer-events: none
-  border-radius: 0.5rem
-  mix-blend-mode: soft-light
-  // Opacity is driven inline (grainOpacity is a number); this fades that change instead of popping it.
-  transition: opacity 0.25s ease
-  // A real (non-tileable) grain photo, stretched to cover instead of tiled to avoid a repeat seam.
-  background-image: url("/ui/CT_35mm_Grain.png")
-  background-repeat: no-repeat
-  background-position: center
-  background-size: cover

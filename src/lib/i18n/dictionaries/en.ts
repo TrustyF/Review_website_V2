@@ -279,6 +279,7 @@ export const en = {
 			"This item is soft-deleted — hidden from every list. Open the editor to restore it or delete it permanently.",
 		openOriginalSource: "Open original source",
 		detailsHeading: "Details",
+		reviewHeading: "Review",
 		changeLogHeading: "Change log",
 		facts: {
 			network: "Network",

@@ -287,6 +287,7 @@ export const fr = {
 			"Cet élément est supprimé (suppression douce) — masqué de toutes les listes. Ouvrez l'éditeur pour le restaurer ou le supprimer définitivement.",
 		openOriginalSource: "Ouvrir la source d'origine",
 		detailsHeading: "Détails",
+		reviewHeading: "Avis",
 		changeLogHeading: "Journal des modifications",
 		facts: {
 			network: "Chaîne",

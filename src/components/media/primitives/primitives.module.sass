@@ -75,3 +75,31 @@
 // Shared by every one-line type-specific fact — one class since they're never shown together.
 .info_line
   font-size: 1rem
+
+// Fades in over the placeholder background instead of popping in the instant it's decoded.
+.banner_image
+  opacity: 0
+  transition: opacity 0.25s ease
+
+.banner_image_loaded
+  opacity: 1
+
+// Matches the banner image's geometry so it lines up; z-index sits between the image and the
+// caller's own backdrop gradient, painting over the image but under the edge fade.
+.banner_grain
+  display: block
+  position: absolute
+  width: 100%
+  height: 370px
+  top: 0
+  z-index: 0
+  pointer-events: none
+  border-radius: 0.5rem
+  mix-blend-mode: soft-light
+  // Opacity is driven inline (grainOpacity is a number); this fades that change instead of popping it.
+  transition: opacity 0.25s ease
+  // A real (non-tileable) grain photo, stretched to cover instead of tiled to avoid a repeat seam.
+  background-image: url("/ui/CT_35mm_Grain.png")
+  background-repeat: no-repeat
+  background-position: center
+  background-size: cover

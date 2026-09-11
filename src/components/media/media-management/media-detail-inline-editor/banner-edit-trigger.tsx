@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
-import Image from "next/image";
 import { MediaRecord } from "@/components/media/types";
+import { MediaBanner } from "@/components/media/primitives/banner";
 import { getAlternativeBanners } from "@/components/media/media-management/media-editor/media-editor-actions";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
@@ -62,15 +62,6 @@ export function BannerEditTrigger({
 		onStage: (path, previewSrc) => stageBanner(media.id, path, previewSrc),
 	});
 
-	// Fade-in-on-load, reset whenever src changes (picking a new banner) so swapping banners
-	// fades the same way the first load does.
-	const [isLoaded, setIsLoaded] = useState(false);
-	const [loadedSrc, setLoadedSrc] = useState(src);
-	if (src !== loadedSrc) {
-		setIsLoaded(false);
-		setLoadedSrc(src);
-	}
-
 	// Seeded from any already-staged draft value (not just media.bannerFocusY) so a pending
 	// framing tweak survives a remount. Local state drives the live preview; the stage is debounced.
 	const [focusY, setFocusY] = useState(
@@ -89,48 +80,32 @@ export function BannerEditTrigger({
 		}, 400);
 	}
 
-	const image = (
-		<Image
-			src={src}
-			alt={`${media.title} banner`}
-			width={1280}
-			height={720}
-			className={`${imageClassName ?? ""} ${styles.image} ${isLoaded ? styles.image_loaded : ""}`}
-			style={{ objectPosition: `50% ${focusY}%` }}
-			onLoad={() => setIsLoaded(true)}
-			priority
-		/>
-	);
-
-	// Held at 0 until isLoaded, otherwise the grain textures the placeholder background
-	// instead of the banner while the image is still loading.
-	const grain = (
-		<div
-			className={styles.grain}
-			style={{ opacity: isLoaded ? grainOpacity : 0 }}
-		/>
-	);
-
 	if (!isAdmin) {
 		return (
-			<div className={bannerClassName}>
-				<div className={visualClassName}>
-					{image}
-					{grain}
-					<div className={backdropClassName}></div>
-				</div>
-			</div>
+			<MediaBanner
+				src={src}
+				alt={`${media.title} banner`}
+				focusY={focusY}
+				grainOpacity={grainOpacity}
+				wrapperClassName={bannerClassName}
+				visualClassName={visualClassName}
+				imageClassName={imageClassName}
+				backdropClassName={backdropClassName}
+			/>
 		);
 	}
 
 	return (
-		<div className={bannerClassName} ref={containerRef}>
-			<div className={visualClassName}>
-				{image}
-				{grain}
-				<div className={backdropClassName}></div>
-			</div>
-
+		<MediaBanner
+			ref={containerRef}
+			src={src}
+			alt={`${media.title} banner`}
+			focusY={focusY}
+			grainOpacity={grainOpacity}
+			wrapperClassName={bannerClassName}
+			visualClassName={visualClassName}
+			imageClassName={imageClassName}
+			backdropClassName={backdropClassName}>
 			<button
 				type="button"
 				className={styles.click_target}
@@ -167,6 +142,6 @@ export function BannerEditTrigger({
 					onClose={close}
 				/>
 			)}
-		</div>
+		</MediaBanner>
 	);
 }

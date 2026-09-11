@@ -28,7 +28,12 @@ export function CastPhotos({ entries }: { entries: CreditLink[] }) {
 						key={entry.key}
 						href={entry.href}
 						className={styles.cast_photo_link}>
-						<PersonPhoto src={entry.photoSrc} alt={entry.name} />
+						<PersonPhoto
+							src={entry.photoSrc}
+							alt={entry.name}
+							photoClassName={styles.cast_photo_image}
+							placeholderClassName={styles.cast_photo_image}
+						/>
 						<span className={styles.cast_photo_name}>{entry.name}</span>
 						{entry.character && (
 							<span className={styles.cast_photo_character}>
