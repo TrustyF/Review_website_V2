@@ -24,6 +24,13 @@
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))
   gap: 1.5rem
 
+  // A single 220px+ column on a phone makes each card's 16:9 thumbnail loom
+  // full-width; fixed 2-up (like LazyMediaGrid's mobile override) keeps cards
+  // pocket-sized instead.
+  @media (max-width: $mobile-breakpoint)
+    grid-template-columns: repeat(2, 1fr)
+    gap: 1rem
+
 // Same mount-only fade+slide-up as activity-feed/grouped-media-list, staggered by --stagger-index; hand-copied rather than shared.
 @keyframes item-enter
   0%

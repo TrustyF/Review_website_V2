@@ -61,7 +61,7 @@
   gap: 2rem
 
   @media (max-width: 640px)
-    grid-template-columns: 1fr
+    gap: 1rem
 
 // Both capped to the same height; children flex to fill rather than sizing the panel. Both are Links so the whole card is clickable.
 .watchlist,
@@ -80,6 +80,13 @@
   &:hover
     border-color: var(--accent2)
 
+  // Stays side-by-side (see .grid) rather than stacking, so each panel is
+  // scaled down instead — both the panel and its content shrink together.
+  @media (max-width: 640px)
+    height: 11rem
+    padding: 0.75rem
+    gap: 0.5rem
+
 .section_title
   font-size: 1rem
   font-weight: 400
@@ -87,8 +94,16 @@
   align-items: center
   gap: 0.5rem
 
+  @media (max-width: 640px)
+    font-size: 0.8rem
+    gap: 0.35rem
+
 .section_icon
   color: var(--accent1)
+
+  @media (max-width: 640px)
+    width: 0.85rem
+    height: 0.85rem
 
 // Fixed 2x2 grid (page.tsx caps to 4 lists) so cards share the panel height equally.
 .lists_stack
@@ -99,5 +114,11 @@
   flex: 1
   min-height: 0
 
+  @media (max-width: 640px)
+    gap: 0.5rem
+
 .empty
   @include empty-text
+
+  @media (max-width: 640px)
+    font-size: 0.75rem
