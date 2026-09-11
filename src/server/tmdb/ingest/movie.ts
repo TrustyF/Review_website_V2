@@ -67,6 +67,7 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 						budget: data.budget,
 						revenue: data.revenue,
 						tagline: data.tagline,
+						taglineFr: french.tagline,
 						imdbID: data.imdb_id,
 						originalLanguage: data.original_language,
 						popularity: data.popularity,
@@ -107,7 +108,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 			data.backdrop_path;
 		// Same fill-once-if-still-empty treatment as title/overview below.
 		const french =
-			existing.titleFr && existing.overviewFr
+			existing.titleFr && existing.overviewFr && existing.movie?.taglineFr
 				? null
 				: await fetchTmdbFrenchTranslation(externalId, MediaType.MOVIE);
 
@@ -140,6 +141,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 						budget: data.budget,
 						revenue: data.revenue,
 						tagline: existing.movie?.tagline ?? data.tagline,
+						taglineFr: existing.movie?.taglineFr ?? french?.tagline ?? null,
 						imdbID: existing.movie?.imdbID ?? data.imdb_id,
 						originalLanguage:
 							existing.movie?.originalLanguage ?? data.original_language,

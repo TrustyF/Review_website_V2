@@ -42,8 +42,12 @@ const CurrencyFormatter = new Intl.NumberFormat("en-US", {
 
 // Covers a confirmed future date and a title merely announced/in-production
 // with no date yet (e.g. TMDB "In Production" — see tv-show.ts's TV_STATUS_MAP).
-function isUpcomingRelease(releaseDate: Date | null, status: MediaStatus): boolean {
-	if (status === MediaStatus.ANNOUNCED || status === MediaStatus.UPCOMING) return true;
+function isUpcomingRelease(
+	releaseDate: Date | null,
+	status: MediaStatus,
+): boolean {
+	if (status === MediaStatus.ANNOUNCED || status === MediaStatus.UPCOMING)
+		return true;
 	return releaseDate != null && releaseDate.getTime() > Date.now();
 }
 
@@ -58,7 +62,13 @@ function Fact({ label, value }: { label: string; value: ReactNode }) {
 
 // Renders fields that differ between media types — each keeps its data on a
 // different relation (media.movie, media.tvShow, ...), picked here by type.
-function MediaTypeFacts({ media, dict }: { media: MediaRecord; dict: Dictionary }) {
+function MediaTypeFacts({
+	media,
+	dict,
+}: {
+	media: MediaRecord;
+	dict: Dictionary;
+}) {
 	const facts = dict.mediaDetail.facts;
 	switch (media.type) {
 		// Budget/revenue/ROI render in the financials box beside the review
@@ -143,11 +153,12 @@ export default async function MediaDetailPage({
 	const overview =
 		locale === "fr" ? (media.overviewFr ?? media.overview) : media.overview;
 
-	// Only movies/shorts carry a tagline — pulled out here since it now sits
-	// in the header's meta row rather than the type-specific facts list.
+	// Only movies/shorts carry a tagline; falls back to English when untranslated, same as overview.
 	const tagline =
 		media.type === "MOVIE" || media.type === "SHORT"
-			? media.movie.tagline
+			? locale === "fr"
+				? (media.movie.taglineFr ?? media.movie.tagline)
+				: media.movie.tagline
 			: null;
 	// Same story for runtime — it now sits in the secondary-facts block
 	// beside the review instead of the type-specific facts list.
@@ -204,7 +215,7 @@ export default async function MediaDetailPage({
 				)}
 				{media.bannerSrc && <div className={styles.banner_spacer} />}
 				{!media.bannerSrc && <div className={styles.no_banner_spacer} />}
-	
+
 				<div className={styles.details_wrapper}>
 					<div className={styles.header}>
 						<div className={styles.poster_column}>
@@ -266,19 +277,20 @@ export default async function MediaDetailPage({
 									</Suspense>
 								</div>
 							</div>
+							{tagline && <p className={styles.tagline}>{tagline}</p>}
 							{media.alternateTitle && (
 								<div className={styles.alt_title}>{media.alternateTitle}</div>
 							)}
-	
-							<div className={styles.meta_row}>
-								<MediaReleaseDate date={media.releaseDate} />
-							</div>
-	
+
 							<div className={styles.review_row}>
 								<div className={styles.review_col}>
-									<ReviewBodyEditTrigger media={media} isUpcoming={isUpcoming} />
+									<ReviewBodyEditTrigger
+										media={media}
+										isUpcoming={isUpcoming}
+									/>
 								</div>
-								{(runtimeLabel != null ||
+								{(media.releaseDate != null ||
+									runtimeLabel != null ||
 									publicRating != null ||
 									difficulty === 1 ||
 									difficulty === 2 ||
@@ -286,10 +298,14 @@ export default async function MediaDetailPage({
 									revenue != null ||
 									roi != null) && (
 									<div className={styles.secondary_facts}>
+										<MediaReleaseDate date={media.releaseDate} />
 										{runtimeLabel != null && (
 											<div className={styles.finance_group}>
 												<dl className={styles.financials_facts}>
-													<Fact label={dict.mediaDetail.facts.runtime} value={runtimeLabel} />
+													<Fact
+														label={dict.mediaDetail.facts.runtime}
+														value={runtimeLabel}
+													/>
 												</dl>
 											</div>
 										)}
@@ -310,7 +326,9 @@ export default async function MediaDetailPage({
 													<span
 														className={`${styles.difficulty_dot} ${difficulty === 1 ? styles.difficulty_dot_medium : styles.difficulty_dot_hard}`}
 													/>
-													{difficulty === 1 ? dict.mediaDetail.medium : dict.mediaDetail.hard}
+													{difficulty === 1
+														? dict.mediaDetail.medium
+														: dict.mediaDetail.hard}
 												</div>
 											</Tooltip>
 										)}
@@ -331,7 +349,8 @@ export default async function MediaDetailPage({
 													)}
 												</dl>
 												{roi != null && (
-													<Tooltip content={dict.mediaDetail.returnOnInvestment}>
+													<Tooltip
+														content={dict.mediaDetail.returnOnInvestment}>
 														<CircularGauge
 															value={roi}
 															size={40}
@@ -351,10 +370,11 @@ export default async function MediaDetailPage({
 
 						<MediaEditButton media={media} className={styles.edit_button} />
 					</div>
-	
+
 					<section className={styles.section}>
-						<h2 className={styles.section_title}>{dict.mediaDetail.detailsHeading}</h2>
-						{tagline && <p className={styles.tagline}>{tagline}</p>}
+						<h2 className={styles.section_title}>
+							{dict.mediaDetail.detailsHeading}
+						</h2>
 						{overview && <p className={styles.overview}>{overview}</p>}
 
 						<MediaTypeFacts media={media} dict={dict} />
@@ -365,7 +385,9 @@ export default async function MediaDetailPage({
 					</section>
 
 					<section className={styles.section}>
-						<h2 className={styles.section_title}>{dict.mediaDetail.changeLogHeading}</h2>
+						<h2 className={styles.section_title}>
+							{dict.mediaDetail.changeLogHeading}
+						</h2>
 						<Suspense fallback={null}>
 							<MediaChangeLogSection
 								mediaId={media.id}

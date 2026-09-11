@@ -1,0 +1,101 @@
+@use "@/app/styles/variables" as *
+
+.wrapper
+  max-width: 900px
+  margin: 20px auto
+  padding: 0 20px
+  color: var(--foreground)
+  display: flex
+  flex-flow: column
+  gap: 16px
+
+.hint
+  margin: 0
+  font-size: 0.85rem
+  opacity: 0.7
+
+  code
+    font-family: $font-mono
+
+.controls
+  display: flex
+  flex-flow: column
+  gap: 14px
+  border: 1px solid var(--border-highlight)
+  border-radius: 6px
+  padding: 16px
+
+.control_row
+  display: flex
+  flex-flow: column
+  gap: 6px
+
+.control_head
+  display: flex
+  flex-flow: row
+  align-items: baseline
+  justify-content: space-between
+  gap: 10px
+
+  output
+    font-variant-numeric: tabular-nums
+    font-size: 0.85rem
+
+.presets
+  display: flex
+  flex-flow: row wrap
+  gap: 8px
+
+.picker_button
+  align-self: flex-start
+  padding: 6px 12px
+  border: 1px solid var(--border-highlight)
+  border-radius: 4px
+  cursor: pointer
+
+  &:hover
+    border-color: var(--foreground)
+
+.error
+  margin: 0
+  color: var(--danger)
+  font-size: 0.8rem
+
+.comparison
+  display: flex
+  flex-flow: row wrap
+  gap: 32px
+  align-items: flex-start
+
+.variant
+  display: flex
+  flex-flow: column
+  gap: 8px
+  align-items: flex-start
+
+.variant_label
+  font-size: 0.85rem
+  font-weight: 600
+
+// Same treatment as primitives.module.sass's .poster_frame/.poster
+.frame
+  background-color: var(--accent1-tint)
+  border-radius: 0.5rem
+  overflow: hidden
+
+.image
+  display: block
+  width: 100%
+  height: 100%
+  object-fit: cover
+
+.stats
+  margin: 0
+  font-size: 0.8rem
+  font-variant-numeric: tabular-nums
+  opacity: 0.8
+
+.summary
+  border: 1px solid var(--border-highlight)
+  border-radius: 6px
+  padding: 12px 16px

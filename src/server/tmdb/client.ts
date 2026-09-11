@@ -145,7 +145,7 @@ export async function fetchTmdbImages(
 export async function fetchTmdbFrenchTranslation(
 	id: string,
 	media_type: MediaType,
-): Promise<{ title: string | null; overview: string | null }> {
+): Promise<{ title: string | null; overview: string | null; tagline: string | null }> {
 	const json = await cachedJson(
 		"tmdb",
 		`${ConvertTypeToString(media_type)}-${id}-translations`,
@@ -172,6 +172,7 @@ export async function fetchTmdbFrenchTranslation(
 	return {
 		title: best?.data.title || best?.data.name || null,
 		overview: best?.data.overview || null,
+		tagline: best?.data.tagline || null,
 	};
 }
 

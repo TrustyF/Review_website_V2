@@ -164,6 +164,7 @@ export const TmdbTranslationsResponseSchema = type({
 			"title?": "string",
 			"name?": "string",
 			"overview?": "string",
+			"tagline?": "string",
 		}),
 	}).array(),
 });

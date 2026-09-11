@@ -49,6 +49,9 @@ export function DevMenu() {
 						<Link href="/dev/link-embed-preview" className={styles.link}>
 							Link embed preview
 						</Link>
+						<Link href="/dev/poster-scaling" className={styles.link}>
+							Poster scaling
+						</Link>
 					</div>
 				)}
 				{isAdmin && (

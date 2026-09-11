@@ -105,6 +105,8 @@ model Movie {
   budget           Float?
   revenue          Float?
   tagline          String?
+  // Filled in at ingest from TMDB's /translations endpoint, same as Media.titleFr/overviewFr.
+  taglineFr        String?
   imdbID           String?
   originalLanguage String?
   // TMDB's own rolling popularity score — recomputed roughly daily from view

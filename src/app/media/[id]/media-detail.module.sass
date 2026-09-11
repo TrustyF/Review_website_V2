@@ -127,7 +127,6 @@ $var_banner_width: 110%
   flex-flow: row wrap
   align-items: baseline
   justify-content: space-between
-  max-width: 90%
   gap: 1rem
 
 // Inline flow wraps title+director together; flex row would split at line breaks
@@ -191,19 +190,11 @@ $var_banner_width: 110%
   color: var(--accent1)
   font-style: italic
 
-.meta_row
-  display: flex
-  flex-flow: row
-  align-items: center
-  gap: 1rem
-  color: var(--accent1)
-  font-family: $font-mono
-  font-size: 0.95rem
-
 .tagline
   font-size: 0.9rem
   font-style: italic
-  color: var(--body)
+  color: var(--accent1)
+  max-width: 70%
 
 .source_link
   color: var(--accent1)
