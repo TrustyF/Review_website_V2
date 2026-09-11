@@ -6,7 +6,6 @@ import { toMediaRecord, MediaRecord } from "@/components/media/types";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { MediaTitle } from "@/components/media/primitives/title";
-import { MediaReleaseDate } from "@/components/media/primitives/release-date";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { formatRuntime } from "@/components/media/primitives/runtime";
 import { PosterEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/poster-edit-trigger";
@@ -298,43 +297,66 @@ export default async function MediaDetailPage({
 									revenue != null ||
 									roi != null) && (
 									<div className={styles.secondary_facts}>
-										<MediaReleaseDate date={media.releaseDate} />
-										{runtimeLabel != null && (
-											<div className={styles.finance_group}>
-												<dl className={styles.financials_facts}>
-													<Fact
-														label={dict.mediaDetail.facts.runtime}
-														value={runtimeLabel}
-													/>
+										{(media.releaseDate != null ||
+											runtimeLabel != null ||
+											publicRating != null ||
+											difficulty === 1 ||
+											difficulty === 2) && (
+											<div className={styles.fact_group}>
+												<dl className={styles.fact_group_list}>
+													{media.releaseDate != null && (
+														<Fact
+															label={dict.mediaDetail.facts.releaseDate}
+															value={media.releaseDate.getFullYear()}
+														/>
+													)}
+													{runtimeLabel != null && (
+														<Fact
+															label={dict.mediaDetail.facts.runtime}
+															value={runtimeLabel}
+														/>
+													)}
+													{publicRating != null && (
+														<Fact
+															label={dict.mediaDetail.facts.rating}
+															value={
+																<span className={styles.public_rating}>
+																	{publicRating.toFixed(1)}
+																	<StarIcon
+																		style={{ color: "var(--link)" }}
+																	/>
+																</span>
+															}
+														/>
+													)}
+													{(difficulty === 1 || difficulty === 2) && (
+														<Fact
+															label={dict.mediaDetail.facts.difficulty}
+															value={
+																<Tooltip
+																	content={
+																		difficulty === 1
+																			? dict.mediaDetail.mediumDifficulty
+																			: dict.mediaDetail.hardDifficulty
+																	}>
+																	<span className={styles.difficulty}>
+																		<span
+																			className={`${styles.difficulty_dot} ${difficulty === 1 ? styles.difficulty_dot_medium : styles.difficulty_dot_hard}`}
+																		/>
+																		{difficulty === 1
+																			? dict.mediaDetail.medium
+																			: dict.mediaDetail.hard}
+																	</span>
+																</Tooltip>
+															}
+														/>
+													)}
 												</dl>
 											</div>
 										)}
-										{publicRating != null && (
-											<div className={styles.public_rating}>
-												{publicRating.toFixed(1)}
-												<StarIcon style={{ color: "var(--link)" }} />
-											</div>
-										)}
-										{(difficulty === 1 || difficulty === 2) && (
-											<Tooltip
-												content={
-													difficulty === 1
-														? dict.mediaDetail.mediumDifficulty
-														: dict.mediaDetail.hardDifficulty
-												}>
-												<div className={styles.difficulty}>
-													<span
-														className={`${styles.difficulty_dot} ${difficulty === 1 ? styles.difficulty_dot_medium : styles.difficulty_dot_hard}`}
-													/>
-													{difficulty === 1
-														? dict.mediaDetail.medium
-														: dict.mediaDetail.hard}
-												</div>
-											</Tooltip>
-										)}
 										{(budget != null || revenue != null || roi != null) && (
-											<div className={styles.finance_group}>
-												<dl className={styles.financials_facts}>
+											<div className={styles.fact_group}>
+												<dl className={styles.fact_group_list}>
 													{budget != null && (
 														<Fact
 															label={dict.mediaDetail.facts.budget}
