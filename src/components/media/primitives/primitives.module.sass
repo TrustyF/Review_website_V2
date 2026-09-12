@@ -90,7 +90,9 @@
   display: block
   position: absolute
   width: 100%
-  height: 370px
+  // Scales like media-detail.module.sass's .banner_image; 950 ($content-width) is this
+  // element's own width basis (100%, vs. that one's 110%-scaled 1045), same 370px height at full width.
+  aspect-ratio: 950 / 370
   top: 0
   z-index: 0
   pointer-events: none
