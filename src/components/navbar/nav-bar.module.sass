@@ -101,6 +101,11 @@ $nav-content-gap: 0.75rem
 .link_label_icon_only
   display: none
 
+// Swapped by breakpoint below, like MediaCardShell/MediaCardShellMobile —
+// desktop keeps the Media/Reading dropdowns, the drawer lists routes flat.
+.catalog_links_mobile
+  display: none
+
 @media (max-width: $mobile-breakpoint)
   // Everything above is desktop layout; everything here is the drawer.
   .wrapper
@@ -146,6 +151,20 @@ $nav-content-gap: 0.75rem
   .nav_group_account
     justify-content: flex-start
     min-width: 0
+
+  .dropdowns_desktop
+    display: none
+
+  // Wider than .nav_group's own 1rem so Movies/TV/Shorts and Manga/Comics/Books
+  // read as separate categories, matching the desktop dropdowns they replace.
+  .catalog_links_mobile
+    display: flex
+    gap: 2rem
+
+  .catalog_subgroup
+    display: flex
+    flex-flow: column
+    gap: 1rem
 
   // Drawer has room, so iconOnly labels come back too.
   [data-mobile-open="true"] .link_label_icon_only

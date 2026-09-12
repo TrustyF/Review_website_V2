@@ -71,7 +71,9 @@ export default function Navbar() {
 						{/*	</NavLink>*/}
 						{/*</div>*/}
 
-						<div className={style.nav_group}>
+						{/* Desktop only — grouped under dropdowns; the mobile drawer lists
+						every catalog route flat instead (.catalog_links_mobile below). */}
+						<div className={`${style.nav_group} ${style.dropdowns_desktop}`}>
 							<NavDropdown
 								label={dict.nav.media}
 								icon={MovieIcon}
@@ -90,6 +92,64 @@ export default function Navbar() {
 									{ href: "/books", label: dict.nav.books },
 								]}
 							/>
+							<NavLink
+								href="/games"
+								icon={GamepadDirectional}
+								className={style.link}
+								pathname={pathname}>
+								{dict.nav.games}
+							</NavLink>
+						</div>
+
+						{/* Mobile drawer only — same routes as the desktop dropdowns above,
+						laid out flat instead of behind a tap-to-expand summary. */}
+						<div className={`${style.nav_group} ${style.catalog_links_mobile}`}>
+							<div className={style.catalog_subgroup}>
+								<NavLink
+									href="/movies"
+									icon={MovieIcon}
+									className={style.link}
+									pathname={pathname}>
+									{dict.nav.movies}
+								</NavLink>
+								<NavLink
+									href="/tv"
+									icon={MovieIcon}
+									className={style.link}
+									pathname={pathname}>
+									{dict.nav.tv}
+								</NavLink>
+								<NavLink
+									href="/shorts"
+									icon={MovieIcon}
+									className={style.link}
+									pathname={pathname}>
+									{dict.nav.shorts}
+								</NavLink>
+							</div>
+							<div className={style.catalog_subgroup}>
+								<NavLink
+									href="/manga"
+									icon={BookOpen}
+									className={style.link}
+									pathname={pathname}>
+									{dict.nav.manga}
+								</NavLink>
+								<NavLink
+									href="/comics"
+									icon={BookOpen}
+									className={style.link}
+									pathname={pathname}>
+									{dict.nav.comics}
+								</NavLink>
+								<NavLink
+									href="/books"
+									icon={BookOpen}
+									className={style.link}
+									pathname={pathname}>
+									{dict.nav.books}
+								</NavLink>
+							</div>
 							<NavLink
 								href="/games"
 								icon={GamepadDirectional}

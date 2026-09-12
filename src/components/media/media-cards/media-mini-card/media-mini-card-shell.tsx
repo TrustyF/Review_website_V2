@@ -8,8 +8,10 @@ import styles from "./media-mini-card-shell.module.sass";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { ReviewIcon } from "@/components/media/icons/review-icon";
 import { useMediaCardDisplay } from "@/components/media/media-card-display-context";
-import { AddToWatchlistHoverButton } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-hover-button";
-import { MarkAsWatchedHoverButton } from "@/components/media/media-cards/media-mini-card/mark-as-watched-hover-button";
+/* eslint-disable-next-line comment-length/flag-long -- disabled imports, not prose */
+// Disabled below for now — may come back later.
+// import { AddToWatchlistHoverButton } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-hover-button";
+// import { MarkAsWatchedHoverButton } from "@/components/media/media-cards/media-mini-card/mark-as-watched-hover-button";
 import { PosterQuickEditButton } from "@/components/media/media-cards/media-mini-card/poster-quick-edit-button";
 import { useWatched } from "@/components/watched/watched-context";
 
@@ -44,10 +46,13 @@ export function MediaMiniCardShell({ media, children }: Props) {
 					ratio={posterRatioFor(media.type)}
 					difficulty={media.review?.difficulty}
 				/>
+				{/* eslint-disable-next-line comment-length/no-very-long -- disabled code, not prose */}
+				{/* Disabled for now — may come back later.
 				<div className={styles.status_buttons}>
 					<AddToWatchlistHoverButton mediaId={media.id} />
 					<MarkAsWatchedHoverButton mediaId={media.id} type={media.type} />
 				</div>
+				*/}
 			</div>
 			<div className={styles.info_group}>
 				{showTitle && (

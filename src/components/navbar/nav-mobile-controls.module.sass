@@ -10,10 +10,9 @@
   @media (max-width: $mobile-breakpoint)
     display: flex
 
-// Keeps the avatar visible/tappable without opening the drawer, same as the
-// hamburger; already inside .mobile_controls so needs no rules of its own.
+// Hidden until the drawer opens (see .mobile_hideable) — keeps the closed bar to
+// just the branded hamburger, decluttering the collapsed state.
 .mobile_account_link
-  display: flex
   align-items: center
   justify-content: center
   width: $mobile-icon-size
@@ -23,6 +22,14 @@
   // for just this side, without pushing the hamburger further away too.
   margin-left: 1rem
 
+// Shared by the notification bell wrapper and .mobile_account_link above — both
+// stay out of the collapsed bar and only appear alongside the opened drawer.
+.mobile_hideable
+  display: none
+
+[data-mobile-open="true"] .mobile_hideable
+  display: flex
+
 // Hamburger trigger for the mobile drawer below.
 .mobile_toggle
   display: flex
@@ -30,7 +37,9 @@
   justify-content: center
   width: $mobile-icon-size
   height: $mobile-icon-size
+  border-radius: 50%
+  background: var(--background)
   border: none
-  background: transparent
-  color: var(--foreground)
+  //border: 2px solid var(--brand-muted)
+  color: var(--on-brand)
   cursor: pointer

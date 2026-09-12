@@ -30,16 +30,19 @@ export function NavMobileControls({
 
 	return (
 		<div className={style.mobile_controls}>
-			{/* Also in drawer (NavAccountMenu), stays visible in bar. .account_identity hidden at this width (no duplication). Skipped when signed out. */}
+			{/* Also in drawer (NavAccountMenu); .account_identity hidden at this width (no
+			duplication). Both hidden here until the drawer opens (.mobile_hideable). */}
 			{signedIn && (
 				<>
-					<NotificationBell />
+					<div className={style.mobile_hideable}>
+						<NotificationBell />
+					</div>
 					<NavAccountAvatar
 						pathname={pathname}
 						avatarSrc={avatarSrc}
 						showAvatar={showAvatar}
 						onAvatarError={onAvatarError}
-						className={style.mobile_account_link}
+						className={`${style.mobile_account_link} ${style.mobile_hideable}`}
 						iconSize={18}
 					/>
 				</>
