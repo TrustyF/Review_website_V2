@@ -9,6 +9,11 @@ export default async function TvPage() {
 			title={dict.nav.tv}
 			type={MediaType.TVSHOW}
 			include={{ tvShow: true }}
+			switcher={[
+				{ href: "/movies", label: dict.nav.movies },
+				{ href: "/tv", label: dict.nav.tv },
+				{ href: "/shorts", label: dict.nav.shorts },
+			]}
 		/>
 	);
 }

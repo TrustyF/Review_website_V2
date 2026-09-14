@@ -10,6 +10,11 @@ export default async function MoviesPage() {
 			type={MediaType.MOVIE}
 			include={{ movie: true }}
 			recentHref="/movies/recent"
+			switcher={[
+				{ href: "/movies", label: dict.nav.movies },
+				{ href: "/tv", label: dict.nav.tv },
+				{ href: "/shorts", label: dict.nav.shorts },
+			]}
 		/>
 	);
 }

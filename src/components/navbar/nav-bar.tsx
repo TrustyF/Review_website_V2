@@ -14,9 +14,9 @@ import { HomeIcon } from "@/components/icons/home-icon";
 import { MovieIcon } from "@/components/icons/movie-icon";
 import { LogoTag } from "@/components/logo/logo-tag";
 import { NavSearch } from "@/components/navbar/nav-search/nav-search";
-import { NavDropdown } from "@/components/navbar/nav-dropdown";
 import { NavLink } from "@/components/navbar/nav-link";
 import { NavAccountMenu } from "@/components/navbar/nav-account-menu";
+import { NavQuickLinks } from "@/components/navbar/nav-quick-links";
 import { NavMobileControls } from "@/components/navbar/nav-mobile-controls";
 import { NavAdminLinks } from "@/components/navbar/nav-admin-links";
 import { useNavbarVisibility } from "@/components/navbar/use-navbar-visibility";
@@ -71,85 +71,25 @@ export default function Navbar() {
 						{/*	</NavLink>*/}
 						{/*</div>*/}
 
-						{/* Desktop only — grouped under dropdowns; the mobile drawer lists
-						every catalog route flat instead (.catalog_links_mobile below). */}
-						<div className={`${style.nav_group} ${style.dropdowns_desktop}`}>
-							<NavDropdown
-								label={dict.nav.media}
-								icon={MovieIcon}
-								items={[
-									{ href: "/movies", label: dict.nav.movies },
-									{ href: "/tv", label: dict.nav.tv },
-									{ href: "/shorts", label: dict.nav.shorts },
-								]}
-							/>
-							<NavDropdown
-								label={dict.nav.reading}
-								icon={BookOpen}
-								items={[
-									{ href: "/manga", label: dict.nav.manga },
-									{ href: "/comics", label: dict.nav.comics },
-									{ href: "/books", label: dict.nav.books },
-								]}
-							/>
+						{/* Desktop only — the group's own switcher (inside each catalog
+						page) picks the type; NavQuickLinks covers mobile instead. */}
+						<div className={`${style.nav_group} ${style.catalog_group_desktop}`}>
 							<NavLink
-								href="/games"
-								icon={GamepadDirectional}
+								href="/movies"
+								activeHrefs={["/movies", "/tv", "/shorts"]}
+								icon={MovieIcon}
 								className={style.link}
 								pathname={pathname}>
-								{dict.nav.games}
+								{dict.nav.media}
 							</NavLink>
-						</div>
-
-						{/* Mobile drawer only — same routes as the desktop dropdowns above,
-						laid out flat instead of behind a tap-to-expand summary. */}
-						<div className={`${style.nav_group} ${style.catalog_links_mobile}`}>
-							<div className={style.catalog_subgroup}>
-								<NavLink
-									href="/movies"
-									icon={MovieIcon}
-									className={style.link}
-									pathname={pathname}>
-									{dict.nav.movies}
-								</NavLink>
-								<NavLink
-									href="/tv"
-									icon={MovieIcon}
-									className={style.link}
-									pathname={pathname}>
-									{dict.nav.tv}
-								</NavLink>
-								<NavLink
-									href="/shorts"
-									icon={MovieIcon}
-									className={style.link}
-									pathname={pathname}>
-									{dict.nav.shorts}
-								</NavLink>
-							</div>
-							<div className={style.catalog_subgroup}>
-								<NavLink
-									href="/manga"
-									icon={BookOpen}
-									className={style.link}
-									pathname={pathname}>
-									{dict.nav.manga}
-								</NavLink>
-								<NavLink
-									href="/comics"
-									icon={BookOpen}
-									className={style.link}
-									pathname={pathname}>
-									{dict.nav.comics}
-								</NavLink>
-								<NavLink
-									href="/books"
-									icon={BookOpen}
-									className={style.link}
-									pathname={pathname}>
-									{dict.nav.books}
-								</NavLink>
-							</div>
+							<NavLink
+								href="/manga"
+								activeHrefs={["/manga", "/comics", "/books"]}
+								icon={BookOpen}
+								className={style.link}
+								pathname={pathname}>
+								{dict.nav.reading}
+							</NavLink>
 							<NavLink
 								href="/games"
 								icon={GamepadDirectional}
@@ -210,15 +150,20 @@ export default function Navbar() {
 					</div>
 				</div>
 
-				<NavMobileControls
-					signedIn={signedIn}
-					pathname={pathname}
-					avatarSrc={avatarSrc}
-					showAvatar={showAvatar}
-					onAvatarError={onAvatarError}
-					mobileOpen={mobileOpen}
-					onToggle={() => setMobileOpen((open) => !open)}
-				/>
+				{/* Mobile only — kept out of the hamburger drawer so Media/Reading/
+				Games stay reachable with the drawer closed. */}
+				<div className={style.mobile_end}>
+					<NavQuickLinks pathname={pathname} />
+					<NavMobileControls
+						signedIn={signedIn}
+						pathname={pathname}
+						avatarSrc={avatarSrc}
+						showAvatar={showAvatar}
+						onAvatarError={onAvatarError}
+						mobileOpen={mobileOpen}
+						onToggle={() => setMobileOpen((open) => !open)}
+					/>
+				</div>
 
 				{isAdmin && <NavAdminLinks pathname={pathname} />}
 			</nav>

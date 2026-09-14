@@ -1,11 +1,11 @@
 @use "@/app/styles/variables" as *
 
-// margin-left:auto on group keeps icons together; individual margins would split them
+// Right-alignment on mobile now comes from .mobile_end (nav-bar.module.sass),
+// which wraps this alongside NavQuickLinks.
 .mobile_controls
   display: none
   align-items: center
   gap: 0.5rem
-  margin-left: auto
 
   @media (max-width: $mobile-breakpoint)
     display: flex
@@ -38,7 +38,7 @@
   width: $mobile-icon-size
   height: $mobile-icon-size
   border-radius: 50%
-  background: var(--background)
+  background: none
   border: none
   //border: 2px solid var(--brand-muted)
   color: var(--on-brand)

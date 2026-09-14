@@ -101,9 +101,10 @@ $nav-content-gap: 0.75rem
 .link_label_icon_only
   display: none
 
-// Swapped by breakpoint below, like MediaCardShell/MediaCardShellMobile —
-// desktop keeps the Media/Reading dropdowns, the drawer lists routes flat.
-.catalog_links_mobile
+// Groups NavQuickLinks with NavMobileControls so one margin-left: auto packs
+// both against the right edge on mobile; hidden entirely on desktop, where
+// the quick links render inline in .groups instead (see nav-bar.tsx).
+.mobile_end
   display: none
 
 @media (max-width: $mobile-breakpoint)
@@ -152,20 +153,17 @@ $nav-content-gap: 0.75rem
     justify-content: flex-start
     min-width: 0
 
-  .dropdowns_desktop
+  // Redundant with NavQuickLinks (always visible outside the drawer) once open.
+  .catalog_group_desktop
     display: none
 
-  // Wider than .nav_group's own 1rem so Movies/TV/Shorts and Manga/Comics/Books
-  // read as separate categories, matching the desktop dropdowns they replace.
-  .catalog_links_mobile
+  .mobile_end
     display: flex
-    gap: 2rem
-
-  .catalog_subgroup
-    display: flex
-    flex-flow: column
+    align-items: center
     gap: 1rem
+    margin-left: auto
 
-  // Drawer has room, so iconOnly labels come back too.
-  [data-mobile-open="true"] .link_label_icon_only
+  // Drawer has room, so iconOnly labels come back too — scoped to the
+  // drawer itself so NavQuickLinks's always-visible icons stay icon-only.
+  [data-mobile-open="true"] .nav_content .link_label_icon_only
     display: inline

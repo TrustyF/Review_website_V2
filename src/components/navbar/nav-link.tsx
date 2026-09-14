@@ -20,10 +20,13 @@ type NavLinkProps = {
 	// Pass "_blank" for a destination that shouldn't navigate away from
 	// whatever the admin already has open (e.g. the image crop tool).
 	target?: string;
+	// For a link that fronts a group of routes (e.g. "Media" for /movies,
+	// /tv, /shorts) — active state matches any of these instead of just href.
+	activeHrefs?: string[];
 };
 
-// Every plain top-level item (vs. a NavDropdown) goes through here so the
-// icon stays optional without repeating "icon && <Icon />" everywhere.
+// Every plain top-level nav item goes through here so the icon stays
+// optional without repeating "icon && <Icon />" everywhere.
 export function NavLink({
 	href,
 	icon: Icon,
@@ -33,8 +36,9 @@ export function NavLink({
 	iconOnly = false,
 	prefetch = false,
 	target,
+	activeHrefs,
 }: NavLinkProps) {
-	const isActive = isNavActive(pathname, href);
+	const isActive = (activeHrefs ?? [href]).some((h) => isNavActive(pathname, h));
 	const label = typeof children === "string" ? children : undefined;
 	return (
 		<Link

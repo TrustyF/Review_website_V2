@@ -9,6 +9,11 @@ export default async function MangaPage() {
 			title={dict.nav.manga}
 			type={MediaType.MANGA}
 			include={{ manga: true }}
+			switcher={[
+				{ href: "/manga", label: dict.nav.manga },
+				{ href: "/comics", label: dict.nav.comics },
+				{ href: "/books", label: dict.nav.books },
+			]}
 		/>
 	);
 }

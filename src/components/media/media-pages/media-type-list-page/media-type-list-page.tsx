@@ -1,6 +1,7 @@
 import { Link } from "@/components/ui/link";
 import { dbPublic } from "@/server/db/client";
 import { MediaFilterGrid } from "@/components/media/media-grids/media-filter-grid/media-filter-grid";
+import { MediaTypeSwitcher } from "@/components/media/media-pages/media-type-switcher/media-type-switcher";
 import { toMediaRecord } from "@/components/media/types";
 import { EnrichmentStatus, MediaType, Prisma } from "@prisma/client";
 import styles from "./media-type-list-page.module.sass";
@@ -12,6 +13,8 @@ type Props = {
 	include: Prisma.MediaInclude;
 	// Link to this type's flat, recency-sorted sibling (RecentMediaListPage) — omitted for types that don't have one yet.
 	recentHref?: string;
+	// Sibling types under the same navbar group (e.g. movies/tv/shorts under "Media") — omitted for a type with no siblings (games).
+	switcher?: { href: string; label: string }[];
 };
 
 // Shared by every per-type page: fetch every DONE media row of one type, rate-tier them. Pages only differ in title/type/include.
@@ -20,6 +23,7 @@ export async function MediaTypeListPage({
 	type,
 	include,
 	recentHref,
+	switcher,
 }: Props) {
 	// dbPublic (not db) — soft-deleted media is excluded automatically.
 	const rawList = await dbPublic.media.findMany({
@@ -37,6 +41,7 @@ export async function MediaTypeListPage({
 
 	return (
 		<div className={styles.wrapper}>
+			{switcher && <MediaTypeSwitcher items={switcher} />}
 			<MediaFilterGrid media={media} showRating={false} showTitle={false} />
 		</div>
 	);
