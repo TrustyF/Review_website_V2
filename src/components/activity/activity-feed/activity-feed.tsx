@@ -18,16 +18,10 @@ import { ListAdditionsCard } from "@/components/notifications/list-additions-car
 import { MediaAdditionsCard } from "@/components/notifications/media-additions-card";
 import { useDictionary, useLocale } from "@/lib/i18n/i18n-context";
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+import { listDateFormatterFor } from "@/lib/format-list-date";
 import { TimelineList } from "./timeline-list";
 import { TimelineRow } from "./timeline-row";
 import styles from "./activity-feed.module.sass";
-
-function dateFormatterFor(locale: string) {
-	return new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-GB", {
-		month: "short",
-		day: "numeric",
-	});
-}
 
 // One icon per ActivityType — RATING_CHANGED reuses the star rating value's own icon.
 const TYPE_ICON = {
@@ -286,7 +280,7 @@ export function ActivityFeed({
 }) {
 	const dict = useDictionary();
 	const locale = useLocale();
-	const dateFormatter = dateFormatterFor(locale);
+	const dateFormatter = listDateFormatterFor(locale);
 	// Same reveal-more-on-scroll pattern as LazyMediaGrid/LazyMediaList — avoids
 	// mounting up to ~700 rows (each with its own poster Image) up front.
 	const { visibleCount, sentinelRef } = useLazyReveal(
@@ -316,7 +310,6 @@ export function ActivityFeed({
 									key={entry.id}
 									entry={entry}
 									index={index}
-									dateFormatter={dateFormatter}
 								/>
 							);
 						}
@@ -336,7 +329,6 @@ export function ActivityFeed({
 								key={entry.id}
 								entry={entry}
 								index={index}
-								dateFormatter={dateFormatter}
 							/>
 						);
 					}

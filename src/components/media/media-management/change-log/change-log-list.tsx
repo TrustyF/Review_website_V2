@@ -16,11 +16,8 @@ import { ChangeLogEmptyGate } from "./change-log-empty-gate";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { getLocale } from "@/lib/i18n/get-locale";
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+import { listDateFormatterFor } from "@/lib/format-list-date";
 import styles from "./change-log-list.module.sass";
-
-// Locale-keyed since a fixed "en-GB" formatter would render month names in
-// English even when the rest of the page is in French.
-const DATE_FORMAT_LOCALE: Record<string, string> = { en: "en-GB", fr: "fr-FR" };
 
 // Rows for these fields are date-only markers — oldValue/newValue is just a "true" placeholder.
 const MILESTONE_FIELDS = new Set(["watched", "reviewed", "rewatched"]);
@@ -140,13 +137,7 @@ export async function ChangeLogList({
 	review: Review | null | undefined;
 }) {
 	const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
-	const dateFormatter = new Intl.DateTimeFormat(DATE_FORMAT_LOCALE[locale], {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
+	const dateFormatter = listDateFormatterFor(locale);
 	const fieldLabels: Record<string, string> = {
 		rating: dict.changeLog.fields.rating,
 		liked: dict.changeLog.fields.liked,

@@ -7,15 +7,8 @@ import {
 	ReviewSpoilerProvider,
 } from "@/components/media/media-cards/media-card/review-body";
 import { useDictionary, useLocale } from "@/lib/i18n/i18n-context";
+import { listDateFormatterFor } from "@/lib/format-list-date";
 import styles from "./review.module.sass";
-
-function dateFormatterFor(locale: string) {
-	return new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-GB", {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-	});
-}
 
 type Props = {
 	review: Review | null | undefined;
@@ -58,7 +51,7 @@ export function MediaReviewMeta({
 			{/* "Reviewed on" isn't shown here — it's changelog-only, not duplicated on the card. */}
 			{watchedDate && (
 				<div className={`${styles.review_date} ${dateClassName ?? ""}`}>
-					{watchedOnLabel(type, dict)} {dateFormatterFor(locale).format(watchedDate)}
+					{watchedOnLabel(type, dict)} {listDateFormatterFor(locale).format(watchedDate)}
 				</div>
 			)}
 		</>

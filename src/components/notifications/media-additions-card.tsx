@@ -3,18 +3,8 @@ import { type CSSProperties } from "react";
 import Image from "next/image";
 import { Link } from "@/components/ui/link";
 import { useDictionary, useLocale } from "@/lib/i18n/i18n-context";
+import { listDateFormatterFor } from "@/lib/format-list-date";
 import styles from "./media-additions-card.module.sass";
-
-// Default keeps notifications' time-of-day; activity feed passes its own compact formatter.
-function defaultDateFormatter(locale: string) {
-	return new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-GB", {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
-}
 
 // Shared shape between NotificationEntry and ActivityFeedEntry — readAt/onRead are
 // notification-only (activity feed has no read state, so `unread` there is always false).
@@ -31,16 +21,14 @@ export function MediaAdditionsCard<T extends MediaGroupEntry>({
 	entry,
 	index,
 	onRead,
-	dateFormatter,
 }: {
 	entry: T;
 	index: number;
 	onRead?: (entry: T) => void;
-	dateFormatter?: Intl.DateTimeFormat;
 }) {
 	const dict = useDictionary();
 	const locale = useLocale();
-	const formatter = dateFormatter ?? defaultDateFormatter(locale);
+	const formatter = listDateFormatterFor(locale);
 	const media = entry.media;
 	const groupedLists = entry.groupedLists ?? [];
 	if (!media) return null;

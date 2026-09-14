@@ -18,17 +18,8 @@ import { MediaAdditionsCard } from "@/components/notifications/media-additions-c
 import { Clickable } from "@/components/ui/clickable";
 import { useDictionary, useLocale } from "@/lib/i18n/i18n-context";
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+import { listDateFormatterFor } from "@/lib/format-list-date";
 import styles from "./notification-feed.module.sass";
-
-function dateFormatterFor(locale: string) {
-	return new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-GB", {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-		hour: "2-digit",
-		minute: "2-digit",
-	});
-}
 
 // Dialed separately from useLazyReveal's own 24-item default, same reasoning
 // as ACTIVITY_BATCH_SIZE — a notification row is a different shape than a grid card.
@@ -76,7 +67,7 @@ export function NotificationFeed({
 }) {
 	const dict = useDictionary();
 	const locale = useLocale();
-	const dateFormatter = dateFormatterFor(locale);
+	const dateFormatter = listDateFormatterFor(locale);
 	// Optimistic local readAt overlay — revalidatePath only refreshes this page on
 	// its next server render, not props this client component is already mounted with.
 	const [readOverrides, setReadOverrides] = useState<Set<number>>(new Set());

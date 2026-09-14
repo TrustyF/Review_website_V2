@@ -7,15 +7,11 @@ import {
 	dismissRecommendationRequest,
 } from "@/components/recommendations/recommendation-request-actions";
 import { displayName } from "@/lib/display-name";
+import { listDateFormatterFor } from "@/lib/format-list-date";
 import styles from "./recommendation-requests.module.sass";
 
-const DateFormatter = new Intl.DateTimeFormat("en-GB", {
-	year: "numeric",
-	month: "short",
-	day: "numeric",
-	hour: "2-digit",
-	minute: "2-digit",
-});
+// Admin-only, no i18n locale context — always English.
+const DateFormatter = listDateFormatterFor("en");
 
 type Tab = "PENDING" | "ALL";
 

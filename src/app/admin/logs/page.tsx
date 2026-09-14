@@ -2,15 +2,11 @@ import { notFound } from "next/navigation";
 import { CircleCheck, TriangleAlert } from "lucide-react";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
+import { listDateFormatterFor } from "@/lib/format-list-date";
 import styles from "./logs.module.sass";
 
-const DateFormatter = new Intl.DateTimeFormat("en-GB", {
-	year: "numeric",
-	month: "short",
-	day: "numeric",
-	hour: "2-digit",
-	minute: "2-digit",
-});
+// Admin-only, no i18n locale context — always English.
+const DateFormatter = listDateFormatterFor("en");
 
 const MAX_VISIBLE_RUNS = 100;
 

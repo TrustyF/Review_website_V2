@@ -8,15 +8,8 @@ import {
 } from "@/components/recommendations/recommendation-request-actions";
 import { useDictionary, useLocale } from "@/lib/i18n/i18n-context";
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+import { listDateFormatterFor } from "@/lib/format-list-date";
 import styles from "./recommendation-request-page.module.sass";
-
-function dateFormatterFor(locale: string) {
-	return new Intl.DateTimeFormat(locale === "fr" ? "fr-FR" : "en-GB", {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-	});
-}
 
 function statusLabel(
 	status: MyRecommendationRequest["status"],
@@ -39,7 +32,7 @@ export function RecommendationRequestPageClient({
 }) {
 	const dict = useDictionary();
 	const locale = useLocale();
-	const dateFormatter = dateFormatterFor(locale);
+	const dateFormatter = listDateFormatterFor(locale);
 
 	const [requests, setRequests] = useState(initialRequests);
 	const [message, setMessage] = useState("");
