@@ -1,11 +1,18 @@
 "use client";
-import { LayoutList, List } from "lucide-react";
+import {
+	BookOpen,
+	GamepadDirectional,
+	LayoutList,
+	List,
+	Menu,
+	X,
+} from "lucide-react";
 import { ActivityIcon } from "@/components/icons/activity-icon";
+import { MovieIcon } from "@/components/icons/movie-icon";
+import { Clickable } from "@/components/ui/clickable";
 import { NavSearch } from "@/components/navbar/nav-search/nav-search";
 import { NavLink } from "@/components/navbar/nav-link";
 import { NavAccountMenu } from "@/components/navbar/nav-account-menu";
-import { NavQuickLinks } from "@/components/navbar/nav-quick-links";
-import { NavMobileControls } from "@/components/navbar/nav-mobile-controls";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import barStyle from "./nav-bar.module.sass";
 import style from "./nav-bar-mobile.module.sass";
@@ -20,8 +27,8 @@ type Props = {
 	onToggle: () => void;
 };
 
-// Collapsed bar + drawer shown below $mobile-breakpoint. Always mounted
-// alongside NavBarDesktop; nav-bar-mobile.module.sass hides it above it.
+// Collapsed bar (search + account + hamburger) below $mobile-breakpoint,
+// plus the full-label drawer the hamburger opens. NavBarLinks covers desktop.
 export function NavBarMobile({
 	signedIn,
 	pathname,
@@ -35,69 +42,82 @@ export function NavBarMobile({
 
 	return (
 		<>
-			{/* data-nav-drawer marks this so nav-bar.module.sass can reveal iconOnly
-			labels inside it, without touching NavQuickLinks's always-icon-only links. */}
-			<div className={style.drawer} data-nav-drawer>
-				<div className={style.groups}>
-					<div className={style.nav_group}>
-						<NavLink
-							href="/activity"
-							icon={ActivityIcon}
-							className={barStyle.link}
-							pathname={pathname}
-							iconOnly
-							prefetch>
-							{dict.nav.activity}
-						</NavLink>
-						<NavLink
-							href="/reviews"
-							icon={LayoutList}
-							className={barStyle.link}
-							pathname={pathname}
-							iconOnly
-							prefetch>
-							{dict.nav.reviews}
-						</NavLink>
-						<NavLink
-							href="/lists"
-							icon={List}
-							className={barStyle.link}
-							pathname={pathname}
-							iconOnly
-							prefetch>
-							{dict.nav.lists}
-						</NavLink>
-					</div>
-
-					<div className={style.nav_group}>
-						<NavSearch />
-					</div>
-				</div>
-
-				<div className={style.nav_group}>
-					<NavAccountMenu
-						signedIn={signedIn}
-						pathname={pathname}
-						avatarSrc={avatarSrc}
-						showAvatar={showAvatar}
-						onAvatarError={onAvatarError}
-					/>
-				</div>
-			</div>
-
-			{/* Kept out of the drawer so Media/Reading/Games stay reachable with
-			the drawer closed. */}
-			<div className={style.mobile_end}>
-				<NavQuickLinks pathname={pathname} />
-				<NavMobileControls
+			<div className={style.bar_end}>
+				<NavSearch />
+				<NavAccountMenu
 					signedIn={signedIn}
 					pathname={pathname}
 					avatarSrc={avatarSrc}
 					showAvatar={showAvatar}
 					onAvatarError={onAvatarError}
-					mobileOpen={mobileOpen}
-					onToggle={onToggle}
 				/>
+				<Clickable
+					className={style.toggle}
+					aria-label={mobileOpen ? dict.nav.closeMenu : dict.nav.openMenu}
+					aria-pressed={mobileOpen}
+					onClick={onToggle}>
+					{mobileOpen ? <X size={20} /> : <Menu size={20} />}
+				</Clickable>
+			</div>
+
+			{/* data-nav-drawer marks this so nav-bar.module.sass reveals the
+			iconOnly items' labels here (Activity/Reviews/Lists). */}
+			<div className={style.drawer} data-nav-drawer>
+				<div className={style.nav_group}>
+					<NavLink
+						href="/movies"
+						activeHrefs={["/movies", "/tv", "/shorts"]}
+						icon={MovieIcon}
+						className={barStyle.link}
+						pathname={pathname}>
+						{dict.nav.media}
+					</NavLink>
+					<NavLink
+						href="/manga"
+						activeHrefs={["/manga", "/comics", "/books"]}
+						icon={BookOpen}
+						className={barStyle.link}
+						pathname={pathname}>
+						{dict.nav.reading}
+					</NavLink>
+					<NavLink
+						href="/games"
+						icon={GamepadDirectional}
+						className={barStyle.link}
+						pathname={pathname}>
+						{dict.nav.games}
+					</NavLink>
+				</div>
+
+				<div className={style.nav_group}>
+					<NavLink
+						href="/activity"
+						icon={ActivityIcon}
+						className={barStyle.link}
+						pathname={pathname}
+						iconOnly
+						prefetch>
+						{dict.nav.activity}
+					</NavLink>
+					<NavLink
+						href="/reviews"
+						icon={LayoutList}
+						className={barStyle.link}
+						pathname={pathname}
+						iconOnly
+						prefetch>
+						{dict.nav.reviews}
+					</NavLink>
+					<NavLink
+						href="/lists"
+						icon={List}
+						className={barStyle.link}
+						pathname={pathname}
+						iconOnly
+						prefetch>
+						{dict.nav.lists}
+					</NavLink>
+				</div>
 			</div>
 		</>
 	);

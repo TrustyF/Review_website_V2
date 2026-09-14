@@ -16,7 +16,7 @@ type Props = {
 };
 
 // Signed in: bell + avatar link; signed out: link to /login. Sign-out lives
-// on the account page. Hidden in the mobile drawer (NavMobileControls covers it).
+// on the account page. Same row at every width.
 export function NavAccountMenu({
 	signedIn,
 	pathname,
@@ -47,7 +47,6 @@ export function NavAccountMenu({
 				showAvatar={showAvatar}
 				onAvatarError={onAvatarError}
 				className={barStyle.link}
-				iconSize={14}
 			/>
 		</div>
 	);

@@ -1,13 +1,12 @@
 @use "@/app/styles/variables" as *
 
-// Desktop-only cluster; hidden entirely (not narrowed) on mobile below.
 .account_identity
   display: flex
   align-items: center
   gap: 1.5rem
 
   @media (max-width: $mobile-breakpoint)
-    display: none
+    gap: 0.85rem
 
 // Despite the name, styles the signed-out "Sign in" link; sign-out lives
 // on the account page (SignOutButton), not here.

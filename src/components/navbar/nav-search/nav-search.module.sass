@@ -20,14 +20,6 @@
   &:hover
     background: var(--ticket-accent-dark)
 
-[data-mobile-open="true"] .wrapper
-  justify-content: flex-start
-  gap: 0.5rem
-
-// Visually swaps the icon in front of the input (DOM order stays the same).
-[data-mobile-open="true"] .trigger
-  order: -1
-
 // Real animated width (not a transform trick) so expanding actually
 // reflows/pushes the nav groups before it, not just growing in place.
 .overlay
@@ -46,14 +38,6 @@
     margin-right: 0.5rem
     overflow: visible
     opacity: 1
-
-// Drawer has room, so input stays pre-expanded regardless of isExpanded.
-[data-mobile-open="true"] .overlay
-  flex-grow: 1
-  width: auto
-  margin-right: 0
-  overflow: visible
-  opacity: 1
 
 .input
   width: 100%

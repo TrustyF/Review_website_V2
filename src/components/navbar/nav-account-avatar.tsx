@@ -8,20 +8,16 @@ type Props = {
 	avatarSrc: string | null;
 	showAvatar: boolean;
 	onAvatarError: () => void;
-	// Desktop and mobile pass their own wrapping layout class.
 	className: string | undefined;
-	// 18px on mobile to match the bigger tap target there, 14px elsewhere.
-	iconSize: number;
 };
 
-// Shared /account link (avatar-or-fallback-icon) between desktop and mobile.
+// /account link: avatar image if the user has one, fallback icon otherwise.
 export function NavAccountAvatar({
 	pathname,
 	avatarSrc,
 	showAvatar,
 	onAvatarError,
 	className,
-	iconSize,
 }: Props) {
 	return (
 		<Link
@@ -41,7 +37,7 @@ export function NavAccountAvatar({
 			) : (
 				// Always icon-only (no label to pair with), so full brightness.
 				<AccountIcon
-					size={iconSize}
+					size={14}
 					className={`${style.nav_icon} ${style.nav_icon_always}`}
 				/>
 			)}

@@ -13,7 +13,7 @@ import { NavAccountMenu } from "@/components/navbar/nav-account-menu";
 import { NavAdminLinks } from "@/components/navbar/nav-admin-links";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import barStyle from "./nav-bar.module.sass";
-import style from "./nav-bar-desktop.module.sass";
+import style from "./nav-bar-links.module.sass";
 
 type Props = {
 	signedIn: boolean;
@@ -24,9 +24,9 @@ type Props = {
 	isAdmin: boolean;
 };
 
-// Inline row shown at/above $mobile-breakpoint. Always mounted alongside
-// NavBarMobile; nav-bar-desktop.module.sass hides it below the breakpoint.
-export function NavBarDesktop({
+// Desktop-only nav row. Below $mobile-breakpoint this hides entirely (see
+// its own .nav_content media query) and NavBarMobile takes over instead.
+export function NavBarLinks({
 	signedIn,
 	pathname,
 	avatarSrc,
@@ -97,8 +97,8 @@ export function NavBarDesktop({
 						</NavLink>
 					</div>
 
-					{/* NavSearch's expand spends leftover room in .groups, pushing
-					earlier groups aside via their own flex-shrink once it runs out. */}
+					{/* NavSearch's expand spends leftover room in .groups. Below
+					$mobile-breakpoint it's just a trigger that routes to /search. */}
 					<div className={style.nav_group}>
 						<NavSearch />
 					</div>
@@ -117,6 +117,8 @@ export function NavBarDesktop({
 				</div>
 			</div>
 
+			{/* Admin tools stay desktop-only — nav-admin-links.module.sass hides
+			the absolutely-positioned corner cluster below $mobile-breakpoint. */}
 			{isAdmin && <NavAdminLinks pathname={pathname} />}
 		</>
 	);

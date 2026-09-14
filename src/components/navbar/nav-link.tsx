@@ -11,8 +11,8 @@ type NavLinkProps = {
 	className: string | undefined;
 	pathname: string;
 	children: React.ReactNode;
-	// Label hidden on desktop, moved to aria-label/title; stays a real DOM
-	// element (not omitted) so the mobile drawer can bring it back.
+	// True: label hidden at every width. False: label hides only below
+	// $mobile-breakpoint (CSS-driven). Either way aria-label always covers it.
 	iconOnly?: boolean;
 	// Leave unset for anything dynamic/session-scoped (e.g. /account); pass
 	// true only for a cheap-to-prefetch static/ISR destination.
@@ -48,7 +48,7 @@ export function NavLink({
 			target={target}
 			rel={target === "_blank" ? "noopener noreferrer" : undefined}
 			aria-current={isActive ? "page" : undefined}
-			aria-label={iconOnly ? label : undefined}
+			aria-label={label}
 			title={iconOnly ? label : undefined}>
 			{/* Lucide ships outline-only icons, so "filled" is just a fill color. */}
 			{Icon && (

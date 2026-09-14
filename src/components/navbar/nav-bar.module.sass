@@ -36,9 +36,12 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   display: flex
   align-items: center
   flex-shrink: 0
+  position: relative
+  // NavBarMobile's drawer is a full-bleed panel from the viewport top (see
+  // nav-bar-mobile.module.sass) — this keeps the logo showing above it.
+  z-index: 2
 
-// Base look for every nav item; NavBarDesktop/NavBarMobile each lay these
-// out differently (row vs column) but share this same class for the item itself.
+// Base look for every top-level nav item, at every width.
 .link
   display: flex
   align-items: center
@@ -64,7 +67,6 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   display: none
 
 // NavBarMobile's drawer marks its root [data-nav-drawer] so iconOnly labels
-// come back once inside it; NavQuickLinks's always-visible icons, which sit
-// outside the drawer, are untouched by this.
+// come back once inside it — there's room for full labels there.
 [data-nav-drawer] .link_label_icon_only
   display: inline

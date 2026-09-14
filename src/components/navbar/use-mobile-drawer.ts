@@ -15,13 +15,11 @@ export function useMobileDrawer() {
 		setMobileOpen(false);
 	}
 
-	// Delegated so it catches any link/button click, not just handleNavClick per Link.
+	// Delegated so no NavLink needs to know about drawer state. Only "a"
+	// matches — the hamburger's a Clickable (role=button div), not an anchor,
+	// so its own click never closes what it just opened.
 	function handleNavClick(e: React.MouseEvent<HTMLElement>) {
-		const clicked = (e.target as HTMLElement).closest("a, button");
-		if (!clicked) return;
-		// The hamburger's own onClick already toggled mobileOpen before this
-		// bubbled click arrives — closing it here would undo that toggle.
-		if (!clicked.hasAttribute("data-mobile-toggle")) {
+		if ((e.target as HTMLElement).closest("a")) {
 			setMobileOpen(false);
 		}
 	}

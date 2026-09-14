@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { LucideProvider } from "lucide-react";
 import { LogoImage } from "@/components/logo/logo-image";
-import { NavBarDesktop } from "@/components/navbar/nav-bar-desktop";
+import { NavBarLinks } from "@/components/navbar/nav-bar-links";
 import { NavBarMobile } from "@/components/navbar/nav-bar-mobile";
 import { useNavbarVisibility } from "@/components/navbar/use-navbar-visibility";
 import { useMobileDrawer } from "@/components/navbar/use-mobile-drawer";
@@ -43,9 +43,9 @@ export default function Navbar() {
 					<LogoImage />
 				</Link>
 
-				{/* Both always mount; each one's own CSS module decides visibility at
+				{/* Both always mount; each one's own CSS decides visibility at
 				$mobile-breakpoint, so a mobile tweak can't reach desktop or vice versa. */}
-				<NavBarDesktop
+				<NavBarLinks
 					signedIn={signedIn}
 					pathname={pathname}
 					avatarSrc={avatarSrc}

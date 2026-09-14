@@ -1,51 +1,54 @@
 @use "@/app/styles/variables" as *
 
-// Rendered mobile bar height.
-$mobile-bar-height: 2rem + $mobile-icon-size
+// Search + account + hamburger, right-packed on the collapsed bar. Hidden
+// entirely at/above $mobile-breakpoint — NavBarLinks takes over there.
+.bar_end
+  display: none
+  align-items: center
+  gap: 0.5rem
+  margin-left: auto
+  // Sits above .drawer below, which is a full-bleed panel starting at the
+  // viewport top (see .drawer) — without this it'd paint underneath it.
+  position: relative
+  z-index: 2
 
-// Hidden by default at any width; the mobile media query below is the only
-// place either of these turns visible, so nothing here leaks onto desktop.
+  @media (max-width: $mobile-breakpoint)
+    display: flex
+
+.toggle
+  display: flex
+  align-items: center
+  justify-content: center
+  width: $mobile-icon-size
+  height: $mobile-icon-size
+  border-radius: 50%
+  color: var(--foreground)
+  cursor: pointer
+
+  &:hover
+    background: var(--ticket-accent-dark)
+
+// Starts at the true viewport top (not below the bar) so it reaches the
+// screen edges on every side; its own top padding clears the collapsed
+// bar's height instead, and .bar_end/.title (nav-bar.module.sass) stay
+// visible above it via z-index regardless of DOM order.
 .drawer
   display: none
   position: fixed
-  top: 0
-  left: 0
-  right: 0
-  max-height: calc(100vh - #{$mobile-bar-height})
+  inset: 0
+  padding: 5rem 1.25rem 2rem
   overflow-y: auto
   flex-flow: column
   align-items: stretch
-  gap: 1.5rem
-  padding: 1.25rem
+  gap: 2rem
   background: var(--modal-bg)
-  border-top: 1px solid var(--surface-border)
-  border-bottom: 1px solid var(--surface-border)
 
   @media (max-width: $mobile-breakpoint)
     [data-mobile-open="true"] &
       display: flex
 
-.groups
-  display: flex
-  flex-flow: column
-  align-items: stretch
-  justify-content: flex-start
-  gap: 2rem
-  padding: 0.5rem 0 2rem 1rem
-
 .nav_group
   display: flex
   flex-flow: column
   align-items: stretch
-  gap: 1rem
-
-// Groups NavQuickLinks with NavMobileControls so one margin-left: auto packs
-// both against the right edge of the collapsed bar.
-.mobile_end
-  display: none
-
-  @media (max-width: $mobile-breakpoint)
-    display: flex
-    align-items: center
-    gap: 1rem
-    margin-left: auto
+  gap: 1.5rem
