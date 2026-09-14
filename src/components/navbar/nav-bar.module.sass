@@ -1,16 +1,9 @@
 @use "@/app/styles/variables" as *
 
-// Rendered mobile bar height.
-$mobile-bar-height: 2rem + $mobile-icon-size
-
 // Gap between viewport edge and the centered body column at any width.
 $body-edge-gap: calc((100vw - #{$content-width}) / 2)
 
-// Shared with .nav_group_account's min-width formula below, which needs the
-// exact same gap value to net out correctly.
-$nav-content-gap: 0.75rem
-
-// Fixed min-height since .add_media_link is absolutely positioned.
+// Fixed min-height since NavAdminLinks's .add_media_link is absolutely positioned.
 .wrapper
   display: flex
   align-items: center
@@ -32,6 +25,9 @@ $nav-content-gap: 0.75rem
   // Eased gradient (not a linear 2-stop fade) to avoid a visible seam.
   background: linear-gradient(to bottom, var(--nav-scrim) 0%, color-mix(in srgb, var(--nav-scrim) 74%, transparent) 19%, color-mix(in srgb, var(--nav-scrim) 54%, transparent) 34%, color-mix(in srgb, var(--nav-scrim) 38%, transparent) 47%, color-mix(in srgb, var(--nav-scrim) 21%, transparent) 62.5%, color-mix(in srgb, var(--nav-scrim) 11%, transparent) 75%, color-mix(in srgb, var(--nav-scrim) 4%, transparent) 87%, transparent 100%)
 
+  @media (max-width: $mobile-breakpoint)
+    padding: 1rem 1.25rem
+
 .hidden
   transform: translateY(-100%)
 
@@ -41,42 +37,8 @@ $nav-content-gap: 0.75rem
   align-items: center
   flex-shrink: 0
 
-// .groups and .nav_group_account are siblings here (not nested) so each can
-// align to its own edge without one's width throwing off the other's math.
-.nav_content
-  display: flex
-  align-items: center
-  gap: $nav-content-gap
-  flex: 1 1 auto
-  min-width: 0
-
-// Right-packs so its edge lands at the body column's right edge regardless
-// of the account cluster's actual width (see .nav_group_account below).
-.groups
-  display: flex
-  flex-shrink: 1
-  flex-grow: 1
-  align-items: center
-  justify-content: flex-end
-  gap: clamp(1rem, 3vw, 3rem)
-
-.nav_group
-  display: flex
-  align-items: center
-  gap: 1.5rem
-  min-width: 0
-
-// Scoped to .groups's own children only — .nav_group_account is a sibling
-// of .groups, not nested, so it isn't double-spaced by this rule.
-.groups > .nav_group:not(:first-child)
-  margin-left: 0.75rem
-
-// min-width reserves body-margin floor; flex-shrink:0 holds it; falls back to content size at narrow widths
-.nav_group.nav_group_account
-  justify-content: flex-end
-  flex-shrink: 0
-  min-width: max(0px, calc(#{$body-edge-gap} - 3rem - #{$nav-content-gap}))
-
+// Base look for every nav item; NavBarDesktop/NavBarMobile each lay these
+// out differently (row vs column) but share this same class for the item itself.
 .link
   display: flex
   align-items: center
@@ -101,69 +63,8 @@ $nav-content-gap: 0.75rem
 .link_label_icon_only
   display: none
 
-// Groups NavQuickLinks with NavMobileControls so one margin-left: auto packs
-// both against the right edge on mobile; hidden entirely on desktop, where
-// the quick links render inline in .groups instead (see nav-bar.tsx).
-.mobile_end
-  display: none
-
-@media (max-width: $mobile-breakpoint)
-  // Everything above is desktop layout; everything here is the drawer.
-  .wrapper
-    padding: 1rem 1.25rem
-
-  // Hidden-by-default drawer, toggled via [data-mobile-open] on <nav>.
-  .nav_content
-    display: none
-    position: fixed
-    top: 0
-    left: 0
-    right: 0
-    max-height: calc(100vh - #{$mobile-bar-height})
-    overflow-y: auto
-    flex-flow: column
-    align-items: stretch
-    gap: 1.5rem
-    padding: 1.25rem
-    background: var(--modal-bg)
-    border-top: 1px solid var(--surface-border)
-    border-bottom: 1px solid var(--surface-border)
-
-    [data-mobile-open="true"] &
-      display: flex
-
-  .groups
-    flex-flow: column
-    align-items: stretch
-    justify-content: flex-start
-    flex-grow: 0
-    gap: 2rem
-    padding: 0.5rem 0 2rem 1rem
-  .nav_group
-    flex-flow: column
-    align-items: stretch
-    gap: 1rem
-
-  // Matches .groups > .nav_group:not(:first-child)'s specificity above so
-  // this actually overrides it here instead of losing to source-order.
-  .groups > .nav_group:not(:first-child)
-    margin-left: 0
-
-  .nav_group_account
-    justify-content: flex-start
-    min-width: 0
-
-  // Redundant with NavQuickLinks (always visible outside the drawer) once open.
-  .catalog_group_desktop
-    display: none
-
-  .mobile_end
-    display: flex
-    align-items: center
-    gap: 1rem
-    margin-left: auto
-
-  // Drawer has room, so iconOnly labels come back too — scoped to the
-  // drawer itself so NavQuickLinks's always-visible icons stay icon-only.
-  [data-mobile-open="true"] .nav_content .link_label_icon_only
-    display: inline
+// NavBarMobile's drawer marks its root [data-nav-drawer] so iconOnly labels
+// come back once inside it; NavQuickLinks's always-visible icons, which sit
+// outside the drawer, are untouched by this.
+[data-nav-drawer] .link_label_icon_only
+  display: inline

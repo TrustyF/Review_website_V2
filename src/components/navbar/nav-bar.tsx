@@ -2,23 +2,10 @@
 import { Link } from "@/components/ui/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import {
-	BookOpen,
-	GamepadDirectional,
-	LayoutList,
-	List,
-	LucideProvider,
-} from "lucide-react";
-import { ActivityIcon } from "@/components/icons/activity-icon";
-import { HomeIcon } from "@/components/icons/home-icon";
-import { MovieIcon } from "@/components/icons/movie-icon";
-import { LogoTag } from "@/components/logo/logo-tag";
-import { NavSearch } from "@/components/navbar/nav-search/nav-search";
-import { NavLink } from "@/components/navbar/nav-link";
-import { NavAccountMenu } from "@/components/navbar/nav-account-menu";
-import { NavQuickLinks } from "@/components/navbar/nav-quick-links";
-import { NavMobileControls } from "@/components/navbar/nav-mobile-controls";
-import { NavAdminLinks } from "@/components/navbar/nav-admin-links";
+import { LucideProvider } from "lucide-react";
+import { LogoImage } from "@/components/logo/logo-image";
+import { NavBarDesktop } from "@/components/navbar/nav-bar-desktop";
+import { NavBarMobile } from "@/components/navbar/nav-bar-mobile";
 import { useNavbarVisibility } from "@/components/navbar/use-navbar-visibility";
 import { useMobileDrawer } from "@/components/navbar/use-mobile-drawer";
 import { useAvatarImage } from "@/components/navbar/use-avatar-image";
@@ -26,7 +13,6 @@ import { useIsAdmin } from "@/lib/use-is-admin";
 import { useAvatar } from "@/components/account/avatar-context";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import style from "./nav-bar.module.sass";
-import { LogoImage } from "@/components/logo/logo-image";
 
 export default function Navbar() {
 	const dict = useDictionary();
@@ -57,115 +43,25 @@ export default function Navbar() {
 					<LogoImage />
 				</Link>
 
-				{/* Below $mobile-breakpoint this same container becomes the drawer,
-				toggled by the hamburger button via [data-mobile-open] above. */}
-				<div className={style.nav_content}>
-					<div className={style.groups}>
-						{/*<div className={style.nav_group}>*/}
-						{/*	<NavLink*/}
-						{/*		href="/"*/}
-						{/*		icon={HomeIcon}*/}
-						{/*		className={style.link}*/}
-						{/*		pathname={pathname}>*/}
-						{/*		Home*/}
-						{/*	</NavLink>*/}
-						{/*</div>*/}
-
-						{/* Desktop only — the group's own switcher (inside each catalog
-						page) picks the type; NavQuickLinks covers mobile instead. */}
-						<div className={`${style.nav_group} ${style.catalog_group_desktop}`}>
-							<NavLink
-								href="/movies"
-								activeHrefs={["/movies", "/tv", "/shorts"]}
-								icon={MovieIcon}
-								className={style.link}
-								pathname={pathname}>
-								{dict.nav.media}
-							</NavLink>
-							<NavLink
-								href="/manga"
-								activeHrefs={["/manga", "/comics", "/books"]}
-								icon={BookOpen}
-								className={style.link}
-								pathname={pathname}>
-								{dict.nav.reading}
-							</NavLink>
-							<NavLink
-								href="/games"
-								icon={GamepadDirectional}
-								className={style.link}
-								pathname={pathname}>
-								{dict.nav.games}
-							</NavLink>
-						</div>
-
-						<div className={style.nav_group}>
-							<NavLink
-								href="/activity"
-								icon={ActivityIcon}
-								className={style.link}
-								pathname={pathname}
-								// Static-ish, safe to prefetch eagerly, unlike /account below.
-								iconOnly
-								prefetch>
-								{dict.nav.activity}
-							</NavLink>
-							<NavLink
-								href="/reviews"
-								icon={LayoutList}
-								className={style.link}
-								pathname={pathname}
-								iconOnly
-								prefetch>
-								{dict.nav.reviews}
-							</NavLink>
-							<NavLink
-								href="/lists"
-								icon={List}
-								className={style.link}
-								pathname={pathname}
-								iconOnly
-								prefetch>
-								{dict.nav.lists}
-							</NavLink>
-						</div>
-
-						{/* NavSearch's expand spends leftover room in .groups, pushing
-						earlier groups aside via their own flex-shrink once it runs out. */}
-						<div className={style.nav_group}>
-							<NavSearch />
-						</div>
-					</div>
-
-					{/* Sibling of .groups, not nested — its width would otherwise throw
-					off .groups's own body-edge alignment. */}
-					<div className={`${style.nav_group} ${style.nav_group_account}`}>
-						<NavAccountMenu
-							signedIn={signedIn}
-							pathname={pathname}
-							avatarSrc={avatarSrc}
-							showAvatar={showAvatar}
-							onAvatarError={onAvatarError}
-						/>
-					</div>
-				</div>
-
-				{/* Mobile only — kept out of the hamburger drawer so Media/Reading/
-				Games stay reachable with the drawer closed. */}
-				<div className={style.mobile_end}>
-					<NavQuickLinks pathname={pathname} />
-					<NavMobileControls
-						signedIn={signedIn}
-						pathname={pathname}
-						avatarSrc={avatarSrc}
-						showAvatar={showAvatar}
-						onAvatarError={onAvatarError}
-						mobileOpen={mobileOpen}
-						onToggle={() => setMobileOpen((open) => !open)}
-					/>
-				</div>
-
-				{isAdmin && <NavAdminLinks pathname={pathname} />}
+				{/* Both always mount; each one's own CSS module decides visibility at
+				$mobile-breakpoint, so a mobile tweak can't reach desktop or vice versa. */}
+				<NavBarDesktop
+					signedIn={signedIn}
+					pathname={pathname}
+					avatarSrc={avatarSrc}
+					showAvatar={showAvatar}
+					onAvatarError={onAvatarError}
+					isAdmin={isAdmin}
+				/>
+				<NavBarMobile
+					signedIn={signedIn}
+					pathname={pathname}
+					avatarSrc={avatarSrc}
+					showAvatar={showAvatar}
+					onAvatarError={onAvatarError}
+					mobileOpen={mobileOpen}
+					onToggle={() => setMobileOpen((open) => !open)}
+				/>
 			</nav>
 		</LucideProvider>
 	);
