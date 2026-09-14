@@ -48,6 +48,7 @@ export async function sendWeeklyDigest(): Promise<WeeklyDigestResult> {
 			to: recipient.email!,
 			subject: props.dict.digest.subject,
 			react: LatestActivityEmail({ ...props, unsubscribeUrl }),
+			unsubscribeUrl,
 		});
 		sentCount++;
 	}

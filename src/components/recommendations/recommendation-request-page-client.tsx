@@ -90,7 +90,7 @@ export function RecommendationRequestPageClient({
 						className={styles.textarea}
 						value={message}
 						onChange={(e) => setMessage(e.target.value)}
-						placeholder={dict.recommendationRequest.messagePlaceholder}
+						// placeholder={dict.recommendationRequest.messagePlaceholder}
 						autoFocus
 					/>
 					{error && <div className={styles.error}>{error}</div>}
@@ -109,7 +109,9 @@ export function RecommendationRequestPageClient({
 				{dict.recommendationRequest.historyTitle}
 			</h2>
 			{history.length === 0 ? (
-				<p className={styles.empty}>{dict.recommendationRequest.historyEmpty}</p>
+				<p className={styles.empty}>
+					{dict.recommendationRequest.historyEmpty}
+				</p>
 			) : (
 				<ul className={styles.history_list}>
 					{history.map((request) => (

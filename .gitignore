@@ -17,6 +17,10 @@
 # next.js
 /.next/
 /out/
+# Turbopack dev-server writes its error-overlay output to the Windows null
+# device path ("nul") on compile errors; a Windows/Node path-handling quirk
+# sometimes makes that create a literal file here instead of discarding it.
+/nul
 
 # production
 /build

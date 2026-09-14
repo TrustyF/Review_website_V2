@@ -20,9 +20,23 @@
   color: var(--danger)
 
 .submit_button
-  padding: 0.5rem 1.2rem
   align-self: flex-start
+  padding: 0.6rem 1.2rem
+  border-radius: 2rem
+  background: var(--brand)
+  color: var(--on-brand)
+  font-family: $font-body
+  font-size: 0.95rem
+  font-weight: 600
   cursor: pointer
+
+  &:hover
+    background: var(--brand-hover)
+
+  &[aria-disabled="true"]
+    background: var(--brand-muted)
+    color: var(--accent1)
+    cursor: default
 
 .pending_panel
   display: flex
@@ -31,7 +45,7 @@
   padding: 1rem
   border: 1px solid var(--surface-border)
   border-radius: 0.5rem
-  background: var(--surface1)
+  background: var(--surface)
 
 .pending_label
   color: var(--brand)
@@ -59,7 +73,7 @@
   gap: 0.3rem
   padding: 0.75rem 1rem
   border-radius: 0.5rem
-  background: var(--surface1)
+  background: var(--surface)
 
 .history_row_header
   display: flex
@@ -84,5 +98,8 @@
 
 .history_list_link
   align-self: flex-start
-  color: var(--link)
-  font-size: 0.85rem
+  padding: 0.25rem 0.6rem
+  border-radius: 0.4rem
+  background: var(--brand-muted)
+  color: var(--brand)
+  font-size: 0.8rem

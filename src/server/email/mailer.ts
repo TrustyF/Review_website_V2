@@ -25,18 +25,35 @@ function getTransport() {
 	return transport;
 }
 
-// Renders React Email to HTML; sent by cron scripts (weekly-digest, list-add), not inline
+// Renders React Email to HTML (+ a plain-text part — HTML-only mail is a
+// spam signal) and sends via nodemailer.
 export async function sendEmail(input: {
 	to: string;
 	subject: string;
 	react: ReactElement;
+	// RFC 8058 one-click unsubscribe header — pass for bulk mail (the weekly
+	// digest), omit for a one-off transactional send. A real spam signal to
+	// Gmail/Yahoo when missing, independent of SPF/DKIM/DMARC.
+	unsubscribeUrl?: string;
 }): Promise<void> {
-	const html = await render(input.react);
+	const [html, text] = await Promise.all([
+		render(input.react),
+		render(input.react, { plainText: true }),
+	]);
 	await getTransport().sendMail({
 		from: process.env.EMAIL_FROM,
 		to: input.to,
 		subject: input.subject,
 		html,
+		text,
+		...(input.unsubscribeUrl
+			? {
+					headers: {
+						"List-Unsubscribe": `<${input.unsubscribeUrl}>`,
+						"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+					},
+				}
+			: {}),
 	});
 }
 

@@ -43,7 +43,7 @@
   gap: 0.4rem
   padding: 0.75rem 1rem
   border-radius: 0.5rem
-  background: var(--surface1)
+  background: var(--surface)
 
 .row_header
   display: flex
@@ -71,16 +71,27 @@
   margin-top: 0.3rem
 
 .create_list_link
-  color: var(--link)
-  font-size: 0.85rem
+  flex-shrink: 0
+  padding: 0.25rem 0.6rem
+  border-radius: 0.4rem
+  background: var(--brand-muted)
+  color: var(--brand)
+  font-size: 0.8rem
 
 .dismiss_button
+  flex-shrink: 0
+  padding: 0.25rem 0.6rem
+  border-radius: 0.4rem
+  background: var(--accent1-tint)
   color: var(--accent1)
-  font-size: 0.85rem
+  font-size: 0.8rem
   cursor: pointer
 
   &:hover
     color: var(--danger)
+
+  &[aria-disabled="true"]
+    opacity: 0.5
 
 .status_label
   align-self: flex-start
