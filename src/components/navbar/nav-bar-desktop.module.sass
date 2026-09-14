@@ -1,0 +1,45 @@
+@use "@/app/styles/variables" as *
+
+// Shared with .nav_group_account's min-width formula below, which needs the
+// exact same gap value to net out correctly.
+$nav-content-gap: 0.75rem
+
+// Gap between viewport edge and the centered body column at any width.
+$body-edge-gap: calc((100vw - #{$content-width}) / 2)
+
+// .groups and .nav_group_account are siblings here (not nested) so each can
+// align to its own edge without one's width throwing off the other's math.
+.nav_content
+  display: flex
+  align-items: center
+  gap: $nav-content-gap
+  flex: 1 1 auto
+  min-width: 0
+
+  @media (max-width: $mobile-breakpoint)
+    display: none
+
+// Right-packs so its edge lands at the body column's right edge regardless
+// of the account cluster's actual width (see .nav_group_account below).
+.groups
+  display: flex
+  flex-shrink: 1
+  flex-grow: 1
+  align-items: center
+  justify-content: flex-end
+  gap: clamp(1rem, 3vw, 3rem)
+
+.nav_group
+  display: flex
+  align-items: center
+  gap: 1.5rem
+  min-width: 0
+
+.groups > .nav_group:not(:first-child)
+  margin-left: 0.75rem
+
+// min-width reserves body-margin floor; flex-shrink:0 holds it; falls back to content size at narrow widths
+.nav_group.nav_group_account
+  justify-content: flex-end
+  flex-shrink: 0
+  min-width: max(0px, calc(#{$body-edge-gap} - 3rem - #{$nav-content-gap}))

@@ -1,0 +1,51 @@
+@use "@/app/styles/variables" as *
+
+// Rendered mobile bar height.
+$mobile-bar-height: 2rem + $mobile-icon-size
+
+// Hidden by default at any width; the mobile media query below is the only
+// place either of these turns visible, so nothing here leaks onto desktop.
+.drawer
+  display: none
+  position: fixed
+  top: 0
+  left: 0
+  right: 0
+  max-height: calc(100vh - #{$mobile-bar-height})
+  overflow-y: auto
+  flex-flow: column
+  align-items: stretch
+  gap: 1.5rem
+  padding: 1.25rem
+  background: var(--modal-bg)
+  border-top: 1px solid var(--surface-border)
+  border-bottom: 1px solid var(--surface-border)
+
+  @media (max-width: $mobile-breakpoint)
+    [data-mobile-open="true"] &
+      display: flex
+
+.groups
+  display: flex
+  flex-flow: column
+  align-items: stretch
+  justify-content: flex-start
+  gap: 2rem
+  padding: 0.5rem 0 2rem 1rem
+
+.nav_group
+  display: flex
+  flex-flow: column
+  align-items: stretch
+  gap: 1rem
+
+// Groups NavQuickLinks with NavMobileControls so one margin-left: auto packs
+// both against the right edge of the collapsed bar.
+.mobile_end
+  display: none
+
+  @media (max-width: $mobile-breakpoint)
+    display: flex
+    align-items: center
+    gap: 1rem
+    margin-left: auto
