@@ -37,8 +37,10 @@ model List {
   targetUserId String?
   targetUser   User?   @relation(fields: [targetUserId], references: [id], onDelete: SetNull)
 
-  items         ListItem[]
-  notifications Notification[]
+  items             ListItem[]
+  notifications     Notification[]
+  // Requests fulfilled by creating this list — see RecommendationRequest.fulfilledListId.
+  fulfilledRequests RecommendationRequest[]
 
   @@index([targetUserId])
 }

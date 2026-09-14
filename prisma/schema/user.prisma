@@ -32,14 +32,15 @@ model User {
 
   createDate DateTime @default(now())
 
-  accounts            Account[]
-  sessions            Session[]
-  watchlistItems      WatchlistItem[]
-  watchedItems        WatchedItem[]
+  accounts               Account[]
+  sessions               Session[]
+  watchlistItems         WatchlistItem[]
+  watchedItems           WatchedItem[]
   // Recommendation lists an admin has deposited into this account — see
   // List.targetUserId's own comment.
-  recommendationLists List[]
-  notifications       Notification[]
+  recommendationLists    List[]
+  notifications          Notification[]
+  recommendationRequests RecommendationRequest[]
 }
 
 // Standard Auth.js Prisma adapter shape (Account/Session/VerificationToken)

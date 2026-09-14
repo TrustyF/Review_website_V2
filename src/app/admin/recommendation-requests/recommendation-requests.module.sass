@@ -1,0 +1,90 @@
+@use "@/app/styles/variables" as *
+
+.wrapper
+  width: 950px
+  max-width: 100%
+  margin: 0 auto 2rem auto
+  display: flex
+  flex-flow: column
+  gap: 1.5rem
+
+.panel
+  display: flex
+  flex-flow: column
+  gap: 1rem
+
+.tabs
+  display: flex
+  gap: 0.5rem
+
+.tab
+  padding: 0.4rem 0.9rem
+  border: 1px solid var(--accent1)
+  border-radius: 0.4rem
+  color: var(--accent1)
+  font-size: 0.85rem
+  cursor: pointer
+
+.tab_active
+  color: var(--foreground)
+  border-color: var(--brand)
+
+.empty
+  @include empty-text
+
+.list
+  display: flex
+  flex-flow: column
+  gap: 0.75rem
+
+.row
+  display: flex
+  flex-flow: column
+  gap: 0.4rem
+  padding: 0.75rem 1rem
+  border-radius: 0.5rem
+  background: var(--surface1)
+
+.row_header
+  display: flex
+  align-items: baseline
+  justify-content: space-between
+  gap: 0.75rem
+
+.requester
+  font-weight: 500
+  color: var(--foreground)
+
+.date
+  flex-shrink: 0
+  color: var(--accent1)
+  font-family: $font-mono
+  font-size: 0.8rem
+
+.message
+  white-space: pre-wrap
+
+.actions
+  display: flex
+  align-items: center
+  gap: 1rem
+  margin-top: 0.3rem
+
+.create_list_link
+  color: var(--link)
+  font-size: 0.85rem
+
+.dismiss_button
+  color: var(--accent1)
+  font-size: 0.85rem
+  cursor: pointer
+
+  &:hover
+    color: var(--danger)
+
+.status_label
+  align-self: flex-start
+  color: var(--accent1)
+  font-size: 0.8rem
+  text-transform: uppercase
+  letter-spacing: 0.03em

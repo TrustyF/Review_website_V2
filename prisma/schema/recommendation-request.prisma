@@ -1,0 +1,31 @@
+enum RecommendationRequestStatus {
+  PENDING
+  FULFILLED
+  DISMISSED
+}
+
+// A user asking the admin for a recommendation, with a free-text message
+// describing what they're in the mood for. Fulfillment normally happens by
+// an admin creating a targeted List for the requester (see
+// recommendation-request-actions.ts's fulfillRecommendationRequestWithList) —
+// that already fires the existing LIST_CREATED notification, so this model
+// doesn't need its own NotificationType.
+model RecommendationRequest {
+  id         Int                         @id @default(autoincrement())
+  message    String
+  status     RecommendationRequestStatus @default(PENDING)
+  createdAt  DateTime                    @default(now())
+  resolvedAt DateTime?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Set only when fulfilled via the "create list" shortcut. SetNull rather
+  // than Cascade — deleting the list later shouldn't delete the historical
+  // request record, just its link.
+  fulfilledListId Int?
+  fulfilledList   List? @relation(fields: [fulfilledListId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+}

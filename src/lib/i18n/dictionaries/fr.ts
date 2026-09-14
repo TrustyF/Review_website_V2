@@ -29,6 +29,7 @@ export const fr = {
 		lists: "Listes",
 		addMedia: "Ajouter un média",
 		userLists: "Listes des utilisateurs",
+		recommendationRequests: "Demandes de recommandation",
 		cronLogs: "Journaux cron",
 		digest: "Résumé",
 		imageCrop: "Recadrage d'image",
@@ -85,6 +86,9 @@ export const fr = {
 		recommendations: "Recommandations",
 		recommendationsEmpty:
 			"Rien de recommandé pour l'instant — les listes qu'un admin vous destine spécifiquement apparaîtront ici.",
+		askForRecommendation: "Demander une recommandation",
+		askForRecommendationHint: "Arthur vous préparera une liste.",
+		askForRecommendationPending: "Votre demande est en attente — je reviens vers vous bientôt.",
 		dangerZoneTitle: "Zone de danger",
 		dangerZoneSubtitle:
 			"Supprime définitivement votre compte, votre liste à voir et vos listes. Cette action est irréversible.",
@@ -275,6 +279,22 @@ export const fr = {
 			`${listCreated ? "Créée et ajout de" : "Ajout de"} ${count} élément${count === 1 ? "" : "s"}`,
 		mediaAdditionsCaption: (count: number) =>
 			`Ajouté à ${count} liste${count === 1 ? "" : "s"}`,
+	},
+	recommendationRequest: {
+		title: "Demander une recommandation",
+		subtitle: "Dites-moi ce dont vous avez envie et je vous préparerai une liste.",
+		backToAccount: "← Compte",
+		messagePlaceholder: "ex. quelque chose comme une série mystère à suspense lent…",
+		submit: "Envoyer la demande",
+		submitting: "Envoi…",
+		submitFailed: "Échec de l'envoi. Réessayez.",
+		alreadyPendingFailed: "Vous avez déjà une demande en attente.",
+		historyTitle: "Demandes précédentes",
+		historyEmpty: "Aucune demande précédente.",
+		statusPending: "En attente",
+		statusFulfilled: "Traitée",
+		statusDismissed: "Rejetée",
+		viewList: "Voir la liste →",
 	},
 	searchPage: {
 		promptEmpty: "Recherchez un titre, une personne ou une société.",

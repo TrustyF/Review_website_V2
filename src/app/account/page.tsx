@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Link } from "@/components/ui/link";
-import { List, Settings } from "lucide-react";
+import { List, MailPlus, Send, Settings, Sparkles } from "lucide-react";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
@@ -62,7 +62,15 @@ export default async function AccountPage() {
 		include: { _count: { select: { items: true } } },
 		orderBy: { createDate: "desc" },
 	});
-	const recommendationLists = recommendationListsAll.slice(0, MAX_VISIBLE_LISTS);
+	const recommendationLists = recommendationListsAll.slice(
+		0,
+		MAX_VISIBLE_LISTS,
+	);
+
+	const pendingRequest = await db.recommendationRequest.findFirst({
+		where: { userId: session.user.id, status: "PENDING" },
+		select: { id: true },
+	});
 
 	return (
 		<div className={styles.wrapper}>
@@ -87,6 +95,22 @@ export default async function AccountPage() {
 					<SignOutButton />
 				</div>
 			</div>
+
+			<Link
+				href="/account/recommendation-request"
+				className={styles.ask_recommendation}>
+				<MailPlus size={25} className={styles.section_icon} />
+				<div className={styles.ask_recommendation_text}>
+					<span className={styles.section_title}>
+						{dict.account.askForRecommendation}
+					</span>
+					<span className={styles.ask_recommendation_hint}>
+						{pendingRequest
+							? dict.account.askForRecommendationPending
+							: dict.account.askForRecommendationHint}
+					</span>
+				</div>
+			</Link>
 
 			<div className={styles.grid}>
 				<Link href="/watchlist" className={styles.watchlist}>
@@ -114,7 +138,9 @@ export default async function AccountPage() {
 									key={list.id}
 									id={list.id}
 									// Falls back to English when untranslated, like Review.bodyFr.
-									title={locale === "fr" ? (list.titleFr ?? list.title) : list.title}
+									title={
+										locale === "fr" ? (list.titleFr ?? list.title) : list.title
+									}
 									description={
 										locale === "fr"
 											? (list.descriptionFr ?? list.description)

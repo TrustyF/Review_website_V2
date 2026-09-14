@@ -29,6 +29,7 @@ export const en = {
 		lists: "Lists",
 		addMedia: "Add media",
 		userLists: "User lists",
+		recommendationRequests: "Recommendation requests",
 		cronLogs: "Cron logs",
 		digest: "Digest",
 		imageCrop: "Image crop",
@@ -85,6 +86,10 @@ export const en = {
 		recommendations: "Recommendations",
 		recommendationsEmpty:
 			"Nothing recommended yet — lists an admin curates for you specifically will show up here.",
+		askForRecommendation: "Request recommendation",
+		askForRecommendationHint: "Arthur will craft a list for you.",
+		askForRecommendationPending:
+			"Your request is pending — I'll follow up soon.",
 		dangerZoneTitle: "Danger zone",
 		dangerZoneSubtitle:
 			"Permanently delete your account, watchlist, and lists. This can't be undone.",
@@ -258,7 +263,8 @@ export const en = {
 		title: "Notifications",
 		unreadAriaLabel: (count: number) => `Notifications (${count} unread)`,
 		backToAccount: "← Account",
-		empty: "Nothing yet — you'll see it here when an admin makes a list for you or adds something to one of your lists.",
+		empty:
+			"Nothing yet — you'll see it here when an admin makes a list for you or adds something to one of your lists.",
 		markAllRead: "Mark all as read",
 		newListForYou: "A new list was made for you",
 		createdListForYou: "Created list for you",
@@ -267,6 +273,23 @@ export const en = {
 			`${listCreated ? "Created and added" : "Added"} ${count} item${count === 1 ? "" : "s"}`,
 		mediaAdditionsCaption: (count: number) =>
 			`Added to ${count} list${count === 1 ? "" : "s"}`,
+	},
+	recommendationRequest: {
+		title: "Ask for a recommendation",
+		subtitle:
+			"Tell me what you're in the mood for and I'll put a list together for you.",
+		backToAccount: "← Account",
+		messagePlaceholder: "e.g. something like a slow-burn mystery series…",
+		submit: "Send request",
+		submitting: "Sending…",
+		submitFailed: "Failed to send. Try again.",
+		alreadyPendingFailed: "You already have a pending request.",
+		historyTitle: "Past requests",
+		historyEmpty: "No past requests yet.",
+		statusPending: "Pending",
+		statusFulfilled: "Fulfilled",
+		statusDismissed: "Dismissed",
+		viewList: "View list →",
 	},
 	searchPage: {
 		promptEmpty: "Search for a title, person, or company.",
