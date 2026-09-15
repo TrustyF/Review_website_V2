@@ -4,6 +4,7 @@ import React from "react";
 import Navbar from "@/components/navbar/nav-bar";
 import { DevMenu } from "@/components/dev-menu/dev-menu";
 import { MobileViewportListener } from "@/lib/mobile-viewport-listener";
+import { RrwebAnalytics } from "@/lib/analytics/rrweb-analytics";
 import MediaEditorModal from "@/components/media/media-management/media-editor/media-editor-modal";
 import { FeaturedManagerModal } from "@/components/home/featured-review/featured-manager/featured-manager-modal";
 import { AuthSessionProvider } from "@/components/auth/session-provider";
@@ -42,6 +43,7 @@ export default async function RootLayout({
 									<Navbar />
 									<DevMenu />
 									<MobileViewportListener />
+									<RrwebAnalytics />
 									<MediaEditorModal />
 									<FeaturedManagerModal />
 									<VersionBadge />

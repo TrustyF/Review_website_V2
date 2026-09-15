@@ -32,6 +32,21 @@ const nextConfig: NextConfig = {
 		unoptimized: true,
 	},
 	allowedDevOrigins: ["192.168.1.68"],
+	async headers() {
+		// @font-face requires CORS even for plain cross-origin loads, unlike
+		// images/CSS - needed for the rrweb replay on analytics.arthursirjacobs.com.
+		return [
+			{
+				source: "/_next/static/:path*",
+				headers: [
+					{
+						key: "Access-Control-Allow-Origin",
+						value: "https://analytics.arthursirjacobs.com",
+					},
+				],
+			},
+		];
+	},
 };
 
 export default nextConfig;
