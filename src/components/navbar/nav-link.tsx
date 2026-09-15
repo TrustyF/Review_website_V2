@@ -23,6 +23,9 @@ type NavLinkProps = {
 	// For a link that fronts a group of routes (e.g. "Media" for /movies,
 	// /tv, /shorts) — active state matches any of these instead of just href.
 	activeHrefs?: string[];
+	// Bigger touch target for the mobile drawer's rows; every other call
+	// site relies on the 14px default that matches the rest of the navbar.
+	iconSize?: number;
 };
 
 // Every plain top-level nav item goes through here so the icon stays
@@ -37,6 +40,7 @@ export function NavLink({
 	prefetch = false,
 	target,
 	activeHrefs,
+	iconSize = 14,
 }: NavLinkProps) {
 	const isActive = (activeHrefs ?? [href]).some((h) => isNavActive(pathname, h));
 	const label = typeof children === "string" ? children : undefined;
@@ -53,7 +57,7 @@ export function NavLink({
 			{/* Lucide ships outline-only icons, so "filled" is just a fill color. */}
 			{Icon && (
 				<Icon
-					size={14}
+					size={iconSize}
 					className={`${style.nav_icon} ${iconOnly ? style.nav_icon_always : ""}`}
 					// fill={isActive ? "currentColor" : "none"}
 				/>

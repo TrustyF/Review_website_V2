@@ -70,12 +70,12 @@
   // Extra breathing room below the navbar, on top of --navbar-height; was previously duplicated per-page as inconsistent .wrapper top margins (2rem/3rem)
   --content-gap: 4rem
 
-  // Smaller breathing room on a narrow viewport, same intent as desktop's
-  // 4rem. --navbar-height (3rem) undercounts the real navbar box (nav-bar.module.sass's
-  // .wrapper is 5rem tall at every width, min-height included) by 2rem, so
-  // this adds that back on top of the 1.5rem actually wanted here.
+  // Below $mobile-breakpoint the navbar is position: relative (nav-bar.module.sass),
+  // not fixed — it occupies its own space in flow, so nothing needs to reserve
+  // room for it here or offset sticky elements around it.
   @media (max-width: $mobile-breakpoint)
-    --content-gap: 4rem
+    --content-gap: 1rem
+    --navbar-offset: 0rem
 
 
 html
@@ -109,6 +109,12 @@ body
 main
   padding-top: calc(var(--navbar-height) + var(--content-gap))
   padding-bottom: var(--footer-margin)
+
+  // The relative navbar already pushes this down by its own real height on
+  // mobile (see nav-bar.module.sass) — reserving --navbar-height again on
+  // top of that would double up the space.
+  @media (max-width: $mobile-breakpoint)
+    padding-top: var(--content-gap)
 
 
 a

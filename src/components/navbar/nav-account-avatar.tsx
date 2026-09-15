@@ -9,6 +9,9 @@ type Props = {
 	showAvatar: boolean;
 	onAvatarError: () => void;
 	className: string | undefined;
+	// Fallback-icon size only — the real avatar image is sized by
+	// className's own .nav_avatar rule (nav-bar.module.sass).
+	iconSize?: number;
 };
 
 // /account link: avatar image if the user has one, fallback icon otherwise.
@@ -18,6 +21,7 @@ export function NavAccountAvatar({
 	showAvatar,
 	onAvatarError,
 	className,
+	iconSize = 14,
 }: Props) {
 	return (
 		<Link
@@ -37,7 +41,7 @@ export function NavAccountAvatar({
 			) : (
 				// Always icon-only (no label to pair with), so full brightness.
 				<AccountIcon
-					size={14}
+					size={iconSize}
 					className={`${style.nav_icon} ${style.nav_icon_always}`}
 				/>
 			)}

@@ -13,6 +13,7 @@ import { Clickable } from "@/components/ui/clickable";
 import { NavSearch } from "@/components/navbar/nav-search/nav-search";
 import { NavLink } from "@/components/navbar/nav-link";
 import { NavAccountMenu } from "@/components/navbar/nav-account-menu";
+import { SignOutButton } from "@/components/account/sign-out-button/sign-out-button";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import barStyle from "./nav-bar.module.sass";
 import style from "./nav-bar-mobile.module.sass";
@@ -27,8 +28,9 @@ type Props = {
 	onToggle: () => void;
 };
 
-// Collapsed bar (search + account + hamburger) below $mobile-breakpoint,
-// plus the full-label drawer the hamburger opens. NavBarLinks covers desktop.
+// Collapsed bar (Media/Reading/Games + search + hamburger, closed; account +
+// hamburger, open) below $mobile-breakpoint, plus the drawer the hamburger
+// opens for the rest. NavBarLinks covers desktop.
 export function NavBarMobile({
 	signedIn,
 	pathname,
@@ -43,33 +45,16 @@ export function NavBarMobile({
 	return (
 		<>
 			<div className={style.bar_end}>
-				<NavSearch />
-				<NavAccountMenu
-					signedIn={signedIn}
-					pathname={pathname}
-					avatarSrc={avatarSrc}
-					showAvatar={showAvatar}
-					onAvatarError={onAvatarError}
-				/>
-				<Clickable
-					className={style.toggle}
-					aria-label={mobileOpen ? dict.nav.closeMenu : dict.nav.openMenu}
-					aria-pressed={mobileOpen}
-					onClick={onToggle}>
-					{mobileOpen ? <X size={20} /> : <Menu size={20} />}
-				</Clickable>
-			</div>
-
-			{/* data-nav-drawer marks this so nav-bar.module.sass reveals the
-			iconOnly items' labels here (Activity/Reviews/Lists). */}
-			<div className={style.drawer} data-nav-drawer>
-				<div className={style.nav_group}>
+				{/* data-quick-links marks this so nav-bar.module.sass brings the
+				labels back at/above 500px. */}
+				<div className={style.quick_links} data-quick-links>
 					<NavLink
 						href="/movies"
 						activeHrefs={["/movies", "/tv", "/shorts"]}
 						icon={MovieIcon}
 						className={barStyle.link}
-						pathname={pathname}>
+						pathname={pathname}
+						iconOnly>
 						{dict.nav.media}
 					</NavLink>
 					<NavLink
@@ -77,14 +62,84 @@ export function NavBarMobile({
 						activeHrefs={["/manga", "/comics", "/books"]}
 						icon={BookOpen}
 						className={barStyle.link}
-						pathname={pathname}>
+						pathname={pathname}
+						iconOnly>
 						{dict.nav.reading}
 					</NavLink>
 					<NavLink
 						href="/games"
 						icon={GamepadDirectional}
 						className={barStyle.link}
-						pathname={pathname}>
+						pathname={pathname}
+						iconOnly>
+						{dict.nav.games}
+					</NavLink>
+				</div>
+				<NavSearch />
+				{/* Only visible while the drawer's open (nav-bar-mobile.module.sass)
+				— replaces the hidden quick links/search at the same bar level.
+				data-account-bar sizes up the avatar image (nav-bar.module.sass). */}
+				<div className={style.account_bar} data-account-bar>
+					<NavAccountMenu
+						signedIn={signedIn}
+						pathname={pathname}
+						avatarSrc={avatarSrc}
+						showAvatar={showAvatar}
+						onAvatarError={onAvatarError}
+						avatarIconSize={32}
+					/>
+				</div>
+				<Clickable
+					className={style.toggle}
+					aria-label={mobileOpen ? dict.nav.closeMenu : dict.nav.openMenu}
+					aria-pressed={mobileOpen}
+					onClick={onToggle}>
+					<span className={style.toggle_icons}>
+						<Menu
+							size={20}
+							className={`${style.toggle_icon} ${mobileOpen ? style.toggle_icon_hidden : ""}`}
+						/>
+						<X
+							size={20}
+							className={`${style.toggle_icon} ${mobileOpen ? "" : style.toggle_icon_hidden}`}
+						/>
+					</span>
+				</Clickable>
+			</div>
+
+			{/* data-nav-drawer reveals iconOnly items' labels (nav-bar.module.sass).
+			iconSize bumps them past the navbar's usual 14px for a touch menu. */}
+			<div className={style.drawer} data-nav-drawer>
+				{/* Duplicates .quick_links above — full labels here since there's
+				room, unlike the icon-only collapsed bar. */}
+				<div className={style.nav_group}>
+					<NavLink
+						href="/movies"
+						activeHrefs={["/movies", "/tv", "/shorts"]}
+						icon={MovieIcon}
+						className={barStyle.link}
+						pathname={pathname}
+						iconOnly
+						iconSize={20}>
+						{dict.nav.media}
+					</NavLink>
+					<NavLink
+						href="/manga"
+						activeHrefs={["/manga", "/comics", "/books"]}
+						icon={BookOpen}
+						className={barStyle.link}
+						pathname={pathname}
+						iconOnly
+						iconSize={20}>
+						{dict.nav.reading}
+					</NavLink>
+					<NavLink
+						href="/games"
+						icon={GamepadDirectional}
+						className={barStyle.link}
+						pathname={pathname}
+						iconOnly
+						iconSize={20}>
 						{dict.nav.games}
 					</NavLink>
 				</div>
@@ -96,6 +151,7 @@ export function NavBarMobile({
 						className={barStyle.link}
 						pathname={pathname}
 						iconOnly
+						iconSize={20}
 						prefetch>
 						{dict.nav.activity}
 					</NavLink>
@@ -105,6 +161,7 @@ export function NavBarMobile({
 						className={barStyle.link}
 						pathname={pathname}
 						iconOnly
+						iconSize={20}
 						prefetch>
 						{dict.nav.reviews}
 					</NavLink>
@@ -114,10 +171,20 @@ export function NavBarMobile({
 						className={barStyle.link}
 						pathname={pathname}
 						iconOnly
+						iconSize={20}
 						prefetch>
 						{dict.nav.lists}
 					</NavLink>
 				</div>
+
+				{/* Anchored to the drawer's bottom edge (see .nav_group_signout) —
+				sign-out is normally account-page-only (SignOutButton's own
+				comment); the drawer's an exception since it's opt-in. */}
+				{signedIn && (
+					<div className={`${style.nav_group} ${style.nav_group_signout}`}>
+						<SignOutButton />
+					</div>
+				)}
 			</div>
 		</>
 	);

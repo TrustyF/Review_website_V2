@@ -9,7 +9,7 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   align-items: center
   gap: 3rem
   width: 100%
-  min-height: 5rem
+  min-height: $navbar-real-height
   padding: 1rem 3rem
   // Aligns .title to the body column's left edge, floored at 3rem.
   padding-left: max(3rem, #{$body-edge-gap})
@@ -27,6 +27,22 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
 
   @media (max-width: $mobile-breakpoint)
     padding: 1rem 1.25rem
+    // Scrolls away with the page instead of staying pinned — useNavbarVisibility
+    // skips its hide/reveal logic at this width, so there's nothing to keep
+    // fixed for.
+    position: relative
+    top: auto
+    left: auto
+
+    // Back to fixed while the drawer's open: it's the toggle/.account_bar's
+    // only anchor (nav-bar-mobile.module.sass's .drawer is already fixed) —
+    // relative here would let the page scroll them out from under it.
+    // data-mobile-open is on this same <nav> element, not an ancestor, so
+    // this must be a compound selector (&[...]), not a descendant one.
+    &[data-mobile-open="true"]
+      position: fixed
+      top: 0
+      left: 0
 
 .hidden
   transform: translateY(-100%)
@@ -36,10 +52,12 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   display: flex
   align-items: center
   flex-shrink: 0
-  position: relative
-  // NavBarMobile's drawer is a full-bleed panel from the viewport top (see
-  // nav-bar-mobile.module.sass) — this keeps the logo showing above it.
-  z-index: 2
+
+  // Hidden while the drawer's open (nav-bar-mobile.module.sass's full-bleed
+  // .drawer) — only its own toggle stays visible above it, to close it.
+  @media (max-width: $mobile-breakpoint)
+    [data-mobile-open="true"] &
+      display: none
 
 // Base look for every top-level nav item, at every width.
 .link
@@ -57,6 +75,11 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   object-fit: cover
   flex-shrink: 0
 
+// NavBarMobile's account_bar marks itself [data-account-bar] — more room to
+// spare there than the rest of the navbar's icons get.
+[data-account-bar] .nav_avatar
+  width: 3.5rem
+
 .link_label
   white-space: nowrap
 
@@ -70,3 +93,22 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
 // come back once inside it — there's room for full labels there.
 [data-nav-drawer] .link_label_icon_only
   display: inline
+
+// Bigger tappable rows than desktop's compact inline links — there's room
+// to spare in a full-screen touch menu. No left padding — the icon lines up
+// with the drawer's own edge instead of sitting inset from it.
+[data-nav-drawer] .link
+  padding: 0.75rem 0.6rem
+  border-radius: 0.5rem
+  font-size: 1.05rem
+
+  &:hover,
+  &[aria-current="page"]
+    background: var(--ticket-accent-dark)
+
+// NavBarMobile's Media/Reading/Games row marks itself [data-quick-links] so
+// their labels come back once there's enough width, below the full switch
+// to NavBarLinks at $mobile-breakpoint.
+@media (min-width: 600px)
+  [data-quick-links] .link_label_icon_only
+    display: inline

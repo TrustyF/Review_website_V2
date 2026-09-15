@@ -22,7 +22,7 @@ export default function Navbar() {
 	const isAdmin = useIsAdmin();
 	const pathname = usePathname();
 	const hidden = useNavbarVisibility();
-	const { mobileOpen, setMobileOpen, handleNavClick } = useMobileDrawer();
+	const { mobileOpen, setMobileOpen, handleNavClick, navRef } = useMobileDrawer();
 	const { showAvatar, onAvatarError } = useAvatarImage(avatarSrc);
 	const signedIn = Boolean(session?.user);
 
@@ -31,6 +31,7 @@ export default function Navbar() {
 		// soft. absoluteStrokeWidth fixes it at 1.5px here instead of per <Icon> call site.
 		<LucideProvider strokeWidth={1.5} absoluteStrokeWidth>
 			<nav
+				ref={navRef}
 				className={`${style.wrapper} ${hidden ? style.hidden : ""}`}
 				// Scoped to <nav>'s own subtree, unlike --navbar-offset which page
 				// content elsewhere needs as a real global.

@@ -1,7 +1,7 @@
 @use "@/app/styles/variables" as *
 
-// Search + account + hamburger, right-packed on the collapsed bar. Hidden
-// entirely at/above $mobile-breakpoint — NavBarLinks takes over there.
+// Quick links + search + hamburger, right-packed on the collapsed bar.
+// Hidden entirely at/above $mobile-breakpoint — NavBarLinks takes over there.
 .bar_end
   display: none
   align-items: center
@@ -15,6 +15,27 @@
   @media (max-width: $mobile-breakpoint)
     display: flex
 
+  // Quick links/search hide once the drawer's open — it already duplicates
+  // the former, and there's nothing left to search for. .account_bar takes
+  // their place instead (see its own rule below), spread across the row
+  // from .title's now-empty spot instead of packed against the toggle.
+  [data-mobile-open="true"] &
+    flex: 1 1 auto
+    margin-left: 0
+    justify-content: space-between
+
+    > :not(.toggle, .account_bar)
+      display: none
+
+// Media/Reading/Games, kept apart from the search/account/hamburger cluster
+// that follows it without a visible divider.
+.quick_links
+  display: flex
+  align-items: center
+  gap: 1.5rem
+  margin-right: 0.75rem
+  justify-content: space-around
+
 .toggle
   display: flex
   align-items: center
@@ -24,24 +45,65 @@
   border-radius: 50%
   color: var(--foreground)
   cursor: pointer
+  transition: background-color 0.2s ease
 
   &:hover
     background: var(--ticket-accent-dark)
 
-// Starts at the true viewport top (not below the bar) so it reaches the
-// screen edges on every side; its own top padding clears the collapsed
-// bar's height instead, and .bar_end/.title (nav-bar.module.sass) stay
-// visible above it via z-index regardless of DOM order.
+  // Stays highlighted while the drawer's open, not just mid-hover, so the
+  // toggle itself signals the open state.
+  &[aria-pressed="true"]
+    background: var(--ticket-accent-dark)
+
+// Menu/X icons stacked and cross-faded with a quarter-turn instead of
+// swapped instantly.
+.toggle_icons
+  position: relative
+  width: 20px
+  height: 20px
+
+.toggle_icon
+  position: absolute
+  top: 50%
+  left: 50%
+  transform: translate(-50%, -50%) rotate(0deg)
+  opacity: 1
+  transition: transform 0.2s ease, opacity 0.15s ease
+
+  @media (prefers-reduced-motion: reduce)
+    transition: opacity 0.15s ease
+
+.toggle_icon_hidden
+  transform: translate(-50%, -50%) rotate(90deg)
+  opacity: 0
+
+// Avatar/bell, at the same bar level as the toggle instead of down in the
+// drawer's own content. Hidden until the drawer's open — the account link's
+// own tap target would otherwise double up with .toggle's.
+.account_bar
+  display: none
+  align-items: center
+  gap: 1.5rem
+  min-width: 0
+
+  [data-mobile-open="true"] &
+    display: flex
+
+// Full-bleed panel from the true viewport top — the toggle (see .bar_end
+// above) stays visible above it via z-index so the drawer can still be
+// closed; everything else in the collapsed bar hides instead of doubling up
+// with the drawer's own content. Top padding clears the bar's height, plus
+// this own gap value so Media lands the same distance from .account_bar as
+// Activity does from Games.
 .drawer
   display: none
   position: fixed
   inset: 0
-  padding: 5rem 1.25rem 2rem
-  overflow-y: auto
+  padding: calc(#{$navbar-real-height} + 2rem) 2.5rem 2rem
   flex-flow: column
   align-items: stretch
   gap: 2rem
-  background: var(--modal-bg)
+  background: var(--surface)
 
   @media (max-width: $mobile-breakpoint)
     [data-mobile-open="true"] &
@@ -51,4 +113,17 @@
   display: flex
   flex-flow: column
   align-items: stretch
-  gap: 1.5rem
+  // Small — each row already carries its own vertical padding
+  // (nav-bar.module.sass's [data-nav-drawer] .link), so this is just a
+  // hairline gap between boxes.
+  gap: 0.25rem
+
+// Pushed to the drawer's bottom edge, set apart from the browse links above
+// it by a divider — puts the leftover space below the links to use instead
+// of leaving it empty. align-items overrides .nav_group's stretch so the
+// button sizes to its own content instead of spanning the full row.
+.nav_group_signout
+  align-items: flex-start
+  margin-top: auto
+  padding-top: 1.5rem
+  border-top: 1px solid var(--surface-border)

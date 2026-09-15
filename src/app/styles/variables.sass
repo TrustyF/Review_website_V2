@@ -19,6 +19,13 @@ $content-width: 950px
 // drawer, at or above it the full desktop row (see nav-bar.module.sass/.tsx).
 $mobile-breakpoint: 830px
 
+// The navbar's actual rendered height (nav-bar.module.sass's .wrapper
+// min-height), at every width. Distinct from the CSS custom property
+// --navbar-height (globals.sass), which is a smaller nominal value other
+// spacing math is built on — components that need to align flush against
+// the real navbar edge (e.g. featured-review.module.sass) use this instead.
+$navbar-real-height: 5rem
+
 // Mobile icon square size — shared so the collapsed bar's controls and the
 // drawer trigger stay the same size.
 $mobile-icon-size: 2.25rem

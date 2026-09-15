@@ -14,10 +14,6 @@ $var_banner_width: 110%
   display: flex
   flex-flow: column
 
-  // Mobile only: cancels main's padding-top since short banner makes gap noticeable
-  @media (max-width: $mobile-breakpoint)
-    margin-top: calc(-1 * (var(--navbar-height) + var(--content-gap)))
-
 .details_wrapper
   display: flex
   flex-flow: column
@@ -34,12 +30,16 @@ $var_banner_width: 110%
   position: absolute
   width: 100%
   left: auto
-  // Cancels main padding-top so banner reaches true viewport top
+  // Cancels main padding-top so banner reaches true viewport top, behind
+  // the fixed desktop navbar.
   top: calc(-1 * (var(--navbar-height) + var(--content-gap)))
 
-  // Mobile: don't double-cancel .wrapper's own cancel
+  // Below $mobile-breakpoint the navbar is position: relative, not fixed
+  // (nav-bar.module.sass), so main's padding-top is just --content-gap
+  // (globals.sass) — cancel that alone to sit flush against its bottom
+  // edge instead of leaving that gap above the banner.
   @media (max-width: $mobile-breakpoint)
-    top: 0
+    top: calc(-1 * var(--content-gap))
 
 .banner
   position: relative

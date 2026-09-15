@@ -13,6 +13,8 @@ type Props = {
 	avatarSrc: string | null;
 	showAvatar: boolean;
 	onAvatarError: () => void;
+	// Passed through to NavAccountAvatar's fallback-icon size.
+	avatarIconSize?: number;
 };
 
 // Signed in: bell + avatar link; signed out: link to /login. Sign-out lives
@@ -23,6 +25,7 @@ export function NavAccountMenu({
 	avatarSrc,
 	showAvatar,
 	onAvatarError,
+	avatarIconSize = 14,
 }: Props) {
 	const dict = useDictionary();
 
@@ -40,14 +43,15 @@ export function NavAccountMenu({
 
 	return (
 		<div className={style.account_identity}>
-			<NotificationBell />
 			<NavAccountAvatar
 				pathname={pathname}
 				avatarSrc={avatarSrc}
 				showAvatar={showAvatar}
 				onAvatarError={onAvatarError}
 				className={barStyle.link}
+				iconSize={avatarIconSize}
 			/>
+			<NotificationBell />
 		</div>
 	);
 }

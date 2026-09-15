@@ -11,10 +11,20 @@ $page-padding: 1.25rem
 
 .wrapper
   position: relative
-  // one-off margin cancel so the featured review banner can sit tight at the top
-  margin-top: -2rem
+  // Cancels main's padding-top so the banner sits flush right below the
+  // navbar (touching it, not behind it). --navbar-height (globals.sass) is a
+  // smaller nominal value main's padding-top is built on, undercounting the
+  // real fixed navbar box ($navbar-real-height) — this corrects for that gap
+  // on top of canceling --content-gap.
+  margin-top: calc(#{$navbar-real-height} - var(--navbar-height) - var(--content-gap))
 
-// Admin-only "manage featured reviews" trigger, same corner convention as MediaEditButton. Positioned against .wrapper, not the card's own <Link>, which it deliberately sits outside of. z-index above hero content so the banner/gradient never paints over it.
+  // Below $mobile-breakpoint the navbar is position: relative instead
+  // (nav-bar.module.sass) and already occupies its own real height in flow,
+  // so only --content-gap needs canceling here.
+  @media (max-width: $mobile-breakpoint)
+    margin-top: calc(-1 * var(--content-gap))
+
+// Admin-only "manage featured reviews" trigger, same corner convention as MediaEditButton. Positioned against .wrapper, not the card's own <Link>, which it deliberately sits outside of. z-index above hero content so the banner/gradient never paints over it. Desktop-only (see featured-review.tsx), so no mobile offset needed.
 .manage_featured_button
   position: absolute
   top: 1rem
