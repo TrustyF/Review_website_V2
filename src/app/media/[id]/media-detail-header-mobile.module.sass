@@ -15,6 +15,7 @@
 
 .poster_column
   grid-area: poster
+  position: relative
   display: flex
   flex-flow: column
   align-items: center
@@ -24,8 +25,13 @@
   position: relative
   width: 100%
 
+// Overlaid on the poster's top-left corner instead of sitting in the
+// column's own flex flow, so it doesn't push the poster down.
 .back_button
-  align-self: flex-start
+  position: absolute
+  top: -2.5rem
+  left: 0
+  z-index: 5
 
 .list_button_float
   position: absolute

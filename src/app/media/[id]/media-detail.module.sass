@@ -19,8 +19,14 @@ $var_banner_width: 110%
   flex-flow: column
   gap: 5rem
 
+// Overlaid on the poster's top-left corner (position: relative lives on
+// .poster_column, not here) instead of sitting in the column's own flex flow,
+// so it doesn't push the poster down.
 .back_button
-  align-self: flex-start
+  position: absolute
+  top: -2.5rem
+  left: 0
+  z-index: 5
 
 .deleted_banner
   color: var(--danger)
@@ -106,6 +112,14 @@ $var_banner_width: 110%
 .header
   display: grid
   grid-template-columns: 220px 1fr auto
+  // Explicit row track sizes (not the default implicit auto/auto) — poster
+  // spans both rows, and with two auto tracks the grid algorithm splits its
+  // extra height between them, inflating the headtext row past its own
+  // content and shoving review down away from the title. Capping row 1 to
+  // its content (max-content) and giving row 2 the 1fr instead sends all of
+  // that extra height to review's row, where align-items: start still keeps
+  // review pinned to the top of it.
+  grid-template-rows: max-content 1fr
   grid-template-areas: "poster headtext headtext" "poster review facts"
   column-gap: 2rem
   row-gap: 0.75rem
@@ -116,6 +130,7 @@ $var_banner_width: 110%
 
 .poster_column
   grid-area: poster
+  position: relative
   display: flex
   flex-flow: column
   align-items: center
@@ -221,6 +236,7 @@ $var_banner_width: 110%
 .review_col
   grid-area: review
   min-width: 0
+  margin-top: 0.5rem
 
 // Public rating + budget/revenue/ROI gauge, sitting beside the review
 // instead of down in the type-specific facts list.

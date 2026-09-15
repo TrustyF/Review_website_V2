@@ -101,6 +101,9 @@ async function groupCredits(mediaId: number, type: MediaType) {
 	const creatorRoleEntries = [
 		...(creditsByRole.get("Creator")?.values() ?? []),
 	];
+	const developerRoleEntries = [
+		...(creditsByRole.get("Developer")?.values() ?? []),
+	];
 	// Manga: author/artist (no director concept) merged in byline, deduped by person
 	const authorArtistEntries = [
 		...new Map(
@@ -117,13 +120,18 @@ async function groupCredits(mediaId: number, type: MediaType) {
 		creatorRoleEntries.length > 0;
 	const promoteAuthorArtist =
 		type === MediaType.MANGA && authorArtistEntries.length > 0;
+	// Games: IGDB has no director/creator concept, only Developer companies.
+	const promoteDeveloper =
+		type === MediaType.GAME && developerRoleEntries.length > 0;
 	// Capped at 2 — quick "who made this", not full credits.
 	const directorEntries = (
 		promoteCreator
 			? creatorRoleEntries
 			: promoteAuthorArtist
 				? authorArtistEntries
-				: directorRoleEntries
+				: promoteDeveloper
+					? developerRoleEntries
+					: directorRoleEntries
 	).slice(0, 2);
 
 	const studioEntries = [...(creditsByRole.get("Studio")?.values() ?? [])];
