@@ -324,6 +324,7 @@ export const fr = {
 			releaseDate: "Date de sortie",
 			rating: "Note du public",
 			difficulty: "Difficulté",
+			liked: "Aimé",
 		},
 		mediumDifficulty: "Difficulté moyenne",
 		hardDifficulty: "Difficulté élevée",

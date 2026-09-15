@@ -6,6 +6,7 @@ import { MediaPoster } from "@/components/media/primitives/poster";
 import { MediaTitle } from "@/components/media/primitives/title";
 import { MediaReviewDisplay } from "@/components/media/media-cards/media-card/review";
 import { AddToListButtonSection } from "@/components/lists/add-to-list-button/add-to-list-button-section";
+import { BackButton } from "@/components/ui/back-button/back-button";
 import { AddToWatchlistButtonSection } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-button-section";
 import { WatchedButtonSection } from "@/components/watched/watched-button/watched-button-section";
 import { MediaDirectorCredit } from "./credits-section";
@@ -44,6 +45,7 @@ export function MediaDetailHeaderMobile({
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.poster_column}>
+				<BackButton className={styles.back_button} />
 				<div className={styles.poster}>
 					<MediaPoster
 						src={media.posterSrc}
@@ -103,7 +105,11 @@ export function MediaDetailHeaderMobile({
 							className={styles.title}
 						/>
 						<Suspense fallback={null}>
-							<MediaDirectorCredit mediaId={media.id} type={media.type} />
+							<MediaDirectorCredit
+								mediaId={media.id}
+								type={media.type}
+								className={styles.title_director}
+							/>
 						</Suspense>
 					</div>
 				</div>

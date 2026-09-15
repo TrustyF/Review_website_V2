@@ -5,6 +5,8 @@ import { getMediaCore } from "./get-media";
 import { toMediaRecord, MediaRecord } from "@/components/media/types";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { StarIcon } from "@/components/media/icons/star-icon";
+import { HeartIcon } from "@/components/media/icons/heart-icon";
+import { BackButton } from "@/components/ui/back-button/back-button";
 import { MediaTitle } from "@/components/media/primitives/title";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { formatRuntime } from "@/components/media/primitives/runtime";
@@ -188,6 +190,7 @@ export default async function MediaDetailPage({
 	// null/0 both mean "not rated for difficulty" — same convention
 	// MediaPoster's own corner notch uses (see poster.tsx).
 	const difficulty = raw.review?.difficulty;
+	const liked = raw.review?.liked;
 	// Computed here (not inside ReviewBodyEditTrigger) since comparing against
 	// Date.now() during a client component's render trips react-hooks/purity.
 	const isUpcoming = isUpcomingRelease(media.releaseDate, raw.status);
@@ -219,6 +222,7 @@ export default async function MediaDetailPage({
 				<div className={styles.details_wrapper}>
 					<div className={styles.header}>
 						<div className={styles.poster_column}>
+							<BackButton className={styles.back_button} />
 							<div className={styles.poster}>
 								<PosterEditTrigger
 									media={media}
@@ -288,6 +292,7 @@ export default async function MediaDetailPage({
 							publicRating != null ||
 							difficulty === 1 ||
 							difficulty === 2 ||
+							liked ||
 							budget != null ||
 							revenue != null ||
 							roi != null) && (
@@ -296,7 +301,8 @@ export default async function MediaDetailPage({
 									runtimeLabel != null ||
 									publicRating != null ||
 									difficulty === 1 ||
-									difficulty === 2) && (
+									difficulty === 2 ||
+									liked) && (
 									<div className={styles.fact_group}>
 										<dl className={styles.fact_group_list}>
 											{media.releaseDate != null && (
@@ -343,6 +349,16 @@ export default async function MediaDetailPage({
 														</Tooltip>
 													}
 												/>
+											)}
+											{liked && (
+												<div className={styles.fact}>
+													<dd className={styles.fact_value}>
+														<span className={styles.liked}>
+															<HeartIcon size={12} />
+															{dict.mediaDetail.facts.liked}
+														</span>
+													</dd>
+												</div>
 											)}
 										</dl>
 									</div>

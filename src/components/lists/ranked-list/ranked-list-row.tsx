@@ -5,6 +5,7 @@ import { MediaPoster } from "@/components/media/primitives/poster";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaTitle } from "@/components/media/primitives/title";
 import { StarIcon } from "@/components/media/icons/star-icon";
+import { HeartIcon } from "@/components/media/icons/heart-icon";
 import { MediaRecord } from "@/components/media/types";
 import { SeenBadge } from "@/components/watched/seen-badge/seen-badge";
 import styles from "./ranked-list.module.sass";
@@ -77,6 +78,7 @@ export function RankedListRow({
 					<div className={styles.rating}>
 						{media.review.rating}
 						<StarIcon size={11} />
+						{media.review.liked && <HeartIcon size={12} title="Liked" />}
 					</div>
 				)}
 			</div>

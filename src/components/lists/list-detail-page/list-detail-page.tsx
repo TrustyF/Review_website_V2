@@ -8,6 +8,7 @@ import { ListMediaView } from "@/components/lists/list-media-view/list-media-vie
 import { EditListLink } from "@/components/lists/edit-list-link/edit-list-link";
 import { ListIdBadge } from "@/components/lists/list-id-badge/list-id-badge";
 import { ListWatchedProgress } from "@/components/lists/list-watched-progress/list-watched-progress";
+import { BackButton } from "@/components/ui/back-button/back-button";
 import { displayName } from "@/lib/display-name";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { getLocale } from "@/lib/i18n/get-locale";
@@ -81,6 +82,7 @@ export async function ListDetailPage({ id }: Props) {
 
 	return (
 		<div className={styles.wrapper}>
+			<BackButton />
 			<div className={styles.header}>
 				{list.thumbnail ? (
 					// eslint-disable-next-line @next/next/no-img-element

@@ -7,6 +7,7 @@ import { StarIcon } from "@/components/media/icons/star-icon";
 import styles from "./media-mini-card-shell.module.sass";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
 import { ReviewIcon } from "@/components/media/icons/review-icon";
+import { HeartIcon } from "@/components/media/icons/heart-icon";
 import { useMediaCardDisplay } from "@/components/media/media-card-display-context";
 /* eslint-disable-next-line comment-length/flag-long -- disabled imports, not prose */
 // Disabled below for now — may come back later.
@@ -71,6 +72,9 @@ export function MediaMiniCardShell({ media, children }: Props) {
 					)}
 					{showReviewIcon && media.review && media.review.body && (
 						<ReviewIcon size={9} title="Has review" />
+					)}
+					{showReviewIcon && media.review?.liked && (
+						<HeartIcon size={10} title="Liked" />
 					)}
 					{children}
 				</div>

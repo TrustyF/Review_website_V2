@@ -7,6 +7,7 @@ import { MediaRecord } from "@/components/media/types";
 import { MediaPoster } from "@/components/media/primitives/poster";
 import { MediaReleaseDate } from "@/components/media/primitives/release-date";
 import { StarIcon } from "@/components/media/icons/star-icon";
+import { HeartIcon } from "@/components/media/icons/heart-icon";
 import {
 	ReviewBody,
 	ReviewSpoilerProvider,
@@ -251,6 +252,7 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 							<div className={styles.rating}>
 								{review.rating}
 								<StarIcon size={14} />
+								{review.liked && <HeartIcon size={15} title="Liked" />}
 							</div>
 						)}
 					</div>

@@ -319,6 +319,7 @@ export const en = {
 			releaseDate: "Release date",
 			rating: "Audience rating",
 			difficulty: "Difficulty",
+			liked: "Liked",
 		},
 		mediumDifficulty: "Medium difficulty",
 		hardDifficulty: "Hard difficulty",

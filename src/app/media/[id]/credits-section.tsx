@@ -147,9 +147,12 @@ async function groupCredits(mediaId: number, type: MediaType) {
 export async function MediaDirectorCredit({
 	mediaId,
 	type,
+	className,
 }: {
 	mediaId: number;
 	type: MediaType;
+	// Lets the mobile header size this down from the shared default (media-detail.module.sass's .title_director).
+	className?: string | undefined;
 }) {
 	const [{ directorEntries }, dict] = await Promise.all([
 		groupCredits(mediaId, type),
@@ -158,7 +161,7 @@ export async function MediaDirectorCredit({
 	if (directorEntries.length === 0) return null;
 
 	return (
-		<span className={styles.title_director}>
+		<span className={`${styles.title_director} ${className ?? ""}`}>
 			{dict.mediaDetail.byCreditPrefix} <CreditNames entries={directorEntries} />
 		</span>
 	);
