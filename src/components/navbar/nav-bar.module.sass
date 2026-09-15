@@ -26,7 +26,10 @@ $body-edge-gap: calc((100vw - #{$content-width}) / 2)
   background: linear-gradient(to bottom, var(--nav-scrim) 0%, color-mix(in srgb, var(--nav-scrim) 74%, transparent) 19%, color-mix(in srgb, var(--nav-scrim) 54%, transparent) 34%, color-mix(in srgb, var(--nav-scrim) 38%, transparent) 47%, color-mix(in srgb, var(--nav-scrim) 21%, transparent) 62.5%, color-mix(in srgb, var(--nav-scrim) 11%, transparent) 75%, color-mix(in srgb, var(--nav-scrim) 4%, transparent) 87%, transparent 100%)
 
   @media (max-width: $mobile-breakpoint)
-    padding: 1rem 1.25rem
+    // Shorter bar than desktop's — $navbar-real-height-mobile's own comment
+    // has the exact math this padding is tuned against.
+    min-height: $navbar-real-height-mobile
+    padding: 0.125rem 0.5rem
     // Scrolls away with the page instead of staying pinned — useNavbarVisibility
     // skips its hide/reveal logic at this width, so there's nothing to keep
     // fixed for.

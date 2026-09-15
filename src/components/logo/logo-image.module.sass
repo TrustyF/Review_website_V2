@@ -8,6 +8,11 @@
   height: 50px
   font-family: $font-sans
 
+  // Matches .icon's own mobile height below — .icon is absolute, so it
+  // doesn't shrink this box on its own.
+  @media (max-width: $mobile-breakpoint)
+    height: 25px
+
 .image
   position: absolute
   height: 100%
@@ -27,6 +32,7 @@
 
   @media (max-width: $mobile-breakpoint)
     display: block
+    height: 25px
 
 // Matches .image's box so the clip-path lines up with the ticket art; insets measured off logo.webp's actual pixels — re-measure if that asset changes.
 .fill

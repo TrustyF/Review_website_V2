@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
 	/* config options here */
-// Self-hosted uses traced standalone bundle (no-op for Vercel).
+	// Self-hosted uses traced standalone bundle (no-op for Vercel).
 	output: "standalone",
 	reactCompiler: true,
 	// Prevents version-skew bugs: stale tabs detect new builds via hashed BUILD_TIME.
@@ -31,6 +31,7 @@ const nextConfig: NextConfig = {
 		// optimizer avoids redundant work and pattern-allowlist need.
 		unoptimized: true,
 	},
+	allowedDevOrigins: ["192.168.1.68"],
 };
 
 export default nextConfig;

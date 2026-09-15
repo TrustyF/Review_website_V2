@@ -76,9 +76,34 @@ export function NavBarMobile({
 					</NavLink>
 				</div>
 				<NavSearch />
-				{/* Only visible while the drawer's open (nav-bar-mobile.module.sass)
-				— replaces the hidden quick links/search at the same bar level.
-				data-account-bar sizes up the avatar image (nav-bar.module.sass). */}
+			</div>
+
+			{/* Sibling of .bar_end, not nested in it — both position: absolute
+			against .wrapper independently (nav-bar-mobile.module.sass), so
+			neither's flow depends on the other. */}
+			<Clickable
+				className={style.toggle}
+				aria-label={mobileOpen ? dict.nav.closeMenu : dict.nav.openMenu}
+				aria-pressed={mobileOpen}
+				onClick={onToggle}>
+				<span className={style.toggle_icons}>
+					<Menu
+						size={20}
+						className={`${style.toggle_icon} ${mobileOpen ? style.toggle_icon_hidden : ""}`}
+					/>
+					<X
+						size={20}
+						className={`${style.toggle_icon} ${mobileOpen ? "" : style.toggle_icon_hidden}`}
+					/>
+				</span>
+			</Clickable>
+
+			{/* data-nav-drawer reveals iconOnly items' labels (nav-bar.module.sass).
+			iconSize bumps them past the navbar's usual 14px for a touch menu. */}
+			<div className={style.drawer} data-nav-drawer>
+				{/* In the drawer's own flow — its own padding, independent of
+				.wrapper's (nav-bar.module.sass), not pinned to the bar above.
+				data-account-bar sizes up the avatar image there. */}
 				<div className={style.account_bar} data-account-bar>
 					<NavAccountMenu
 						signedIn={signedIn}
@@ -89,27 +114,7 @@ export function NavBarMobile({
 						avatarIconSize={32}
 					/>
 				</div>
-				<Clickable
-					className={style.toggle}
-					aria-label={mobileOpen ? dict.nav.closeMenu : dict.nav.openMenu}
-					aria-pressed={mobileOpen}
-					onClick={onToggle}>
-					<span className={style.toggle_icons}>
-						<Menu
-							size={20}
-							className={`${style.toggle_icon} ${mobileOpen ? style.toggle_icon_hidden : ""}`}
-						/>
-						<X
-							size={20}
-							className={`${style.toggle_icon} ${mobileOpen ? "" : style.toggle_icon_hidden}`}
-						/>
-					</span>
-				</Clickable>
-			</div>
 
-			{/* data-nav-drawer reveals iconOnly items' labels (nav-bar.module.sass).
-			iconSize bumps them past the navbar's usual 14px for a touch menu. */}
-			<div className={style.drawer} data-nav-drawer>
 				{/* Duplicates .quick_links above — full labels here since there's
 				room, unlike the icon-only collapsed bar. */}
 				<div className={style.nav_group}>

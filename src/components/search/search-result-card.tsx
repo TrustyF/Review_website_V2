@@ -1,7 +1,6 @@
 "use client";
 import Image from "next/image";
 import { Building2, UserRound } from "lucide-react";
-import { MediaType } from "@prisma/client";
 import { Link } from "@/components/ui/link";
 import { GlobalSearchResult } from "@/components/search/search-actions";
 import { useDictionary } from "@/lib/i18n/i18n-context";
@@ -10,15 +9,6 @@ import styles from "./search-result-card.module.sass";
 // One search result component, separate since GlobalSearchResult lacks MediaRecord fields.
 export function SearchResultCard({ result }: { result: GlobalSearchResult }) {
 	const dict = useDictionary();
-	const typeLabels: Record<MediaType, string> = {
-		[MediaType.MOVIE]: dict.nav.search.typeLabels.movie,
-		[MediaType.SHORT]: dict.nav.search.typeLabels.short,
-		[MediaType.TVSHOW]: dict.nav.search.typeLabels.tvShow,
-		[MediaType.MANGA]: dict.nav.search.typeLabels.manga,
-		[MediaType.COMIC]: dict.nav.search.typeLabels.comic,
-		[MediaType.GAME]: dict.nav.search.typeLabels.game,
-		[MediaType.BOOK]: dict.nav.search.typeLabels.book,
-	};
 
 	if (result.kind === "media") {
 		return (
@@ -31,12 +21,6 @@ export function SearchResultCard({ result }: { result: GlobalSearchResult }) {
 					className={styles.media_poster}
 				/>
 				<div className={styles.media_title}>{result.title}</div>
-				<div className={styles.media_meta}>
-					{typeLabels[result.type]}
-					{result.releaseDate && (
-						<> · {new Date(result.releaseDate).getFullYear()}</>
-					)}
-				</div>
 			</Link>
 		);
 	}

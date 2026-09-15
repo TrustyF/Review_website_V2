@@ -6,8 +6,8 @@ import { fr } from "@/lib/i18n/dictionaries/fr";
 
 // Dictionary values include functions (e.g. `gapDaysLater(n)`), which can't
 // cross the Server->Client boundary — so only `locale` (a string) does, and
-// the dictionary is picked from this client-bundled map instead.
-const dictionaries: Record<Locale, Dictionary> = { en, fr };
+// the dictionary is picked from this client-bundled map (exported for onboarding).
+export const dictionaries: Record<Locale, Dictionary> = { en, fr };
 
 const I18nContext = createContext<Locale | undefined>(undefined);
 

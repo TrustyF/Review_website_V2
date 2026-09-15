@@ -20,15 +20,24 @@ $content-width: 950px
 $mobile-breakpoint: 830px
 
 // The navbar's actual rendered height (nav-bar.module.sass's .wrapper
-// min-height), at every width. Distinct from the CSS custom property
-// --navbar-height (globals.sass), which is a smaller nominal value other
-// spacing math is built on — components that need to align flush against
-// the real navbar edge (e.g. featured-review.module.sass) use this instead.
+// min-height) at/above $mobile-breakpoint. Distinct from the CSS custom
+// property --navbar-height (globals.sass), which is a smaller nominal value
+// other spacing math is built on — components that need to align flush
+// against the real navbar edge (e.g. featured-review.module.sass) use this
+// instead.
 $navbar-real-height: 5rem
 
 // Mobile icon square size — shared so the collapsed bar's controls and the
 // drawer trigger stay the same size.
 $mobile-icon-size: 2.25rem
+
+// The navbar's real rendered height below $mobile-breakpoint — shorter than
+// desktop's $navbar-real-height. $mobile-icon-size (2.25rem) plus this
+// value's own vertical padding in nav-bar.module.sass's .wrapper (0.125rem
+// top/bottom) nets out to exactly this, so it's content-driven, not an
+// artificial floor. Used wherever mobile-only math needs to clear the bar
+// (e.g. the drawer's top padding in nav-bar-mobile.module.sass).
+$navbar-real-height-mobile: 2.5rem
 
 // Responsive wrapper: adds padding below $content-width, keeping desktop layout pixel-identical
 @mixin content-wrapper($max-width: $content-width)

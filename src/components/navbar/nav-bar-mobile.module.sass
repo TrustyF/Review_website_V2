@@ -1,30 +1,25 @@
 @use "@/app/styles/variables" as *
 
-// Quick links + search + hamburger, right-packed on the collapsed bar.
-// Hidden entirely at/above $mobile-breakpoint — NavBarLinks takes over there.
+// Quick links + search. Positioned independently of .wrapper's own padding
+// (its nearest positioned ancestor — see nav-bar.module.sass), with its own
+// fixed right inset that clears .toggle's separate absolute box, not shared
+// flow/padding with it (see .toggle below). Hidden entirely at/above
+// $mobile-breakpoint — NavBarLinks takes over there.
 .bar_end
   display: none
   align-items: center
   gap: 0.5rem
-  margin-left: auto
-  // Sits above .drawer below, which is a full-bleed panel starting at the
-  // viewport top (see .drawer) — without this it'd paint underneath it.
-  position: relative
-  z-index: 2
 
   @media (max-width: $mobile-breakpoint)
     display: flex
+    position: absolute
+    top: 0
+    bottom: 0
+    right: 3rem
 
-  // Quick links/search hide once the drawer's open — it already duplicates
-  // the former, and there's nothing left to search for. .account_bar takes
-  // their place instead (see its own rule below), spread across the row
-  // from .title's now-empty spot instead of packed against the toggle.
-  [data-mobile-open="true"] &
-    flex: 1 1 auto
-    margin-left: 0
-    justify-content: space-between
-
-    > :not(.toggle, .account_bar)
+    // Hides once the drawer's open — it already duplicates these, and
+    // there's nothing left to search for.
+    [data-mobile-open="true"] &
       display: none
 
 // Media/Reading/Games, kept apart from the search/account/hamburger cluster
@@ -36,10 +31,13 @@
   margin-right: 0.75rem
   justify-content: space-around
 
+// A normal flex item of .wrapper again (position: relative, not absolute) —
+// margin-left: auto right-packs it within .wrapper's own row, same as any
+// other nav item, instead of a hand-tuned fixed offset that kept drifting
+// out of alignment. No longer a child of .bar_end (see nav-bar-mobile.tsx),
+// so it needs its own hide-above-$mobile-breakpoint rule.
 .toggle
-  display: flex
-  align-items: center
-  justify-content: center
+  display: none
   width: $mobile-icon-size
   height: $mobile-icon-size
   border-radius: 50%
@@ -47,11 +45,16 @@
   cursor: pointer
   transition: background-color 0.2s ease
 
-  &:hover
-    background: var(--ticket-accent-dark)
+  @media (max-width: $mobile-breakpoint)
+    display: flex
+    align-items: center
+    justify-content: center
+    position: relative
+    margin-left: auto
+    z-index: 2
 
-  // Stays highlighted while the drawer's open, not just mid-hover, so the
-  // toggle itself signals the open state.
+  // Stays highlighted while the drawer's open, so the toggle itself signals
+  // the open state.
   &[aria-pressed="true"]
     background: var(--ticket-accent-dark)
 
@@ -77,29 +80,27 @@
   transform: translate(-50%, -50%) rotate(90deg)
   opacity: 0
 
-// Avatar/bell, at the same bar level as the toggle instead of down in the
-// drawer's own content. Hidden until the drawer's open — the account link's
-// own tap target would otherwise double up with .toggle's.
+// Lives in the drawer's own flow (padding: below), not the collapsed bar —
+// its position only depends on the drawer's own layout, not .wrapper's.
 .account_bar
-  display: none
+  display: flex
   align-items: center
   gap: 1.5rem
   min-width: 0
-
-  [data-mobile-open="true"] &
-    display: flex
+  padding-bottom: 1rem
+  border-bottom: 1px solid var(--surface-border)
 
 // Full-bleed panel from the true viewport top — the toggle (see .bar_end
 // above) stays visible above it via z-index so the drawer can still be
 // closed; everything else in the collapsed bar hides instead of doubling up
-// with the drawer's own content. Top padding clears the bar's height, plus
-// this own gap value so Media lands the same distance from .account_bar as
-// Activity does from Games.
+// with the drawer's own content. Top padding clears the bar's height, plus a
+// small gap — not this own full 2rem gap value, or .account_bar sits much
+// further from the (now much shorter) bar than Media does from Games.
 .drawer
   display: none
   position: fixed
   inset: 0
-  padding: calc(#{$navbar-real-height} + 2rem) 2.5rem 2rem
+  padding: 1rem 2.5rem 2rem
   flex-flow: column
   align-items: stretch
   gap: 2rem

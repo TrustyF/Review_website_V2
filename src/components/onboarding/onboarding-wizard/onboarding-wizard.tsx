@@ -6,7 +6,8 @@ import { Clickable } from "@/components/ui/clickable";
 import { AvatarPicker } from "@/components/account/avatar-picker/avatar-picker";
 import { AvatarGroup } from "@/lib/avatars";
 import { LANGUAGE_OPTIONS } from "@/lib/languages";
-import { useDictionary } from "@/lib/i18n/i18n-context";
+import { dictionaries, useDictionary } from "@/lib/i18n/i18n-context";
+import type { Locale } from "@/lib/i18n/get-locale";
 import {
 	saveOnboardingLanguage,
 	saveOnboardingNewsletterOptIn,
@@ -72,9 +73,13 @@ function OnboardingStep({
 }
 
 export function OnboardingWizard({ initial, avatarGroups }: Props) {
-	const dict = useDictionary();
+	const contextDict = useDictionary();
 	const router = useRouter();
 	const [step, setStep] = useState(0);
+	// Set on step 0's Continue so steps 1+ render translated immediately,
+	// instead of flashing the old language while router.refresh() re-syncs the cookie.
+	const [confirmedLocale, setConfirmedLocale] = useState<Locale | null>(null);
+	const dict = confirmedLocale ? dictionaries[confirmedLocale] : contextDict;
 	// Falls back to `name` (from signup) only when no username yet (same order as display-name.ts). Editable here so user can confirm/change before save.
 	const [username, setUsername] = useState(
 		initial.username ?? initial.name ?? "",
@@ -98,12 +103,18 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 		router.push("/account");
 	}
 
-	async function handleLanguageChange(value: string) {
-		setPreferredLanguage(value);
-		await saveOnboardingLanguage(value);
-		// Picks up the just-saved locale cookie so the rest of the wizard
-		// (and the site) renders in the chosen language right away.
-		router.refresh();
+	async function handleLanguageNext() {
+		setIsSubmitting(true);
+		try {
+			await saveOnboardingLanguage(preferredLanguage);
+			// Switches the wizard's own dict immediately; refresh below re-syncs
+			// the cookie for the rest of the site, without the wizard waiting on it.
+			setConfirmedLocale(preferredLanguage as Locale);
+			router.refresh();
+			setStep(1);
+		} finally {
+			setIsSubmitting(false);
+		}
 	}
 
 	async function handleUsernameNext() {
@@ -141,24 +152,35 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 				<OnboardingStep
 					title={dict.onboarding.languageStep.title}
 					subtitle={dict.onboarding.languageStep.subtitle}
-					rightAction={{ label: dict.common.continue, onClick: () => setStep(1) }}>
-					<label className={styles.field}>
+					rightAction={{
+						label: dict.common.continue,
+						onClick: handleLanguageNext,
+						disabled: isSubmitting,
+					}}>
+					<div className={styles.field}>
 						{dict.account.preferredLanguage}
-						<select
-							className={styles.input}
-							value={preferredLanguage}
-							onChange={(e) => handleLanguageChange(e.target.value)}>
+						<div className={styles.language_options}>
 							{LANGUAGE_OPTIONS.map((option) => (
-								<option key={option.value} value={option.value}>
-									{option.label}
-								</option>
+								<Clickable
+									key={option.value}
+									className={`${styles.language_option} ${option.value === preferredLanguage ? styles.language_option_active : ""}`}
+									aria-pressed={option.value === preferredLanguage}
+									onClick={() => setPreferredLanguage(option.value)}>
+									<span className={styles.language_flag}>{option.flag}</span>
+									<span>{option.label}</span>
+								</Clickable>
 							))}
-						</select>
-					</label>
+						</div>
+					</div>
 					{preferredLanguage !== "en" && (
 						<div className={styles.language_notice}>
 							<Languages size={16} />
-							<span>{dict.onboarding.languageStep.notice}</span>
+							{/* Always French: shown only once French is selected, regardless of the
+							    dictionary's current locale (which may lag behind during the refresh). */}
+							<span>
+								Certains contenus comme les jeux vidéo et mangas ne sont pas
+								traduits. Ils seront affichés en anglais.
+							</span>
 						</div>
 					)}
 				</OnboardingStep>

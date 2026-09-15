@@ -1,8 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
-import { Clickable } from "@/components/ui/clickable";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./search-page-input.module.sass";
 
@@ -15,6 +13,7 @@ export function SearchPageInput({ initialQuery }: { initialQuery: string }) {
 	const dict = useDictionary();
 	const router = useRouter();
 	const [input, setInput] = useState(initialQuery);
+	const inputRef = useRef<HTMLInputElement>(null);
 
 	function submit(value: string) {
 		const trimmed = value.trim();
@@ -23,7 +22,7 @@ export function SearchPageInput({ initialQuery }: { initialQuery: string }) {
 		);
 	}
 
-	// Debounces on typing; Enter/click below still submit immediately.
+	// Debounces on typing; Enter still submits immediately.
 	useEffect(() => {
 		const timeout = setTimeout(() => submit(input), DEBOUNCE_MS);
 		return () => clearTimeout(timeout);
@@ -36,8 +35,12 @@ export function SearchPageInput({ initialQuery }: { initialQuery: string }) {
 			onSubmit={(e) => {
 				e.preventDefault();
 				submit(input);
+				// Only on an explicit Enter/Go, not the debounce effect above —
+				// dismisses the mobile keyboard, which a route change alone doesn't.
+				inputRef.current?.blur();
 			}}>
 			<input
+				ref={inputRef}
 				type="text"
 				className={styles.input}
 				placeholder={dict.nav.search.placeholder}
@@ -45,12 +48,6 @@ export function SearchPageInput({ initialQuery }: { initialQuery: string }) {
 				onChange={(e) => setInput(e.target.value)}
 				autoFocus
 			/>
-			<Clickable
-				className={styles.submit}
-				aria-label={dict.nav.search.ariaLabel}
-				onClick={() => submit(input)}>
-				<Search size={18} />
-			</Clickable>
 		</form>
 	);
 }

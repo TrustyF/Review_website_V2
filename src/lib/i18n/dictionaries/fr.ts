@@ -112,8 +112,6 @@ export const fr = {
 			title: "Choisissez votre langue",
 			subtitle:
 				"Vous pourrez le modifier à tout moment dans les paramètres du compte.",
-			notice:
-				"Certains contenus comme les jeux vidéo et mangas ne sont pas traduits. Ils seront disponibles en anglais",
 		},
 		usernameStep: {
 			title: "Choisissez un nom d'utilisateur",

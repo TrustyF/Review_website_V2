@@ -29,7 +29,7 @@ export const en = {
 		lists: "Lists",
 		addMedia: "Add media",
 		userLists: "User lists",
-		recommendationRequests: "Recommendation requests",
+		recommendationRequests: "Rec requests",
 		cronLogs: "Cron logs",
 		digest: "Digest",
 		imageCrop: "Image crop",
@@ -112,8 +112,6 @@ export const en = {
 		languageStep: {
 			title: "Choose your language",
 			subtitle: "You can change this any time in account settings.",
-			notice:
-				"English is the site's primary language — some content isn't available in French yet.",
 		},
 		usernameStep: {
 			title: "Pick a username",
