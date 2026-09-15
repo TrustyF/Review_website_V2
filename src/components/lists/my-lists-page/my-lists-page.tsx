@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { Link } from "@/components/ui/link";
 import { db } from "@/server/db/client";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
@@ -20,6 +21,9 @@ export async function MyListsPage() {
 
 	return (
 		<div className={styles.wrapper}>
+			<Link href="/account" className={styles.back_link}>
+				{dict.account.backToAccount}
+			</Link>
 			<div className={styles.header}>
 				<h1>{dict.account.recommendations}</h1>
 			</div>

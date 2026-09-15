@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { Link } from "@/components/ui/link";
 import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
 import { WatchlistGrid } from "@/components/watchlist/watchlist-grid/watchlist-grid";
@@ -38,6 +39,9 @@ export async function WatchlistPage() {
 
 	return (
 		<div className={styles.wrapper}>
+			<Link href="/account" className={styles.back_link}>
+				{dict.watchlist.backToAccount}
+			</Link>
 			<h1>{dict.watchlist.title}</h1>
 			{media.length === 0 ? (
 				<p className={styles.empty}>{dict.watchlist.empty}</p>

@@ -78,6 +78,7 @@ export const en = {
 		newsletterOptIn: "Subscribe to the newsletter",
 		listAddEmailOptIn: "Email me when media is added to my lists",
 		settingsAriaLabel: "Account settings",
+		backToAccount: "← Account",
 		watchlistCard: "Watchlist",
 		signOut: "Sign out",
 		changeProfilePicture: "Change profile picture",
@@ -234,6 +235,7 @@ export const en = {
 	},
 	watchlist: {
 		title: "My watchlist",
+		backToAccount: "← Account",
 		empty: "Your watchlist is empty — add something from its media page.",
 		inWatchlist: "In watchlist",
 		addToWatchlist: "Add to watchlist",

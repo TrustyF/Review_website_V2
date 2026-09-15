@@ -78,6 +78,7 @@ export const fr = {
 		newsletterOptIn: "S'abonner à la newsletter",
 		listAddEmailOptIn: "Me prévenir par e-mail lors d'un ajout à mes listes",
 		settingsAriaLabel: "Paramètres du compte",
+		backToAccount: "← Compte",
 		watchlistCard: "Liste à voir",
 		signOut: "Se déconnecter",
 		changeProfilePicture: "Changer la photo de profil",
@@ -237,6 +238,7 @@ export const fr = {
 	},
 	watchlist: {
 		title: "Ma liste à voir",
+		backToAccount: "← Compte",
 		empty:
 			"Votre liste à voir est vide — ajoutez quelque chose depuis sa page média.",
 		inWatchlist: "Dans la liste à voir",

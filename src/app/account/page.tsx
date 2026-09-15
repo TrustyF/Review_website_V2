@@ -5,7 +5,6 @@ import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
 import { AvatarPicker } from "@/components/account/avatar-picker/avatar-picker";
-import { SignOutButton } from "@/components/account/sign-out-button/sign-out-button";
 import { getAvatarGroups } from "@/server/avatars/avatar-catalog";
 import { WatchlistStack } from "@/components/watchlist/watchlist-stack/watchlist-stack";
 import { WatchlistIcon } from "@/components/icons/watchlist-icon";
@@ -85,15 +84,12 @@ export default async function AccountPage() {
 					{/*	{session.user.role === "ADMIN" ? "Admin" : "Member"}*/}
 					{/*</p>*/}
 				</div>
-				<div className={styles.header_actions}>
-					<Link
-						href="/account/settings"
-						className={styles.settings_link}
-						aria-label={dict.account.settingsAriaLabel}>
-						<Settings size={18} />
-					</Link>
-					<SignOutButton />
-				</div>
+				<Link
+					href="/account/settings"
+					className={styles.settings_link}
+					aria-label={dict.account.settingsAriaLabel}>
+					<Settings size={18} />
+				</Link>
 			</div>
 
 			<Link
@@ -113,17 +109,6 @@ export default async function AccountPage() {
 			</Link>
 
 			<div className={styles.grid}>
-				<Link href="/watchlist" className={styles.watchlist}>
-					<h2 className={styles.section_title}>
-						<WatchlistIcon size={18} className={styles.section_icon} />
-						{dict.account.watchlistCard}
-					</h2>
-					{watchlistMedia.length === 0 ? (
-						<p className={styles.empty}>{dict.watchlist.empty}</p>
-					) : (
-						<WatchlistStack media={watchlistMedia} />
-					)}
-				</Link>
 				<Link href="/account/lists" className={styles.lists}>
 					<h2 className={styles.section_title}>
 						<List size={18} className={styles.section_icon} />
@@ -152,6 +137,17 @@ export default async function AccountPage() {
 								/>
 							))}
 						</div>
+					)}
+				</Link>
+				<Link href="/watchlist" className={styles.watchlist}>
+					<h2 className={styles.section_title}>
+						<WatchlistIcon size={18} className={styles.section_icon} />
+						{dict.account.watchlistCard}
+					</h2>
+					{watchlistMedia.length === 0 ? (
+						<p className={styles.empty}>{dict.watchlist.empty}</p>
+					) : (
+						<WatchlistStack media={watchlistMedia} />
 					)}
 				</Link>
 			</div>
