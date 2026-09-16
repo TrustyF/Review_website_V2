@@ -52,7 +52,7 @@ export const MediaBanner = forwardRef<HTMLDivElement, Props>(function MediaBanne
 					className={`${imageClassName ?? ""} ${styles.banner_image} ${isLoaded ? styles.banner_image_loaded : ""}`}
 					style={{ objectPosition: `50% ${focusY}%` }}
 					onLoad={() => setIsLoaded(true)}
-					preload
+					fetchPriority="high"
 				/>
 				<div
 					className={styles.banner_grain}

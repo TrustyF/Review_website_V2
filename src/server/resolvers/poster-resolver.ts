@@ -10,6 +10,7 @@ import {
 	BANNER_MAX_WIDTH,
 	BANNER_MOBILE_DIR,
 	BANNER_MOBILE_MAX_WIDTH,
+	BANNER_MOBILE_QUALITY,
 	BANNER_QUALITY,
 	CHANGELOG_BANNER_THUMB_DIR,
 	CHANGELOG_THUMB_DIR,
@@ -315,6 +316,7 @@ export async function resolveBanner(
 
 	const dir = variant === "mobile" ? BANNER_MOBILE_DIR : BANNER_DIR;
 	const maxWidth = variant === "mobile" ? BANNER_MOBILE_MAX_WIDTH : BANNER_MAX_WIDTH;
+	const quality = variant === "mobile" ? BANNER_MOBILE_QUALITY : BANNER_QUALITY;
 	const filename = mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT);
 	const storage = getImageStorage();
 
@@ -342,7 +344,7 @@ export async function resolveBanner(
 		dedupeEncode(`${dir}/${filename}`, async () => {
 			const encoded = await sharp(source)
 				.resize({ width: maxWidth, withoutEnlargement: true })
-				.avif({ quality: BANNER_QUALITY })
+				.avif({ quality })
 				.toBuffer();
 			await storage.write(dir, filename, encoded);
 			return encoded;
@@ -372,7 +374,7 @@ export async function persistCroppedBanner(
 	// Mobile is a further downsize of the (already-encoded) crop, not an upscale.
 	const mobileBytes = await sharp(croppedBytes)
 		.resize({ width: BANNER_MOBILE_MAX_WIDTH, withoutEnlargement: true })
-		.avif({ quality: BANNER_QUALITY })
+		.avif({ quality: BANNER_MOBILE_QUALITY })
 		.toBuffer();
 	await storage.write(BANNER_MOBILE_DIR, filename, mobileBytes);
 }

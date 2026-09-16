@@ -18,17 +18,26 @@ type Props = {
 	media: MediaRecord & { review: NonNullable<MediaRecord["review"]> };
 	direction: 1 | -1;
 	exiting?: boolean;
+	// True only for the very first card shown on page load — there's no prior state to visibly
+	// transition from, and the RAF-gated fade-in was delaying this card's LCP banner for no benefit.
+	skipEnterAnimation?: boolean;
 };
 
 // Mobile-width counterpart to FeaturedReviewCard — desktop's fixed 180px poster squeezes .info to nothing below ~450px, so this uses a smaller grid cell instead. Swapped in via CSS breakpoint, not matchMedia, since FeaturedReview already re-renders both on every transition.
-export function FeaturedReviewCardMobile({ media, direction, exiting = false }: Props) {
+export function FeaturedReviewCardMobile({
+	media,
+	direction,
+	exiting = false,
+	skipEnterAnimation = false,
+}: Props) {
 	const dict = useDictionary();
 	const locale = useLocale();
-	const [settled, setSettled] = useState(exiting);
+	const [settled, setSettled] = useState(exiting || skipEnterAnimation);
 	useEffect(() => {
+		if (skipEnterAnimation) return;
 		const frame = requestAnimationFrame(() => setSettled(!exiting));
 		return () => cancelAnimationFrame(frame);
-	}, [exiting]);
+	}, [exiting, skipEnterAnimation]);
 
 	// Re-measured on every resize, not just mount — a reflow (e.g. title wrapping) can flip whether the excerpt clips without a remount.
 	const excerptRef = useRef<HTMLDivElement>(null);
@@ -68,7 +77,7 @@ export function FeaturedReviewCardMobile({ media, direction, exiting = false }: 
 						sizes="100vw"
 						className={styles.banner_image}
 						style={{ objectPosition: `50% ${media.bannerFocusY}%` }}
-						preload
+						fetchPriority="high"
 					/>
 					<div className={styles.banner_backdrop} />
 				</div>

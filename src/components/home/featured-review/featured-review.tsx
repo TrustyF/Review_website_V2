@@ -48,6 +48,9 @@ export function FeaturedReview({ items }: Props) {
 	>(null);
 	// True while steering via the picker — auto-advance pauses on interaction and resumes after AUTO_ADVANCE_MS of no further interaction.
 	const [paused, setPaused] = useState(false);
+	// Flips once, permanently, on the first ever swap — lets the very first card skip its enter
+	// animation (see FeaturedReviewCard's skipEnterAnimation) without re-triggering on later visits back to index 0.
+	const [hasTransitioned, setHasTransitioned] = useState(false);
 	// Bumped on every picker interaction, including a re-click on the active item where index alone wouldn't change — keys the resume-timer effect below.
 	const [interactionTick, setInteractionTick] = useState(0);
 
@@ -78,6 +81,7 @@ export function FeaturedReview({ items }: Props) {
 			const list = reviewedRef.current;
 			const currentIndex = indexRef.current;
 			const nextIndex = (currentIndex + 1) % list.length;
+			setHasTransitioned(true);
 			setDirection(1);
 			setOutgoing(list[currentIndex]!);
 			setIndex(nextIndex);
@@ -100,6 +104,7 @@ export function FeaturedReview({ items }: Props) {
 		setPaused(true);
 		setInteractionTick((t) => t + 1);
 		if (nextIndex === index) return;
+		setHasTransitioned(true);
 		setDirection(nextIndex > index ? 1 : -1);
 		setOutgoing(media);
 		setIndex(nextIndex);
@@ -121,6 +126,7 @@ export function FeaturedReview({ items }: Props) {
 					key={media.id}
 					media={media}
 					direction={direction}
+					skipEnterAnimation={!hasTransitioned}
 				/>
 				{/* Swapped in for the cards above via CSS below $mobile-breakpoint. Same outgoing/incoming pair and keys, so crossfade/settle timing matches the desktop pair. */}
 				{outgoing && (
@@ -134,6 +140,7 @@ export function FeaturedReview({ items }: Props) {
 				<FeaturedReviewCardMobile
 					key={`${media.id}-mobile`}
 					media={media}
+					skipEnterAnimation={!hasTransitioned}
 					direction={direction}
 				/>
 			</div>
@@ -165,17 +172,26 @@ type CardProps = {
 	media: MediaRecord & { review: NonNullable<MediaRecord["review"]> };
 	direction: 1 | -1;
 	exiting?: boolean;
+	// True only for the very first card shown on page load — see FeaturedReviewCardMobile's own
+	// comment on this prop.
+	skipEnterAnimation?: boolean;
 };
 
-function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
+function FeaturedReviewCard({
+	media,
+	direction,
+	exiting = false,
+	skipEnterAnimation = false,
+}: CardProps) {
 	const dict = useDictionary();
 	const locale = useLocale();
 	// Entering cards start offset/transparent, flip to .settled a frame after mount. Exiting cards run this backwards (start settled, then flip off) to play the fade-and-slide-out. requestAnimationFrame ensures a real paint happens between the two states, or the transition gets coalesced away.
-	const [settled, setSettled] = useState(exiting);
+	const [settled, setSettled] = useState(exiting || skipEnterAnimation);
 	useEffect(() => {
+		if (skipEnterAnimation) return;
 		const frame = requestAnimationFrame(() => setSettled(!exiting));
 		return () => cancelAnimationFrame(frame);
-	}, [exiting]);
+	}, [exiting, skipEnterAnimation]);
 
 	// "Read full review" only shows when .excerpt actually clips — measured via ResizeObserver since there's no way to know that without rendering it.
 	const excerptRef = useRef<HTMLDivElement>(null);
@@ -216,8 +232,9 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 						sizes="(max-width: 950px) 100vw, 950px"
 						className={styles.banner_image}
 						style={{ objectPosition: `50% ${media.bannerFocusY}%` }}
-						// Skips lazy-loading — the initial hero is the page's LCP candidate, and a swapped-in card is wanted immediately too.
-						preload
+						// fetchPriority (not preload/priority) is what actually sets fetchpriority=high on the
+						// request — the initial hero is the page's LCP candidate, a swapped-in card wants it too.
+						fetchPriority="high"
 					/>
 					<div className={styles.banner_backdrop} />
 				</div>

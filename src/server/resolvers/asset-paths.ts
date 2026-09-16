@@ -14,6 +14,9 @@ export const BANNER_DIR = "banners/cache";
 // Own directory, same reasoning as CHANGELOG_THUMB_DIR vs POSTER_DIR — the mobile featured-review card only ever displays the banner at ~380px CSS width (~720px at 2x DPI), well under BANNER_MAX_WIDTH.
 export const BANNER_MOBILE_DIR = "banners/mobile-cache";
 export const BANNER_MOBILE_MAX_WIDTH = 800;
+// Lower than BANNER_QUALITY — smaller on-screen size hides compression artifacts better, and this
+// is the mobile LCP image, so trimming bytes matters more here than it does for the desktop hero.
+export const BANNER_MOBILE_QUALITY = 45;
 
 // Own directory, same reasoning as CHANGELOG_THUMB_DIR vs POSTER_DIR.
 export const CHANGELOG_BANNER_THUMB_DIR = "banners/changelog-cache";
