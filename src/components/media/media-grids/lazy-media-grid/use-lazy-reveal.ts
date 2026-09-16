@@ -45,13 +45,14 @@ export function useLazyReveal<T extends { id: string | number }>(
 		const sentinel = sentinelRef.current;
 		if (!sentinel) return;
 
-		// rootMargin gives it a head start: next batch mounts before the sentinel reaches the viewport edge.
+		// rootMargin gives it a head start: next batch mounts (and its posters start loading)
+		// well before the sentinel reaches the viewport edge, same margin as LazyRecentMediaSection.
 		const observer = new IntersectionObserver(
 			(entries) => {
 				if (!entries.some((entry) => entry.isIntersecting)) return;
 				setVisibleCount((count) => Math.min(count + batchSize, items.length));
 			},
-			{ rootMargin: "100px" },
+			{ rootMargin: "200px" },
 		);
 		observer.observe(sentinel);
 		return () => observer.disconnect();

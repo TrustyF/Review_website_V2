@@ -31,7 +31,8 @@ export function AllReviewsFeed({ initialMedia, initialHasMore }: Props) {
 		const sentinel = sentinelRef.current;
 		if (!sentinel) return;
 
-		// rootMargin starts the fetch a bit before the sentinel reaches the viewport edge.
+		// rootMargin starts the fetch well before the sentinel reaches the viewport edge, same
+		// margin as LazyRecentMediaSection/useLazyReveal.
 		const observer = new IntersectionObserver(
 			(entries) => {
 				if (!entries.some((entry) => entry.isIntersecting)) return;
