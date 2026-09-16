@@ -2,6 +2,7 @@ import { db } from "@/server/db/client";
 import {
 	BANNER_DIR,
 	BANNER_FORMAT,
+	BANNER_MOBILE_DIR,
 	mediaAssetFilename,
 	POSTER_DIR,
 } from "@/server/resolvers/poster-resolver";
@@ -61,15 +62,21 @@ async function main() {
 		validBannerFilenames,
 		"banner",
 	);
+	const deletedBannersMobile = await cleanupOrphans(
+		BANNER_MOBILE_DIR,
+		validBannerFilenames,
+		"banner (mobile)",
+	);
 
+	const totalBanners = deletedBanners.length + deletedBannersMobile.length;
 	await appendJobSummary([
 		"## Cleanup Posters",
 		"",
 		"| Type | Removed |",
 		"| --- | --- |",
 		`| Poster | ${deletedPosters.length} |`,
-		`| Banner | ${deletedBanners.length} |`,
-		...(deletedPosters.length + deletedBanners.length > 0
+		`| Banner | ${totalBanners} |`,
+		...(deletedPosters.length + totalBanners > 0
 			? [
 					"",
 					"### Removed files",
@@ -77,6 +84,7 @@ async function main() {
 					...formatSummaryList([
 						...deletedPosters.map((f) => `[poster] ${f}`),
 						...deletedBanners.map((f) => `[banner] ${f}`),
+						...deletedBannersMobile.map((f) => `[banner-mobile] ${f}`),
 					]),
 				]
 			: []),

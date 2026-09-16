@@ -62,13 +62,13 @@ export function FeaturedReviewCardMobile({ media, direction, exiting = false }: 
 			{media.bannerSrc && (
 				<div className={styles.banner}>
 					<Image
-						src={media.bannerSrc}
+						src={media.bannerSrcMobile ?? media.bannerSrc}
 						alt=""
 						fill
 						sizes="100vw"
 						className={styles.banner_image}
 						style={{ objectPosition: `50% ${media.bannerFocusY}%` }}
-						priority
+						preload
 					/>
 					<div className={styles.banner_backdrop} />
 				</div>

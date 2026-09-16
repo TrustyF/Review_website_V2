@@ -40,6 +40,8 @@ type BaseRecord = Omit<Media, "type"> & {
 	posterSrc: string;
 	// Unlike posterSrc, no placeholder fallback — absent just means "don't render a banner section", not "show a stand-in image".
 	bannerSrc: string | null;
+	// Smaller pre-encoded variant for the mobile featured-review card, which never displays the banner wider than ~800px physical.
+	bannerSrcMobile: string | null;
 	// "Watched on" — Review.createDate itself, not a separate column, since saveReview now requires a rating to save at all. Still gated on rating as a defensive fallback for older rows.
 	watchedDate: Date | null;
 };
@@ -60,6 +62,9 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 	const bannerSrc = raw.bannerPath
 		? `/api/banner/${raw.id}/${mediaAssetFilename(raw.id, raw.bannerPath, BANNER_FORMAT)}`
 		: null;
+	const bannerSrcMobile = raw.bannerPath
+		? `${bannerSrc}?size=mobile`
+		: null;
 	const watchedDate = raw.review?.rating != null ? raw.review.createDate : null;
 	const genres = (raw.mediaGenres ?? []).map((mg) => mg.genre.name);
 	switch (raw.type) {
@@ -72,6 +77,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				movie: raw.movie,
 				posterSrc,
 				bannerSrc,
+				bannerSrcMobile,
 				watchedDate,
 				genres,
 			};
@@ -83,6 +89,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				tvShow: raw.tvShow,
 				posterSrc,
 				bannerSrc,
+				bannerSrcMobile,
 				watchedDate,
 				genres,
 			};
@@ -94,6 +101,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				manga: raw.manga,
 				posterSrc,
 				bannerSrc,
+				bannerSrcMobile,
 				watchedDate,
 				genres,
 			};
@@ -105,6 +113,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				comic: raw.comic,
 				posterSrc,
 				bannerSrc,
+				bannerSrcMobile,
 				watchedDate,
 				genres,
 			};
@@ -116,6 +125,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				game: raw.game,
 				posterSrc,
 				bannerSrc,
+				bannerSrcMobile,
 				watchedDate,
 				genres,
 			};
@@ -127,6 +137,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				book: raw.book,
 				posterSrc,
 				bannerSrc,
+				bannerSrcMobile,
 				watchedDate,
 				genres,
 			};

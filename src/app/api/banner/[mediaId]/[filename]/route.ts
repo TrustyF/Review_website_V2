@@ -5,10 +5,12 @@ import { resolveBanner } from "@/server/resolvers/poster-resolver";
 
 // Same lazy-resolve-on-request pattern as /api/poster. [filename] is unused, only content-addressing the URL so the immutable Cache-Control below is safe.
 export async function GET(
-	_req: Request,
+	req: Request,
 	{ params }: { params: Promise<{ mediaId: string }> },
 ) {
 	const { mediaId } = await params;
+	const variant =
+		new URL(req.url).searchParams.get("size") === "mobile" ? "mobile" : "full";
 	const id = Number(mediaId);
 	if (!Number.isFinite(id)) {
 		return NextResponse.json({ error: "Invalid media id" }, { status: 400 });
@@ -29,7 +31,12 @@ export async function GET(
 		}
 	}
 
-	const resolved = await resolveBanner(id, media.type, media.bannerPath);
+	const resolved = await resolveBanner(
+		id,
+		media.type,
+		media.bannerPath,
+		variant,
+	);
 	if (!resolved) {
 		return NextResponse.json(
 			{ error: "No banner for this media" },

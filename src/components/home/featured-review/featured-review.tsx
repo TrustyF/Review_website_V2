@@ -217,7 +217,7 @@ function FeaturedReviewCard({ media, direction, exiting = false }: CardProps) {
 						className={styles.banner_image}
 						style={{ objectPosition: `50% ${media.bannerFocusY}%` }}
 						// Skips lazy-loading — the initial hero is the page's LCP candidate, and a swapped-in card is wanted immediately too.
-						priority
+						preload
 					/>
 					<div className={styles.banner_backdrop} />
 				</div>

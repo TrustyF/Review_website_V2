@@ -8,6 +8,8 @@ import {
 	BANNER_DIR,
 	BANNER_FORMAT,
 	BANNER_MAX_WIDTH,
+	BANNER_MOBILE_DIR,
+	BANNER_MOBILE_MAX_WIDTH,
 	BANNER_QUALITY,
 	CHANGELOG_BANNER_THUMB_DIR,
 	CHANGELOG_THUMB_DIR,
@@ -281,13 +283,16 @@ export async function resolveBanner(
 	mediaId: number,
 	type: MediaType,
 	bannerPath: string | null,
+	variant: "full" | "mobile" = "full",
 ): Promise<(ResolvedAsset & { fresh: boolean }) | null> {
 	if (!bannerPath) return null;
 
+	const dir = variant === "mobile" ? BANNER_MOBILE_DIR : BANNER_DIR;
+	const maxWidth = variant === "mobile" ? BANNER_MOBILE_MAX_WIDTH : BANNER_MAX_WIDTH;
 	const filename = mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT);
 	const storage = getImageStorage();
 
-	const cached = await storage.read(BANNER_DIR, filename);
+	const cached = await storage.read(dir, filename);
 	if (cached) {
 		return {
 			bytes: cached,
@@ -306,12 +311,12 @@ export async function resolveBanner(
 	// Deduped so concurrent misses on this banner don't each redo the
 	// resize/encode/write.
 	const encode = () =>
-		dedupeEncode(`${BANNER_DIR}/${filename}`, async () => {
+		dedupeEncode(`${dir}/${filename}`, async () => {
 			const encoded = await sharp(source)
-				.resize({ width: BANNER_MAX_WIDTH, withoutEnlargement: true })
+				.resize({ width: maxWidth, withoutEnlargement: true })
 				.avif({ quality: BANNER_QUALITY })
 				.toBuffer();
-			await storage.write(BANNER_DIR, filename, encoded);
+			await storage.write(dir, filename, encoded);
 			return encoded;
 		});
 
