@@ -1,8 +1,7 @@
 import type { MetadataRoute } from "next";
 import { dbPublic } from "@/server/db/client";
 import { EnrichmentStatus } from "@prisma/client";
-
-const SITE_URL = process.env.SITE_URL ?? "http://localhost:3000";
+import { SITE_URL } from "@/lib/site-url";
 
 // Static, publicly-browsable routes — excludes auth/account/admin/dev pages.
 const STATIC_ROUTES = [
