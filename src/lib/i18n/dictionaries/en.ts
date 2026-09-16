@@ -27,6 +27,7 @@ export const en = {
 		activity: "Activity",
 		reviews: "Reviews",
 		lists: "Lists",
+		stats: "Stats",
 		addMedia: "Add media",
 		userLists: "User lists",
 		recommendationRequests: "Rec requests",
@@ -355,6 +356,62 @@ export const en = {
 		gapDaysLater: (n: number) => `${n} day${n === 1 ? "" : "s"} later`,
 		gapMonthsLater: (n: number) => `${n} month${n === 1 ? "" : "s"} later`,
 		gapYearsLater: (n: number) => `${n} year${n === 1 ? "" : "s"} later`,
+	},
+	stats: {
+		title: "Stats",
+		yearScope: {
+			all: "All",
+		},
+		tiles: {
+			titles: "Titles tracked",
+			rated: "Titles rated",
+			reviewsWritten: "Reviews written",
+			avgRating: "Average rating",
+			movieTimeWatched: "Movie time watched",
+		},
+		mediaByType: {
+			title: "Catalog by type",
+		},
+		modeToggle: {
+			titles: "Titles",
+			rating: "Avg rating",
+		},
+		titleCount: (count: number) => `${count} title${count === 1 ? "" : "s"}`,
+		worldMap: {
+			title: "Where it's from",
+			subtitle: "Titles by country of origin",
+			topCountriesTitle: "Top countries",
+			tooltipRating: (rating: number, count: number) =>
+				`${rating.toFixed(1)}/10 (${count} title${count === 1 ? "" : "s"})`,
+			noRating: "No ratings yet",
+			fewer: "Fewer",
+			more: "More",
+			lower: "Lower",
+			higher: "Higher",
+		},
+		topGenres: {
+			title: "Top genres",
+		},
+		topPeople: {
+			title: "Top people",
+			empty: "No credited people yet.",
+			roleActors: "Actors",
+			roleDirectors: "Directors",
+		},
+		ratingDistribution: {
+			title: "Rating distribution",
+		},
+		reviewsByYear: {
+			title: "Reviews per year",
+			tooltip: (count: number, year: number) =>
+				`${count} review${count === 1 ? "" : "s"} in ${year}`,
+		},
+		mediaByDecade: {
+			title: "Catalog by decade",
+			tick: (decade: number) => `${decade}s`,
+			tooltip: (count: number, decadeLabel: string) =>
+				`${count} title${count === 1 ? "" : "s"} from the ${decadeLabel}`,
+		},
 	},
 	digest: {
 		subject: "What I've been watching",

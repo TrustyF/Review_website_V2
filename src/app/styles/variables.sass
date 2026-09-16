@@ -210,3 +210,29 @@ $navbar-real-height-mobile: 2.5rem
 // Compounded onto .nav_icon so specificity matches and wins by source order.
 @mixin nav-icon-brighten
   color: var(--foreground)
+
+// Bordered/raised section box — was about to be hand-copied across every
+// stats-page chart section, now centralized. Callers add their own padding
+// overrides only if a section needs to break the default.
+@mixin card-section
+  padding: 1.25rem
+  border: 1px solid var(--surface-border)
+  border-radius: 0.5rem
+  background: var(--surface)
+
+// Pill-shaped toggle option (world map's Titles/Avg rating switch, top
+// people's own copy) — border+dim by default, brand border when active.
+@mixin toggle-pill
+  padding: 0.3rem 0.8rem
+  border: 2px solid var(--surface-border)
+  border-radius: 10px
+  color: var(--accent1)
+  font-size: 0.8rem
+  cursor: pointer
+
+  &:hover
+    color: var(--foreground)
+
+  &[data-active="true"]
+    color: var(--foreground)
+    border-color: var(--brand)

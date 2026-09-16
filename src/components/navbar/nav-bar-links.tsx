@@ -1,6 +1,7 @@
 "use client";
 import {
 	BookOpen,
+	ChartNoAxesCombined,
 	GamepadDirectional,
 	LayoutList,
 	List,
@@ -94,6 +95,15 @@ export function NavBarLinks({
 							iconOnly
 							prefetch>
 							{dict.nav.lists}
+						</NavLink>
+						<NavLink
+							href="/stats"
+							icon={ChartNoAxesCombined}
+							className={barStyle.link}
+							pathname={pathname}
+							iconOnly
+							prefetch>
+							{dict.nav.stats}
 						</NavLink>
 					</div>
 

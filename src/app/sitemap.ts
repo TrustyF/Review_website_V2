@@ -14,6 +14,7 @@ const STATIC_ROUTES = [
 	"/games",
 	"/manga",
 	"/reviews",
+	"/stats",
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

@@ -27,6 +27,7 @@ export const fr = {
 		activity: "Activité",
 		reviews: "Critiques",
 		lists: "Listes",
+		stats: "Statistiques",
 		addMedia: "Ajouter un média",
 		userLists: "Listes des utilisateurs",
 		recommendationRequests: "Demandes de recommandation",
@@ -89,7 +90,8 @@ export const fr = {
 			"Rien de recommandé pour l'instant — les listes qu'un admin vous destine spécifiquement apparaîtront ici.",
 		askForRecommendation: "Demander une recommandation",
 		askForRecommendationHint: "Arthur vous préparera une liste.",
-		askForRecommendationPending: "Votre demande est en attente — je reviens vers vous bientôt.",
+		askForRecommendationPending:
+			"Votre demande est en attente — je reviens vers vous bientôt.",
 		dangerZoneTitle: "Zone de danger",
 		dangerZoneSubtitle:
 			"Supprime définitivement votre compte, votre liste à voir et vos listes. Cette action est irréversible.",
@@ -282,9 +284,11 @@ export const fr = {
 	},
 	recommendationRequest: {
 		title: "Demander une recommandation",
-		subtitle: "Dites-moi ce dont vous avez envie et je vous préparerai une liste.",
+		subtitle:
+			"Dites-moi ce dont vous avez envie et je vous préparerai une liste.",
 		backToAccount: "← Compte",
-		messagePlaceholder: "ex. quelque chose comme une série mystère à suspense lent…",
+		messagePlaceholder:
+			"ex. quelque chose comme une série mystère à suspense lent…",
 		submit: "Envoyer la demande",
 		submitting: "Envoi…",
 		submitFailed: "Échec de l'envoi. Réessayez.",
@@ -360,6 +364,62 @@ export const fr = {
 		gapDaysLater: (n: number) => `${n} jour${n === 1 ? "" : "s"} plus tard`,
 		gapMonthsLater: (n: number) => `${n} mois plus tard`,
 		gapYearsLater: (n: number) => `${n} an${n === 1 ? "" : "s"} plus tard`,
+	},
+	stats: {
+		title: "Statistiques",
+		yearScope: {
+			all: "Tout",
+		},
+		tiles: {
+			titles: "Titres suivis",
+			rated: "Titres notés",
+			reviewsWritten: "Critiques écrites",
+			avgRating: "Note moyenne",
+			movieTimeWatched: "Temps de films regardés",
+		},
+		mediaByType: {
+			title: "Collection par type",
+		},
+		modeToggle: {
+			titles: "Titres",
+			rating: "Note moyenne",
+		},
+		titleCount: (count: number) => `${count} titre${count === 1 ? "" : "s"}`,
+		worldMap: {
+			title: "D'où ça vient",
+			subtitle: "Titres par pays d'origine",
+			topCountriesTitle: "Top pays",
+			tooltipRating: (rating: number, count: number) =>
+				`${rating.toFixed(1)}/10 (${count} titre${count === 1 ? "" : "s"})`,
+			noRating: "Pas encore de note",
+			fewer: "Moins",
+			more: "Plus",
+			lower: "Plus bas",
+			higher: "Plus haut",
+		},
+		topGenres: {
+			title: "Genres les plus fréquents",
+		},
+		topPeople: {
+			title: "Personnalités les plus créditées",
+			empty: "Aucune personne créditée pour le moment.",
+			roleActors: "Acteurs",
+			roleDirectors: "Réalisateurs",
+		},
+		ratingDistribution: {
+			title: "Répartition des notes",
+		},
+		reviewsByYear: {
+			title: "Critiques par année",
+			tooltip: (count: number, year: number) =>
+				`${count} critique${count === 1 ? "" : "s"} en ${year}`,
+		},
+		mediaByDecade: {
+			title: "Collection par décennie",
+			tick: (decade: number) => `${decade}s`,
+			tooltip: (count: number, decadeLabel: string) =>
+				`${count} titre${count === 1 ? "" : "s"} des années ${decadeLabel}`,
+		},
 	},
 	digest: {
 		subject: "Ce que j'ai regardé",

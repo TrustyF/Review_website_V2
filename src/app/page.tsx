@@ -22,7 +22,7 @@ const RECENTLY_WATCHED_COUNT = 14;
 const MY_WATCHLIST_COUNT = 7;
 const ANTICIPATED_RELEASES_COUNT = 14;
 // How far back "recent" reaches for getRecentMovies.
-const RECENT_MOVIES_MONTHS = 5;
+const RECENT_MOVIES_MONTHS = 2;
 // How far out an UPCOMING release can be and still count as "soon" for getAnticipatedReleases.
 const ANTICIPATED_SOON_MONTHS = 2;
 // Floor below which the date filter is dropped, so the section doesn't look sparse after a quiet stretch.
@@ -102,7 +102,10 @@ async function getAnticipatedReleases() {
 				isAdult: false,
 				isDeleted: false,
 				OR: [
-					{ status: MediaStatus.UPCOMING, releaseDate: { gte: new Date(), lte: soonCutoff } },
+					{
+						status: MediaStatus.UPCOMING,
+						releaseDate: { gte: new Date(), lte: soonCutoff },
+					},
 					{ releaseDate: { gte: cutoff } },
 				],
 				NOT: { review: { rating: { not: null } } },
