@@ -19,10 +19,42 @@ import { getLocale } from "@/lib/i18n/get-locale";
 
 import { fontVariables } from "./fonts";
 
+const SITE_URL = process.env.SITE_URL ?? "http://localhost:3000";
+
 export const metadata: Metadata = {
-	title: "Arthur's corner",
+	title: {
+		default: "Arthur's corner — Arthur Sirjacobs' movie, TV, book & game reviews",
+		template: "%s — Arthur's corner",
+	},
+	description:
+		"Arthur Sirjacobs' personal reviews and ratings of movies, TV shows, books, comics, manga and games.",
+	authors: [{ name: "Arthur Sirjacobs", url: SITE_URL }],
+	creator: "Arthur Sirjacobs",
 	// Needed to resolve relative openGraph.images URLs into absolute ones for link-preview crawlers. Override via SITE_URL once deployed.
-	metadataBase: new URL(process.env.SITE_URL ?? "http://localhost:3000"),
+	metadataBase: new URL(SITE_URL),
+	openGraph: {
+		siteName: "Arthur's corner",
+		type: "website",
+		url: SITE_URL,
+	},
+	twitter: {
+		card: "summary_large_image",
+	},
+};
+
+const personJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "Person",
+	name: "Arthur Sirjacobs",
+	url: SITE_URL,
+};
+
+const websiteJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "WebSite",
+	name: "Arthur's corner",
+	url: SITE_URL,
+	author: { "@type": "Person", name: "Arthur Sirjacobs" },
 };
 
 export default async function RootLayout({
@@ -34,6 +66,19 @@ export default async function RootLayout({
 
 	return (
 		<html lang={locale} className={fontVariables}>
+			<head>
+				{/* Person + WebSite entities so Google can associate this site with the "Arthur Sirjacobs" name query. */}
+				<script
+					type="application/ld+json"
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: static, no user input
+					dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
+				/>
+				<script
+					type="application/ld+json"
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: static, no user input
+					dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+				/>
+			</head>
 			<body>
 				<I18nProvider locale={locale}>
 					<AuthSessionProvider>
