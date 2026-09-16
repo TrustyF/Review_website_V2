@@ -1,4 +1,4 @@
-import { record } from "rrweb";
+import type { record } from "rrweb";
 import type { eventWithTime } from "@rrweb/types";
 import { fetchGeo, getSessionSeed, type Geo } from "@/lib/analytics/session";
 
@@ -14,6 +14,9 @@ let sendInterval: ReturnType<typeof setInterval> | null = null;
 let geo: Geo = null;
 let visibilityHandler: (() => void) | null = null;
 let flushOnHide: (() => void) | null = null;
+// Guards the gap while rrweb's chunk is still loading — set to false means a
+// stop() landed before start() finished, so the just-loaded record() must be skipped.
+let starting = false;
 
 function batchPayload(batch: eventWithTime[]) {
 	return {
@@ -37,12 +40,19 @@ async function sendBatch(batch: eventWithTime[]) {
 	if (!ok) events = batch.concat(events);
 }
 
-export function start() {
-	if (stopRecording) return;
+// Not statically imported — rrweb is a sizable library, and this way it only
+// ships to the client once a session actually starts recording, off the initial bundle.
+export async function start() {
+	if (stopRecording || starting) return;
+	starting = true;
 
 	fetchGeo().then((g) => {
 		geo = g;
 	});
+
+	const { record } = await import("rrweb");
+	if (!starting) return; // stop() landed while the chunk was loading
+	starting = false;
 
 	stopRecording = record({
 		emit(event) {
@@ -85,6 +95,7 @@ export function start() {
 }
 
 export function stop() {
+	starting = false;
 	if (stopRecording) {
 		stopRecording();
 		stopRecording = null;

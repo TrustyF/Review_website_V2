@@ -18,10 +18,13 @@ import {
 	BANNER_FORMAT,
 	bannerUrlFor,
 	mediaAssetFilename,
+	persistCroppedBanner,
+	persistCroppedPoster,
 	posterUrlFor,
 	resolveBanner,
 	resolvePoster,
 } from "@/server/resolvers/poster-resolver";
+import { readCroppedFile } from "@/server/resolvers/image-crop-resolver";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
 import type { PickableImage } from "@/components/media/media-management/media-editor/components/image-picker";
 import { recordInvocation } from "@/server/dev/invocation-tracker";
@@ -491,14 +494,16 @@ export async function updateMediaPoster(
 		});
 	}
 
-	// resolvePoster returns as soon as the source downloads and defers the resize/encode/write
-	// to after(), so this Server Action doesn't tie up the instance and block others behind it.
-	await resolvePoster(
-		mediaId,
-		existing!.type,
-		existing!.externalId,
-		posterPath,
-	);
+	// A custom crop's bytes live in the transient cropped/ store (swept after 24h) — persist them
+	// directly rather than relying on resolvePoster's lazy fetch of a URL that later expires.
+	const croppedBytes = await readCroppedFile(posterPath);
+	if (croppedBytes) {
+		await persistCroppedPoster(mediaId, posterPath, croppedBytes);
+	} else {
+		// resolvePoster returns as soon as the source downloads and defers the resize/encode/write
+		// to after(), so this Server Action doesn't tie up the instance and block others behind it.
+		await resolvePoster(mediaId, existing!.type, existing!.externalId, posterPath);
+	}
 	if (revalidate) revalidateMediaPaths(mediaId, existing!.type);
 	return `/api/poster/${mediaId}/${mediaAssetFilename(mediaId, posterPath)}`;
 }
@@ -586,9 +591,16 @@ export async function updateMediaBanner(
 		});
 	}
 
-	// resolveBanner returns as soon as the source downloads and defers the encode to
-	// after(), so this Server Action doesn't tie up the instance (see updateMediaPoster).
-	await resolveBanner(mediaId, existing!.type, bannerPath);
+	// A custom crop's bytes live in the transient cropped/ store (swept after 24h) — persist them
+	// directly rather than relying on resolveBanner's lazy fetch of a URL that later expires.
+	const croppedBytes = await readCroppedFile(bannerPath);
+	if (croppedBytes) {
+		await persistCroppedBanner(mediaId, bannerPath, croppedBytes);
+	} else {
+		// resolveBanner returns as soon as the source downloads and defers the encode to
+		// after(), so this Server Action doesn't tie up the instance (see updateMediaPoster).
+		await resolveBanner(mediaId, existing!.type, bannerPath);
+	}
 	if (revalidate) revalidateMediaPaths(mediaId, existing!.type);
 	return `/api/banner/${mediaId}/${mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT)}`;
 }

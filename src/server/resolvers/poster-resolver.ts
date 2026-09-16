@@ -131,8 +131,16 @@ export async function resolvePoster(
 	}
 
 	const sourceUrl = posterUrlFor(type, externalId, posterPath, "full");
-	const res = await fetch(sourceUrl);
-	if (!res.ok) throw new Error("Poster download failed");
+	// A dead source (source site down, expired upload, ...) must degrade to the placeholder,
+	// not crash the request — same fallback as the no-posterPath case above.
+	const res = await fetch(sourceUrl).catch(() => null);
+	if (!res?.ok) {
+		return {
+			bytes: await readFile(PLACEHOLDER_POSTER_PATH),
+			contentType: "image/jpeg",
+			fresh: false,
+		};
+	}
 	const source = Buffer.from(await res.arrayBuffer());
 	const sourceContentType = res.headers.get("content-type") || "image/jpeg";
 
@@ -151,6 +159,17 @@ export async function resolvePoster(
 	});
 
 	return { bytes: source, contentType: sourceContentType, fresh: true };
+}
+
+// Persists a saved poster crop directly, same reasoning as persistCroppedBanner. Posters are
+// never resized (see resolvePoster above), so the crop's already-final bytes are used as-is.
+export async function persistCroppedPoster(
+	mediaId: number,
+	posterPath: string,
+	croppedBytes: Buffer,
+): Promise<void> {
+	const filename = mediaAssetFilename(mediaId, posterPath);
+	await getImageStorage().write(POSTER_DIR, filename, croppedBytes);
 }
 
 async function fetchImageBytes(url: string): Promise<Buffer> {
@@ -301,8 +320,10 @@ export async function resolveBanner(
 		};
 	}
 
-	const res = await fetch(bannerUrlFor(type, bannerPath));
-	if (!res.ok) throw new Error("Banner download failed");
+	// A dead source (e.g. an expired cropped-image upload) must degrade to "no banner", not
+	// crash the request — resolveBanner has no fallback bytes to serve otherwise.
+	const res = await fetch(bannerUrlFor(type, bannerPath)).catch(() => null);
+	if (!res?.ok) return null;
 	const source = Buffer.from(await res.arrayBuffer());
 	// Read off the response rather than hardcoded, so it stays correct if a
 	// source ever changes format.
@@ -325,6 +346,28 @@ export async function resolveBanner(
 	});
 
 	return { bytes: source, contentType: sourceContentType, fresh: true };
+}
+
+// Persists a saved crop into the long-term banner cache directly — leaving it to resolveBanner's
+// on-request fetch reads back CROPPED_DIR, which cleanup-cropped-images.ts sweeps after 24h.
+export async function persistCroppedBanner(
+	mediaId: number,
+	bannerPath: string,
+	croppedBytes: Buffer,
+): Promise<void> {
+	const filename = mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT);
+	const storage = getImageStorage();
+
+	// saveCroppedImage's "banner-16-9" shape already encodes at BANNER_MAX_WIDTH/BANNER_QUALITY/
+	// BANNER_FORMAT — identical to resolveBanner's own full-size encode, so used as-is.
+	await storage.write(BANNER_DIR, filename, croppedBytes);
+
+	// Mobile is a further downsize of the (already-encoded) crop, not an upscale.
+	const mobileBytes = await sharp(croppedBytes)
+		.resize({ width: BANNER_MOBILE_MAX_WIDTH, withoutEnlargement: true })
+		.avif({ quality: BANNER_QUALITY })
+		.toBuffer();
+	await storage.write(BANNER_MOBILE_DIR, filename, mobileBytes);
 }
 
 // Deferred-encode shape like poster/banner, smaller resize, no fallback.

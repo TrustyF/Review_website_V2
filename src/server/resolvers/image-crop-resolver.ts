@@ -23,7 +23,8 @@ const AVATAR_QUALITY = 80;
 
 export type CropRect = { x: number; y: number; width: number; height: number };
 
-// Single dir (content-addressed); different shapes never collide.
+// Single dir (content-addressed); different shapes never collide. Transient (24h sweep) — any save
+// action accepting a crop must persist it via readCroppedFile immediately, never store this URL.
 export const CROPPED_DIR = "cropped";
 
 // Reads temp file from saveCroppedImage (null for anything else).
