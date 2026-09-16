@@ -66,7 +66,7 @@ async function toPosterSrc(media: MediaSelection): Promise<string> {
 		media.externalId,
 		media.posterPath,
 	);
-	return toAbsoluteUrl(src);
+	return toAbsoluteUrl(src ?? PLACEHOLDER_POSTER_SRC);
 }
 
 async function toBannerSrc(media: MediaSelection): Promise<string | null> {

@@ -72,12 +72,14 @@ async function ChangeValue({
 
 	if (field === "posterPath") {
 		// Content-addressed by mediaId + historical posterPath, so it keeps working after the current poster changes.
+		// Null when that historical source is no longer reachable (e.g. an expired crop upload).
 		const thumbSrc = await resolveChangelogPosterThumb(
 			mediaId,
 			type,
 			externalId,
 			value,
 		);
+		if (!thumbSrc) return null;
 		return (
 			<Image
 				className={styles.poster_value}
@@ -92,6 +94,7 @@ async function ChangeValue({
 	if (field === "bannerPath") {
 		// Same idea as posterPath above, but landscape; bannerUrlFor doesn't need externalId.
 		const thumbSrc = await resolveChangelogBannerThumb(mediaId, type, value);
+		if (!thumbSrc) return null;
 		return (
 			<Image
 				className={styles.banner_value}

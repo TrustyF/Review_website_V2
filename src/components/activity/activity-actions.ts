@@ -77,10 +77,10 @@ type MediaSelection = {
 // not /api/poster's full-size resolve. posterSrcCache dedupes since one media can appear in several entries.
 async function toMediaEntry(
 	media: MediaSelection,
-	posterSrcCache: Map<number, Promise<string>>,
+	posterSrcCache: Map<number, Promise<string | null>>,
 ): Promise<ActivityFeedEntry["media"]> {
 	if (!media) return null;
-	let posterSrc: Promise<string> | undefined;
+	let posterSrc: Promise<string | null> | undefined;
 	if (media.posterPath) {
 		posterSrc = posterSrcCache.get(media.id);
 		if (!posterSrc) {
@@ -98,7 +98,7 @@ async function toMediaEntry(
 		title: media.title,
 		titleFr: media.titleFr,
 		type: media.type,
-		posterSrc: posterSrc ? await posterSrc : PLACEHOLDER_POSTER_SRC,
+		posterSrc: posterSrc ? ((await posterSrc) ?? PLACEHOLDER_POSTER_SRC) : PLACEHOLDER_POSTER_SRC,
 	};
 }
 
@@ -428,7 +428,7 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 		groupSameDayMediaAdditions(groupSameDayListAdditions(entries)),
 	);
 
-	const posterSrcCache = new Map<number, Promise<string>>();
+	const posterSrcCache = new Map<number, Promise<string | null>>();
 	return Promise.all(
 		groups.map(async ({ members, axis }): Promise<ActivityFeedEntry> => {
 			// members is always non-empty (grouping always starts a group with

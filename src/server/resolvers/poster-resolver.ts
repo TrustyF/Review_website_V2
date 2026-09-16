@@ -61,7 +61,8 @@ function dedupeEncode(
 	return promise;
 }
 
-// Shared cache-or-download for poster/banner/thumb variants.
+// Shared cache-or-download for poster/banner/thumb variants. A dead source (expired crop, source
+// site down, ...) returns null rather than throwing — callers fall back to a placeholder/omit.
 async function cacheOrDownload(
 	dir: string,
 	filename: string,
@@ -69,31 +70,35 @@ async function cacheOrDownload(
 	{ resize }: { resize?: { width?: number; height?: number } } = {},
 	quality = POSTER_QUALITY,
 	format: CacheFormat = "webp",
-): Promise<{ bytes: Buffer }> {
+): Promise<{ bytes: Buffer } | null> {
 	const storage = getImageStorage();
 
 	const cached = await storage.read(dir, filename);
 	if (cached) return { bytes: cached };
 
-	const bytes = await dedupeEncode(`${dir}/${filename}`, async () => {
-		const res = await fetch(sourceUrl);
-		if (!res.ok) throw new Error("Poster download failed");
-		const source = Buffer.from(await res.arrayBuffer());
-		let image = sharp(source);
-		if (resize) {
-			image = image.resize({ ...resize, withoutEnlargement: true });
-		}
-		const encoded =
-			format === "avif"
-				? image.avif({ quality })
-				: format === "jpeg"
-					? image.jpeg({ quality })
-					: image.webp({ quality });
-		const bytes = await encoded.toBuffer();
-		await storage.write(dir, filename, bytes);
-		return bytes;
-	});
-	return { bytes };
+	try {
+		const bytes = await dedupeEncode(`${dir}/${filename}`, async () => {
+			const res = await fetch(sourceUrl);
+			if (!res.ok) throw new Error("Image download failed");
+			const source = Buffer.from(await res.arrayBuffer());
+			let image = sharp(source);
+			if (resize) {
+				image = image.resize({ ...resize, withoutEnlargement: true });
+			}
+			const encoded =
+				format === "avif"
+					? image.avif({ quality })
+					: format === "jpeg"
+						? image.jpeg({ quality })
+						: image.webp({ quality });
+			const bytes = await encoded.toBuffer();
+			await storage.write(dir, filename, bytes);
+			return bytes;
+		});
+		return { bytes };
+	} catch {
+		return null;
+	}
 }
 
 // Plain Uint8Array, not Node's Buffer<ArrayBufferLike> — NextResponse's
@@ -278,21 +283,23 @@ export async function resolveLinkEmbedImage(
 	return { bytes, contentType: "image/jpeg" };
 }
 
-// Content-addressable caching like resolvePoster; resolvable after poster replaced/deleted
+// Content-addressable caching like resolvePoster; resolvable after poster replaced/deleted.
+// Null when the historical source is no longer reachable — callers fall back to a placeholder.
 export async function resolveChangelogPosterThumb(
 	mediaId: number,
 	type: MediaType,
 	externalId: string | null,
 	posterPath: string,
-) {
+): Promise<string | null> {
 	const filename = mediaAssetFilename(mediaId, posterPath);
-	await cacheOrDownload(
+	const result = await cacheOrDownload(
 		CHANGELOG_THUMB_DIR,
 		filename,
 		posterUrlFor(type, externalId, posterPath, "thumb"),
 		{ resize: { height: THUMB_MAX_HEIGHT } },
 		50,
 	);
+	if (!result) return null;
 
 	return getImageStorage().urlFor(CHANGELOG_THUMB_DIR, filename);
 }
@@ -418,7 +425,7 @@ export async function resolveEmailBanner(
 		? bannerUrlFor(type, bannerPath)
 		: posterUrlFor(type, externalId, posterPath!, "full");
 
-	await cacheOrDownload(
+	const result = await cacheOrDownload(
 		EMAIL_BANNER_DIR,
 		filename,
 		sourceUrl,
@@ -426,6 +433,7 @@ export async function resolveEmailBanner(
 		EMAIL_BANNER_QUALITY,
 		"jpeg",
 	);
+	if (!result) return null;
 
 	return getImageStorage().urlFor(EMAIL_BANNER_DIR, filename);
 }
@@ -437,10 +445,10 @@ export async function resolveEmailPoster(
 	type: MediaType,
 	externalId: string | null,
 	posterPath: string,
-): Promise<string> {
+): Promise<string | null> {
 	const filename = mediaAssetFilename(mediaId, posterPath, "jpeg");
 
-	await cacheOrDownload(
+	const result = await cacheOrDownload(
 		EMAIL_POSTER_DIR,
 		filename,
 		posterUrlFor(type, externalId, posterPath, "full"),
@@ -448,6 +456,7 @@ export async function resolveEmailPoster(
 		EMAIL_POSTER_QUALITY,
 		"jpeg",
 	);
+	if (!result) return null;
 
 	return getImageStorage().urlFor(EMAIL_POSTER_DIR, filename);
 }
@@ -458,15 +467,16 @@ export async function resolveChangelogBannerThumb(
 	mediaId: number,
 	type: MediaType,
 	bannerPath: string,
-) {
+): Promise<string | null> {
 	const filename = mediaAssetFilename(mediaId, bannerPath);
-	await cacheOrDownload(
+	const result = await cacheOrDownload(
 		CHANGELOG_BANNER_THUMB_DIR,
 		filename,
 		bannerUrlFor(type, bannerPath),
 		{ resize: { width: BANNER_THUMB_MAX_WIDTH } },
 		50,
 	);
+	if (!result) return null;
 
 	return getImageStorage().urlFor(CHANGELOG_BANNER_THUMB_DIR, filename);
 }

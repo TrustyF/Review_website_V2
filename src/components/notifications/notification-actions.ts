@@ -64,12 +64,12 @@ async function toMediaEntry(
 ): Promise<NotificationEntry["media"]> {
 	if (!media) return null;
 	const posterSrc = media.posterPath
-		? await resolveChangelogPosterThumb(
+		? ((await resolveChangelogPosterThumb(
 				media.id,
 				media.type,
 				media.externalId,
 				media.posterPath,
-			)
+			)) ?? PLACEHOLDER_POSTER_SRC)
 		: PLACEHOLDER_POSTER_SRC;
 	return { id: media.id, title: media.title, titleFr: media.titleFr, posterSrc };
 }
