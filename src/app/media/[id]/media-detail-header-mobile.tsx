@@ -51,6 +51,7 @@ export function MediaDetailHeaderMobile({
 						src={media.posterSrc}
 						title={media.title}
 						ratio={posterRatioFor(media.type)}
+						fade={false}
 					/>
 					<Suspense fallback={null}>
 						<AddToListButtonSection

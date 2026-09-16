@@ -15,7 +15,7 @@ export async function RecentMoviesSection({ items }: Props) {
 	return (
 		<section className={styles.wrapper}>
 			<h2 className={styles.title}>{dict.home.recentReleases}</h2>
-			<MediaCardDisplayProvider showTitle={false}>
+			<MediaCardDisplayProvider showTitle={false} fade={false}>
 				<OneRowMediaGrid items={items} />
 			</MediaCardDisplayProvider>
 		</section>

@@ -47,14 +47,19 @@ export function PosterEditTrigger({ media, ratio }: Props) {
 
 	if (!isAdmin) {
 		return (
-			<MediaPoster src={media.posterSrc} title={media.title} ratio={ratio} />
+			<MediaPoster
+				src={media.posterSrc}
+				title={media.title}
+				ratio={ratio}
+				fade={false}
+			/>
 		);
 	}
 
 	return (
 		<div className={styles.wrapper} ref={containerRef}>
 			<Hitbox onClick={() => setIsOpen((v) => !v)}>
-				<MediaPoster src={src} title={media.title} ratio={ratio} />
+				<MediaPoster src={src} title={media.title} ratio={ratio} fade={false} />
 			</Hitbox>
 
 			{isOpen && (

@@ -15,7 +15,7 @@ export async function AnticipatedReleasesSection({ items }: Props) {
 	return (
 		<section className={styles.wrapper}>
 			<h2 className={styles.title}>{dict.home.anticipatedReleases}</h2>
-			<MediaCardDisplayProvider showTitle={false} showReleaseDate>
+			<MediaCardDisplayProvider showTitle={false} showReleaseDate fade={false}>
 				<OneRowMediaGrid items={items} />
 			</MediaCardDisplayProvider>
 		</section>

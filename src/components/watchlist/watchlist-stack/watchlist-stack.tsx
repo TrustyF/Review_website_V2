@@ -32,7 +32,7 @@ export function WatchlistStack({ media }: Props) {
 							marginLeft: `calc((100cqw - ${count} * ${RATIO} * 100cqh) / ${count - 1})`,
 						}),
 					}}>
-					<MediaPoster src={item.posterSrc} title={item.title} />
+					<MediaPoster src={item.posterSrc} title={item.title} fade={false} />
 				</div>
 			))}
 		</div>

@@ -24,7 +24,7 @@ type Props = {
 
 // Poster + title + rating only, for dense grid listings where full MediaCardShell is too much; per-type cards supply only the differing secondary info.
 export function MediaMiniCardShell({ media, children }: Props) {
-	const { showRating, showTitle, showReviewIcon } = useMediaCardDisplay();
+	const { showRating, showTitle, showReviewIcon, fade } = useMediaCardDisplay();
 	const { isWatched } = useWatched();
 	// Set optimistically when an alternate is picked — resolvePoster defers its resize/encode
 	// to after(), so the picker's own previewSrc (already resolved) stands in until it's ready.
@@ -46,6 +46,7 @@ export function MediaMiniCardShell({ media, children }: Props) {
 					mediaId={media.id}
 					ratio={posterRatioFor(media.type)}
 					difficulty={media.review?.difficulty}
+					fade={fade}
 				/>
 				{/* eslint-disable-next-line comment-length/no-very-long -- disabled code, not prose */}
 				{/* Disabled for now — may come back later.

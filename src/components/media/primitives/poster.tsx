@@ -11,6 +11,7 @@ export function MediaPoster({
 	mediaId,
 	ratio = "2/3",
 	difficulty,
+	fade = true,
 }: {
 	src: string;
 	title: string;
@@ -18,16 +19,19 @@ export function MediaPoster({
 	ratio?: string;
 	// Corner notch on the poster (mini-cards only, via MediaMiniCardShell) — other callers omit it and render no notch.
 	difficulty?: number | null | undefined;
+	// Grid/list contexts render many posters at once, where fading avoids a jarring simultaneous
+	// pop; single/few-poster contexts (featured review, detail page, admin previews) don't need it.
+	fade?: boolean;
 }) {
-	// aspect-ratio already reserves the space (no CLS), but a blank-to-loaded snap still reads as a jarring pop, especially with whole batches mounting at once (LazyTierGrid). Fade in over a placeholder frame instead.
-	const [isLoaded, setIsLoaded] = useState(false);
+	// aspect-ratio already reserves the space (no CLS), but a blank-to-loaded snap still reads as a jarring pop, especially with whole batches mounting at once (LazyMediaGrid). Fade in over a placeholder frame instead.
+	const [isLoaded, setIsLoaded] = useState(!fade);
 	// Placeholder only shows after a delay, not unconditionally from mount — even a cached src resolves asynchronously on a fresh <img>, so checking img.complete right at mount is racy. Gating visibility on a delay sidesteps that: fast/cached loads never flash a placeholder at all.
 	const [showPlaceholder, setShowPlaceholder] = useState(false);
 	useEffect(() => {
-		if (isLoaded) return;
+		if (!fade || isLoaded) return;
 		const timeout = setTimeout(() => setShowPlaceholder(true), 100);
 		return () => clearTimeout(timeout);
-	}, [isLoaded]);
+	}, [fade, isLoaded]);
 
 	// width/height kept proportional to the passed ratio, not hardcoded to 2/3 — object-fit:cover means CSS aspectRatio controls the visible shape either way, but a mismatched intrinsic ratio still trips next/image's dev-mode warning.
 	const [ratioW, ratioH] = ratio.split("/").map(Number);

@@ -26,7 +26,7 @@ export function RecentMediaSections({
 		type === MediaType.GAME ? dict.home.recentGames : dict.home.recentReleases;
 
 	return (
-		<MediaCardDisplayProvider showTitle={false}>
+		<MediaCardDisplayProvider showTitle={false} fade={false}>
 			{recentReleases.length > 0 && (
 				<section className={styles.wrapper}>
 					<h2 className={styles.title}>{releasesTitle}</h2>

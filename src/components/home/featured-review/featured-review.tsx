@@ -247,6 +247,8 @@ function FeaturedReviewCard({
 						title={media.title}
 						// Fixed regardless of media type (unlike the grid cards) — the poster's width is fixed here too, so a varying ratio would change the card's height and shove the picker below it as items rotate.
 						ratio="2/3"
+						// Single poster, not a grid batch — no fade needed.
+						fade={false}
 					/>
 				</div>
 				<div className={styles.info}>

@@ -275,6 +275,7 @@ export default function MediaEditorModal() {
 								src={draft.posterSrc}
 								title={draft.title}
 								ratio={posterRatioFor(draft.type)}
+								fade={false}
 							/>
 							<EnrichedAgo
 								lastEnrichedAt={draft.lastEnrichedAt}

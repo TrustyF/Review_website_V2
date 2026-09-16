@@ -91,6 +91,7 @@ export function FeaturedReviewCardMobile({
 							title={media.title}
 							// Fixed regardless of media type, same reasoning as the desktop card.
 							ratio="2/3"
+							fade={false}
 						/>
 					</div>
 					<div className={styles.top}>

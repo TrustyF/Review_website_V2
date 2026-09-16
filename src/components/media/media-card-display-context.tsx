@@ -8,6 +8,9 @@ type MediaCardDisplayOptions = {
 	// Movie/TV mini cards' own release date, in the info row's children slot — off
 	// by default since most grids already show a rating there instead.
 	showReleaseDate: boolean;
+	// Off by default for small, fixed-count rows (home page sections) — the pop-in-avoidance
+	// fade only earns its keep on the large catalog grids where many posters batch-mount at once.
+	fade: boolean;
 };
 
 const defaultOptions: MediaCardDisplayOptions = {
@@ -15,6 +18,7 @@ const defaultOptions: MediaCardDisplayOptions = {
 	showTitle: true,
 	showReviewIcon: true,
 	showReleaseDate: false,
+	fade: true,
 };
 
 const MediaCardDisplayContext =
@@ -25,6 +29,7 @@ type ProviderProps = {
 	showTitle?: boolean | undefined;
 	showReviewIcon?: boolean | undefined;
 	showReleaseDate?: boolean | undefined;
+	fade?: boolean | undefined;
 	children: ReactNode;
 };
 
@@ -34,11 +39,12 @@ export function MediaCardDisplayProvider({
 	showTitle = defaultOptions.showTitle,
 	showReviewIcon = defaultOptions.showReviewIcon,
 	showReleaseDate = defaultOptions.showReleaseDate,
+	fade = defaultOptions.fade,
 	children,
 }: ProviderProps) {
 	return (
 		<MediaCardDisplayContext.Provider
-			value={{ showRating, showTitle, showReviewIcon, showReleaseDate }}>
+			value={{ showRating, showTitle, showReviewIcon, showReleaseDate, fade }}>
 			{children}
 		</MediaCardDisplayContext.Provider>
 	);
