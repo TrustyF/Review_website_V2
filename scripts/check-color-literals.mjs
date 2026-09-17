@@ -5,6 +5,15 @@ import path from "node:path";
 const SRC_DIR = path.resolve(import.meta.dirname, "..", "src");
 const ALLOWED_FILES = new Set([
 	path.join(SRC_DIR, "app", "styles", "globals.sass"),
+	// One-off choropleth gradient tokens, scoped locally rather than promoted
+	// to globals.sass since nothing else uses them — see .wrapper's own comment.
+	path.join(
+		SRC_DIR,
+		"components",
+		"stats",
+		"world-map",
+		"world-map.module.sass",
+	),
 ]);
 // Dev-only routes often mock third-party UIs (Discord, WhatsApp) where literal colors are the point, not design tokens.
 const DEV_ROUTES_DIR = path.join(SRC_DIR, "app", "dev") + path.sep;

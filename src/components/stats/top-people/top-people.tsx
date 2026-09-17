@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { UserRound } from "lucide-react";
 import { Link } from "@/components/ui/link";
-import { Clickable } from "@/components/ui/clickable";
+import type { StatsMode } from "@/components/stats/mode-toggle/mode-toggle";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 import type {
@@ -14,9 +14,10 @@ import styles from "./top-people.module.sass";
 
 type Props = {
 	topPeople: Record<PersonRole, PersonRanking>;
+	mode: StatsMode;
 };
 
-type Mode = "titles" | "rating";
+type Mode = StatsMode;
 
 const ROLES: PersonRole[] = ["ACTOR", "DIRECTOR"];
 
@@ -73,29 +74,11 @@ function PersonCard({
 	);
 }
 
-export function TopPeople({ topPeople }: Props) {
+export function TopPeople({ topPeople, mode }: Props) {
 	const dict = useDictionary();
-	const [mode, setMode] = useState<Mode>("titles");
 
 	return (
 		<div className={styles.wrapper}>
-			<div className={styles.toggle}>
-				<Clickable
-					className={styles.toggle_option}
-					aria-pressed={mode === "titles"}
-					data-active={mode === "titles"}
-					onClick={() => setMode("titles")}>
-					{dict.stats.modeToggle.titles}
-				</Clickable>
-				<Clickable
-					className={styles.toggle_option}
-					aria-pressed={mode === "rating"}
-					data-active={mode === "rating"}
-					onClick={() => setMode("rating")}>
-					{dict.stats.modeToggle.rating}
-				</Clickable>
-			</div>
-
 			<div className={styles.groups}>
 				{ROLES.map((role) => {
 					const ranking = topPeople[role];

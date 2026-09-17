@@ -23,7 +23,7 @@ const RATING_TIER_COUNT = 10;
 // Same reasoning as the world map's own MIN_SAMPLE_FOR_RATING — a person with
 // one or two credits shouldn't be able to top the avg-rating leaderboard.
 const MIN_SAMPLE_FOR_PERSON_RATING = 3;
-const TOP_PEOPLE_COUNT = 10;
+const TOP_PEOPLE_COUNT = 12;
 // Top-10-billed only — cuts off cameos/bit parts (Stan Lee's Marvel cameos
 // all land at order 18+, median 35) that shouldn't dominate the ranking.
 const TOP_BILLING_CUTOFF = 10;
@@ -43,18 +43,30 @@ function reviewYearRange(
 	};
 }
 
-// "All" (year: null) matches today's catalog-wide behavior; a specific year
-// narrows to media that was actually reviewed/watched that year.
-function reviewedMediaFilter(year: number | null): Prisma.MediaWhereInput {
-	const range = reviewYearRange(year);
-	return range
-		? { ...MEDIA_FILTER, review: { createDate: range } }
-		: MEDIA_FILTER;
+// "All" (type: null) matches today's catalog-wide filter; a specific type
+// narrows every query down to just that MediaType.
+function mediaFilterWithType(type: MediaType | null): Prisma.MediaWhereInput {
+	return type ? { ...MEDIA_FILTER, type } : MEDIA_FILTER;
 }
 
-export async function getStats(year: number | null = null): Promise<StatsData> {
+// Combines both scopes — "All"/"All" matches today's catalog-wide behavior;
+// a specific year narrows to media actually reviewed/watched that year.
+function reviewedMediaFilter(
+	year: number | null,
+	type: MediaType | null,
+): Prisma.MediaWhereInput {
 	const range = reviewYearRange(year);
-	const mediaFilter = reviewedMediaFilter(year);
+	const base = mediaFilterWithType(type);
+	return range ? { ...base, review: { createDate: range } } : base;
+}
+
+export async function getStats(
+	year: number | null = null,
+	type: MediaType | null = null,
+): Promise<StatsData> {
+	const range = reviewYearRange(year);
+	const mediaFilter = reviewedMediaFilter(year, type);
+	const reviewMediaFilter = mediaFilterWithType(type);
 
 	const [
 		titles,
@@ -62,10 +74,10 @@ export async function getStats(year: number | null = null): Promise<StatsData> {
 		reviewsWritten,
 		avgRatingResult,
 		movieRuntimeResult,
-		byTypeRaw,
+		typeMediaRows,
 		countryMediaRows,
 		countries,
-		genreGroups,
+		genreMediaRows,
 		genres,
 		reviewRatings,
 		allReviewDates,
@@ -74,43 +86,59 @@ export async function getStats(year: number | null = null): Promise<StatsData> {
 	] = await Promise.all([
 		db.media.count({ where: mediaFilter }),
 		db.review.count({
-			where: { media: MEDIA_FILTER, ...(range ? { createDate: range } : {}) },
+			where: {
+				media: reviewMediaFilter,
+				...(range ? { createDate: range } : {}),
+			},
 		}),
 		db.review.count({
 			where: {
-				media: MEDIA_FILTER,
+				media: reviewMediaFilter,
 				body: { not: null },
 				...(range ? { createDate: range } : {}),
 			},
 		}),
 		db.review.aggregate({
-			where: { media: MEDIA_FILTER, ...(range ? { createDate: range } : {}) },
+			where: {
+				media: reviewMediaFilter,
+				...(range ? { createDate: range } : {}),
+			},
 			_avg: { rating: true },
 		}),
 		db.movie.aggregate({
 			where: { media: mediaFilter },
 			_sum: { runtime: true },
 		}),
-		db.media.groupBy({ by: ["type"], where: mediaFilter, _count: true }),
+		db.media.findMany({
+			where: mediaFilter,
+			select: { type: true, review: { select: { rating: true } } },
+		}),
 		db.media.findMany({
 			where: { ...mediaFilter, countryId: { not: null } },
 			select: { countryId: true, review: { select: { rating: true } } },
 		}),
 		db.country.findMany({ select: { id: true, countryCode2: true } }),
-		db.mediaGenre.groupBy({
-			by: ["genreId"],
+		db.mediaGenre.findMany({
 			where: { media: mediaFilter },
-			_count: true,
+			select: {
+				mediaId: true,
+				genreId: true,
+				media: { select: { review: { select: { rating: true } } } },
+			},
+			orderBy: { genreId: "asc" },
 		}),
 		db.genre.findMany({ select: { id: true, name: true } }),
 		db.review.findMany({
-			where: { media: MEDIA_FILTER, ...(range ? { createDate: range } : {}) },
+			where: {
+				media: reviewMediaFilter,
+				...(range ? { createDate: range } : {}),
+			},
 			select: { rating: true },
 		}),
-		// Always unscoped — this is what drives the year selector and the
-		// "Reviews per year" chart, which stays full-history regardless of scope.
+		// Always unscoped by year (drives the year selector + the "Reviews per
+		// year" chart, which stays full-history) but still respects the type filter.
 		db.review.findMany({
-			where: { media: MEDIA_FILTER },
+			where: { media: reviewMediaFilter },
 			select: { createDate: true },
 		}),
 		db.media.findMany({
@@ -120,9 +148,9 @@ export async function getStats(year: number | null = null): Promise<StatsData> {
 		db.credit.findMany({
 			where: {
 				personId: { not: null },
-				// Top People is movie-only — a TV show's own Actor/Director credits
-				// (a different pool of people, often billed for one episode) don't count.
-				media: { ...mediaFilter, type: { not: MediaType.TVSHOW } },
+				// Top People is movie-only. NOT (not `type:`) so this composes with
+				// mediaFilter's own `type` key instead of overwriting it.
+				media: { ...mediaFilter, NOT: { type: MediaType.TVSHOW } },
 				role: { name: { in: Object.values(PERSON_ROLE_NAMES).flat() } },
 				// Director's order/character are always null — each branch below
 				// explicitly keeps null, since SQL's NOT(NULL ...) is NULL not true.
@@ -148,11 +176,32 @@ export async function getStats(year: number | null = null): Promise<StatsData> {
 		}),
 	]);
 
-	const byTypeCounts = new Map(byTypeRaw.map((g) => [g.type, g._count]));
-	const byType = MEDIA_TYPE_ORDER.map((type) => ({
-		type,
-		count: byTypeCounts.get(type) ?? 0,
-	}));
+	const typeStats = new Map<
+		MediaType,
+		{ count: number; ratingSum: number; ratingCount: number }
+	>();
+	for (const m of typeMediaRows) {
+		const stat = typeStats.get(m.type) ?? {
+			count: 0,
+			ratingSum: 0,
+			ratingCount: 0,
+		};
+		stat.count++;
+		if (m.review?.rating != null) {
+			stat.ratingSum += m.review.rating;
+			stat.ratingCount++;
+		}
+		typeStats.set(m.type, stat);
+	}
+	const byType = MEDIA_TYPE_ORDER.map((t) => {
+		const stat = typeStats.get(t);
+		return {
+			type: t,
+			count: stat?.count ?? 0,
+			avgRating:
+				stat && stat.ratingCount > 0 ? stat.ratingSum / stat.ratingCount : null,
+		};
+	});
 
 	const countryCodeById = new Map(countries.map((c) => [c.id, c.countryCode2]));
 	const countryStats = new Map<
@@ -188,17 +237,57 @@ export async function getStats(year: number | null = null): Promise<StatsData> {
 		.sort((a, b) => b.count - a.count);
 	const topCountries = worldMap.slice(0, 8);
 
+	// Caps genre "tags" per title before counting — MangaDex returns loose
+	// lists of up to 12 (vs. TMDB's curated ~3) that would otherwise dominate.
+	const MAX_GENRES_PER_MEDIA = 10;
+	const genreRowCountByMedia = new Map<number, number>();
+	const cappedGenreMediaRows = genreMediaRows.filter((g) => {
+		const seen = genreRowCountByMedia.get(g.mediaId) ?? 0;
+		genreRowCountByMedia.set(g.mediaId, seen + 1);
+		return seen < MAX_GENRES_PER_MEDIA;
+	});
+
+	// Animation/Family are format/audience tags, not genre info; the rest sit
+	// on 25-35% of the catalog — too broad to be distinctive in the ranking.
+	const EXCLUDED_GENRES = new Set([
+		"Animation",
+		"Family",
+		"Adventure",
+		"Comedy",
+		"Drama",
+		"Action",
+		"Fantasy",
+		"Thriller",
+	]);
+
 	const genreNameById = new Map(genres.map((g) => [g.id, g.name]));
-	const genreCountByName = new Map<string, number>();
-	for (const g of genreGroups) {
+	const genreStatsByName = new Map<
+		string,
+		{ count: number; ratingSum: number; ratingCount: number }
+	>();
+	for (const g of cappedGenreMediaRows) {
 		const name = genreNameById.get(g.genreId);
-		if (!name) continue;
-		genreCountByName.set(name, (genreCountByName.get(name) ?? 0) + g._count);
+		if (!name || EXCLUDED_GENRES.has(name)) continue;
+		const stat = genreStatsByName.get(name) ?? {
+			count: 0,
+			ratingSum: 0,
+			ratingCount: 0,
+		};
+		stat.count++;
+		const rating = g.media.review?.rating;
+		if (rating != null) {
+			stat.ratingSum += rating;
+			stat.ratingCount++;
+		}
+		genreStatsByName.set(name, stat);
 	}
-	const topGenres = [...genreCountByName.entries()]
-		.map(([name, count]) => ({ name, count }))
-		.sort((a, b) => b.count - a.count)
-		.slice(0, 10);
+	// Full list, not just top 7 — the client re-ranks by count or avg rating
+	// depending on its own toggle, same as the world map's top-countries list.
+	const genreStats = [...genreStatsByName.entries()].map(([name, stat]) => ({
+		name,
+		count: stat.count,
+		avgRating: stat.ratingCount > 0 ? stat.ratingSum / stat.ratingCount : null,
+	}));
 
 	const ratingCounts = new Array<number>(RATING_TIER_COUNT).fill(0);
 	let unrated = 0;
@@ -321,6 +410,7 @@ export async function getStats(year: number | null = null): Promise<StatsData> {
 	return {
 		year,
 		years,
+		type,
 		totals: {
 			titles,
 			rated,
@@ -329,7 +419,7 @@ export async function getStats(year: number | null = null): Promise<StatsData> {
 			movieMinutesWatched: movieRuntimeResult._sum.runtime ?? 0,
 		},
 		byType,
-		topGenres,
+		topGenres: genreStats,
 		topCountries,
 		worldMap,
 		topPeople,

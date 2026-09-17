@@ -37,6 +37,13 @@
   font-size: 0.65rem
   color: var(--accent1)
   white-space: nowrap
+  max-width: 100%
+
+  // Enough columns shrinks each one below its tick's own nowrap text width,
+  // which then visually bleeds past the column edge — clip it instead.
+  @media (max-width: $mobile-breakpoint)
+    overflow: hidden
+    text-overflow: ellipsis
 
 .tooltip
   position: absolute

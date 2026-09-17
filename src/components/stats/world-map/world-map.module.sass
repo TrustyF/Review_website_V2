@@ -5,14 +5,13 @@
   flex-flow: column
   gap: 0.6rem
 
-.toggle
-  display: flex
-  flex-flow: row
-  gap: 0.5rem
-  align-self: center
-
-.toggle_option
-  @include toggle-pill
+  // One-off choropleth gradients (low->high), one pair per mode so each can
+  // be retinted independently — not in globals.sass since nothing else uses
+  // them; this file is exempted in check-color-literals.mjs.
+  --world-map-count-low: #e62222
+  --world-map-count-high: #6eff26
+  --world-map-rating-low: #e62222
+  --world-map-rating-high: #6eff26
 
 .svg
   width: 100%
@@ -46,7 +45,12 @@
   width: 6rem
   height: 0.5rem
   border-radius: 0.25rem
-  background: linear-gradient(to right, color-mix(in srgb, var(--brand) 15%, var(--surface)), var(--brand))
+
+  &[data-mode="count"]
+    background: linear-gradient(to right, var(--world-map-count-low), var(--world-map-count-high))
+
+  &[data-mode="rating"]
+    background: linear-gradient(to right, var(--world-map-rating-low), var(--world-map-rating-high))
 
 // Portaled to document.body, so position: fixed tracks the raw cursor
 // coordinates regardless of the SVG's own responsive scaling.

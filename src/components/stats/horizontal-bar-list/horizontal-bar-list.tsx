@@ -16,12 +16,22 @@ export type HorizontalBarItem = {
 type Props = {
 	items: HorizontalBarItem[];
 	valueFormatter?: (value: number) => string;
+	// Fixed scale endpoints (e.g. a rating's editable range) instead of
+	// auto-fitting to this list's own min/max — omit for count-style lists.
+	scaleMin?: number;
+	scaleMax?: number;
 };
 
 // Label-left, bar-right ranking — used for the media-type breakdown (colored
 // per item) and single-hue rankings (top genres, top countries) alike.
-export function HorizontalBarList({ items, valueFormatter }: Props) {
-	const max = Math.max(...items.map((i) => i.value), 1);
+export function HorizontalBarList({
+	items,
+	valueFormatter,
+	scaleMin,
+	scaleMax,
+}: Props) {
+	const min = scaleMin ?? 0;
+	const max = scaleMax ?? Math.max(...items.map((i) => i.value), 1);
 
 	return (
 		<ul className={styles.list}>
@@ -36,7 +46,7 @@ export function HorizontalBarList({ items, valueFormatter }: Props) {
 							<span
 								className={styles.bar}
 								style={{
-									width: `${(item.value / max) * 100}%`,
+									width: `${Math.min(100, Math.max(0, ((item.value - min) / (max - min)) * 100))}%`,
 									background: item.color,
 								}}
 							/>

@@ -1,7 +1,7 @@
 "use client";
 import {
 	BookOpen,
-	ChartNoAxesCombined,
+	ChartLine,
 	GamepadDirectional,
 	LayoutList,
 	List,
@@ -98,7 +98,7 @@ export function NavBarLinks({
 						</NavLink>
 						<NavLink
 							href="/stats"
-							icon={ChartNoAxesCombined}
+							icon={ChartLine}
 							className={barStyle.link}
 							pathname={pathname}
 							iconOnly
