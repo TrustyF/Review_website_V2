@@ -189,6 +189,7 @@ export default function MediaEditorModal() {
 								difficulty: draft.review.difficulty,
 								body: draft.review.body,
 								bodyFr: draft.review.bodyFr,
+								createDate: draft.review.createDate,
 							},
 							{ revalidate: false },
 						)
@@ -309,25 +310,45 @@ export default function MediaEditorModal() {
 							/>
 						</label>
 						<div className={styles.details_row}>
-							<label className={styles.field}>
-								Release date
-								<input
-									type="date"
-									className={styles.field_input_date}
-									value={
-										draft?.releaseDate
-											? new Date(draft.releaseDate).toISOString().slice(0, 10)
-											: ""
-									}
-									onChange={(e) =>
-										patchDetails({
-											releaseDate: e.target.value
-												? new Date(e.target.value)
-												: null,
-										})
-									}
-								/>
-							</label>
+							<div className={styles.date_group}>
+								<label className={styles.field}>
+									Release date
+									<input
+										type="date"
+										className={styles.field_input_date}
+										value={
+											draft?.releaseDate
+												? new Date(draft.releaseDate).toISOString().slice(0, 10)
+												: ""
+										}
+										onChange={(e) =>
+											patchDetails({
+												releaseDate: e.target.value
+													? new Date(e.target.value)
+													: null,
+											})
+										}
+									/>
+								</label>
+								<label className={styles.field}>
+									Watched on
+									<input
+										type="date"
+										className={styles.field_input_date}
+										value={
+											draft?.review?.createDate
+												? new Date(draft.review.createDate)
+														.toISOString()
+														.slice(0, 10)
+												: ""
+										}
+										onChange={(e) =>
+											e.target.value &&
+											patchReview({ createDate: new Date(e.target.value) })
+										}
+									/>
+								</label>
+							</div>
 
 							<div className={styles.details_row_secondary}>
 								<label className={styles.field}>

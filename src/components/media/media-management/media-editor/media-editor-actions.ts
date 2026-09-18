@@ -81,6 +81,9 @@ export async function saveReview(
 		// No editor UI for this yet — written directly (e.g. via Prisma Studio).
 		// Optional so existing callers (the editor modal) are unaffected.
 		bodyFr?: string | null;
+		// "Watched on" itself — optional so the inline editor's PendingReview (no date
+		// field) leaves it untouched. Not diffed to the change log; see reviewDate/body above.
+		createDate?: Date;
 	},
 	{ revalidate = true }: { revalidate?: boolean } = {},
 ) {

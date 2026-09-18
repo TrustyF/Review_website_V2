@@ -56,14 +56,20 @@
   gap: 0.75rem
   padding: 0 20px
 
-// Grid so Release date is auto, details_row_secondary is 1fr (not shrink-to-fit)
+// Grid so date_group is auto, details_row_secondary is 1fr (not shrink-to-fit)
 .details_row
   display: grid
   grid-template-columns: auto 1fr
   align-items: start
   gap: 2rem
 
-// Grouped right of Release date; min-width:0 lets fields shrink
+// Release date + Watched on, side by side as one grid cell (see .details_row)
+.date_group
+  display: flex
+  flex-flow: row
+  gap: 2rem
+
+// Grouped right of date_group; min-width:0 lets fields shrink
 .details_row_secondary
   display: flex
   flex-flow: row wrap
@@ -130,11 +136,13 @@
   color: var(--accent1)
   font-size: 0.75rem
 
+// Short, single-value fields (Rating/Liked/Difficulty/Rewatch) laid out side by side
+// instead of stacked, so this row doesn't tower over .body_group next to it.
 .quick_review
   display: flex
-  flex-flow: column
+  flex-flow: row wrap
   align-items: flex-start
-  gap: 1rem
+  gap: 2rem
 
 // Default field look: transparent, underlined, matches review typography
 .field_input
