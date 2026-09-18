@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
 import { GenreMediaListPage } from "@/components/media/media-pages/genre-media-list-page/genre-media-list-page";
+import { generateGenreMetadata } from "./metadata";
+
+export const generateMetadata = generateGenreMetadata;
 
 export default async function GenrePage({
 	params,

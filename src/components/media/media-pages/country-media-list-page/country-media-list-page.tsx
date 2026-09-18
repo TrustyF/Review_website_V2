@@ -9,7 +9,7 @@ import { countryFlagEmoji } from "@/lib/country-flag";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./country-media-list-page.module.sass";
 
-const COUNTRY_NAME_BY_CODE = new Map(
+export const COUNTRY_NAME_BY_CODE = new Map(
 	WORLD_MAP_COUNTRIES.map((c) => [c.code, c.name]),
 );
 

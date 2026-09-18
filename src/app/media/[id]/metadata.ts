@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getMediaCore } from "./get-media";
 import { toLinkEmbedImageSrc } from "@/server/resolvers/poster-resolver";
 import { buildLinkEmbedDescription } from "./link-embed-meta";
+import { SITE_URL } from "@/lib/site-url";
 
 // Split out of page.tsx (Next only needs the export re-exported, not co-located).
 // Reuses page.tsx's React.cache-wrapped getMediaCore so this and the page share one DB round trip per request.
@@ -25,6 +26,7 @@ export async function generateMediaMetadata({
 	return {
 		title: media.title,
 		description,
+		alternates: { canonical: `${SITE_URL}/media/${mediaId}` },
 		openGraph: {
 			title: media.title,
 			description,

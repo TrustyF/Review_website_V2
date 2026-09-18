@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { MediaTypeListPage } from "@/components/media/media-pages/media-type-list-page/media-type-list-page";
 import { MediaType } from "@prisma/client";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
+
+export const metadata: Metadata = {
+	title: "Movie Reviews",
+	description: "Arthur Sirjacobs' ratings and reviews of movies.",
+	alternates: { canonical: "/movies" },
+};
 
 export default async function MoviesPage() {
 	const dict = await getDictionary();

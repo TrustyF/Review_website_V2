@@ -30,6 +30,8 @@ import { MediaStatus } from "@prisma/client";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { getLocale } from "@/lib/i18n/get-locale";
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
+import { buildMediaReviewJsonLd } from "./review-json-ld";
+import { SITE_URL } from "@/lib/site-url";
 
 // See metadata.ts — kept there rather than inlined here so this file stays
 // about rendering the page, not also building link-preview tags.
@@ -195,8 +197,23 @@ export default async function MediaDetailPage({
 	// Date.now() during a client component's render trips react-hooks/purity.
 	const isUpcoming = isUpcomingRelease(media.releaseDate, raw.status);
 
+	const reviewJsonLd = buildMediaReviewJsonLd(
+		media,
+		media.posterSrc ? `${SITE_URL}${media.posterSrc}` : null,
+	);
+
 	return (
 		<div className={styles.page}>
+			{reviewJsonLd && (
+				<script
+					type="application/ld+json"
+					// Escapes "</" so a "</script>" inside the review body can't close this tag early.
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-serialized, escaped below
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify(reviewJsonLd).replace(/<\//g, "<\\/"),
+					}}
+				/>
+			)}
 			<div className={styles.wrapper}>
 				{raw.isDeleted && (
 					<div className={styles.deleted_banner}>

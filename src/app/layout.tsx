@@ -32,6 +32,7 @@ export const metadata: Metadata = {
 	creator: "Arthur Sirjacobs",
 	// Needed to resolve relative openGraph.images URLs into absolute ones for link-preview crawlers. Override via SITE_URL once deployed.
 	metadataBase: new URL(SITE_URL),
+	alternates: { canonical: "/" },
 	openGraph: {
 		siteName: "Arthur's corner",
 		type: "website",

@@ -1,8 +1,16 @@
+import type { Metadata } from "next";
 import { ChartNoAxesCombined } from "lucide-react";
 import { getStats } from "@/components/stats/stats-actions";
 import { StatsPageClient } from "@/components/stats/stats-page-client";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./stats.module.sass";
+
+export const metadata: Metadata = {
+	title: "Stats",
+	description:
+		"Arthur Sirjacobs' viewing/reading stats — ratings breakdown, top genres, countries and people across every review.",
+	alternates: { canonical: "/stats" },
+};
 
 export default async function StatsPage() {
 	const [stats, dict] = await Promise.all([getStats(), getDictionary()]);
