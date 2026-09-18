@@ -9,8 +9,12 @@ import {
 } from "@/components/media/media-grids/media-filter/media-filter";
 
 // Owns filter state and the live/debounced split: `filter` updates immediately so the slider tracks the pointer, `filteredMedia` lags by FILTER_DEBOUNCE_MS to avoid re-filtering on every tick.
-export function useMediaFilter(media: MediaRecord[]) {
-	const [filter, setFilter] = useState<MediaFilterState>(EMPTY_MEDIA_FILTER);
+// `initialFilter` may be a lazy initializer (as accepted by useState), letting callers seed it from the URL without recomputing it on every render.
+export function useMediaFilter(
+	media: MediaRecord[],
+	initialFilter: MediaFilterState | (() => MediaFilterState) = EMPTY_MEDIA_FILTER,
+) {
+	const [filter, setFilter] = useState<MediaFilterState>(initialFilter);
 
 	const [debouncedFilter, setDebouncedFilter] = useState(filter);
 	useEffect(() => {

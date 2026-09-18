@@ -114,3 +114,48 @@ export function availableFilterFields(media: MediaRecord[]): Set<FilterField> {
 	}
 	return fields;
 }
+
+// Reads filter state out of a catalog page's own URL, so it survives back/forward navigation and stays shareable/bookmarkable.
+export function mediaFilterFromSearchParams(params: URLSearchParams): MediaFilterState {
+	const genres = params.get("genres");
+	const difficulties = params.get("difficulties");
+	const minRating = params.get("minRating");
+	const maxRating = params.get("maxRating");
+	const minRuntime = params.get("minRuntime");
+	const maxRuntime = params.get("maxRuntime");
+	return {
+		includedGenres: new Set(genres ? genres.split(",") : []),
+		minRating: minRating !== null ? Number(minRating) : null,
+		maxRating: maxRating !== null ? Number(maxRating) : null,
+		minRuntime: minRuntime !== null ? Number(minRuntime) : null,
+		maxRuntime: maxRuntime !== null ? Number(maxRuntime) : null,
+		includedDifficulties: new Set(
+			difficulties ? difficulties.split(",").map(Number) : [],
+		),
+	};
+}
+
+// Mutates `params` in place to match `filter`, clearing any key that's back to its default so an unfiltered view keeps a clean URL.
+export function applyMediaFilterToSearchParams(
+	filter: MediaFilterState,
+	params: URLSearchParams,
+): void {
+	if (filter.includedGenres.size > 0) {
+		params.set("genres", [...filter.includedGenres].join(","));
+	} else {
+		params.delete("genres");
+	}
+	if (filter.minRating != null) params.set("minRating", String(filter.minRating));
+	else params.delete("minRating");
+	if (filter.maxRating != null) params.set("maxRating", String(filter.maxRating));
+	else params.delete("maxRating");
+	if (filter.minRuntime != null) params.set("minRuntime", String(filter.minRuntime));
+	else params.delete("minRuntime");
+	if (filter.maxRuntime != null) params.set("maxRuntime", String(filter.maxRuntime));
+	else params.delete("maxRuntime");
+	if (filter.includedDifficulties.size > 0) {
+		params.set("difficulties", [...filter.includedDifficulties].join(","));
+	} else {
+		params.delete("difficulties");
+	}
+}
