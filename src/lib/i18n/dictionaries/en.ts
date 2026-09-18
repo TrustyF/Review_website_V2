@@ -233,7 +233,7 @@ export const en = {
 		eyebrowNew: "New review",
 	},
 	watchlist: {
-		title: "My watchlist",
+		title: "Watchlisted",
 		backToAccount: "← Account",
 		empty: "Your watchlist is empty — add something from its media page.",
 		inWatchlist: "In watchlist",
