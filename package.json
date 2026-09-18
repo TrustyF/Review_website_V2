@@ -5,7 +5,7 @@
 	"scripts": {
 		"dev": "next dev",
 		"postinstall": "prisma generate",
-		"build": "prisma migrate deploy && NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) next build && npm run build_search_index",
+		"build": "npm run fetch_identity && prisma migrate deploy && NEXT_PUBLIC_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) next build && npm run build_search_index",
 		"start": "next start",
 		"lint": "eslint && npm run lint:colors && npm run lint:styles",
 		"lint:colors": "node scripts/check-color-literals.mjs",
@@ -20,6 +20,7 @@
 		"compose": "docker compose up -d && docker compose up -d --wait db && npx prisma migrate deploy",
 		"typecheck": "tsc --noEmit",
 		"build_search_index": "tsx src/server/maintenance/build-search-index.ts",
+		"fetch_identity": "tsx src/server/maintenance/fetch-identity.ts",
 		"cleanup_posters": "tsx src/server/maintenance/cron/cleanup-posters.ts",
 		"cleanup_cropped_images": "tsx src/server/maintenance/cron/cleanup-cropped-images.ts",
 		"enrich_db": "tsx src/server/maintenance/cron/enrich-db.ts",

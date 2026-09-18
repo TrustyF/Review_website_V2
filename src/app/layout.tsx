@@ -16,6 +16,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { I18nProvider } from "@/lib/i18n/i18n-context";
 import { getLocale } from "@/lib/i18n/get-locale";
+import { personIdentity } from "@/lib/identity";
 
 import { fontVariables } from "./fonts";
 
@@ -43,13 +44,6 @@ export const metadata: Metadata = {
 	},
 };
 
-const personJsonLd = {
-	"@context": "https://schema.org",
-	"@type": "Person",
-	name: "Arthur Sirjacobs",
-	url: SITE_URL,
-};
-
 const websiteJsonLd = {
 	"@context": "https://schema.org",
 	"@type": "WebSite",
@@ -64,6 +58,11 @@ export default async function RootLayout({
 	children: React.ReactNode;
 }>) {
 	const locale = await getLocale();
+	const personJsonLd = {
+		"@context": "https://schema.org",
+		"@type": "Person",
+		...personIdentity,
+	};
 
 	return (
 		<html lang={locale} className={fontVariables}>
