@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/server/db/client";
 import { comparePassword } from "@/lib/password";
+import { sendNewAccountAlert } from "@/server/email/send-new-account-alert";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
 	adapter: PrismaAdapter(db),
@@ -21,7 +22,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 			},
 			authorize: async (credentials) => {
 				const email =
-					typeof credentials?.email === "string" ? credentials.email : undefined;
+					typeof credentials?.email === "string"
+						? credentials.email
+						: undefined;
 				const password =
 					typeof credentials?.password === "string"
 						? credentials.password
@@ -48,6 +51,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 			},
 		}),
 	],
+	events: {
+		// Only fires for adapter-created users (OAuth) — signUp() handles the
+		// credentials path itself since it bypasses the adapter.
+		async createUser({ user }) {
+			try {
+				await sendNewAccountAlert(user);
+			} catch (err) {
+				console.error("Failed to send new account alert email", err);
+			}
+		},
+	},
 	callbacks: {
 		// `user` set only on sign-in request; role/settings changes take effect on next sign-in. Everything reads from JWT, not per-request DB (avatar exception: RootLayout reads DB, revalidatePath refreshes).
 		jwt({ token, user }) {

@@ -13,9 +13,33 @@
   --world-map-rating-low: #e62222
   --world-map-rating-high: #6eff26
 
+.svg_container
+  position: relative
+
 .svg
   width: 100%
   height: auto
+  cursor: grab
+  touch-action: none
+
+  &:active
+    cursor: grabbing
+
+.reset_zoom
+  position: absolute
+  top: 0.5rem
+  right: 0.5rem
+  z-index: 10
+  padding: 0.3rem 0.6rem
+  background: var(--modal-bg)
+  border: 1px solid var(--surface-border)
+  border-radius: 0.35rem
+  font-size: 0.75rem
+  color: var(--accent1)
+  cursor: pointer
+
+  &:hover
+    filter: brightness(1.2)
 
 .country
   fill: var(--surface-border)

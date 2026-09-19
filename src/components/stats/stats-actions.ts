@@ -70,7 +70,6 @@ export async function getStats(
 
 	const [
 		titles,
-		rated,
 		reviewsWritten,
 		avgRatingResult,
 		movieRuntimeResult,
@@ -85,12 +84,6 @@ export async function getStats(
 		personCredits,
 	] = await Promise.all([
 		db.media.count({ where: mediaFilter }),
-		db.review.count({
-			where: {
-				media: reviewMediaFilter,
-				...(range ? { createDate: range } : {}),
-			},
-		}),
 		db.review.count({
 			where: {
 				media: reviewMediaFilter,
@@ -133,7 +126,7 @@ export async function getStats(
 				media: reviewMediaFilter,
 				...(range ? { createDate: range } : {}),
 			},
-			select: { rating: true },
+			select: { rating: true, createDate: true },
 		}),
 		// Always unscoped by year (drives the year selector + the "Reviews per
 		// year" chart, which stays full-history) but still respects the type filter.
@@ -300,6 +293,22 @@ export async function getStats(
 		ratingCounts[tier] = (ratingCounts[tier] ?? 0) + 1;
 	}
 
+	// Longest run of consecutive calendar days (UTC) with at least one review,
+	// within the same year/type scope as the rest of the tiles.
+	const reviewDayKeys = [
+		...new Set(
+			reviewRatings.map((r) => Math.floor(r.createDate.getTime() / 86400000)),
+		),
+	].sort((a, b) => a - b);
+	let longestStreakDays = reviewDayKeys.length > 0 ? 1 : 0;
+	let currentStreak = longestStreakDays;
+	for (let i = 1; i < reviewDayKeys.length; i++) {
+		const prevDay = reviewDayKeys[i - 1] as number;
+		const day = reviewDayKeys[i] as number;
+		currentStreak = day - prevDay === 1 ? currentStreak + 1 : 1;
+		longestStreakDays = Math.max(longestStreakDays, currentStreak);
+	}
+
 	const reviewsByYearMap = new Map<number, number>();
 	for (const { createDate } of allReviewDates) {
 		const y = createDate.getUTCFullYear();
@@ -413,7 +422,7 @@ export async function getStats(
 		type,
 		totals: {
 			titles,
-			rated,
+			longestStreakDays,
 			reviewsWritten,
 			avgRating: avgRatingResult._avg.rating,
 			movieMinutesWatched: movieRuntimeResult._sum.runtime ?? 0,

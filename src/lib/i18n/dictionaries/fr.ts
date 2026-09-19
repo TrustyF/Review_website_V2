@@ -372,10 +372,12 @@ export const fr = {
 		},
 		tiles: {
 			titles: "Titres suivis",
-			rated: "Titres notés",
+			longestStreak: "Plus longue série de critiques",
+			daysUnit: (n: number) => `jour${n === 1 ? "" : "s"}`,
 			reviewsWritten: "Critiques écrites",
 			avgRating: "Note moyenne",
 			movieTimeWatched: "Temps de films regardés",
+			hoursUnit: "h",
 		},
 		mediaByType: {
 			title: "Collection par type",
@@ -396,6 +398,7 @@ export const fr = {
 			more: "Plus",
 			lower: "Plus bas",
 			higher: "Plus haut",
+			resetZoom: "Réinitialiser le zoom",
 		},
 		topGenres: {
 			title: "Genres les plus fréquents",

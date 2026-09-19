@@ -66,7 +66,7 @@ export type StatsData = {
 	type: MediaType | null;
 	totals: {
 		titles: number;
-		rated: number;
+		longestStreakDays: number;
 		reviewsWritten: number;
 		avgRating: number | null;
 		movieMinutesWatched: number;

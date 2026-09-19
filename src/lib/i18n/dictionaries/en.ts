@@ -364,10 +364,12 @@ export const en = {
 		},
 		tiles: {
 			titles: "Titles tracked",
-			rated: "Titles rated",
+			longestStreak: "Longest review streak",
+			daysUnit: (n: number) => `day${n === 1 ? "" : "s"}`,
 			reviewsWritten: "Reviews written",
 			avgRating: "Average rating",
 			movieTimeWatched: "Movie time watched",
+			hoursUnit: "h",
 		},
 		mediaByType: {
 			title: "Catalog by type",
@@ -388,6 +390,7 @@ export const en = {
 			more: "More",
 			lower: "Lower",
 			higher: "Higher",
+			resetZoom: "Reset zoom",
 		},
 		topGenres: {
 			title: "Top genres",

@@ -1,6 +1,7 @@
 "use server";
 import { db } from "@/server/db/client";
 import { hashPassword } from "@/lib/password";
+import { sendNewAccountAlert } from "@/server/email/send-new-account-alert";
 
 export type SignUpInput = {
 	name: string;
@@ -20,11 +21,18 @@ export async function signUp(input: SignUpInput): Promise<void> {
 	if (existing) throw new Error("An account with this email already exists");
 
 	// preferredLanguage/newsletterOptIn/username/image picked in /onboarding wizard after this. Only needs enough to create row and sign in.
-	await db.user.create({
+	const user = await db.user.create({
 		data: {
 			email,
 			name: input.name.trim() || null,
 			passwordHash: await hashPassword(input.password),
 		},
 	});
+
+	// Best-effort — a failed alert email shouldn't fail the signup.
+	try {
+		await sendNewAccountAlert(user);
+	} catch (err) {
+		console.error("Failed to send new account alert email", err);
+	}
 }
