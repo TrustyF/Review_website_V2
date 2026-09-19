@@ -13,13 +13,19 @@ import {
 	setMediaDeleted,
 	updateMediaBanner,
 	updateMediaPoster,
+	updateMediaType,
 } from "@/components/media/media-management/media-editor/media-editor-actions";
+import type { MediaType } from "@prisma/client";
 import { ReviewBodyModal } from "@/components/media/media-management/media-editor/components/review-body-modal";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { Review } from "@prisma/client";
 import { MediaPoster } from "@/components/media/primitives/poster";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { EnrichedAgo } from "@/components/media/primitives/enriched-ago";
+
+// Mirrors RECLASSIFIABLE_TYPES in media-editor-actions.ts — the types that
+// share the Movie submodel, so switching between them is a plain update.
+const RECLASSIFIABLE_TYPES: MediaType[] = ["MOVIE", "SHORT"];
 
 export default function MediaEditorModal() {
 	const media = useReviewEditorStore((s) => s.media);
@@ -36,6 +42,10 @@ export default function MediaEditorModal() {
 	// separate from isSaving/saveError since either can run without touching the draft.
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [deleteError, setDeleteError] = useState<string | null>(null);
+
+	// Applies immediately on select, like the delete toggle — not deferred to Save.
+	const [isChangingType, setIsChangingType] = useState(false);
+	const [typeError, setTypeError] = useState<string | null>(null);
 
 	// Logging a rewatch is its own independent action — doesn't touch or wait on
 	// unsaved draft edits, so it gets its own request state instead of riding handleSave.
@@ -79,6 +89,7 @@ export default function MediaEditorModal() {
 		setDeleteError(null);
 		setConfirmHardDelete(false);
 		setRewatchLogged(false);
+		setTypeError(null);
 	}
 
 	// Locks the background page's scroll while the modal (which scrolls internally)
@@ -137,6 +148,24 @@ export default function MediaEditorModal() {
 			setDeleteError("Failed to update. Try again.");
 		} finally {
 			setIsDeleting(false);
+		}
+	}
+
+	// Only offered when draft.type is already one of RECLASSIFIABLE_TYPES — all
+	// three share the Movie submodel, so swapping type here is safe.
+	async function handleTypeChange(type: MediaType) {
+		if (!draft) return;
+		setIsChangingType(true);
+		setTypeError(null);
+		try {
+			await updateMediaType(draft.id, type);
+			// Safe to cast — RECLASSIFIABLE_TYPES all carry the same `movie` field,
+			// so the rest of draft's shape stays valid under the new type.
+			setDraft((prev) => (prev ? ({ ...prev, type } as MediaRecord) : prev));
+		} catch (e) {
+			setTypeError(e instanceof Error ? e.message : "Failed to update type.");
+		} finally {
+			setIsChangingType(false);
 		}
 	}
 
@@ -207,10 +236,14 @@ export default function MediaEditorModal() {
 					{ revalidate: false },
 				),
 				pendingPosterPath
-					? updateMediaPoster(draft.id, pendingPosterPath, { revalidate: false })
+					? updateMediaPoster(draft.id, pendingPosterPath, {
+							revalidate: false,
+						})
 					: Promise.resolve(),
 				pendingBannerPath
-					? updateMediaBanner(draft.id, pendingBannerPath, { revalidate: false })
+					? updateMediaBanner(draft.id, pendingBannerPath, {
+							revalidate: false,
+						})
 					: Promise.resolve(),
 			]);
 			await finalizeMediaEditorSave(draft.id, draft.type, {
@@ -290,6 +323,22 @@ export default function MediaEditorModal() {
 					{/* Base Media fields — normally owned by a source's ingest,
 				editable here for the rare case of no/wrong provider match. */}
 					<div className={styles.details_group}>
+						{draft && RECLASSIFIABLE_TYPES.includes(draft.type) && (
+							<label className={styles.field}>
+								Type
+								<select
+									className={styles.field_input}
+									value={draft.type}
+									disabled={isChangingType}
+									onChange={(e) =>
+										handleTypeChange(e.target.value as MediaType)
+									}>
+									<option value="MOVIE">Movie</option>
+									<option value="SHORT">Short</option>
+								</select>
+							</label>
+						)}
+						{typeError && <div className={styles.save_error}>{typeError}</div>}
 						<label className={styles.field}>
 							Title
 							<input

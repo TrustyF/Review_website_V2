@@ -62,9 +62,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 	const bannerSrc = raw.bannerPath
 		? `/api/banner/${raw.id}/${mediaAssetFilename(raw.id, raw.bannerPath, BANNER_FORMAT)}`
 		: null;
-	const bannerSrcMobile = raw.bannerPath
-		? `${bannerSrc}?size=mobile`
-		: null;
+	const bannerSrcMobile = raw.bannerPath ? `${bannerSrc}?size=mobile` : null;
 	const watchedDate = raw.review?.rating != null ? raw.review.createDate : null;
 	const genres = (raw.mediaGenres ?? []).map((mg) => mg.genre.name);
 	switch (raw.type) {

@@ -25,7 +25,7 @@ const useIsomorphicLayoutEffect =
 
 const VIEWPORT_MARGIN = 8;
 
-	// Right-anchored so dropdown grows to fit content, stays aligned.
+// Right-anchored so dropdown grows to fit content, stays aligned.
 type DropdownPosition = { top: number; right: number };
 
 // Media-agnostic navbar search: trigger expands inline with animated width.
@@ -52,9 +52,7 @@ export function NavSearch() {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const overlayRef = useRef<HTMLDivElement>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
-	const [dropdownPos, setDropdownPos] = useState<DropdownPosition | null>(
-		null,
-	);
+	const [dropdownPos, setDropdownPos] = useState<DropdownPosition | null>(null);
 
 	// Dropdown is portaled apart from the wrapper (see below), so a click
 	// inside it must count as "inside" too, same as PosterQuickEditButton.
@@ -68,10 +66,7 @@ export function NavSearch() {
 
 		function update() {
 			const rect = overlayRef.current!.getBoundingClientRect();
-			const right = Math.max(
-				window.innerWidth - rect.right,
-				VIEWPORT_MARGIN,
-			);
+			const right = Math.max(window.innerWidth - rect.right, VIEWPORT_MARGIN);
 			setDropdownPos({ top: rect.bottom + 8, right });
 		}
 
@@ -182,10 +177,7 @@ export function NavSearch() {
 												<>
 													{typeLabels[result.type]}
 													{result.releaseDate && (
-														<>
-															{" "}
-															- {new Date(result.releaseDate).getFullYear()}
-														</>
+														<> - {new Date(result.releaseDate).getFullYear()}</>
 													)}
 												</>
 											) : (
@@ -202,7 +194,9 @@ export function NavSearch() {
 							))
 						) : (
 							<div className={styles.status}>
-								{isSearching ? dict.nav.search.searching : dict.nav.search.noMatches}
+								{isSearching
+									? dict.nav.search.searching
+									: dict.nav.search.noMatches}
 							</div>
 						)}
 					</div>,

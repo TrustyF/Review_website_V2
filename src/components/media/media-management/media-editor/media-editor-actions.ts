@@ -231,6 +231,40 @@ export async function saveMediaDetails(
 	if (revalidate) revalidateMediaPaths(mediaId, existing!.type);
 }
 
+// Only among these two — they share the Movie submodel, so switching
+// between them needs no data migration.
+const RECLASSIFIABLE_TYPES = new Set<MediaType>([
+	MediaType.MOVIE,
+	MediaType.SHORT,
+]);
+
+// Applies immediately (like setMediaDeleted) since it affects which catalog
+// page the item lives on — both old and new paths need revalidating.
+export async function updateMediaType(mediaId: number, type: MediaType) {
+	await requireAdmin();
+	if (!RECLASSIFIABLE_TYPES.has(type)) {
+		throw new Error("Can only reclassify between Movie and Short.");
+	}
+
+	const existing = await db.media.findUniqueOrThrow({
+		where: { id: mediaId },
+		select: { type: true },
+	});
+	if (!RECLASSIFIABLE_TYPES.has(existing.type)) {
+		throw new Error("Can only reclassify between Movie and Short.");
+	}
+	if (existing.type === type) return;
+
+	await db.media.update({ where: { id: mediaId }, data: { type } });
+	await db.mediaChangeLog.create({
+		data: { mediaId, field: "type", oldValue: existing.type, newValue: type },
+	});
+
+	await invalidateSearchIndex();
+	revalidateMediaPaths(mediaId, existing.type);
+	revalidateMediaPaths(mediaId, type);
+}
+
 // Soft delete just flips Media.isDeleted — public queries filter it out, but the row and /media/[id]
 // stay put so this toggle can restore it (needed since @@unique([externalId, type]) still holds).
 export async function setMediaDeleted(mediaId: number, isDeleted: boolean) {
@@ -505,7 +539,12 @@ export async function updateMediaPoster(
 	} else {
 		// resolvePoster returns as soon as the source downloads and defers the resize/encode/write
 		// to after(), so this Server Action doesn't tie up the instance and block others behind it.
-		await resolvePoster(mediaId, existing!.type, existing!.externalId, posterPath);
+		await resolvePoster(
+			mediaId,
+			existing!.type,
+			existing!.externalId,
+			posterPath,
+		);
 	}
 	if (revalidate) revalidateMediaPaths(mediaId, existing!.type);
 	return `/api/poster/${mediaId}/${mediaAssetFilename(mediaId, posterPath)}`;

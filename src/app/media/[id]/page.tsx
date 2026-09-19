@@ -157,31 +157,22 @@ export default async function MediaDetailPage({
 	const overview =
 		locale === "fr" ? (media.overviewFr ?? media.overview) : media.overview;
 
-	// Only movies/shorts carry a tagline; falls back to English when untranslated, same as overview.
-	const tagline =
-		media.type === "MOVIE" || media.type === "SHORT"
-			? locale === "fr"
-				? (media.movie.taglineFr ?? media.movie.tagline)
-				: media.movie.tagline
-			: null;
+	const hasMovieSubmodel = media.type === "MOVIE" || media.type === "SHORT";
+	// Only these types carry a tagline; falls back to English when untranslated, same as overview.
+	const tagline = hasMovieSubmodel
+		? locale === "fr"
+			? (media.movie.taglineFr ?? media.movie.tagline)
+			: media.movie.tagline
+		: null;
 	// Same story for runtime — it now sits in the secondary-facts block
 	// beside the review instead of the type-specific facts list.
-	const runtime =
-		media.type === "MOVIE" || media.type === "SHORT"
-			? media.movie.runtime
-			: null;
+	const runtime = hasMovieSubmodel ? media.movie.runtime : null;
 	const runtimeLabel =
 		runtime != null ? (formatRuntime(runtime) ?? `${runtime}m`) : null;
 	// Same story for budget/revenue/ROI — they now sit in the financials box
 	// beside the review instead of the type-specific facts list.
-	const budget =
-		media.type === "MOVIE" || media.type === "SHORT"
-			? media.movie.budget
-			: null;
-	const revenue =
-		media.type === "MOVIE" || media.type === "SHORT"
-			? media.movie.revenue
-			: null;
+	const budget = hasMovieSubmodel ? media.movie.budget : null;
+	const revenue = hasMovieSubmodel ? media.movie.revenue : null;
 	const roi =
 		budget != null && revenue != null && budget !== 0
 			? (revenue - budget) / budget

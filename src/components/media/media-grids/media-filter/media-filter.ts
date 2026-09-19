@@ -116,7 +116,9 @@ export function availableFilterFields(media: MediaRecord[]): Set<FilterField> {
 }
 
 // Reads filter state out of a catalog page's own URL, so it survives back/forward navigation and stays shareable/bookmarkable.
-export function mediaFilterFromSearchParams(params: URLSearchParams): MediaFilterState {
+export function mediaFilterFromSearchParams(
+	params: URLSearchParams,
+): MediaFilterState {
 	const genres = params.get("genres");
 	const difficulties = params.get("difficulties");
 	const minRating = params.get("minRating");
@@ -145,13 +147,17 @@ export function applyMediaFilterToSearchParams(
 	} else {
 		params.delete("genres");
 	}
-	if (filter.minRating != null) params.set("minRating", String(filter.minRating));
+	if (filter.minRating != null)
+		params.set("minRating", String(filter.minRating));
 	else params.delete("minRating");
-	if (filter.maxRating != null) params.set("maxRating", String(filter.maxRating));
+	if (filter.maxRating != null)
+		params.set("maxRating", String(filter.maxRating));
 	else params.delete("maxRating");
-	if (filter.minRuntime != null) params.set("minRuntime", String(filter.minRuntime));
+	if (filter.minRuntime != null)
+		params.set("minRuntime", String(filter.minRuntime));
 	else params.delete("minRuntime");
-	if (filter.maxRuntime != null) params.set("maxRuntime", String(filter.maxRuntime));
+	if (filter.maxRuntime != null)
+		params.set("maxRuntime", String(filter.maxRuntime));
 	else params.delete("maxRuntime");
 	if (filter.includedDifficulties.size > 0) {
 		params.set("difficulties", [...filter.includedDifficulties].join(","));
