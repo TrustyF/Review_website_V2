@@ -49,7 +49,7 @@ const websiteJsonLd = {
 	"@type": "WebSite",
 	name: "Arthur's corner",
 	url: SITE_URL,
-	author: { "@type": "Person", name: "Arthur Sirjacobs" },
+	author: { "@id": personIdentity["@id"] },
 };
 
 export default async function RootLayout({

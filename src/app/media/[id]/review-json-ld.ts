@@ -1,6 +1,7 @@
 import { MediaType } from "@prisma/client";
 import { MediaRecord } from "@/components/media/types";
 import { SITE_URL } from "@/lib/site-url";
+import { personIdentity } from "@/lib/identity";
 
 // schema.org type per MediaType — what Google's Review rich result needs
 // `itemReviewed.@type` to be for each catalog section.
@@ -44,7 +45,7 @@ export function buildMediaReviewJsonLd(
 			bestRating: 10,
 			worstRating: 0,
 		},
-		author: { "@type": "Person", name: "Arthur Sirjacobs" },
+		author: { "@id": personIdentity["@id"] },
 		...(media.review?.reviewDate
 			? { datePublished: media.review.reviewDate.toISOString().slice(0, 10) }
 			: {}),
