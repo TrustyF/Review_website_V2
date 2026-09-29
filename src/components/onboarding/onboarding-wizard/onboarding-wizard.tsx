@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Languages } from "lucide-react";
 import { Clickable } from "@/components/ui/clickable";
@@ -9,10 +9,11 @@ import { LANGUAGE_OPTIONS } from "@/lib/languages";
 import { dictionaries, useDictionary } from "@/lib/i18n/i18n-context";
 import type { Locale } from "@/lib/i18n/get-locale";
 import {
+	saveOnboardingEmailPreferences,
 	saveOnboardingLanguage,
-	saveOnboardingNewsletterOptIn,
 	saveOnboardingUsername,
 } from "@/components/onboarding/onboarding-actions";
+import { parseOnboardingStep } from "@/components/onboarding/onboarding-step";
 import styles from "./onboarding-wizard.module.sass";
 
 type Props = {
@@ -22,8 +23,10 @@ type Props = {
 		image: string | null;
 		preferredLanguage: string;
 		newsletterOptIn: boolean;
+		listAddEmailOptIn: boolean;
 	};
 	avatarGroups: AvatarGroup[];
+	initialStep: number;
 };
 
 type StepAction = { label: string; onClick: () => void; disabled?: boolean };
@@ -56,7 +59,7 @@ function OnboardingStep({
 				className={`${styles.actions} ${leftAction ? "" : styles.actions_end}`}>
 				{leftAction && (
 					<Clickable
-						className={styles.skip_button}
+						className={styles.back_button}
 						onClick={leftAction.onClick}>
 						{leftAction.label}
 					</Clickable>
@@ -72,10 +75,46 @@ function OnboardingStep({
 	);
 }
 
-export function OnboardingWizard({ initial, avatarGroups }: Props) {
+export function OnboardingWizard({
+	initial,
+	avatarGroups,
+	initialStep,
+}: Props) {
 	const contextDict = useDictionary();
 	const router = useRouter();
-	const [step, setStep] = useState(0);
+	// Step lives in ?step= so browser back/forward moves between steps.
+	const [step, setStep] = useState(initialStep);
+	// Lowest step in this tab's history; below it, in-app Back can't use history.back().
+	const entryStepRef = useRef(initialStep);
+
+	useEffect(() => {
+		function onPopState() {
+			setStep(
+				parseOnboardingStep(
+					new URLSearchParams(window.location.search).get("step"),
+				),
+			);
+		}
+		window.addEventListener("popstate", onPopState);
+		return () => window.removeEventListener("popstate", onPopState);
+	}, []);
+
+	function goForward(next: number) {
+		window.history.pushState(null, "", `?step=${next}`);
+		setStep(next);
+	}
+
+	function goBack() {
+		if (step > entryStepRef.current) {
+			window.history.back();
+			return;
+		}
+		// Landed directly on a later step (e.g. refresh) — no earlier entry to pop.
+		const prev = step - 1;
+		window.history.replaceState(null, "", `?step=${prev}`);
+		entryStepRef.current = prev;
+		setStep(prev);
+	}
 	// Set on step 0's Continue so steps 1+ render translated immediately,
 	// instead of flashing the old language while router.refresh() re-syncs the cookie.
 	const [confirmedLocale, setConfirmedLocale] = useState<Locale | null>(null);
@@ -90,6 +129,9 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 	const [newsletterOptIn, setNewsletterOptIn] = useState(
 		initial.newsletterOptIn,
 	);
+	const [listAddEmailOptIn, setListAddEmailOptIn] = useState(
+		initial.listAddEmailOptIn,
+	);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const STEPS = [
@@ -99,10 +141,6 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 		dict.onboarding.steps.preferences,
 	];
 
-	function finish() {
-		router.push("/account");
-	}
-
 	async function handleLanguageNext() {
 		setIsSubmitting(true);
 		try {
@@ -110,8 +148,8 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 			// Switches the wizard's own dict immediately; refresh below re-syncs
 			// the cookie for the rest of the site, without the wizard waiting on it.
 			setConfirmedLocale(preferredLanguage as Locale);
+			goForward(1);
 			router.refresh();
-			setStep(1);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -121,7 +159,7 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 		setIsSubmitting(true);
 		try {
 			await saveOnboardingUsername(username.trim() || null);
-			setStep(2);
+			goForward(2);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -130,8 +168,11 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 	async function handleFinish() {
 		setIsSubmitting(true);
 		try {
-			await saveOnboardingNewsletterOptIn(newsletterOptIn);
-			finish();
+			await saveOnboardingEmailPreferences({
+				newsletterOptIn,
+				listAddEmailOptIn,
+			});
+			router.push("/account");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -190,7 +231,7 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 				<OnboardingStep
 					title={dict.onboarding.usernameStep.title}
 					subtitle={dict.onboarding.usernameStep.subtitle}
-					leftAction={{ label: dict.common.back, onClick: () => setStep(0) }}
+					leftAction={{ label: dict.common.back, onClick: goBack }}
 					rightAction={{
 						label: dict.common.continue,
 						onClick: handleUsernameNext,
@@ -211,8 +252,11 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 				<OnboardingStep
 					title={dict.onboarding.avatarStep.title}
 					subtitle={dict.onboarding.avatarStep.subtitle}
-					leftAction={{ label: dict.common.back, onClick: () => setStep(1) }}
-					rightAction={{ label: dict.common.continue, onClick: () => setStep(3) }}>
+					leftAction={{ label: dict.common.back, onClick: goBack }}
+					rightAction={{
+						label: dict.common.continue,
+						onClick: () => goForward(3),
+					}}>
 					<div className={styles.avatar_picker}>
 						<AvatarPicker initialSrc={initial.image} groups={avatarGroups} />
 					</div>
@@ -222,7 +266,8 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 			{step === 3 && (
 				<OnboardingStep
 					title={dict.onboarding.preferencesStep.title}
-					leftAction={{ label: dict.common.skip, onClick: finish }}
+					subtitle={dict.onboarding.preferencesStep.subtitle}
+					leftAction={{ label: dict.common.back, onClick: goBack }}
 					rightAction={{
 						label: isSubmitting ? dict.common.saving : dict.onboarding.finish,
 						onClick: handleFinish,
@@ -234,7 +279,25 @@ export function OnboardingWizard({ initial, avatarGroups }: Props) {
 							checked={newsletterOptIn}
 							onChange={(e) => setNewsletterOptIn(e.target.checked)}
 						/>
-						{dict.account.newsletterOptIn}
+						<span className={styles.option_text}>
+							<span>{dict.account.newsletterOptIn}</span>
+							<span className={styles.option_description}>
+								{dict.account.newsletterOptInDescription}
+							</span>
+						</span>
+					</label>
+					<label className={styles.checkbox_field}>
+						<input
+							type="checkbox"
+							checked={listAddEmailOptIn}
+							onChange={(e) => setListAddEmailOptIn(e.target.checked)}
+						/>
+						<span className={styles.option_text}>
+							<span>{dict.account.listAddEmailOptIn}</span>
+							<span className={styles.option_description}>
+								{dict.account.listAddEmailOptInDescription}
+							</span>
+						</span>
 					</label>
 				</OnboardingStep>
 			)}

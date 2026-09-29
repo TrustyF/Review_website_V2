@@ -1,7 +1,7 @@
 @use "@/app/styles/variables" as *
 
 .wrapper
-  @include content-wrapper(24rem)
+  @include content-wrapper(28rem)
   margin: 0 auto 3rem auto
   display: flex
   flex-flow: column
@@ -12,5 +12,7 @@
   font-size: 0.85rem
   align-self: flex-start
 
+// Kept apart from the form so it doesn't read as one of the saved settings.
 .sign_out
   align-self: flex-start
+  margin-top: 0.8rem

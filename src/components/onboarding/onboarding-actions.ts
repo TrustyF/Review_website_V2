@@ -7,7 +7,9 @@ import { isLocale } from "@/lib/i18n/get-locale";
 
 // Saved per-step so incomplete wizard sessions retain earlier progress
 
-export async function saveOnboardingLanguage(preferredLanguage: string): Promise<void> {
+export async function saveOnboardingLanguage(
+	preferredLanguage: string,
+): Promise<void> {
 	const session = await auth();
 	if (!session?.user?.id) throw new Error("Not signed in");
 
@@ -25,10 +27,13 @@ export async function saveOnboardingLanguage(preferredLanguage: string): Promise
 		});
 	}
 
-	revalidatePath("/account");
+	// Locale affects every page, not just /account — drop all cached routes.
+	revalidatePath("/", "layout");
 }
 
-export async function saveOnboardingUsername(username: string | null): Promise<void> {
+export async function saveOnboardingUsername(
+	username: string | null,
+): Promise<void> {
 	const session = await auth();
 	if (!session?.user?.id) throw new Error("Not signed in");
 
@@ -40,15 +45,19 @@ export async function saveOnboardingUsername(username: string | null): Promise<v
 	revalidatePath("/account");
 }
 
-export async function saveOnboardingNewsletterOptIn(
-	newsletterOptIn: boolean,
-): Promise<void> {
+export async function saveOnboardingEmailPreferences(input: {
+	newsletterOptIn: boolean;
+	listAddEmailOptIn: boolean;
+}): Promise<void> {
 	const session = await auth();
 	if (!session?.user?.id) throw new Error("Not signed in");
 
 	await db.user.update({
 		where: { id: session.user.id },
-		data: { newsletterOptIn },
+		data: {
+			newsletterOptIn: input.newsletterOptIn,
+			listAddEmailOptIn: input.listAddEmailOptIn,
+		},
 	});
 
 	revalidatePath("/account");

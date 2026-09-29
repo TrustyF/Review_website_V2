@@ -6,6 +6,7 @@ import { db } from "@/server/db/client";
 import { getRecommendationTarget } from "@/components/lists/list-actions";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import { displayName } from "@/lib/display-name";
+import { getLocale } from "@/lib/i18n/get-locale";
 import styles from "./user-overview.module.sass";
 
 // Admin's landing page for a specific user: their identity plus a preview of the
@@ -19,7 +20,10 @@ export default async function AdminUserOverviewPage({
 	if (session?.user?.role !== "ADMIN") notFound();
 
 	const { id } = await params;
-	const target = await getRecommendationTarget(id);
+	const [target, locale] = await Promise.all([
+		getRecommendationTarget(id),
+		getLocale(),
+	]);
 	if (!target) notFound();
 
 	const MAX_VISIBLE_LISTS = 4;
@@ -64,8 +68,12 @@ export default async function AdminUserOverviewPage({
 							<ListPreviewCard
 								key={list.id}
 								id={list.id}
-								title={list.title}
-								description={list.description}
+								title={locale === "fr" ? (list.titleFr ?? list.title) : list.title}
+								description={
+									locale === "fr"
+										? (list.descriptionFr ?? list.description)
+										: list.description
+								}
 								thumbnail={list.thumbnail}
 								itemCount={list._count.items}
 								linked={false}

@@ -52,64 +52,88 @@ export function AccountSettingsForm({ initial }: Props) {
 
 	return (
 		<form className={styles.form} onSubmit={handleSubmit}>
-			<label className={styles.field}>
-				{dict.account.username}
-				<input
-					className={styles.input}
-					type="text"
-					value={username}
-					placeholder={dict.account.usernamePlaceholder}
-					onChange={(e) => {
-						setUsername(e.target.value);
-						setSaved(false);
-					}}
-				/>
-			</label>
-			<label className={styles.field}>
-				{dict.account.preferredLanguage}
-				<select
-					className={styles.input}
-					value={preferredLanguage}
-					onChange={(e) => {
-						setPreferredLanguage(e.target.value);
-						setSaved(false);
-					}}>
-					{LANGUAGE_OPTIONS.map((option) => (
-						<option key={option.value} value={option.value}>
-							{option.label}
-						</option>
-					))}
-				</select>
-			</label>
-			<label className={styles.checkbox_field}>
-				<input
-					type="checkbox"
-					checked={newsletterOptIn}
-					onChange={(e) => {
-						setNewsletterOptIn(e.target.checked);
-						setSaved(false);
-					}}
-				/>
-				{dict.account.newsletterOptIn}
-			</label>
-			<label className={styles.checkbox_field}>
-				<input
-					type="checkbox"
-					checked={listAddEmailOptIn}
-					onChange={(e) => {
-						setListAddEmailOptIn(e.target.checked);
-						setSaved(false);
-					}}
-				/>
-				{dict.account.listAddEmailOptIn}
-			</label>
-			{saved && <div className={styles.saved}>{dict.common.saved}</div>}
-			<button
-				type="submit"
-				className={styles.submit_button}
-				disabled={isSubmitting}>
-				{isSubmitting ? dict.common.saving : dict.common.save}
-			</button>
+			<section className={styles.section}>
+				<h2 className={styles.section_title}>{dict.account.profileSection}</h2>
+				<label className={styles.field}>
+					{dict.account.username}
+					<input
+						className={styles.input}
+						type="text"
+						value={username}
+						placeholder={dict.account.usernamePlaceholder}
+						onChange={(e) => {
+							setUsername(e.target.value);
+							setSaved(false);
+						}}
+					/>
+				</label>
+			</section>
+
+			<section className={styles.section}>
+				<h2 className={styles.section_title}>{dict.account.languageSection}</h2>
+				<label className={styles.field}>
+					{dict.account.preferredLanguage}
+					<select
+						className={styles.input}
+						value={preferredLanguage}
+						onChange={(e) => {
+							setPreferredLanguage(e.target.value);
+							setSaved(false);
+						}}>
+						{LANGUAGE_OPTIONS.map((option) => (
+							<option key={option.value} value={option.value}>
+								{option.label}
+							</option>
+						))}
+					</select>
+				</label>
+			</section>
+
+			<section className={styles.section}>
+				<h2 className={styles.section_title}>{dict.account.emailsSection}</h2>
+				<label className={styles.checkbox_field}>
+					<input
+						type="checkbox"
+						checked={newsletterOptIn}
+						onChange={(e) => {
+							setNewsletterOptIn(e.target.checked);
+							setSaved(false);
+						}}
+					/>
+					<span className={styles.option_text}>
+						<span>{dict.account.newsletterOptIn}</span>
+						<span className={styles.option_description}>
+							{dict.account.newsletterOptInDescription}
+						</span>
+					</span>
+				</label>
+				<label className={styles.checkbox_field}>
+					<input
+						type="checkbox"
+						checked={listAddEmailOptIn}
+						onChange={(e) => {
+							setListAddEmailOptIn(e.target.checked);
+							setSaved(false);
+						}}
+					/>
+					<span className={styles.option_text}>
+						<span>{dict.account.listAddEmailOptIn}</span>
+						<span className={styles.option_description}>
+							{dict.account.listAddEmailOptInDescription}
+						</span>
+					</span>
+				</label>
+			</section>
+
+			<div className={styles.save_row}>
+				<button
+					type="submit"
+					className={styles.submit_button}
+					disabled={isSubmitting}>
+					{isSubmitting ? dict.common.saving : dict.common.save}
+				</button>
+				{saved && <span className={styles.saved}>{dict.common.saved}</span>}
+			</div>
 		</form>
 	);
 }

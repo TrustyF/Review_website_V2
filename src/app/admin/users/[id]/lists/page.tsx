@@ -5,6 +5,7 @@ import { db } from "@/server/db/client";
 import { getRecommendationTarget } from "@/components/lists/list-actions";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import { displayName } from "@/lib/display-name";
+import { getLocale } from "@/lib/i18n/get-locale";
 import styles from "./user-lists.module.sass";
 
 // Full grid of one user's recommendation lists, reached from /admin/users/[id]. "New list"
@@ -18,7 +19,10 @@ export default async function AdminUserListsPage({
 	if (session?.user?.role !== "ADMIN") notFound();
 
 	const { id } = await params;
-	const target = await getRecommendationTarget(id);
+	const [target, locale] = await Promise.all([
+		getRecommendationTarget(id),
+		getLocale(),
+	]);
 	if (!target) notFound();
 
 	const lists = await db.list.findMany({
@@ -44,8 +48,12 @@ export default async function AdminUserListsPage({
 						<ListPreviewCard
 							key={list.id}
 							id={list.id}
-							title={list.title}
-							description={list.description}
+							title={locale === "fr" ? (list.titleFr ?? list.title) : list.title}
+							description={
+								locale === "fr"
+									? (list.descriptionFr ?? list.description)
+									: list.description
+							}
 							thumbnail={list.thumbnail}
 							itemCount={list._count.items}
 						/>

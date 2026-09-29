@@ -8,7 +8,6 @@ export const en = {
 		cancel: "Cancel",
 		delete: "Delete",
 		back: "Back",
-		skip: "Skip",
 		continue: "Continue",
 		close: "Close",
 		use: "Use",
@@ -76,9 +75,17 @@ export const en = {
 		username: "Username",
 		usernamePlaceholder: "Shown instead of your name if set",
 		preferredLanguage: "Preferred language",
-		newsletterOptIn: "Subscribe to the newsletter",
-		listAddEmailOptIn: "Email me when media is added to my lists",
+		newsletterOptIn: "Weekly newsletter",
+		newsletterOptInDescription:
+			"A weekly recap of what Arthur rated and reviewed.",
+		listAddEmailOptIn: "Recommendation updates",
+		listAddEmailOptInDescription:
+			"An email when Arthur adds media to a list made for you.",
 		settingsAriaLabel: "Account settings",
+		settingsTitle: "Settings",
+		profileSection: "Profile",
+		languageSection: "Language",
+		emailsSection: "Emails",
 		backToAccount: "← Account",
 		watchlistCard: "Watchlist",
 		signOut: "Sign out",
@@ -108,7 +115,7 @@ export const en = {
 			language: "Language",
 			username: "Username",
 			avatar: "Avatar",
-			preferences: "Newsletter",
+			preferences: "Emails",
 		},
 		languageStep: {
 			title: "Choose your language",
@@ -125,7 +132,9 @@ export const en = {
 			subtitle: "Click the avatar to choose one.",
 		},
 		preferencesStep: {
-			title: "Newsletter",
+			title: "Choose your emails",
+			subtitle:
+				"Both are optional. You can change this any time in account settings.",
 		},
 		finish: "Finish",
 	},

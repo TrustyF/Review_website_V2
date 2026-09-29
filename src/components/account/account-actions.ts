@@ -40,7 +40,8 @@ export async function updateAccountSettings(
 		});
 	}
 
-	revalidatePath("/account");
+	// Locale affects every page, not just /account — drop all cached routes.
+	revalidatePath("/", "layout");
 }
 
 export async function updateAvatar(avatarSrc: string): Promise<void> {

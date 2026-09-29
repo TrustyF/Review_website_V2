@@ -3,8 +3,13 @@ import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { getAvatarGroups } from "@/server/avatars/avatar-catalog";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard/onboarding-wizard";
+import { parseOnboardingStep } from "@/components/onboarding/onboarding-step";
 
-export default async function OnboardingPage() {
+type Props = {
+	searchParams: Promise<{ step?: string }>;
+};
+
+export default async function OnboardingPage({ searchParams }: Props) {
 	const session = await auth();
 	if (!session?.user?.id) redirect("/login");
 
@@ -17,6 +22,7 @@ export default async function OnboardingPage() {
 			image: true,
 			preferredLanguage: true,
 			newsletterOptIn: true,
+			listAddEmailOptIn: true,
 		},
 	});
 	if (!user) redirect("/login");
@@ -29,8 +35,10 @@ export default async function OnboardingPage() {
 				image: user.image,
 				preferredLanguage: user.preferredLanguage,
 				newsletterOptIn: user.newsletterOptIn,
+				listAddEmailOptIn: user.listAddEmailOptIn,
 			}}
 			avatarGroups={getAvatarGroups()}
+			initialStep={parseOnboardingStep((await searchParams).step)}
 		/>
 	);
 }
