@@ -1,4 +1,4 @@
-// Caps prevent search-index bloat beyond Vercel's 10s timeout on cache-miss rebuild
+// Caps keep the Person table (and the in-memory search index built from it) from bloating
 
 // TMDB's cast `order` is billing order (0 = top-billed), the only notability signal available.
 export const MAX_BILLED_CAST = 250;

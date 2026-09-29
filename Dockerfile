@@ -31,20 +31,14 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# `npm run build` runs `prisma migrate deploy` against the real DB and (via
-# build-search-index.ts) writes the persisted search index to local disk —
-# search-actions.ts always uses getLocalDiskStorage() for this regardless of
-# IMAGE_STORAGE_DRIVER (this container is long-lived, not many churning
-# serverless instances, so there's no cross-instance store to keep it in
-# sync with — see that file's own comment), so it lands in this stage's
-# public/ and rides along with everything else COPYed into `runner` below.
+# `npm run build` runs `prisma migrate deploy` against the real DB.
 # DATABASE_URL points at the `db` compose service's published port via
 # docker-compose.yml's `build: network: host` (no DIRECT_URL — local
 # Postgres has no pooler, so prisma.config.ts's fallback to DATABASE_URL
 # applies, same as local dev).
 #
-# The R2_* secrets and IMAGE_STORAGE_DRIVER ARG below are no longer needed
-# for the search index specifically, but are still threaded through in case
+# The R2_* secrets and IMAGE_STORAGE_DRIVER ARG below aren't used by any
+# current build step, but are still threaded through in case
 # a future build-time step needs to read/write real R2 objects (e.g.
 # pre-rendering a page that touches poster-resolver.ts). See docker-
 # compose.yml for how each secret id is sourced from the deploying host's

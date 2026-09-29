@@ -2,7 +2,6 @@ import "dotenv/config";
 import { db } from "@/server/db/client";
 import { Source } from "@prisma/client";
 import { fetchTmdbPersonById } from "@/server/tmdb/client";
-import { invalidateSearchIndex } from "@/components/search/search-actions";
 
 // One-time catch-up: crew enriched before photoPath storage became unconditional
 async function main() {
@@ -32,9 +31,6 @@ async function main() {
 	}
 
 	console.log(`[person] backfilled ${updated}/${people.length}`);
-
-	// Runs outside normal request that would invalidate search index, so do it explicitly or stale photoPath lingers until cache TTL expires.
-	if (updated > 0) await invalidateSearchIndex();
 }
 
 main()

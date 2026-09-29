@@ -73,18 +73,17 @@ services:
   # local Postgres has none, so prisma.config.ts's fallback to DATABASE_URL
   # applies both at build and runtime, same as local dev already relied on.
   #
-  # R2 build secrets are only consumed at image-build time (the build-time
-  # search-index rebuild) and never persisted into the image's layers — see
-  # Dockerfile's --mount=type=secret usage.
+  # R2 build secrets are only exposed at image-build time and never persisted
+  # into the image's layers — see Dockerfile's --mount=type=secret usage.
   app:
     build:
       context: .
       network: host
       # Passed through to the Dockerfile's own `ARG IMAGE_STORAGE_DRIVER=r2`
       # default — without this, the build always used "r2" regardless of
-      # .env (nothing was overriding that ARG), so the build-time
-      # search-index rebuild always required real R2 credentials even when
-      # IMAGE_STORAGE_DRIVER was deliberately left unset for local disk.
+      # .env (nothing was overriding that ARG), so build-time steps would
+      # require real R2 credentials even when IMAGE_STORAGE_DRIVER was
+      # deliberately left unset for local disk.
       args:
         IMAGE_STORAGE_DRIVER: ${IMAGE_STORAGE_DRIVER}
       secrets:

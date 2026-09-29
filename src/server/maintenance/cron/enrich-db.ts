@@ -25,7 +25,6 @@ import {
 	isGoogleBooksReachable,
 } from "@/server/google-books/client";
 import { updateBookFromGoogleBooks } from "@/server/google-books/ingest/book";
-import { invalidateSearchIndex } from "@/components/search/search-actions";
 import { Media, MediaType } from "@prisma/client";
 import { appendJobSummary, formatSummaryList } from "./job-summary";
 
@@ -313,9 +312,6 @@ async function main() {
 	);
 
 	await writeJobSummary(results, skipped);
-
-	// Runs as a separate process from the admin actions that normally trigger this, so search-actions.ts's caches wouldn't otherwise pick up the change until their own TTL.
-	if (mediaList.length > 0) await invalidateSearchIndex();
 }
 
 main()
