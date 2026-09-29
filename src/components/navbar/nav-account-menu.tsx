@@ -43,6 +43,7 @@ export function NavAccountMenu({
 
 	return (
 		<div className={style.account_identity}>
+			<NotificationBell />
 			<NavAccountAvatar
 				pathname={pathname}
 				avatarSrc={avatarSrc}
@@ -51,7 +52,6 @@ export function NavAccountMenu({
 				className={barStyle.link}
 				iconSize={avatarIconSize}
 			/>
-			<NotificationBell />
 		</div>
 	);
 }

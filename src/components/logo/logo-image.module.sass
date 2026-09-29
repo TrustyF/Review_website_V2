@@ -10,7 +10,7 @@
 
   // Matches .icon's own mobile height below — .icon is absolute, so it
   // doesn't shrink this box on its own.
-  @media (max-width: $mobile-breakpoint)
+  @media (max-width: $navbar-breakpoint)
     height: 25px
 
 .image
@@ -19,7 +19,7 @@
   width: auto
   object-fit: contain
 
-  @media (max-width: $mobile-breakpoint)
+  @media (max-width: $navbar-breakpoint)
     display: none
 
 // App-icon mark (src/app/favicon.svg, copied to public/ui) swapped in for .image on mobile; exactly one mark visible at any width.
@@ -30,7 +30,7 @@
   width: auto
   object-fit: contain
 
-  @media (max-width: $mobile-breakpoint)
+  @media (max-width: $navbar-breakpoint)
     display: block
     height: 25px
 
@@ -42,7 +42,7 @@
   background: var(--background)
   clip-path: inset(2% 28% 4% 1.5% round 3px)
 
-  @media (max-width: $mobile-breakpoint)
+  @media (max-width: $navbar-breakpoint)
     display: none
 
 .name
@@ -55,5 +55,5 @@
   white-space: nowrap
   //text-shadow: 2px 1px 2px color-mix(in srgb, var(--brand), black 50%)
 
-  @media (max-width: $mobile-breakpoint)
+  @media (max-width: $navbar-breakpoint)
     display: none

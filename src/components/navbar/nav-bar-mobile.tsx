@@ -30,7 +30,7 @@ type Props = {
 };
 
 // Collapsed bar (Media/Reading/Games + search + hamburger, closed; account +
-// hamburger, open) below $mobile-breakpoint, plus the drawer the hamburger
+// hamburger, open) below $navbar-breakpoint, plus the drawer the hamburger
 // opens for the rest. NavBarLinks covers desktop.
 export function NavBarMobile({
 	signedIn,
@@ -55,7 +55,8 @@ export function NavBarMobile({
 						icon={MovieIcon}
 						className={barStyle.link}
 						pathname={pathname}
-						iconOnly>
+						iconOnly
+						iconSize={20}>
 						{dict.nav.media}
 					</NavLink>
 					<NavLink
@@ -64,7 +65,8 @@ export function NavBarMobile({
 						icon={BookOpen}
 						className={barStyle.link}
 						pathname={pathname}
-						iconOnly>
+						iconOnly
+						iconSize={20}>
 						{dict.nav.reading}
 					</NavLink>
 					<NavLink
@@ -72,11 +74,12 @@ export function NavBarMobile({
 						icon={GamepadDirectional}
 						className={barStyle.link}
 						pathname={pathname}
-						iconOnly>
+						iconOnly
+						iconSize={20}>
 						{dict.nav.games}
 					</NavLink>
 				</div>
-				<NavSearch />
+				<NavSearch iconSize={20} />
 			</div>
 
 			{/* Sibling of .bar_end, not nested in it — both position: absolute

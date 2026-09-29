@@ -15,12 +15,15 @@ $mini-card-gap-mobile: 0.5rem
 // Page content column width — previously hardcoded per-file, now centralized
 $content-width: 950px
 
-// The single navbar breakpoint — below this it's a hamburger-triggered
-// drawer, at or above it the full desktop row (see nav-bar.module.sass/.tsx).
+// General mobile layout breakpoint (grids, cards, page layouts).
 $mobile-breakpoint: 830px
 
+// Navbar swap: hamburger bar below, full desktop row above. Keep
+// MOBILE_BREAKPOINT_PX in use-navbar-visibility.ts in sync.
+$navbar-breakpoint: $content-width
+
 // The navbar's actual rendered height (nav-bar.module.sass's .wrapper
-// min-height) at/above $mobile-breakpoint. Distinct from the CSS custom
+// min-height) at/above $navbar-breakpoint. Distinct from the CSS custom
 // property --navbar-height (globals.sass), which is a smaller nominal value
 // other spacing math is built on — components that need to align flush
 // against the real navbar edge (e.g. featured-review.module.sass) use this
@@ -31,7 +34,7 @@ $navbar-real-height: 5rem
 // drawer trigger stay the same size.
 $mobile-icon-size: 2.25rem
 
-// The navbar's real rendered height below $mobile-breakpoint — shorter than
+// The navbar's real rendered height below $navbar-breakpoint — shorter than
 // desktop's $navbar-real-height. $mobile-icon-size (2.25rem) plus this
 // value's own vertical padding in nav-bar.module.sass's .wrapper (0.125rem
 // top/bottom) nets out to exactly this, so it's content-driven, not an

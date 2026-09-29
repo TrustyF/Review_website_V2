@@ -12,7 +12,7 @@ type NavLinkProps = {
 	pathname: string;
 	children: React.ReactNode;
 	// True: label hidden at every width. False: label hides only below
-	// $mobile-breakpoint (CSS-driven). Either way aria-label always covers it.
+	// $navbar-breakpoint (CSS-driven). Either way aria-label always covers it.
 	iconOnly?: boolean;
 	// Leave unset for anything dynamic/session-scoped (e.g. /account); pass
 	// true only for a cheap-to-prefetch static/ISR destination.
@@ -23,8 +23,8 @@ type NavLinkProps = {
 	// For a link that fronts a group of routes (e.g. "Media" for /movies,
 	// /tv, /shorts) — active state matches any of these instead of just href.
 	activeHrefs?: string[];
-	// Bigger touch target for the mobile drawer's rows; every other call
-	// site relies on the 14px default that matches the rest of the navbar.
+	// Main nav passes 18 (desktop) / 20 (mobile); the 14px default is left
+	// for the admin links and sign-in button.
 	iconSize?: number;
 };
 

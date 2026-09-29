@@ -25,7 +25,7 @@ type Props = {
 	isAdmin: boolean;
 };
 
-// Desktop-only nav row. Below $mobile-breakpoint this hides entirely (see
+// Desktop-only nav row. Below $navbar-breakpoint this hides entirely (see
 // its own .nav_content media query) and NavBarMobile takes over instead.
 export function NavBarLinks({
 	signedIn,
@@ -47,7 +47,8 @@ export function NavBarLinks({
 							activeHrefs={["/movies", "/tv", "/shorts"]}
 							icon={MovieIcon}
 							className={barStyle.link}
-							pathname={pathname}>
+							pathname={pathname}
+							iconSize={18}>
 							{dict.nav.media}
 						</NavLink>
 						<NavLink
@@ -55,14 +56,16 @@ export function NavBarLinks({
 							activeHrefs={["/manga", "/comics", "/books"]}
 							icon={BookOpen}
 							className={barStyle.link}
-							pathname={pathname}>
+							pathname={pathname}
+							iconSize={18}>
 							{dict.nav.reading}
 						</NavLink>
 						<NavLink
 							href="/games"
 							icon={GamepadDirectional}
 							className={barStyle.link}
-							pathname={pathname}>
+							pathname={pathname}
+							iconSize={18}>
 							{dict.nav.games}
 						</NavLink>
 					</div>
@@ -75,6 +78,7 @@ export function NavBarLinks({
 							pathname={pathname}
 							// Static-ish, safe to prefetch eagerly, unlike /account below.
 							iconOnly
+							iconSize={18}
 							prefetch>
 							{dict.nav.activity}
 						</NavLink>
@@ -84,6 +88,7 @@ export function NavBarLinks({
 							className={barStyle.link}
 							pathname={pathname}
 							iconOnly
+							iconSize={18}
 							prefetch>
 							{dict.nav.reviews}
 						</NavLink>
@@ -93,6 +98,7 @@ export function NavBarLinks({
 							className={barStyle.link}
 							pathname={pathname}
 							iconOnly
+							iconSize={18}
 							prefetch>
 							{dict.nav.lists}
 						</NavLink>
@@ -102,13 +108,14 @@ export function NavBarLinks({
 							className={barStyle.link}
 							pathname={pathname}
 							iconOnly
+							iconSize={18}
 							prefetch>
 							{dict.nav.stats}
 						</NavLink>
 					</div>
 
 					{/* NavSearch's expand spends leftover room in .groups. Below
-					$mobile-breakpoint it's just a trigger that routes to /search. */}
+					$navbar-breakpoint it's just a trigger that routes to /search. */}
 					<div className={style.nav_group}>
 						<NavSearch />
 					</div>
@@ -123,12 +130,13 @@ export function NavBarLinks({
 						avatarSrc={avatarSrc}
 						showAvatar={showAvatar}
 						onAvatarError={onAvatarError}
+						avatarIconSize={18}
 					/>
 				</div>
 			</div>
 
 			{/* Admin tools stay desktop-only — nav-admin-links.module.sass hides
-			the absolutely-positioned corner cluster below $mobile-breakpoint. */}
+			the absolutely-positioned corner cluster below $navbar-breakpoint. */}
 			{isAdmin && <NavAdminLinks pathname={pathname} />}
 		</>
 	);

@@ -4,13 +4,13 @@
 // (its nearest positioned ancestor — see nav-bar.module.sass), with its own
 // fixed right inset that clears .toggle's separate absolute box, not shared
 // flow/padding with it (see .toggle below). Hidden entirely at/above
-// $mobile-breakpoint — NavBarLinks takes over there.
+// $navbar-breakpoint — NavBarLinks takes over there.
 .bar_end
   display: none
   align-items: center
   gap: 0.5rem
 
-  @media (max-width: $mobile-breakpoint)
+  @media (max-width: $navbar-breakpoint)
     display: flex
     position: absolute
     top: 0
@@ -35,7 +35,7 @@
 // margin-left: auto right-packs it within .wrapper's own row, same as any
 // other nav item, instead of a hand-tuned fixed offset that kept drifting
 // out of alignment. No longer a child of .bar_end (see nav-bar-mobile.tsx),
-// so it needs its own hide-above-$mobile-breakpoint rule.
+// so it needs its own hide-above-$navbar-breakpoint rule.
 .toggle
   display: none
   width: $mobile-icon-size
@@ -45,7 +45,7 @@
   cursor: pointer
   transition: background-color 0.2s ease
 
-  @media (max-width: $mobile-breakpoint)
+  @media (max-width: $navbar-breakpoint)
     display: flex
     align-items: center
     justify-content: center
@@ -106,7 +106,7 @@
   gap: 2rem
   background: var(--surface)
 
-  @media (max-width: $mobile-breakpoint)
+  @media (max-width: $navbar-breakpoint)
     [data-mobile-open="true"] &
       display: flex
 

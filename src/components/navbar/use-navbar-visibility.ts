@@ -6,13 +6,13 @@ import { useEffect, useRef, useState } from "react";
 const TOP_EXEMPT_PX = 100;
 const REVEAL_THRESHOLD_PX = 100;
 
-// Matches $mobile-breakpoint (variables.sass). Own listener rather than the
+// Matches $navbar-breakpoint (variables.sass). Own listener rather than the
 // shared useIsMobileViewport store, whose breakpoint is tuned independently
 // for admin-editing gates elsewhere, not the navbar.
-const MOBILE_BREAKPOINT_PX = 830;
+const MOBILE_BREAKPOINT_PX = 950;
 const DESKTOP_NAV_QUERY = `(min-width: ${MOBILE_BREAKPOINT_PX + 1}px)`;
 
-// True at/above $mobile-breakpoint, where the navbar is fixed and hideable.
+// True at/above $navbar-breakpoint, where the navbar is fixed and hideable.
 // Below it the navbar is position: relative (nav-bar.module.sass) — nothing
 // to hide/reveal, so callers skip that logic entirely.
 function useIsDesktopNav() {

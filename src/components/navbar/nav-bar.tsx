@@ -45,7 +45,7 @@ export default function Navbar() {
 				</Link>
 
 				{/* Both always mount; each one's own CSS decides visibility at
-				$mobile-breakpoint, so a mobile tweak can't reach desktop or vice versa. */}
+				$navbar-breakpoint, so a mobile tweak can't reach desktop or vice versa. */}
 				<NavBarLinks
 					signedIn={signedIn}
 					pathname={pathname}

@@ -29,7 +29,8 @@ const VIEWPORT_MARGIN = 8;
 type DropdownPosition = { top: number; right: number };
 
 // Media-agnostic navbar search: trigger expands inline with animated width.
-export function NavSearch() {
+// iconSize: the mobile bar bumps it to match its hamburger.
+export function NavSearch({ iconSize = 18 }: { iconSize?: number }) {
 	const dict = useDictionary();
 	const typeLabels: Record<MediaType, string> = {
 		[MediaType.MOVIE]: dict.nav.search.typeLabels.movie,
@@ -246,7 +247,7 @@ export function NavSearch() {
 					}
 					setIsExpanded((expanded) => !expanded);
 				}}>
-				<Search size={18} />
+				<Search size={iconSize} />
 			</Clickable>
 			{dropdown}
 		</div>

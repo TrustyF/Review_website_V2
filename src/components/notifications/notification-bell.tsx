@@ -37,7 +37,7 @@ export function NotificationBell() {
 					: dict.notifications.title
 			}
 			title={dict.notifications.title}>
-			<Bell size={14} />
+			<Bell size={18} />
 			{unreadCount > 0 && (
 				<span className={style.badge}>{unreadCount > 9 ? "9+" : unreadCount}</span>
 			)}

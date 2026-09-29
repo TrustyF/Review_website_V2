@@ -43,11 +43,11 @@ $var_banner_width: 110%
   // the fixed desktop navbar.
   top: calc(-1 * (var(--navbar-height) + var(--content-gap)))
 
-  // Below $mobile-breakpoint the navbar is position: relative, not fixed
+  // Below $navbar-breakpoint the navbar is position: relative, not fixed
   // (nav-bar.module.sass), so main's padding-top is just --content-gap
   // (globals.sass) — cancel that alone to sit flush against its bottom
   // edge instead of leaving that gap above the banner.
-  @media (max-width: $mobile-breakpoint)
+  @media (max-width: $navbar-breakpoint)
     top: calc(-1 * var(--content-gap))
 
 .banner
