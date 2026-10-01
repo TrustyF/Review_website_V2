@@ -31,37 +31,40 @@
 .tooltip_right
   transform: translate(0, -50%)
 
+// Rotated square on the edge: two outer sides carry the outline, its fill hides the border
+// underneath so the outline is unbroken. 8px keeps its inner half within the 0.4rem padding.
 .arrow
   position: absolute
-  width: 0
-  height: 0
-  border-style: solid
+  width: 8px
+  height: 8px
+  background: var(--surface)
+  border: 1px solid transparent
+  transform: translate(-50%, -50%) rotate(45deg)
 
-// Border-triangle technique; simpler than SVG since arrow has no corners
+// Tooltip above the trigger: point at the bottom edge, facing down.
 .arrow_top
   top: 100%
   left: 50%
-  transform: translateX(-50%)
-  border-width: 6px 6px 0 6px
-  border-color: var(--surface) transparent transparent transparent
+  border-right-color: var(--surface-border)
+  border-bottom-color: var(--surface-border)
 
+// Tooltip below the trigger: point at the top edge, facing up.
 .arrow_bottom
-  bottom: 100%
+  top: 0
   left: 50%
-  transform: translateX(-50%)
-  border-width: 0 6px 6px 6px
-  border-color: transparent transparent var(--surface) transparent
+  border-top-color: var(--surface-border)
+  border-left-color: var(--surface-border)
 
+// Tooltip left of the trigger: point at the right edge, facing right.
 .arrow_left
+  top: 50%
   left: 100%
-  top: 50%
-  transform: translateY(-50%)
-  border-width: 6px 0 6px 6px
-  border-color: transparent transparent transparent var(--surface)
+  border-top-color: var(--surface-border)
+  border-right-color: var(--surface-border)
 
+// Tooltip right of the trigger: point at the left edge, facing left.
 .arrow_right
-  right: 100%
   top: 50%
-  transform: translateY(-50%)
-  border-width: 6px 6px 6px 0
-  border-color: transparent var(--surface) transparent transparent
+  left: 0
+  border-bottom-color: var(--surface-border)
+  border-left-color: var(--surface-border)

@@ -29,7 +29,8 @@ export function DeleteAccountSection({ hasPassword }: Props) {
 		escapeToo: true,
 	});
 
-	const canSubmit = confirmText === CONFIRM_PHRASE && (!hasPassword || password.length > 0);
+	const canSubmit =
+		confirmText === CONFIRM_PHRASE && (!hasPassword || password.length > 0);
 
 	function openModal() {
 		setConfirmText("");
@@ -46,7 +47,9 @@ export function DeleteAccountSection({ hasPassword }: Props) {
 			await deleteAccount(hasPassword ? password : null);
 			await signOut({ callbackUrl: "/" });
 		} catch (err) {
-			setError(err instanceof Error ? err.message : dict.account.deleteAccountFailed);
+			setError(
+				err instanceof Error ? err.message : dict.account.deleteAccountFailed,
+			);
 			setIsSubmitting(false);
 		}
 	}
@@ -72,7 +75,9 @@ export function DeleteAccountSection({ hasPassword }: Props) {
 								<X size={16} />
 							</Clickable>
 						</div>
-						<p className={styles.warning}>{dict.account.deleteAccountWarning}</p>
+						<p className={styles.warning}>
+							{dict.account.deleteAccountWarning}
+						</p>
 						<label className={styles.field}>
 							{dict.account.typeToConfirm(CONFIRM_PHRASE)}
 							<input
@@ -99,7 +104,9 @@ export function DeleteAccountSection({ hasPassword }: Props) {
 							className={styles.confirm_button}
 							disabled={!canSubmit || isSubmitting}
 							onClick={handleDelete}>
-							{isSubmitting ? dict.account.deleting : dict.account.permanentlyDeleteAccount}
+							{isSubmitting
+								? dict.account.deleting
+								: dict.account.permanentlyDeleteAccount}
 						</Clickable>
 					</div>
 				</div>

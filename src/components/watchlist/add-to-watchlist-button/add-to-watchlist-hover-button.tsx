@@ -22,7 +22,9 @@ export function AddToWatchlistHoverButton({ mediaId, className }: Props) {
 	if (!session?.user?.id) return null;
 
 	const inWatchlist = isInWatchlist(mediaId);
-	const label = inWatchlist ? dict.watchlist.inWatchlist : dict.watchlist.addToWatchlist;
+	const label = inWatchlist
+		? dict.watchlist.inWatchlist
+		: dict.watchlist.addToWatchlist;
 
 	return (
 		<Tooltip content={label} className={styles.trigger}>

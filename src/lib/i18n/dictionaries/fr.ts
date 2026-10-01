@@ -161,6 +161,28 @@ export const fr = {
 		},
 		finish: "Terminer",
 	},
+	tips: {
+		title: "Astuce",
+		labels: {
+			watchlist: "Liste à voir",
+			watched: "Vu",
+			difficulty: "Difficulté",
+			recommendation: "Recommandations",
+			mediaTypeSwitcher: "Catégories",
+		},
+		watchlist: "Enregistrez-le pour plus tard.",
+		watched:
+			"Marquez ce que vous avez vu pour que je ne vous le recommande pas.",
+		difficulty: "Indique le niveau d'effort demandé",
+		difficultyLevels: {
+			none: "Aucune",
+			noneDescription: "Accessible",
+			mediumDescription: "Demande de l'attention",
+			hardDescription: "Expérimental/exigeant",
+		},
+		recommendation: "Dites-moi ce qui vous tente, je vous ferai une liste.",
+		mediaTypeSwitcher: "Changez de catégorie ici.",
+	},
 	media: {
 		recentSuffix: "récents",
 		recentBackToRating: "Par note",

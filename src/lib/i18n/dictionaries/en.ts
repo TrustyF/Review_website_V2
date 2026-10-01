@@ -159,6 +159,29 @@ export const en = {
 		},
 		finish: "Finish",
 	},
+	tips: {
+		title: "Tip",
+		// Shown after the title ("Tip — Watchlist"); one per id in tip-ids.ts.
+		labels: {
+			watchlist: "Watchlist",
+			watched: "Seen",
+			difficulty: "Difficulty",
+			recommendation: "Recommendations",
+			mediaTypeSwitcher: "Categories",
+		},
+		watchlist: "Save it for later.",
+		watched: "Mark what you've seen so I don't recommend it.",
+		difficulty: "Indicates the level of effort needed",
+		// Medium/Hard names come from mediaDetail.medium/hard, matching the page's own labels.
+		difficultyLevels: {
+			none: "None",
+			noneDescription: "Accessible",
+			mediumDescription: "Requires attention",
+			hardDescription: "Experimental/challenging",
+		},
+		recommendation: "Tell me your mood, I'll make you a list.",
+		mediaTypeSwitcher: "Switch categories here.",
+	},
 	media: {
 		recentSuffix: "recent",
 		recentBackToRating: "By rating",

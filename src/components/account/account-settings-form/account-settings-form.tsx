@@ -2,7 +2,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateAccountSettings } from "@/components/account/account-actions";
-import { LANGUAGE_OPTIONS } from "@/lib/languages";
+import { LanguagePicker } from "@/components/account/language-picker/language-picker";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./account-settings-form.module.sass";
 
@@ -71,22 +71,16 @@ export function AccountSettingsForm({ initial }: Props) {
 
 			<section className={styles.section}>
 				<h2 className={styles.section_title}>{dict.account.languageSection}</h2>
-				<label className={styles.field}>
+				<div className={styles.field}>
 					{dict.account.preferredLanguage}
-					<select
-						className={styles.input}
+					<LanguagePicker
 						value={preferredLanguage}
-						onChange={(e) => {
-							setPreferredLanguage(e.target.value);
+						onChange={(value) => {
+							setPreferredLanguage(value);
 							setSaved(false);
-						}}>
-						{LANGUAGE_OPTIONS.map((option) => (
-							<option key={option.value} value={option.value}>
-								{option.label}
-							</option>
-						))}
-					</select>
-				</label>
+						}}
+					/>
+				</div>
 			</section>
 
 			<section className={styles.section}>

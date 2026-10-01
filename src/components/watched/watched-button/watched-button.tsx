@@ -2,8 +2,12 @@
 import { useState } from "react";
 import { Eye } from "lucide-react";
 import { MediaType } from "@prisma/client";
-import { markAsWatched, unmarkAsWatched } from "@/components/watched/watched-actions";
+import {
+	markAsWatched,
+	unmarkAsWatched,
+} from "@/components/watched/watched-actions";
 import { Clickable } from "@/components/ui/clickable";
+import { Tip } from "@/components/tips/tip/tip";
 import {
 	alreadyWatchedLabel,
 	markAsWatchedLabel,
@@ -48,14 +52,18 @@ export function WatchedButton({
 		: markAsWatchedLabel(type, dict);
 
 	return (
-		<Clickable
-			className={className ? `${styles.trigger} ${className}` : styles.trigger}
-			disabled={isPending}
-			aria-pressed={isWatched}
-			title={label}
-			aria-label={label}
-			onClick={toggle}>
-			<Eye size={15} />
-		</Clickable>
+		<Tip id="watched" text={dict.tips.watched} after="watchlist">
+			<Clickable
+				className={
+					className ? `${styles.trigger} ${className}` : styles.trigger
+				}
+				disabled={isPending}
+				aria-pressed={isWatched}
+				title={label}
+				aria-label={label}
+				onClick={toggle}>
+				<Eye size={15} />
+			</Clickable>
+		</Tip>
 	);
 }

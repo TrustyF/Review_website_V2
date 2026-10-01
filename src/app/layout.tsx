@@ -12,6 +12,7 @@ import { VersionBadge } from "@/components/version-badge/version-badge";
 import { AvatarProvider } from "@/components/account/avatar-context";
 import { WatchlistProvider } from "@/components/watchlist/watchlist-context";
 import { WatchedProvider } from "@/components/watched/watched-context";
+import { TipsProvider } from "@/components/tips/tips-context";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { I18nProvider } from "@/lib/i18n/i18n-context";
@@ -24,7 +25,8 @@ const SITE_URL = process.env.SITE_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
 	title: {
-		default: "Arthur's corner — Arthur Sirjacobs' movie, TV, book & game reviews",
+		default:
+			"Arthur's corner — Arthur Sirjacobs' movie, TV, book & game reviews",
 		template: "%s — Arthur's corner",
 	},
 	description:
@@ -85,14 +87,16 @@ export default async function RootLayout({
 						<AvatarProvider>
 							<WatchlistProvider>
 								<WatchedProvider>
-									<Navbar />
-									<DevMenu />
-									<MobileViewportListener />
-									<RrwebAnalytics />
-									<MediaEditorModal />
-									<FeaturedManagerModal />
-									<VersionBadge />
-									<main>{children}</main>
+									<TipsProvider>
+										<Navbar />
+										<DevMenu />
+										<MobileViewportListener />
+										<RrwebAnalytics />
+										<MediaEditorModal />
+										<FeaturedManagerModal />
+										<VersionBadge />
+										<main>{children}</main>
+									</TipsProvider>
 								</WatchedProvider>
 							</WatchlistProvider>
 						</AvatarProvider>

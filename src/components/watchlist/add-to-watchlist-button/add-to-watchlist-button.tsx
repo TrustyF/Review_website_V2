@@ -1,8 +1,12 @@
 "use client";
 import { useState } from "react";
 import { Clock } from "lucide-react";
-import { addToWatchlist, removeFromWatchlist } from "@/components/watchlist/watchlist-actions";
+import {
+	addToWatchlist,
+	removeFromWatchlist,
+} from "@/components/watchlist/watchlist-actions";
 import { Clickable } from "@/components/ui/clickable";
+import { Tip } from "@/components/tips/tip/tip";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./add-to-watchlist-button.module.sass";
 
@@ -37,17 +41,23 @@ export function AddToWatchlistButton({
 		}
 	}
 
-	const label = isInWatchlist ? dict.watchlist.inWatchlist : dict.watchlist.addToWatchlist;
+	const label = isInWatchlist
+		? dict.watchlist.inWatchlist
+		: dict.watchlist.addToWatchlist;
 
 	return (
-		<Clickable
-			className={className ? `${styles.trigger} ${className}` : styles.trigger}
-			disabled={isPending}
-			aria-pressed={isInWatchlist}
-			title={label}
-			aria-label={label}
-			onClick={toggle}>
-			<Clock size={15} />
-		</Clickable>
+		<Tip id="watchlist" text={dict.tips.watchlist}>
+			<Clickable
+				className={
+					className ? `${styles.trigger} ${className}` : styles.trigger
+				}
+				disabled={isPending}
+				aria-pressed={isInWatchlist}
+				title={label}
+				aria-label={label}
+				onClick={toggle}>
+				<Clock size={15} />
+			</Clickable>
+		</Tip>
 	);
 }

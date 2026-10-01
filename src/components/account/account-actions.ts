@@ -76,7 +76,8 @@ export async function getMyAvatar(): Promise<string | null> {
 const ACCOUNT_DELETION_ENABLED = false;
 
 export async function deleteAccount(password: string | null): Promise<void> {
-	if (!ACCOUNT_DELETION_ENABLED) throw new Error("Account deletion is disabled");
+	if (!ACCOUNT_DELETION_ENABLED)
+		throw new Error("Account deletion is disabled");
 
 	const session = await auth();
 	if (!session?.user?.id) throw new Error("Not signed in");

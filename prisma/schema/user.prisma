@@ -29,6 +29,8 @@ model User {
   // from newsletterOptIn since it's a more personal/transactional email, not
   // a newsletter someone would want to opt out of independently.
   listAddEmailOptIn Boolean  @default(false)
+  // Ids of the one-time page tips this user has dismissed (see src/components/tips/tip-ids.ts).
+  seenTips          String[] @default([])
 
   createDate DateTime @default(now())
 

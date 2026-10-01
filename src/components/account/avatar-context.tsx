@@ -1,5 +1,11 @@
 "use client";
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import {
+	createContext,
+	ReactNode,
+	useContext,
+	useEffect,
+	useState,
+} from "react";
 import { useSession } from "next-auth/react";
 import { getMyAvatar } from "@/components/account/account-actions";
 

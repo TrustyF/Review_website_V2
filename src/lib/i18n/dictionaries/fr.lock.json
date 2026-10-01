@@ -1279,6 +1279,66 @@
 		"en": "663175a9c461a96d",
 		"fr": "f14fe178f9324f7b"
 	},
+	"tips.difficulty": {
+		"en": "32daf948a54c5059",
+		"fr": "d1079af359838376"
+	},
+	"tips.difficultyLevels.hardDescription": {
+		"en": "5fe72ef95a92ff26",
+		"fr": "acc5f4e9b89d3f45"
+	},
+	"tips.difficultyLevels.mediumDescription": {
+		"en": "ff9011f3a617ee0b",
+		"fr": "4b3225d8ee5f473f"
+	},
+	"tips.difficultyLevels.none": {
+		"en": "f2953d2931e36d0c",
+		"fr": "2cf717f00ff85a4a"
+	},
+	"tips.difficultyLevels.noneDescription": {
+		"en": "31d874890f59e615",
+		"fr": "31d874890f59e615"
+	},
+	"tips.labels.difficulty": {
+		"en": "f6178ff79946bddb",
+		"fr": "49bc78e28a6689eb"
+	},
+	"tips.labels.mediaTypeSwitcher": {
+		"en": "5310a525e2b3eb4e",
+		"fr": "026cfaf2355963e8"
+	},
+	"tips.labels.recommendation": {
+		"en": "621b4f64afca47e4",
+		"fr": "4c7f199980b78a84"
+	},
+	"tips.labels.watched": {
+		"en": "4b5c220e61d3b975",
+		"fr": "d22c21b899daf28a"
+	},
+	"tips.labels.watchlist": {
+		"en": "d8a02d0c584aec5d",
+		"fr": "aa3f007ba707a87f"
+	},
+	"tips.mediaTypeSwitcher": {
+		"en": "fb5ef7e907287cc4",
+		"fr": "47936ee089fe283e"
+	},
+	"tips.recommendation": {
+		"en": "6b5e479c029e9ad4",
+		"fr": "3eaf42c1304c8296"
+	},
+	"tips.title": {
+		"en": "6825e24a3fa637f7",
+		"fr": "57f00e2c19de3e27"
+	},
+	"tips.watched": {
+		"en": "3def1cbdc6c61d27",
+		"fr": "493d0f2efc5a8f75"
+	},
+	"tips.watchlist": {
+		"en": "c9e86c7501cf015b",
+		"fr": "35f94b695ec298d6"
+	},
 	"unsubscribed.accountSettings": {
 		"en": "805ea849d87cd2ec",
 		"fr": "750b555fe613e150"

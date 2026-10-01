@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "seenTips" TEXT[] DEFAULT ARRAY[]::TEXT[];

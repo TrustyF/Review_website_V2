@@ -25,6 +25,7 @@ import { MediaDetailHeaderMobile } from "./media-detail-header-mobile";
 import styles from "./media-detail.module.sass";
 import { CircularGauge } from "@/components/ui/circular-gauge";
 import { Tooltip } from "@/components/ui/tooltip";
+import { Tip } from "@/components/tips/tip/tip";
 import { generateMediaMetadata } from "./metadata";
 import { MediaStatus } from "@prisma/client";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
@@ -340,21 +341,44 @@ export default async function MediaDetailPage({
 												<Fact
 													label={dict.mediaDetail.facts.difficulty}
 													value={
-														<Tooltip
-															content={
-																difficulty === 1
-																	? dict.mediaDetail.mediumDifficulty
-																	: dict.mediaDetail.hardDifficulty
-															}>
-															<span className={styles.difficulty}>
-																<span
-																	className={`${styles.difficulty_dot} ${difficulty === 1 ? styles.difficulty_dot_medium : styles.difficulty_dot_hard}`}
-																/>
-																{difficulty === 1
-																	? dict.mediaDetail.medium
-																	: dict.mediaDetail.hard}
-															</span>
-														</Tooltip>
+														<Tip
+															id="difficulty"
+															text={dict.tips.difficulty}
+															items={[
+																{
+																	name: dict.tips.difficultyLevels.none,
+																	description:
+																		dict.tips.difficultyLevels.noneDescription,
+																},
+																{
+																	name: dict.mediaDetail.medium,
+																	description:
+																		dict.tips.difficultyLevels
+																			.mediumDescription,
+																},
+																{
+																	name: dict.mediaDetail.hard,
+																	description:
+																		dict.tips.difficultyLevels.hardDescription,
+																},
+															]}
+															after="watched">
+															<Tooltip
+																content={
+																	difficulty === 1
+																		? dict.mediaDetail.mediumDifficulty
+																		: dict.mediaDetail.hardDifficulty
+																}>
+																<span className={styles.difficulty}>
+																	<span
+																		className={`${styles.difficulty_dot} ${difficulty === 1 ? styles.difficulty_dot_medium : styles.difficulty_dot_hard}`}
+																	/>
+																	{difficulty === 1
+																		? dict.mediaDetail.medium
+																		: dict.mediaDetail.hard}
+																</span>
+															</Tooltip>
+														</Tip>
 													}
 												/>
 											)}

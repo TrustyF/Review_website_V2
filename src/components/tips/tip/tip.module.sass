@@ -1,0 +1,125 @@
+// Look based on ui/tooltip.module.sass; placement is done in tip.tsx.
+.wrapper
+  display: contents
+
+// Portaled to body; tip.tsx sets top/left (page coordinates), data-side and
+// --arrow-offset, then reveals it. --tip-border is shared with .arrow for hover.
+.tip
+  --tip-border: var(--brand)
+  position: absolute
+  top: 0
+  left: 0
+  z-index: 20
+  visibility: hidden
+  display: flex
+  flex-flow: column
+  gap: 0.2rem
+  width: max-content
+  max-width: min(16rem, calc(100vw - 2rem))
+  padding: 0.5rem 0.7rem
+  background: var(--surface)
+  border: 1px solid var(--tip-border)
+  border-radius: 0.4rem
+  color: var(--foreground)
+  font-size: 0.9rem
+  line-height: 1.3
+  cursor: pointer
+  transition: opacity 0.2s ease
+  // Short delay so it doesn't pop in with the page; backwards keeps it hidden until then.
+  animation: tip-in 0.25s ease-out 0.4s backwards
+
+  &:hover
+    --tip-border: var(--brand-hover)
+
+  // Set by close() in tip.tsx; 0.2s matches its FADE_MS.
+  &[data-closing]
+    opacity: 0
+    pointer-events: none
+
+  @media (prefers-reduced-motion: reduce)
+    transition: none
+    animation: none
+
+// Follows another tip (`after`), so it slides in right as that one fades out.
+.tip_chained
+  animation-delay: 0s
+
+// Starts 6px away from the anchor and slides the way the arrow points;
+// data-side is set before the first paint.
+.tip[data-side="bottom"]
+  --tip-slide: 0, 6px
+
+.tip[data-side="top"]
+  --tip-slide: 0, -6px
+
+.tip[data-side="left"]
+  --tip-slide: -6px, 0
+
+.tip[data-side="right"]
+  --tip-slide: 6px, 0
+
+@keyframes tip-in
+  from
+    opacity: 0
+    transform: translate(var(--tip-slide, 0, 0))
+
+.title
+  display: flex
+  align-items: center
+  gap: 0.3rem
+  color: var(--brand)
+  font-weight: 600
+
+  svg
+    flex-shrink: 0
+
+.label
+  font-weight: 400
+
+.items
+  display: flex
+  flex-flow: column
+  gap: 0.2rem
+  margin-top: 0.2rem
+  padding: 0
+  list-style: none
+  color: var(--accent1)
+
+.item_name
+  color: var(--foreground)
+  font-weight: 600
+
+// Square rotated 45° and centered on the tip's edge: its two outer sides carry the
+// outline, and its fill covers the tip's own border underneath, so the outline is unbroken.
+.arrow
+  position: absolute
+  width: 10px
+  height: 10px
+  background: var(--surface)
+  border: 1px solid transparent
+  transform: translate(-50%, -50%) rotate(45deg)
+
+// --arrow-offset keeps the point on the anchor's center even when the box is shifted.
+.tip[data-side="top"] .arrow
+  top: 100%
+  left: var(--arrow-offset)
+  border-right-color: var(--tip-border)
+  border-bottom-color: var(--tip-border)
+
+.tip[data-side="bottom"] .arrow
+  top: 0
+  left: var(--arrow-offset)
+  border-top-color: var(--tip-border)
+  border-left-color: var(--tip-border)
+
+.tip[data-side="left"] .arrow
+  top: var(--arrow-offset)
+  left: 100%
+  border-top-color: var(--tip-border)
+  border-right-color: var(--tip-border)
+
+.tip[data-side="right"] .arrow
+  top: var(--arrow-offset)
+  left: 0
+  border-bottom-color: var(--tip-border)
+  border-left-color: var(--tip-border)

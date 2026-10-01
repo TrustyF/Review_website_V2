@@ -7,7 +7,7 @@ import { WatchlistIcon } from "@/components/icons/watchlist-icon";
 import { Clickable } from "@/components/ui/clickable";
 import { AvatarPicker } from "@/components/account/avatar-picker/avatar-picker";
 import { AvatarGroup } from "@/lib/avatars";
-import { LANGUAGE_OPTIONS } from "@/lib/languages";
+import { LanguagePicker } from "@/components/account/language-picker/language-picker";
 import { dictionaries, useDictionary } from "@/lib/i18n/i18n-context";
 import type { Locale } from "@/lib/i18n/get-locale";
 import {
@@ -221,18 +221,10 @@ export function OnboardingWizard({
 					}}>
 					<div className={styles.field}>
 						{dict.account.preferredLanguage}
-						<div className={styles.language_options}>
-							{LANGUAGE_OPTIONS.map((option) => (
-								<Clickable
-									key={option.value}
-									className={`${styles.language_option} ${option.value === preferredLanguage ? styles.language_option_active : ""}`}
-									aria-pressed={option.value === preferredLanguage}
-									onClick={() => setPreferredLanguage(option.value)}>
-									<span className={styles.language_flag}>{option.flag}</span>
-									<span>{option.label}</span>
-								</Clickable>
-							))}
-						</div>
+						<LanguagePicker
+							value={preferredLanguage}
+							onChange={setPreferredLanguage}
+						/>
 					</div>
 					{preferredLanguage !== "en" && (
 						<div className={styles.language_notice}>

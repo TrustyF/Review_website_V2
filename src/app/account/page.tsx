@@ -8,6 +8,8 @@ import { AvatarPicker } from "@/components/account/avatar-picker/avatar-picker";
 import { getAvatarGroups } from "@/server/avatars/avatar-catalog";
 import { WatchlistStack } from "@/components/watchlist/watchlist-stack/watchlist-stack";
 import { WatchlistIcon } from "@/components/icons/watchlist-icon";
+import { Tip } from "@/components/tips/tip/tip";
+import { SignOutButton } from "@/components/account/sign-out-button/sign-out-button";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import { displayName } from "@/lib/display-name";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
@@ -92,21 +94,23 @@ export default async function AccountPage() {
 				</Link>
 			</div>
 
-			<Link
-				href="/account/recommendation-request"
-				className={styles.ask_recommendation}>
-				<MailPlus size={25} className={styles.section_icon} />
-				<div className={styles.ask_recommendation_text}>
-					<span className={styles.section_title}>
-						{dict.account.askForRecommendation}
-					</span>
-					<span className={styles.ask_recommendation_hint}>
-						{pendingRequest
-							? dict.account.askForRecommendationPending
-							: dict.account.askForRecommendationHint}
-					</span>
-				</div>
-			</Link>
+			<Tip id="recommendation" text={dict.tips.recommendation}>
+				<Link
+					href="/account/recommendation-request"
+					className={styles.ask_recommendation}>
+					<MailPlus size={25} className={styles.section_icon} />
+					<div className={styles.ask_recommendation_text}>
+						<span className={styles.section_title}>
+							{dict.account.askForRecommendation}
+						</span>
+						<span className={styles.ask_recommendation_hint}>
+							{pendingRequest
+								? dict.account.askForRecommendationPending
+								: dict.account.askForRecommendationHint}
+						</span>
+					</div>
+				</Link>
+			</Tip>
 
 			<div className={styles.grid}>
 				<Link href="/account/lists" className={styles.lists}>
@@ -150,6 +154,10 @@ export default async function AccountPage() {
 						<WatchlistStack media={watchlistMedia} />
 					)}
 				</Link>
+			</div>
+
+			<div className={styles.sign_out}>
+				<SignOutButton />
 			</div>
 		</div>
 	);

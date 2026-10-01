@@ -1,4 +1,4 @@
-import { CSSProperties, KeyboardEvent, ReactNode } from "react";
+import { CSSProperties, KeyboardEvent, ReactNode, Ref } from "react";
 
 type Props = {
 	onClick?: () => void;
@@ -7,6 +7,7 @@ type Props = {
 	style?: CSSProperties | undefined;
 	title?: string;
 	disabled?: boolean;
+	ref?: Ref<HTMLDivElement>;
 	"aria-label"?: string;
 	"aria-pressed"?: boolean;
 	"aria-current"?: boolean | "true" | "false";
@@ -20,6 +21,7 @@ export function Clickable({
 	style,
 	title,
 	disabled,
+	ref,
 	...aria
 }: Props) {
 	function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
@@ -31,6 +33,7 @@ export function Clickable({
 
 	return (
 		<div
+			ref={ref}
 			role="button"
 			tabIndex={disabled ? -1 : 0}
 			aria-disabled={disabled || undefined}

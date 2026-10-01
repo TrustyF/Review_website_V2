@@ -125,7 +125,9 @@ function findProblems(
 			handEdited.push(key);
 		}
 	}
-	return { stale, handEdited };
+	// Left behind when an English entry is deleted.
+	const removed = [...fr.keys()].filter((key) => !en.has(key));
+	return { stale, handEdited, removed };
 }
 
 // Syntax errors only; fr.ts's `satisfies Dictionary` catches type mismatches at typecheck.
@@ -260,14 +262,20 @@ function listArg(args: string[], flag: string): string[] {
 function check() {
 	const en = parseDictionary(EN_PATH, "en").leaves;
 	const fr = parseDictionary(FR_PATH, "fr").leaves;
-	const { stale, handEdited } = findProblems(en, fr, readLock());
-	if (stale.length === 0 && handEdited.length === 0) {
+	const { stale, handEdited, removed } = findProblems(en, fr, readLock());
+	if (stale.length === 0 && handEdited.length === 0 && removed.length === 0) {
 		console.log("fr.ts is up to date with en.ts.");
 		return;
 	}
 	if (stale.length) {
 		console.error(
 			`English changed without retranslating:\n  ${stale.join("\n  ")}`,
+		);
+		console.error("Run `npm run i18n:fr`.");
+	}
+	if (removed.length) {
+		console.error(
+			`Removed from en.ts but still in fr.ts:\n  ${removed.join("\n  ")}`,
 		);
 		console.error("Run `npm run i18n:fr`.");
 	}
@@ -292,7 +300,7 @@ async function translate(args: string[]) {
 		if (!en.has(key)) throw new Error(`Unknown key: ${key}`);
 	}
 
-	const { stale, handEdited } = findProblems(en, fr, lock);
+	const { stale, handEdited, removed } = findProblems(en, fr, lock);
 	const todo = all ? [...en.keys()] : [...new Set([...stale, ...forced])];
 
 	if (todo.length) {
@@ -317,6 +325,9 @@ async function translate(args: string[]) {
 		for (const result of results) {
 			for (const [key, source] of result) fr.set(key, source);
 		}
+	}
+	// renderFr follows en.ts's shape, so rewriting also drops removed entries.
+	if (todo.length || removed.length) {
 		writeFileSync(FR_PATH, renderFr(enParsed.sf, enParsed.root, fr));
 		execSync(`npx biome format --write ${FR_PATH}`, { stdio: "ignore" });
 	}
@@ -336,7 +347,7 @@ async function translate(args: string[]) {
 		(k) => !todo.includes(k) && !accepted.includes(k),
 	);
 	console.log(
-		`Done: ${todo.length} translated, ${accepted.length} accepted.${
+		`Done: ${todo.length} translated, ${removed.length} removed, ${accepted.length} accepted.${
 			stillEdited.length
 				? `\nStill hand-edited (use --keys or --accept): ${stillEdited.join(", ")}`
 				: ""
