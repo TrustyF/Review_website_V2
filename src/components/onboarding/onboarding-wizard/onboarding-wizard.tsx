@@ -1,7 +1,9 @@
 "use client";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Languages } from "lucide-react";
+import { Languages, LayoutList, LucideProvider, MailPlus } from "lucide-react";
+import { MovieIcon } from "@/components/icons/movie-icon";
+import { WatchlistIcon } from "@/components/icons/watchlist-icon";
 import { Clickable } from "@/components/ui/clickable";
 import { AvatarPicker } from "@/components/account/avatar-picker/avatar-picker";
 import { AvatarGroup } from "@/lib/avatars";
@@ -32,6 +34,7 @@ type Props = {
 type StepAction = { label: string; onClick: () => void; disabled?: boolean };
 
 type StepProps = {
+	active: boolean;
 	title: string;
 	subtitle?: string;
 	children: ReactNode;
@@ -39,9 +42,10 @@ type StepProps = {
 	rightAction: StepAction;
 };
 
-// Fixed-height shell every step renders into, so the action row lands in the
-// same spot regardless of how tall a given step's own content is.
+// Every step stays mounted, stacked in one grid cell, so the wizard is as tall as its
+// tallest step and the action row never moves; inactive ones are hidden and inert.
 function OnboardingStep({
+	active,
 	title,
 	subtitle,
 	children,
@@ -49,7 +53,9 @@ function OnboardingStep({
 	rightAction,
 }: StepProps) {
 	return (
-		<div className={styles.step}>
+		<div
+			className={`${styles.step} ${active ? "" : styles.step_hidden}`}
+			inert={!active}>
 			<div className={styles.header}>
 				<h1 className={styles.title}>{title}</h1>
 				{subtitle && <p className={styles.subtitle}>{subtitle}</p>}
@@ -133,12 +139,26 @@ export function OnboardingWizard({
 		initial.listAddEmailOptIn,
 	);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	// Replaces autoFocus, which fires on mount while this step is still hidden.
+	const usernameInputRef = useRef<HTMLInputElement>(null);
+	useEffect(() => {
+		if (step === 1) usernameInputRef.current?.focus();
+	}, [step]);
 
 	const STEPS = [
 		dict.onboarding.steps.language,
 		dict.onboarding.steps.username,
 		dict.onboarding.steps.avatar,
 		dict.onboarding.steps.preferences,
+		dict.onboarding.steps.tour,
+	];
+
+	const tour = dict.onboarding.tourStep;
+	const TOUR_ITEMS = [
+		{ key: "browse", Icon: MovieIcon, ...tour.browse },
+		{ key: "reviews", Icon: LayoutList, ...tour.reviews },
+		{ key: "recommendations", Icon: MailPlus, ...tour.recommendations },
+		{ key: "watchlist", Icon: WatchlistIcon, ...tour.watchlist },
 	];
 
 	async function handleLanguageNext() {
@@ -165,14 +185,14 @@ export function OnboardingWizard({
 		}
 	}
 
-	async function handleFinish() {
+	async function handlePreferencesNext() {
 		setIsSubmitting(true);
 		try {
 			await saveOnboardingEmailPreferences({
 				newsletterOptIn,
 				listAddEmailOptIn,
 			});
-			router.push("/account");
+			goForward(4);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -189,8 +209,9 @@ export function OnboardingWizard({
 				))}
 			</div>
 
-			{step === 0 && (
+			<div className={styles.steps}>
 				<OnboardingStep
+					active={step === 0}
 					title={dict.onboarding.languageStep.title}
 					subtitle={dict.onboarding.languageStep.subtitle}
 					rightAction={{
@@ -225,10 +246,9 @@ export function OnboardingWizard({
 						</div>
 					)}
 				</OnboardingStep>
-			)}
 
-			{step === 1 && (
 				<OnboardingStep
+					active={step === 1}
 					title={dict.onboarding.usernameStep.title}
 					subtitle={dict.onboarding.usernameStep.subtitle}
 					leftAction={{ label: dict.common.back, onClick: goBack }}
@@ -243,13 +263,12 @@ export function OnboardingWizard({
 						value={username}
 						placeholder={dict.onboarding.usernameStep.placeholder}
 						onChange={(e) => setUsername(e.target.value)}
-						autoFocus
+						ref={usernameInputRef}
 					/>
 				</OnboardingStep>
-			)}
 
-			{step === 2 && (
 				<OnboardingStep
+					active={step === 2}
 					title={dict.onboarding.avatarStep.title}
 					subtitle={dict.onboarding.avatarStep.subtitle}
 					leftAction={{ label: dict.common.back, onClick: goBack }}
@@ -261,16 +280,15 @@ export function OnboardingWizard({
 						<AvatarPicker initialSrc={initial.image} groups={avatarGroups} />
 					</div>
 				</OnboardingStep>
-			)}
 
-			{step === 3 && (
 				<OnboardingStep
+					active={step === 3}
 					title={dict.onboarding.preferencesStep.title}
 					subtitle={dict.onboarding.preferencesStep.subtitle}
 					leftAction={{ label: dict.common.back, onClick: goBack }}
 					rightAction={{
-						label: isSubmitting ? dict.common.saving : dict.onboarding.finish,
-						onClick: handleFinish,
+						label: isSubmitting ? dict.common.saving : dict.common.continue,
+						onClick: handlePreferencesNext,
 						disabled: isSubmitting,
 					}}>
 					<label className={styles.checkbox_field}>
@@ -300,7 +318,32 @@ export function OnboardingWizard({
 						</span>
 					</label>
 				</OnboardingStep>
-			)}
+
+				<OnboardingStep
+					active={step === 4}
+					title={tour.title}
+					subtitle={tour.subtitle}
+					leftAction={{ label: dict.common.back, onClick: goBack }}
+					rightAction={{
+						label: dict.onboarding.finish,
+						onClick: () => router.push("/account"),
+					}}>
+					{/* Same stroke handling as the navbar, so lucide and custom icons match. */}
+					<LucideProvider strokeWidth={1.5} absoluteStrokeWidth>
+						<ul className={styles.tour_list}>
+							{TOUR_ITEMS.map(({ key, Icon, title, body }) => (
+								<li key={key} className={styles.tour_item}>
+									<Icon size={20} className={styles.tour_icon} />
+									<span className={styles.option_text}>
+										<span>{title}</span>
+										<span className={styles.option_description}>{body}</span>
+									</span>
+								</li>
+							))}
+						</ul>
+					</LucideProvider>
+				</OnboardingStep>
+			</div>
 		</div>
 	);
 }

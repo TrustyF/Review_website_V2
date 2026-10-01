@@ -1,0 +1,1326 @@
+{
+	"account.askForRecommendation": {
+		"en": "4c5e6ec910ac800a",
+		"fr": "2976c4beb0e18699"
+	},
+	"account.askForRecommendationHint": {
+		"en": "1b18d87d8b67df26",
+		"fr": "33530d5caa5e13ae"
+	},
+	"account.askForRecommendationPending": {
+		"en": "2807785b380b2f81",
+		"fr": "afa9e17a4f9c71cb"
+	},
+	"account.backToAccount": {
+		"en": "03c750790b255f52",
+		"fr": "aa51ad901a2c6c0f"
+	},
+	"account.changeProfilePicture": {
+		"en": "40cfcace937f87cc",
+		"fr": "d2684ff3b86cbba2"
+	},
+	"account.chooseProfilePicture": {
+		"en": "da311a7c057ca36b",
+		"fr": "53b8b0c35dfb04a4"
+	},
+	"account.dangerZoneSubtitle": {
+		"en": "a7db02e0b4652d70",
+		"fr": "a304d8ca7bc5a411"
+	},
+	"account.dangerZoneTitle": {
+		"en": "3ce86653eb42baa6",
+		"fr": "b42ebdc4fde4579c"
+	},
+	"account.deleteAccount": {
+		"en": "6893fcfe347dbf18",
+		"fr": "ed95f362266febe4"
+	},
+	"account.deleteAccountFailed": {
+		"en": "306704b406e3eaeb",
+		"fr": "cb17b49464aa92e7"
+	},
+	"account.deleteAccountWarning": {
+		"en": "3cc604ca1330af93",
+		"fr": "2403fc9ee14ddf4c"
+	},
+	"account.deleting": {
+		"en": "c0ca40456b38f753",
+		"fr": "1f3b885bf29fadc6"
+	},
+	"account.emailsSection": {
+		"en": "27be36dd05bcb093",
+		"fr": "b4d04e73020742e4"
+	},
+	"account.languageSection": {
+		"en": "1fa24b4905737a8d",
+		"fr": "7a4d0b1d7232dad0"
+	},
+	"account.listAddEmailOptIn": {
+		"en": "b7d988f6029c6eaa",
+		"fr": "9b9fce0c3aa3bc25"
+	},
+	"account.listAddEmailOptInDescription": {
+		"en": "39f47528b5345f62",
+		"fr": "b94dff403b90ca81"
+	},
+	"account.newsletterOptIn": {
+		"en": "aae811a41ac30d1c",
+		"fr": "327247130822f2de"
+	},
+	"account.newsletterOptInDescription": {
+		"en": "4185e8bf447bd4d2",
+		"fr": "9f970e8dfa521c6e"
+	},
+	"account.permanentlyDeleteAccount": {
+		"en": "7dca4073f4dc26bf",
+		"fr": "1b969f5981bc598b"
+	},
+	"account.preferredLanguage": {
+		"en": "87d9f87133c74089",
+		"fr": "56571d24d385f393"
+	},
+	"account.profileSection": {
+		"en": "96ad4bd0f7baa40e",
+		"fr": "d1bebceb4c8ca1ae"
+	},
+	"account.recommendations": {
+		"en": "621b4f64afca47e4",
+		"fr": "4c7f199980b78a84"
+	},
+	"account.recommendationsEmpty": {
+		"en": "eadffd5a8e6898a0",
+		"fr": "68ca70af3bfe92ca"
+	},
+	"account.settingsAriaLabel": {
+		"en": "805ea849d87cd2ec",
+		"fr": "750b555fe613e150"
+	},
+	"account.settingsTitle": {
+		"en": "83909f82446ee9c3",
+		"fr": "b8af7531fed1b7b7"
+	},
+	"account.signOut": {
+		"en": "d46969bdd3258d1d",
+		"fr": "232a448dfaae4a47"
+	},
+	"account.typeToConfirm": {
+		"en": "873a94ae164ef453",
+		"fr": "59f0fdc413b451ef"
+	},
+	"account.username": {
+		"en": "500666387b9018ea",
+		"fr": "27c6b954f977a6c0"
+	},
+	"account.usernamePlaceholder": {
+		"en": "a1ea60409855d3e2",
+		"fr": "ae90ee26e9447200"
+	},
+	"account.useThisProfilePicture": {
+		"en": "e16eeabf4d0bda12",
+		"fr": "1979d0cf1a7c5177"
+	},
+	"account.watchlistCard": {
+		"en": "d8a02d0c584aec5d",
+		"fr": "aa3f007ba707a87f"
+	},
+	"activity.addedTo": {
+		"en": "c9425b4cdd3eced8",
+		"fr": "629a2b7242d3dc00"
+	},
+	"activity.createdList": {
+		"en": "5d7668ace3fe7e52",
+		"fr": "9b0413a76ba3eaae"
+	},
+	"activity.empty": {
+		"en": "1b7d0c67d13ee61d",
+		"fr": "4494bf0494faf015"
+	},
+	"activity.rated": {
+		"en": "51809fa7e13dbcd8",
+		"fr": "98afa26fbe171d46"
+	},
+	"activity.reviewed": {
+		"en": "976b03b2e8155ee3",
+		"fr": "45cb26a050a2a352"
+	},
+	"activity.watchlisted": {
+		"en": "fb6f64d6d7afa2e8",
+		"fr": "f29721aafdc10908"
+	},
+	"auth.createAccountButton": {
+		"en": "e63588a861737d67",
+		"fr": "9ff60aa2ff1a1fd9"
+	},
+	"auth.createAccountTitle": {
+		"en": "37b37da08ca830f6",
+		"fr": "8f9ece5c1736f0a7"
+	},
+	"auth.creatingAccount": {
+		"en": "745e72da1d93fe27",
+		"fr": "1feddc602cbcd48e"
+	},
+	"auth.email": {
+		"en": "0b57e967ff55ce5d",
+		"fr": "ed82190d43a2bd83"
+	},
+	"auth.haveAccount": {
+		"en": "c82ba74fa39e650c",
+		"fr": "16595eb8146832c0"
+	},
+	"auth.invalidCredentials": {
+		"en": "904a7c0e8ed86d8e",
+		"fr": "dab4ec83b35e49c7"
+	},
+	"auth.name": {
+		"en": "6cc5df35f0338e23",
+		"fr": "9eb49b48b308a76e"
+	},
+	"auth.needAccount": {
+		"en": "787c084b81aa9fc5",
+		"fr": "e9db5801a75d741a"
+	},
+	"auth.orDivider": {
+		"en": "6f21340b75e3d46c",
+		"fr": "18eaab9e79741bca"
+	},
+	"auth.password": {
+		"en": "9e10723b04013059",
+		"fr": "87f992617eaeee02"
+	},
+	"auth.signIn": {
+		"en": "5a365517fae8bf07",
+		"fr": "e00da1a2ef4dcd15"
+	},
+	"auth.signingIn": {
+		"en": "8f8f7a7d741ceb59",
+		"fr": "ce09308e7a750194"
+	},
+	"auth.signInWithGoogle": {
+		"en": "c134a3defaf087bc",
+		"fr": "a241d478e994bdb0"
+	},
+	"auth.signupFailed": {
+		"en": "4f3f0cca7fbbf12b",
+		"fr": "da478ae972bcd537"
+	},
+	"castPhotos.showAll": {
+		"en": "ca6ffa3955fb33fa",
+		"fr": "db4075865ac99fea"
+	},
+	"castPhotos.showLess": {
+		"en": "44fa5184d5c53ccc",
+		"fr": "54ac7b286c14950f"
+	},
+	"changeLog.bannerAlt": {
+		"en": "413fba6a10dc4a2e",
+		"fr": "365b2eab85b851cf"
+	},
+	"changeLog.deleted": {
+		"en": "a9a33bf98ae22859",
+		"fr": "ee744c5aa7a15cc9"
+	},
+	"changeLog.deleteEntryAriaLabel": {
+		"en": "216571f9f05e7913",
+		"fr": "90a2aa29bf893808"
+	},
+	"changeLog.empty": {
+		"en": "06488d3329681741",
+		"fr": "79d93f03e2fe7eb3"
+	},
+	"changeLog.fields.bannerPath": {
+		"en": "413fba6a10dc4a2e",
+		"fr": "365b2eab85b851cf"
+	},
+	"changeLog.fields.body": {
+		"en": "552e425de43e12fc",
+		"fr": "bcb494aac19af937"
+	},
+	"changeLog.fields.difficulty": {
+		"en": "f6178ff79946bddb",
+		"fr": "49bc78e28a6689eb"
+	},
+	"changeLog.fields.liked": {
+		"en": "2a70248592c0968a",
+		"fr": "ad081a514e05659f"
+	},
+	"changeLog.fields.posterPath": {
+		"en": "633a0bc0c148d558",
+		"fr": "9b8c915f614c20f1"
+	},
+	"changeLog.fields.rating": {
+		"en": "dc8880b9272dc093",
+		"fr": "a267073a51431756"
+	},
+	"changeLog.fields.reviewedOn": {
+		"en": "8f8a1fd4c9418a66",
+		"fr": "a548e976acd47f69"
+	},
+	"changeLog.gapDaysLater": {
+		"en": "d68e615b4a1ea277",
+		"fr": "29d3069d512e655c"
+	},
+	"changeLog.gapMonthsLater": {
+		"en": "68b89b27909541eb",
+		"fr": "0b617338d0b5f99f"
+	},
+	"changeLog.gapYearsLater": {
+		"en": "4b37318cf8edc825",
+		"fr": "333d1b75f76e0e6f"
+	},
+	"changeLog.no": {
+		"en": "b2cbc4e2e5545a6c",
+		"fr": "2b7d9457a558bb1f"
+	},
+	"changeLog.posterAlt": {
+		"en": "633a0bc0c148d558",
+		"fr": "9b8c915f614c20f1"
+	},
+	"changeLog.yes": {
+		"en": "184fda5c980b9d9c",
+		"fr": "2e43b3d2e980b09e"
+	},
+	"common.back": {
+		"en": "7ceade8f25b58fe9",
+		"fr": "eee814bcfbada580"
+	},
+	"common.cancel": {
+		"en": "c0774c185060fc13",
+		"fr": "af12de10a27c7e5c"
+	},
+	"common.close": {
+		"en": "d7cf5045c01b2eb9",
+		"fr": "50eadd29b11cb6e1"
+	},
+	"common.continue": {
+		"en": "25ad263f60f3ed38",
+		"fr": "2bda559a22739b6d"
+	},
+	"common.delete": {
+		"en": "b26de372b4b0eaac",
+		"fr": "d918a08819d45d32"
+	},
+	"common.save": {
+		"en": "c1db83d165ed908a",
+		"fr": "1f399a378a3ff3dc"
+	},
+	"common.saved": {
+		"en": "29e85f4550e3e09e",
+		"fr": "b12778621ddb1c75"
+	},
+	"common.saving": {
+		"en": "4e65400e023b52a3",
+		"fr": "2593f8e3e6148cce"
+	},
+	"common.use": {
+		"en": "91436d6b374e8263",
+		"fr": "67d75b2a1501fcef"
+	},
+	"digest.latestReviews": {
+		"en": "5427db85c9eb5052",
+		"fr": "7b429bf74a8853c9"
+	},
+	"digest.manageSubscription": {
+		"en": "44a42e52d26bb46c",
+		"fr": "8e02eb60b9f625fd"
+	},
+	"digest.previewText": {
+		"en": "31b37ddca0eb20b8",
+		"fr": "9599aaae843b208a"
+	},
+	"digest.recentActivity": {
+		"en": "3abc376b14260041",
+		"fr": "989b5e21f9816415"
+	},
+	"digest.seeMore": {
+		"en": "dfbe73c49d5df1e9",
+		"fr": "c49e52e99f83a444"
+	},
+	"digest.subject": {
+		"en": "d46d3ae8a2fa2bda",
+		"fr": "8efdf134763dd549"
+	},
+	"digest.subscribedFooter": {
+		"en": "ad3e8c2cd141dacd",
+		"fr": "ab980495c11b65a2"
+	},
+	"digest.unsubscribe": {
+		"en": "ed1372ad165aa9bb",
+		"fr": "509d98d3d312eeb7"
+	},
+	"digest.weeklyDigestFallbackHeadline": {
+		"en": "0d49ffc4c81c8eb3",
+		"fr": "c51b06a3ae46a691"
+	},
+	"home.anticipatedReleases": {
+		"en": "2ac5f5b15373edfb",
+		"fr": "211165bf855e2b74"
+	},
+	"home.eyebrowFeatured": {
+		"en": "61ce2271d241ab72",
+		"fr": "f65270b50589db8f"
+	},
+	"home.eyebrowNew": {
+		"en": "ec3145126b9e3c9a",
+		"fr": "0f2e061f7864742a"
+	},
+	"home.readFullReview": {
+		"en": "e73e32a99c885a8d",
+		"fr": "81a728f20445e5ab"
+	},
+	"home.recentGames": {
+		"en": "d8da46d748154ee6",
+		"fr": "8fbcc6451b8e7a96"
+	},
+	"home.recentlyWatched": {
+		"en": "6fa2ef78b065beb4",
+		"fr": "86fd1c1228451892"
+	},
+	"home.recentReleases": {
+		"en": "18e59e1c73da1076",
+		"fr": "c2fe369ae71fe659"
+	},
+	"home.showFeaturedReview": {
+		"en": "fb9fa6cefa011979",
+		"fr": "abd13c2b0fd5c87e"
+	},
+	"lists.empty": {
+		"en": "220a00ec85ee489a",
+		"fr": "579126564c12716f"
+	},
+	"lists.emptyMedia": {
+		"en": "68484e4e98e57d1b",
+		"fr": "c3cf8aca519e2943"
+	},
+	"media.credits.alsoInvolvedIn": {
+		"en": "5a4d450392191771",
+		"fr": "6983747b32cae0d4"
+	},
+	"media.credits.avgLabel": {
+		"en": "394587143a97404a",
+		"fr": "5934767999173ca8"
+	},
+	"media.credits.noCreditedMedia": {
+		"en": "0e09835295595e83",
+		"fr": "87c0337787b300d0"
+	},
+	"media.credits.publicAvgLabel": {
+		"en": "ca18cca148f0bb91",
+		"fr": "5a99e5d835860068"
+	},
+	"media.credits.starringIn": {
+		"en": "78272e467beaf02f",
+		"fr": "872ff3ee472731e4"
+	},
+	"media.filter.clearFilters": {
+		"en": "cac110655a27b59a",
+		"fr": "8eeb3e5f1cb983bd"
+	},
+	"media.filter.difficulty": {
+		"en": "f6178ff79946bddb",
+		"fr": "49bc78e28a6689eb"
+	},
+	"media.filter.difficultyLevels.easy": {
+		"en": "dd2029543df9a8bd",
+		"fr": "2fd1075f11da8dd6"
+	},
+	"media.filter.difficultyLevels.hard": {
+		"en": "f5690fa280b62957",
+		"fr": "b905e697dfe2b68c"
+	},
+	"media.filter.difficultyLevels.medium": {
+		"en": "866bf047c116b31d",
+		"fr": "a0e902b11dcd9697"
+	},
+	"media.filter.genres": {
+		"en": "a121d04a1c8ae0a3",
+		"fr": "a121d04a1c8ae0a3"
+	},
+	"media.filter.noMatches": {
+		"en": "0c244ea46ec81a38",
+		"fr": "b5657a7ff5e6a0fc"
+	},
+	"media.filter.rating": {
+		"en": "dc8880b9272dc093",
+		"fr": "a267073a51431756"
+	},
+	"media.filter.runtime": {
+		"en": "f512d12b575136c4",
+		"fr": "15b3ea3c1ebca625"
+	},
+	"media.ratingDistribution.ratedAriaLabel": {
+		"en": "7b23487efdeb31f0",
+		"fr": "e00df6342ba22e03"
+	},
+	"media.ratingDistribution.ratedTooltip": {
+		"en": "9549a7d6f03fb493",
+		"fr": "6781c4b9c40f2965"
+	},
+	"media.ratingDistribution.title": {
+		"en": "b097deda47fbfd04",
+		"fr": "fd2d4523fc706d0d"
+	},
+	"media.ratingDistribution.unratedAriaLabel": {
+		"en": "ecba91e84edc444f",
+		"fr": "2a47f3a9fee75e12"
+	},
+	"media.ratingDistribution.unratedTooltip": {
+		"en": "6bb705b5f7a16d85",
+		"fr": "2c022e1517f26350"
+	},
+	"media.recentBackToRating": {
+		"en": "26006054089f1ba9",
+		"fr": "6621684ebe731a49"
+	},
+	"media.recentSuffix": {
+		"en": "0efb433dce7da49e",
+		"fr": "ae0ec98e056d3f31"
+	},
+	"media.sort.rating": {
+		"en": "dc8880b9272dc093",
+		"fr": "a267073a51431756"
+	},
+	"media.sort.releaseDate": {
+		"en": "05bbbb0c58769ba3",
+		"fr": "2a66893fbb4933f9"
+	},
+	"media.sort.watchedDate": {
+		"en": "5b3dbad22fe320ee",
+		"fr": "6598aca143a74dc6"
+	},
+	"media.unknownMonth": {
+		"en": "14c4849191d018fc",
+		"fr": "012730069cdc82ad"
+	},
+	"media.unknownYear": {
+		"en": "14c4849191d018fc",
+		"fr": "b2315fd404d3d399"
+	},
+	"media.unrated": {
+		"en": "91a53f1fb3aefe7b",
+		"fr": "32a64a9d5ab46499"
+	},
+	"mediaDetail.byCreditPrefix": {
+		"en": "26c0fb4158e973f8",
+		"fr": "e6b59dcc436b3d19"
+	},
+	"mediaDetail.cast": {
+		"en": "250cceb9c8e86a14",
+		"fr": "3dbfb84bac31b861"
+	},
+	"mediaDetail.changeLogHeading": {
+		"en": "2b8c4b45395d00db",
+		"fr": "e4d702a04d35cc6e"
+	},
+	"mediaDetail.creditsHeading": {
+		"en": "954263a905fa5ef6",
+		"fr": "484eaecd27bafc4a"
+	},
+	"mediaDetail.deletedBanner": {
+		"en": "93c6dd8fe802e931",
+		"fr": "5dfa3839219acd74"
+	},
+	"mediaDetail.detailsHeading": {
+		"en": "ebc7bf40f12e237e",
+		"fr": "36ecd6052653b7ed"
+	},
+	"mediaDetail.facts.budget": {
+		"en": "cce3b80ea35214b6",
+		"fr": "cce3b80ea35214b6"
+	},
+	"mediaDetail.facts.chapters": {
+		"en": "ecac8ddd5e48bb79",
+		"fr": "84eb08964acc0595"
+	},
+	"mediaDetail.facts.difficulty": {
+		"en": "f6178ff79946bddb",
+		"fr": "49bc78e28a6689eb"
+	},
+	"mediaDetail.facts.episodes": {
+		"en": "2dd22803a3959314",
+		"fr": "22a4472076f9cc92"
+	},
+	"mediaDetail.facts.isbn": {
+		"en": "c13ddbbf7353967b",
+		"fr": "c13ddbbf7353967b"
+	},
+	"mediaDetail.facts.liked": {
+		"en": "2a70248592c0968a",
+		"fr": "ad081a514e05659f"
+	},
+	"mediaDetail.facts.network": {
+		"en": "23e10e8157dfc823",
+		"fr": "57c4e0ed2e0fe4f8"
+	},
+	"mediaDetail.facts.pages": {
+		"en": "aaa967c95e0e2318",
+		"fr": "aaa967c95e0e2318"
+	},
+	"mediaDetail.facts.platform": {
+		"en": "d38a6aa13c6163f4",
+		"fr": "1929271c72d01da3"
+	},
+	"mediaDetail.facts.rating": {
+		"en": "4bae0e3d8f2c4bb1",
+		"fr": "946b7fa26038b6a6"
+	},
+	"mediaDetail.facts.releaseDate": {
+		"en": "05bbbb0c58769ba3",
+		"fr": "2a66893fbb4933f9"
+	},
+	"mediaDetail.facts.revenue": {
+		"en": "0cd1908bc7c895f2",
+		"fr": "21da5bd00d14a486"
+	},
+	"mediaDetail.facts.runtime": {
+		"en": "f512d12b575136c4",
+		"fr": "15b3ea3c1ebca625"
+	},
+	"mediaDetail.facts.seasons": {
+		"en": "948bf392b7b16dac",
+		"fr": "1885b7fff83cbdb2"
+	},
+	"mediaDetail.facts.volumes": {
+		"en": "a525e7a090818574",
+		"fr": "eac4e630da8c1113"
+	},
+	"mediaDetail.hard": {
+		"en": "f5690fa280b62957",
+		"fr": "b905e697dfe2b68c"
+	},
+	"mediaDetail.hardDifficulty": {
+		"en": "943ecf0278098860",
+		"fr": "bef43a9d64535381"
+	},
+	"mediaDetail.medium": {
+		"en": "866bf047c116b31d",
+		"fr": "a0e902b11dcd9697"
+	},
+	"mediaDetail.mediumDifficulty": {
+		"en": "7a51b2eca03d471a",
+		"fr": "fe073921c7d08f6e"
+	},
+	"mediaDetail.openOriginalSource": {
+		"en": "42a90fbc498cd2eb",
+		"fr": "a250de721698959a"
+	},
+	"mediaDetail.returnOnInvestment": {
+		"en": "729267731bf6e990",
+		"fr": "575ddae0fbb8b7b2"
+	},
+	"mediaDetail.reviewHeading": {
+		"en": "552e425de43e12fc",
+		"fr": "bcb494aac19af937"
+	},
+	"mediaDetail.studio": {
+		"en": "7abc2dc6e39b1747",
+		"fr": "7abc2dc6e39b1747"
+	},
+	"mediaVerb.alreadyLabel.BOOK": {
+		"en": "c20f377d38831d7f",
+		"fr": "c3cc17493c85de8b"
+	},
+	"mediaVerb.alreadyLabel.COMIC": {
+		"en": "c20f377d38831d7f",
+		"fr": "c3cc17493c85de8b"
+	},
+	"mediaVerb.alreadyLabel.GAME": {
+		"en": "ff2fc8d1bdc5fa57",
+		"fr": "09a3b0dfb67aedbd"
+	},
+	"mediaVerb.alreadyLabel.MANGA": {
+		"en": "c20f377d38831d7f",
+		"fr": "c3cc17493c85de8b"
+	},
+	"mediaVerb.alreadyLabel.MOVIE": {
+		"en": "488ca4c84867d3b8",
+		"fr": "e0662f6c5e80389e"
+	},
+	"mediaVerb.alreadyLabel.SHORT": {
+		"en": "488ca4c84867d3b8",
+		"fr": "e0662f6c5e80389e"
+	},
+	"mediaVerb.alreadyLabel.TVSHOW": {
+		"en": "488ca4c84867d3b8",
+		"fr": "cc7fc3000a8c6803"
+	},
+	"mediaVerb.markAsLabel.BOOK": {
+		"en": "9673dae68f949267",
+		"fr": "58f0345042419a4f"
+	},
+	"mediaVerb.markAsLabel.COMIC": {
+		"en": "9673dae68f949267",
+		"fr": "58f0345042419a4f"
+	},
+	"mediaVerb.markAsLabel.GAME": {
+		"en": "804e0afcc18f35fe",
+		"fr": "3aa1d7e91af06196"
+	},
+	"mediaVerb.markAsLabel.MANGA": {
+		"en": "9673dae68f949267",
+		"fr": "58f0345042419a4f"
+	},
+	"mediaVerb.markAsLabel.MOVIE": {
+		"en": "3655d4b9a47a624f",
+		"fr": "fa1a71c01f1fa725"
+	},
+	"mediaVerb.markAsLabel.SHORT": {
+		"en": "3655d4b9a47a624f",
+		"fr": "fa1a71c01f1fa725"
+	},
+	"mediaVerb.markAsLabel.TVSHOW": {
+		"en": "3655d4b9a47a624f",
+		"fr": "b5dded7e0e4f781c"
+	},
+	"mediaVerb.onLabel.BOOK": {
+		"en": "34a853b14277b57b",
+		"fr": "600718c8e5f2f5f9"
+	},
+	"mediaVerb.onLabel.COMIC": {
+		"en": "34a853b14277b57b",
+		"fr": "600718c8e5f2f5f9"
+	},
+	"mediaVerb.onLabel.GAME": {
+		"en": "190c0e0cb6f8f0be",
+		"fr": "c3c587a5e26506c8"
+	},
+	"mediaVerb.onLabel.MANGA": {
+		"en": "34a853b14277b57b",
+		"fr": "600718c8e5f2f5f9"
+	},
+	"mediaVerb.onLabel.MOVIE": {
+		"en": "95611ed7c3abff31",
+		"fr": "265603b9ed16a2ae"
+	},
+	"mediaVerb.onLabel.SHORT": {
+		"en": "95611ed7c3abff31",
+		"fr": "265603b9ed16a2ae"
+	},
+	"mediaVerb.onLabel.TVSHOW": {
+		"en": "95611ed7c3abff31",
+		"fr": "f5ffb726664973a7"
+	},
+	"mediaVerb.recentlyLabel.BOOK": {
+		"en": "c145e1a2b5de1ae8",
+		"fr": "e61307c61daeefb4"
+	},
+	"mediaVerb.recentlyLabel.COMIC": {
+		"en": "c145e1a2b5de1ae8",
+		"fr": "e61307c61daeefb4"
+	},
+	"mediaVerb.recentlyLabel.GAME": {
+		"en": "e665bda5aecded1e",
+		"fr": "ab6e814fefb17570"
+	},
+	"mediaVerb.recentlyLabel.MANGA": {
+		"en": "c145e1a2b5de1ae8",
+		"fr": "e61307c61daeefb4"
+	},
+	"mediaVerb.recentlyLabel.MOVIE": {
+		"en": "6fa2ef78b065beb4",
+		"fr": "86fd1c1228451892"
+	},
+	"mediaVerb.recentlyLabel.SHORT": {
+		"en": "6fa2ef78b065beb4",
+		"fr": "86fd1c1228451892"
+	},
+	"mediaVerb.recentlyLabel.TVSHOW": {
+		"en": "6fa2ef78b065beb4",
+		"fr": "fb08a49d5e7f5c41"
+	},
+	"mediaVerb.rewatchedOnLabel.BOOK": {
+		"en": "0ac20101e8340583",
+		"fr": "5956e5c438f74672"
+	},
+	"mediaVerb.rewatchedOnLabel.COMIC": {
+		"en": "0ac20101e8340583",
+		"fr": "5956e5c438f74672"
+	},
+	"mediaVerb.rewatchedOnLabel.GAME": {
+		"en": "9b42ec0dcbb31953",
+		"fr": "0c4ab0ee46ccb3f7"
+	},
+	"mediaVerb.rewatchedOnLabel.MANGA": {
+		"en": "0ac20101e8340583",
+		"fr": "5956e5c438f74672"
+	},
+	"mediaVerb.rewatchedOnLabel.MOVIE": {
+		"en": "473c31d59c5a2e7d",
+		"fr": "a927930e975ce7be"
+	},
+	"mediaVerb.rewatchedOnLabel.SHORT": {
+		"en": "473c31d59c5a2e7d",
+		"fr": "a927930e975ce7be"
+	},
+	"mediaVerb.rewatchedOnLabel.TVSHOW": {
+		"en": "473c31d59c5a2e7d",
+		"fr": "4da9508fe421f882"
+	},
+	"mediaVerb.rewatchedVerb.BOOK": {
+		"en": "a74b2b9d1bfba1dc",
+		"fr": "84f8461f17904a76"
+	},
+	"mediaVerb.rewatchedVerb.COMIC": {
+		"en": "a74b2b9d1bfba1dc",
+		"fr": "84f8461f17904a76"
+	},
+	"mediaVerb.rewatchedVerb.GAME": {
+		"en": "cd449b088724b25e",
+		"fr": "e115948a96d62b91"
+	},
+	"mediaVerb.rewatchedVerb.MANGA": {
+		"en": "a74b2b9d1bfba1dc",
+		"fr": "84f8461f17904a76"
+	},
+	"mediaVerb.rewatchedVerb.MOVIE": {
+		"en": "cf648a4217ef798f",
+		"fr": "1bd3348b9c310574"
+	},
+	"mediaVerb.rewatchedVerb.SHORT": {
+		"en": "cf648a4217ef798f",
+		"fr": "1bd3348b9c310574"
+	},
+	"mediaVerb.rewatchedVerb.TVSHOW": {
+		"en": "cf648a4217ef798f",
+		"fr": "cab241ebaffb8a86"
+	},
+	"nav.activity": {
+		"en": "8df2926035af0f1c",
+		"fr": "5534ad93f9e3fa4a"
+	},
+	"nav.addMedia": {
+		"en": "b02a39e06468a6af",
+		"fr": "eae33ecace958b5a"
+	},
+	"nav.books": {
+		"en": "06ddd5fda0e6bdf7",
+		"fr": "02b1ff6375801a8b"
+	},
+	"nav.closeMenu": {
+		"en": "696229fe6c75c7f9",
+		"fr": "bd789df0f0a9d462"
+	},
+	"nav.comics": {
+		"en": "4eca1382a773a6e9",
+		"fr": "4eca1382a773a6e9"
+	},
+	"nav.cronLogs": {
+		"en": "2ed4bd74200c4baf",
+		"fr": "c5729b43d07529c5"
+	},
+	"nav.devMenuAriaLabel": {
+		"en": "48c8827dff1c46b7",
+		"fr": "6752942b9e547ae3"
+	},
+	"nav.digest": {
+		"en": "0399b39ccdb612b2",
+		"fr": "c13e97c188fbd1d3"
+	},
+	"nav.games": {
+		"en": "c3be8704e916f83d",
+		"fr": "b00700310c18264a"
+	},
+	"nav.homeAriaLabel": {
+		"en": "4bfa483bf3eca1f2",
+		"fr": "8a5c76d2c963766b"
+	},
+	"nav.imageCrop": {
+		"en": "3db66f890ef4265f",
+		"fr": "1b0c62cacc75f218"
+	},
+	"nav.lists": {
+		"en": "a2be8f2fb4eea962",
+		"fr": "b176080daec0cb55"
+	},
+	"nav.manga": {
+		"en": "f33bc65daa7f2c30",
+		"fr": "c9cc4400ec547dea"
+	},
+	"nav.media": {
+		"en": "b3232053fa6a545a",
+		"fr": "6027add77a04b386"
+	},
+	"nav.movies": {
+		"en": "f416f72f44a2edd8",
+		"fr": "19898944644b26a1"
+	},
+	"nav.openMenu": {
+		"en": "6c04f11ab26a0a85",
+		"fr": "85aaf6adcc23c290"
+	},
+	"nav.reading": {
+		"en": "ca56105dd11031ca",
+		"fr": "ce30cfbd35ef02ca"
+	},
+	"nav.recommendationRequests": {
+		"en": "0bd0b32e386a20c8",
+		"fr": "6001644454fbf0b1"
+	},
+	"nav.reviews": {
+		"en": "d6b7a6a06a828d6d",
+		"fr": "0b96073a1346fbe0"
+	},
+	"nav.search.ariaLabel": {
+		"en": "bde99b13e0a9d5a2",
+		"fr": "2f8b520606fc2ae4"
+	},
+	"nav.search.credit": {
+		"en": "8130bd48b98087f2",
+		"fr": "f917673a6617a41c"
+	},
+	"nav.search.credits": {
+		"en": "76547934988efdf8",
+		"fr": "7fcb5fa501ff862b"
+	},
+	"nav.search.noMatches": {
+		"en": "63add1fbb1196869",
+		"fr": "bc645a96fa63c66c"
+	},
+	"nav.search.placeholder": {
+		"en": "9be81608e27aa834",
+		"fr": "e67fdf91dad44498"
+	},
+	"nav.search.searchFailed": {
+		"en": "b87ecb7d5020189e",
+		"fr": "cfbed443f875f283"
+	},
+	"nav.search.searching": {
+		"en": "a3402b129735ae18",
+		"fr": "341c360b53525a43"
+	},
+	"nav.search.typeLabels.book": {
+		"en": "f7cd391f94e4ce90",
+		"fr": "a9e902c56cefea08"
+	},
+	"nav.search.typeLabels.comic": {
+		"en": "08245277291ec11c",
+		"fr": "08245277291ec11c"
+	},
+	"nav.search.typeLabels.game": {
+		"en": "31737f3e27c19996",
+		"fr": "3608ba338a9e305c"
+	},
+	"nav.search.typeLabels.manga": {
+		"en": "f33bc65daa7f2c30",
+		"fr": "f33bc65daa7f2c30"
+	},
+	"nav.search.typeLabels.movie": {
+		"en": "47bd51ad5c4f9e4c",
+		"fr": "3f177b9838a218fd"
+	},
+	"nav.search.typeLabels.short": {
+		"en": "c5c78ea21e756394",
+		"fr": "56aee829baf6feb3"
+	},
+	"nav.search.typeLabels.tvShow": {
+		"en": "82ddd7cb73511390",
+		"fr": "130a0f9bf2b49941"
+	},
+	"nav.shorts": {
+		"en": "5b75e61eaf47bb40",
+		"fr": "3c4e0acd29c95912"
+	},
+	"nav.stats": {
+		"en": "b307a08c2efd1f05",
+		"fr": "b307a08c2efd1f05"
+	},
+	"nav.tv": {
+		"en": "7eae5ff242c70f58",
+		"fr": "d8f52932561ee7e0"
+	},
+	"nav.userLists": {
+		"en": "ef3726fcc7295bf6",
+		"fr": "fb1990022210c863"
+	},
+	"notifications.anItem": {
+		"en": "88b08cd2d175c799",
+		"fr": "fba2bec75bc06030"
+	},
+	"notifications.backToAccount": {
+		"en": "03c750790b255f52",
+		"fr": "aa51ad901a2c6c0f"
+	},
+	"notifications.createdListForYou": {
+		"en": "a7f6e61b984ec3a6",
+		"fr": "d50cabc76bc5854f"
+	},
+	"notifications.empty": {
+		"en": "db22ff6c3885e0fe",
+		"fr": "b785e296efc88a77"
+	},
+	"notifications.listAdditionsCaption": {
+		"en": "0d624381e2cadf5c",
+		"fr": "e6a61832d96f6b0b"
+	},
+	"notifications.markAllRead": {
+		"en": "e850035657812799",
+		"fr": "ae90758452c46633"
+	},
+	"notifications.mediaAdditionsCaption": {
+		"en": "150830f3f557a2ce",
+		"fr": "6851b4a450601a16"
+	},
+	"notifications.newListForYou": {
+		"en": "552161404e760fb0",
+		"fr": "a9ca92547271ebee"
+	},
+	"notifications.title": {
+		"en": "bf6b93906d73e810",
+		"fr": "bf6b93906d73e810"
+	},
+	"notifications.unreadAriaLabel": {
+		"en": "ee035d10b7531392",
+		"fr": "864b52ca601d3114"
+	},
+	"onboarding.avatarStep.subtitle": {
+		"en": "516156c3e3290e8f",
+		"fr": "6b7eaff051147011"
+	},
+	"onboarding.avatarStep.title": {
+		"en": "eab15b99b551a15a",
+		"fr": "1bdfd1a82978c53a"
+	},
+	"onboarding.finish": {
+		"en": "b3907da0ad234f10",
+		"fr": "a6d1a39cc3f69ede"
+	},
+	"onboarding.languageStep.subtitle": {
+		"en": "af3ab93e1a48632f",
+		"fr": "5883bac9283de255"
+	},
+	"onboarding.languageStep.title": {
+		"en": "e68f80019ca16d20",
+		"fr": "bd750a48f83cb7c8"
+	},
+	"onboarding.preferencesStep.subtitle": {
+		"en": "be0e7d58de35f5fc",
+		"fr": "e0635630b25e7ad8"
+	},
+	"onboarding.preferencesStep.title": {
+		"en": "d8ca385b17620b57",
+		"fr": "399ebfcc82635156"
+	},
+	"onboarding.steps.avatar": {
+		"en": "6a576b5e871b9f18",
+		"fr": "6a576b5e871b9f18"
+	},
+	"onboarding.steps.language": {
+		"en": "1fa24b4905737a8d",
+		"fr": "7a4d0b1d7232dad0"
+	},
+	"onboarding.steps.preferences": {
+		"en": "27be36dd05bcb093",
+		"fr": "b4d04e73020742e4"
+	},
+	"onboarding.steps.tour": {
+		"en": "9f374f940b3b1932",
+		"fr": "b788dd112890abb4"
+	},
+	"onboarding.steps.username": {
+		"en": "500666387b9018ea",
+		"fr": "27c6b954f977a6c0"
+	},
+	"onboarding.tourStep.browse.body": {
+		"en": "59eade24eb2862b8",
+		"fr": "6422b0804d87a5e5"
+	},
+	"onboarding.tourStep.browse.title": {
+		"en": "db519ecebac6f3bd",
+		"fr": "7682ecba5b692d45"
+	},
+	"onboarding.tourStep.recommendations.body": {
+		"en": "024e1a7697ae5bc9",
+		"fr": "d0324b2cb3035071"
+	},
+	"onboarding.tourStep.recommendations.title": {
+		"en": "dc91389aad97a7e0",
+		"fr": "2976c4beb0e18699"
+	},
+	"onboarding.tourStep.reviews.body": {
+		"en": "c39bd82e486f21bf",
+		"fr": "2e5f655ae72ace39"
+	},
+	"onboarding.tourStep.reviews.title": {
+		"en": "7bf938469b095cae",
+		"fr": "1d7a5d514897ac45"
+	},
+	"onboarding.tourStep.subtitle": {
+		"en": "8be8f9096f09bee7",
+		"fr": "28a7339167e382ae"
+	},
+	"onboarding.tourStep.title": {
+		"en": "e1b1f13d1c445fda",
+		"fr": "d939bcb3fef5f832"
+	},
+	"onboarding.tourStep.watchlist.body": {
+		"en": "7995e0d2ef3200ec",
+		"fr": "7c9d6fdf4509af3c"
+	},
+	"onboarding.tourStep.watchlist.title": {
+		"en": "46a6becf9f5e90f8",
+		"fr": "65b35ca80f140285"
+	},
+	"onboarding.usernameStep.placeholder": {
+		"en": "8a2111967613ecfa",
+		"fr": "727e23800e39c9be"
+	},
+	"onboarding.usernameStep.subtitle": {
+		"en": "91e510740da96315",
+		"fr": "bb9156c7b33ace76"
+	},
+	"onboarding.usernameStep.title": {
+		"en": "1366f037be247267",
+		"fr": "23c3eb9e5f01036e"
+	},
+	"recommendationRequest.alreadyPendingFailed": {
+		"en": "beb43e911c994fc9",
+		"fr": "291ffb58a2285a76"
+	},
+	"recommendationRequest.backToAccount": {
+		"en": "03c750790b255f52",
+		"fr": "aa51ad901a2c6c0f"
+	},
+	"recommendationRequest.historyEmpty": {
+		"en": "ea0a61881be60800",
+		"fr": "ddf1fa93fd55a21b"
+	},
+	"recommendationRequest.historyTitle": {
+		"en": "d5f5d8215a946254",
+		"fr": "7b42029a4cc95ca8"
+	},
+	"recommendationRequest.messagePlaceholder": {
+		"en": "8f7f62d5c6855126",
+		"fr": "63167ccd4acf2ab1"
+	},
+	"recommendationRequest.statusDismissed": {
+		"en": "143ad1c67d9aef3f",
+		"fr": "a4b69c7d6abe7d3a"
+	},
+	"recommendationRequest.statusFulfilled": {
+		"en": "8019763e75f833a8",
+		"fr": "c631302c0332518f"
+	},
+	"recommendationRequest.statusPending": {
+		"en": "f83b907134162080",
+		"fr": "692b22ea0471496c"
+	},
+	"recommendationRequest.submit": {
+		"en": "b492b388bc12eeb4",
+		"fr": "4c2afe5da531bc3a"
+	},
+	"recommendationRequest.submitFailed": {
+		"en": "522d6e9f0cb3468f",
+		"fr": "cfa68c299367d9c5"
+	},
+	"recommendationRequest.submitting": {
+		"en": "bb2e3496f3e0d7e0",
+		"fr": "11209389cf8df3d0"
+	},
+	"recommendationRequest.subtitle": {
+		"en": "f81f2a94ed72ff16",
+		"fr": "f4640fc415bb1176"
+	},
+	"recommendationRequest.title": {
+		"en": "6afd785bb339d436",
+		"fr": "2976c4beb0e18699"
+	},
+	"recommendationRequest.viewList": {
+		"en": "2b8f4106001bb336",
+		"fr": "013161cecf14fd74"
+	},
+	"searchPage.noMatches": {
+		"en": "7f0d177caf14a51a",
+		"fr": "5d62b1ad2e678f7d"
+	},
+	"searchPage.peopleCompaniesSection": {
+		"en": "9622787a151a1684",
+		"fr": "4110ea5b32a72665"
+	},
+	"searchPage.promptEmpty": {
+		"en": "a9df8fc5b233cfbe",
+		"fr": "96219e42cf1d476a"
+	},
+	"searchPage.titlesSection": {
+		"en": "a66f185dbbfbb29a",
+		"fr": "d8ad69109d5626e3"
+	},
+	"stats.mediaByDecade.tick": {
+		"en": "e2672c2f154efdd1",
+		"fr": "8f0468358b09c782"
+	},
+	"stats.mediaByDecade.title": {
+		"en": "352bfa2cb3bde621",
+		"fr": "bd25e465b50c545c"
+	},
+	"stats.mediaByDecade.tooltip": {
+		"en": "433da673dbf10129",
+		"fr": "a15a64a2690d4df1"
+	},
+	"stats.mediaByType.title": {
+		"en": "5cf5cab9dfe1c308",
+		"fr": "6ac52dd120446263"
+	},
+	"stats.modeToggle.rating": {
+		"en": "85d41385e3622f12",
+		"fr": "3b49f4e93c9c90e9"
+	},
+	"stats.modeToggle.titles": {
+		"en": "a66f185dbbfbb29a",
+		"fr": "d8ad69109d5626e3"
+	},
+	"stats.ratingDistribution.title": {
+		"en": "b097deda47fbfd04",
+		"fr": "fd2d4523fc706d0d"
+	},
+	"stats.reviewsByYear.title": {
+		"en": "78cac57cab680750",
+		"fr": "23135a9af2831748"
+	},
+	"stats.reviewsByYear.tooltip": {
+		"en": "59233a724b7d6c01",
+		"fr": "cb657dc9ff421a9d"
+	},
+	"stats.tiles.avgRating": {
+		"en": "2a60e00c90f964ec",
+		"fr": "913d3c8a535cbb1f"
+	},
+	"stats.tiles.daysUnit": {
+		"en": "476d8d7d10e53469",
+		"fr": "18b216ff390c0f7d"
+	},
+	"stats.tiles.hoursUnit": {
+		"en": "71e0bdc1413ca781",
+		"fr": "71e0bdc1413ca781"
+	},
+	"stats.tiles.longestStreak": {
+		"en": "d2994002372edf47",
+		"fr": "c7c5f968b5946ed0"
+	},
+	"stats.tiles.movieTimeWatched": {
+		"en": "634541a1fc009c1d",
+		"fr": "5aaaccaa4062e641"
+	},
+	"stats.tiles.reviewsWritten": {
+		"en": "c465229c3908bb5f",
+		"fr": "fce582114f52e5c8"
+	},
+	"stats.tiles.titles": {
+		"en": "308cc33b3c9f8ae3",
+		"fr": "2a0bd2c035ade12a"
+	},
+	"stats.title": {
+		"en": "b307a08c2efd1f05",
+		"fr": "b307a08c2efd1f05"
+	},
+	"stats.titleCount": {
+		"en": "1911525dc6a74ec1",
+		"fr": "2152e8005994a603"
+	},
+	"stats.topGenres.title": {
+		"en": "909cd2e0195a5568",
+		"fr": "1c3468d41b113180"
+	},
+	"stats.topPeople.empty": {
+		"en": "fd34591e5ec17632",
+		"fr": "326a1afe3aa4b529"
+	},
+	"stats.topPeople.roleActors": {
+		"en": "ab4cd2ebcd737e0e",
+		"fr": "f7e03f27366c96e5"
+	},
+	"stats.topPeople.roleDirectors": {
+		"en": "4ffed00aaad6fcde",
+		"fr": "01ce2dfdbb6b66f7"
+	},
+	"stats.topPeople.title": {
+		"en": "6c5466776a47094c",
+		"fr": "2a01d07f30b72110"
+	},
+	"stats.worldMap.fewer": {
+		"en": "3b0f78b545b2cd1a",
+		"fr": "1bbdec75001c338c"
+	},
+	"stats.worldMap.higher": {
+		"en": "5e0287712e35daf2",
+		"fr": "d84ef896e51bc07f"
+	},
+	"stats.worldMap.lower": {
+		"en": "9b509ece2bf2f6df",
+		"fr": "c78510ff60d542f6"
+	},
+	"stats.worldMap.more": {
+		"en": "01c2cb66faeb38d5",
+		"fr": "8dfce1b791eb6531"
+	},
+	"stats.worldMap.noRating": {
+		"en": "5c4c7627a26913ff",
+		"fr": "9737cacfab1b09bd"
+	},
+	"stats.worldMap.resetZoom": {
+		"en": "a23894f7d1c0e40f",
+		"fr": "6f5afa07c6e68edd"
+	},
+	"stats.worldMap.subtitle": {
+		"en": "48f894e5f66d0ff1",
+		"fr": "2f0e394909963770"
+	},
+	"stats.worldMap.title": {
+		"en": "0ed470eb4f194a67",
+		"fr": "5aa29f057d084953"
+	},
+	"stats.worldMap.tooltipRating": {
+		"en": "5fa5bbf6607becfb",
+		"fr": "5ef738cf7b69e03e"
+	},
+	"stats.worldMap.topCountriesTitle": {
+		"en": "8bb077e6f3bce6f7",
+		"fr": "e7ae80bd2ca9baa5"
+	},
+	"stats.yearScope.all": {
+		"en": "663175a9c461a96d",
+		"fr": "f14fe178f9324f7b"
+	},
+	"unsubscribed.accountSettings": {
+		"en": "805ea849d87cd2ec",
+		"fr": "750b555fe613e150"
+	},
+	"unsubscribed.body": {
+		"en": "ed4242371875befb",
+		"fr": "4d7a7d5dba8bd818"
+	},
+	"unsubscribed.bodyInvalid": {
+		"en": "9e10e754a5479110",
+		"fr": "2052c9adb4c10f72"
+	},
+	"unsubscribed.title": {
+		"en": "7990b5b77df334e6",
+		"fr": "ca37eb2a901b476a"
+	},
+	"unsubscribed.titleInvalid": {
+		"en": "6d409733362067c6",
+		"fr": "737fee2f49b9218c"
+	},
+	"watchlist.addToWatchlist": {
+		"en": "d4268d01c90b77a3",
+		"fr": "34bb1a4bc14dd7a7"
+	},
+	"watchlist.backToAccount": {
+		"en": "03c750790b255f52",
+		"fr": "aa51ad901a2c6c0f"
+	},
+	"watchlist.empty": {
+		"en": "af0b858627408ec3",
+		"fr": "faa311f6539c96ce"
+	},
+	"watchlist.inWatchlist": {
+		"en": "20b2bcad06b5221c",
+		"fr": "8efa877c24a3c4f4"
+	},
+	"watchlist.removeFromWatchlist": {
+		"en": "cf3a3aaba6f94bd2",
+		"fr": "7f205f9f62161b96"
+	},
+	"watchlist.title": {
+		"en": "fb6f64d6d7afa2e8",
+		"fr": "aa3f007ba707a87f"
+	}
+}

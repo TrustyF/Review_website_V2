@@ -1,5 +1,5 @@
 // Shared by the server page (initial ?step=) and the wizard (popstate).
-const STEP_COUNT = 4;
+const STEP_COUNT = 5;
 
 export function parseOnboardingStep(value: string | null | undefined): number {
 	const n = Number.parseInt(value ?? "", 10);

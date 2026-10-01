@@ -24,13 +24,19 @@
 .dot_done
   background: var(--accent1)
 
-// Fixed height so the actions row lands in the same place across every step,
-// regardless of how tall that step's own content is — see OnboardingStep.
+// All steps share one grid cell, so the cell takes the tallest step's height
+// and every step's actions row lands in the same place — see OnboardingStep.
+.steps
+  display: grid
+
 .step
+  grid-area: 1 / 1
   display: flex
   flex-flow: column
   gap: 1.5rem
-  min-height: 20rem
+
+.step_hidden
+  visibility: hidden
 
 .header
   display: flex
@@ -147,6 +153,25 @@
   svg
     flex-shrink: 0
     margin-top: 0.1rem
+
+.tour_list
+  display: flex
+  flex-flow: column
+  gap: 1.5rem
+  list-style: none
+  padding: 0
+  margin: 0
+  font-size: 0.9rem
+
+.tour_item
+  display: flex
+  align-items: flex-start
+  gap: 0.8rem
+
+.tour_icon
+  flex-shrink: 0
+  margin-top: 0.1rem
+  color: var(--brand)
 
 .avatar_picker
   display: flex

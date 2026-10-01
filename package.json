@@ -19,6 +19,8 @@
 		"prisma_migrate": "npx prisma migrate dev",
 		"compose": "docker compose up -d && docker compose up -d --wait db && npx prisma migrate deploy",
 		"typecheck": "tsc --noEmit",
+		"i18n:fr": "tsx src/scripts/i18n/translate-fr.ts",
+		"i18n:check": "tsx src/scripts/i18n/translate-fr.ts check",
 		"fetch_identity": "tsx src/server/maintenance/fetch-identity.ts",
 		"cleanup_posters": "tsx src/server/maintenance/cron/cleanup-posters.ts",
 		"cleanup_cropped_images": "tsx src/server/maintenance/cron/cleanup-cropped-images.ts",

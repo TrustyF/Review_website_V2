@@ -31,6 +31,7 @@ import { recordInvocation } from "@/server/dev/invocation-tracker";
 import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/review-body-syntax";
 import { invalidateSearchIndex } from "@/components/search/search-actions";
 import { revalidateMediaPaths } from "@/server/cache/revalidate-media";
+import { FRENCH_STYLE_RULES } from "@/lib/i18n/french-style";
 
 // Paginated rather than all at once — each candidate costs a separate /api/image-proxy
 // invocation once its thumbnail scrolls into view.
@@ -408,7 +409,7 @@ export async function suggestReviewTranslation(body: string): Promise<string> {
 				type: "text",
 				text: `You translate review text for a personal movie/TV/manga/game log from English to French. Keep the reviewer's tone, opinions, and level of formality — a natural translation, not a literal one.
 
-Match the original's intensity exactly; never amplify it. If the English says "pretty good", the French should be just as lukewarm, not "excellent" or "une vraie réussite". Measured, understated, or dry writing stays measured, understated, or dry. Don't add exclamation marks, intensifiers (vraiment, tellement, absolument, véritable), or emphasis the original doesn't have. Avoid stock critic and marketing phrasing like "une pépite", "un bijou", "un régal", "magistral", "à couper le souffle", "un incontournable", "sans conteste", "une claque" unless the English is equally effusive. Prefer plain, everyday wording a French-speaking reviewer would actually write in a personal log over polished or flowery prose — when in doubt, pick the more sober option.
+${FRENCH_STYLE_RULES}
 
 The text contains marker tokens in pairs, e.g. ${SPOILER_OPEN}some phrase${SPOILER_CLOSE} or ${LINK_OPEN}some phrase${LINK_CLOSE_PREFIX}0⟧ — translate the phrase inside a pair normally, as part of the surrounding sentence, but leave the marker tokens themselves exactly as they are, immediately before/after the translated phrase: don't add, remove, rename, reorder, or explain them. Reply with only the translated text: no preamble, no explanation, no surrounding quotes.`,
 				cache_control: { type: "ephemeral" },

@@ -116,6 +116,7 @@ export const en = {
 			username: "Username",
 			avatar: "Avatar",
 			preferences: "Emails",
+			tour: "Tour",
 		},
 		languageStep: {
 			title: "Choose your language",
@@ -135,6 +136,26 @@ export const en = {
 			title: "Choose your emails",
 			subtitle:
 				"Both are optional. You can change this any time in account settings.",
+		},
+		tourStep: {
+			title: "Welcome to my corner",
+			subtitle: "Here's what you'll find around here.",
+			browse: {
+				title: "Browse my library",
+				body: "All of the movies, books and games I've rated",
+			},
+			reviews: {
+				title: "Read my reviews",
+				body: "More in-depth opinions",
+			},
+			watchlist: {
+				title: "Keep a watchlist",
+				body: "Save anything from my library to watch later.",
+			},
+			recommendations: {
+				title: "Request a recommendation",
+				body: "Tell me what you're in the mood for, I'll put a list together for you",
+			},
 		},
 		finish: "Finish",
 	},
