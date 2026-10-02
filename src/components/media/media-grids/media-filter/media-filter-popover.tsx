@@ -78,8 +78,14 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 
 	return (
 		<div className={styles.wrapper} ref={containerRef}>
-			<Hitbox onClick={() => setIsOpen((v) => !v)} padding={15}>
-				<div className={styles.trigger}>
+			<Hitbox
+				className={styles.trigger_hitbox}
+				onClick={() => setIsOpen((v) => !v)}
+				padding={15}>
+				<div
+					className={
+						isOpen ? `${styles.trigger} ${styles.trigger_open}` : styles.trigger
+					}>
 					<Filter size={16} />
 					{activeCount > 0 && (
 						<span className={styles.count_badge}>{activeCount}</span>

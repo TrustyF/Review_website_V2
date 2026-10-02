@@ -475,6 +475,34 @@
 		"en": "0efb433dce7da49e",
 		"fr": "ae0ec98e056d3f31"
 	},
+	"media.selection.addToWatchlist": {
+		"en": "d4268d01c90b77a3",
+		"fr": "34bb1a4bc14dd7a7"
+	},
+	"media.selection.cancel": {
+		"en": "c0774c185060fc13",
+		"fr": "af12de10a27c7e5c"
+	},
+	"media.selection.clear": {
+		"en": "d0f86d2093269896",
+		"fr": "1d7f2405c06c5b8a"
+	},
+	"media.selection.failed": {
+		"en": "f552dcbe9cd20eef",
+		"fr": "e6380112ece534df"
+	},
+	"media.selection.select": {
+		"en": "d79c5bfdda1e4db0",
+		"fr": "85d86337f41b726c"
+	},
+	"media.selection.selectAll": {
+		"en": "e909b897a838f9c0",
+		"fr": "3978dbcf32c86d89"
+	},
+	"media.selection.selected": {
+		"en": "d8e332e7a74c36b8",
+		"fr": "37b5452bedd50276"
+	},
 	"media.sort.rating": {
 		"en": "dc8880b9272dc093",
 		"fr": "a267073a51431756"

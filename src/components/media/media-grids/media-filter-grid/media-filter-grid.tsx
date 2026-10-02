@@ -7,7 +7,10 @@ import { MediaFilterPopover } from "@/components/media/media-grids/media-filter/
 import { MediaSortPopover } from "@/components/media/media-grids/media-sort/media-sort-popover";
 import { MediaGridControls } from "@/components/media/media-grids/media-grid-controls/media-grid-controls";
 import { MediaSortedGrid } from "@/components/media/media-grids/media-sort/media-sorted-grid";
-import { MediaSortOption, SORT_OPTIONS } from "@/components/media/media-grids/media-sort/media-sort";
+import {
+	MediaSortOption,
+	SORT_OPTIONS,
+} from "@/components/media/media-grids/media-sort/media-sort";
 import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
 import {
 	applyMediaFilterToSearchParams,
@@ -15,6 +18,9 @@ import {
 	mediaFilterFromSearchParams,
 	MediaFilterState,
 } from "@/components/media/media-grids/media-filter/media-filter";
+import { MediaSelectionProvider } from "@/components/media/media-grids/media-selection/media-selection-context";
+import { MediaSelectToggle } from "@/components/media/media-grids/media-selection/media-select-toggle";
+import { MediaSelectionBar } from "@/components/media/media-grids/media-selection/media-selection-bar";
 import styles from "./media-filter-grid.module.sass";
 
 // Avoids React's "useLayoutEffect does nothing on the server" warning; no scroll position to restore on a server render anyway.
@@ -59,7 +65,9 @@ function MediaFilterGridInner({ media, showRating, showTitle }: Props) {
 	const { filter, setFilter, filteredMedia } = useMediaFilter(media, () =>
 		mediaFilterFromSearchParams(searchParams),
 	);
-	const [sort, setSort] = useState<MediaSortOption>(() => parseSort(searchParams));
+	const [sort, setSort] = useState<MediaSortOption>(() =>
+		parseSort(searchParams),
+	);
 
 	// showRating={false} only makes sense for the rating-tiered view (headers already say it); other sorts show it on cards regardless.
 	const effectiveShowRating = sort === "rating" ? showRating : true;
@@ -79,7 +87,9 @@ function MediaFilterGridInner({ media, showRating, showTitle }: Props) {
 	}, [pathname]);
 
 	// history.replaceState (not router.replace) so tweaking a filter never re-fetches the page from the server — Next still picks up the change for usePathname/useSearchParams elsewhere. Debounced for the filter (a dragged slider fires many updates/sec); sort changes are discrete clicks, so those go straight through.
-	const writeTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+	const writeTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(
+		undefined,
+	);
 	useEffect(() => () => clearTimeout(writeTimeout.current), []);
 
 	function writeUrl(nextFilter: MediaFilterState, nextSort: MediaSortOption) {
@@ -88,13 +98,20 @@ function MediaFilterGridInner({ media, showRating, showTitle }: Props) {
 		if (nextSort === "rating") params.delete("sort");
 		else params.set("sort", nextSort);
 		const query = params.toString();
-		window.history.replaceState(null, "", query ? `${pathname}?${query}` : pathname);
+		window.history.replaceState(
+			null,
+			"",
+			query ? `${pathname}?${query}` : pathname,
+		);
 	}
 
 	function handleFilterChange(next: MediaFilterState) {
 		setFilter(next);
 		clearTimeout(writeTimeout.current);
-		writeTimeout.current = setTimeout(() => writeUrl(next, sort), FILTER_DEBOUNCE_MS);
+		writeTimeout.current = setTimeout(
+			() => writeUrl(next, sort),
+			FILTER_DEBOUNCE_MS,
+		);
 	}
 
 	function handleSortChange(next: MediaSortOption) {
@@ -103,18 +120,29 @@ function MediaFilterGridInner({ media, showRating, showTitle }: Props) {
 	}
 
 	return (
-		<MediaCardDisplayProvider showRating={effectiveShowRating} showTitle={showTitle}>
-			<div className={styles.wrapper}>
-				<MediaGridControls overlay>
-					<MediaSortPopover sort={sort} onChange={handleSortChange} />
-					<MediaFilterPopover
-						media={media}
-						filter={filter}
-						onChange={handleFilterChange}
+		<MediaCardDisplayProvider
+			showRating={effectiveShowRating}
+			showTitle={showTitle}>
+			<MediaSelectionProvider>
+				<div className={styles.wrapper}>
+					<MediaGridControls overlay>
+						<MediaSelectToggle />
+						<MediaSortPopover sort={sort} onChange={handleSortChange} />
+						<MediaFilterPopover
+							media={media}
+							filter={filter}
+							onChange={handleFilterChange}
+						/>
+					</MediaGridControls>
+					<MediaSortedGrid media={filteredMedia} sort={sort} />
+				</div>
+				{media[0] && (
+					<MediaSelectionBar
+						visibleIds={filteredMedia.map((m) => m.id)}
+						type={media[0].type}
 					/>
-				</MediaGridControls>
-				<MediaSortedGrid media={filteredMedia} sort={sort} />
-			</div>
+				)}
+			</MediaSelectionProvider>
 		</MediaCardDisplayProvider>
 	);
 }

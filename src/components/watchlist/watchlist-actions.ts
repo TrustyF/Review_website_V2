@@ -36,6 +36,22 @@ export async function addToWatchlist(mediaId: number): Promise<void> {
 	revalidatePath("/activity");
 }
 
+// Bulk version for the grid's multi-select; already-watchlisted ids are skipped.
+export async function addManyToWatchlist(mediaIds: number[]): Promise<void> {
+	const userId = await requireUserId();
+	if (!mediaIds.length) return;
+
+	await db.watchlistItem.createMany({
+		data: mediaIds.map((mediaId) => ({ userId, mediaId })),
+		skipDuplicates: true,
+	});
+
+	revalidatePath("/account");
+	revalidatePath("/watchlist");
+	revalidatePath("/activity");
+	for (const mediaId of mediaIds) revalidatePath(`/media/${mediaId}`);
+}
+
 export async function removeFromWatchlist(mediaId: number): Promise<void> {
 	const userId = await requireUserId();
 

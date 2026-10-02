@@ -204,6 +204,16 @@ export const fr = {
 			releaseDate: "Date de sortie",
 			watchedDate: "Date de visionnage",
 		},
+		selection: {
+			select: "Sélection multiple",
+			cancel: "Annuler",
+			selectAll: "Tout sélectionner",
+			clear: "Effacer",
+			selected: (count: number) =>
+				`${count} sélectionné${count === 1 ? "" : "s"}`,
+			addToWatchlist: "Ajouter à la liste à voir",
+			failed: "Une erreur s'est produite, réessayez.",
+		},
 		unrated: "Non noté",
 		unknownYear: "Inconnue",
 		unknownMonth: "Inconnu",

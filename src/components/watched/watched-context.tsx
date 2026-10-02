@@ -11,12 +11,15 @@ import { useSession } from "next-auth/react";
 import {
 	getMyWatchedMediaIds,
 	markAsWatched,
+	markManyAsWatched,
 	unmarkAsWatched,
 } from "@/components/watched/watched-actions";
 
 type WatchedContextValue = {
 	isWatched: (mediaId: number) => boolean;
 	toggle: (mediaId: number) => void;
+	// Adds only (never removes); resolves once saved, rejects (after reverting) on failure.
+	markMany: (mediaIds: number[]) => Promise<void>;
 };
 
 const WatchedContext = createContext<WatchedContextValue | undefined>(
@@ -67,13 +70,32 @@ export function WatchedProvider({ children }: { children: ReactNode }) {
 		[mediaIds],
 	);
 
+	const markMany = useCallback(
+		async (ids: number[]) => {
+			const added = ids.filter((id) => !mediaIds.has(id));
+			if (!added.length) return;
+			setMediaIds((prev) => new Set([...prev, ...added]));
+			try {
+				await markManyAsWatched(added);
+			} catch (error) {
+				setMediaIds((prev) => {
+					const reverted = new Set(prev);
+					for (const id of added) reverted.delete(id);
+					return reverted;
+				});
+				throw error;
+			}
+		},
+		[mediaIds],
+	);
+
 	const isWatched = useCallback(
 		(mediaId: number) => mediaIds.has(mediaId),
 		[mediaIds],
 	);
 
 	return (
-		<WatchedContext.Provider value={{ isWatched, toggle }}>
+		<WatchedContext.Provider value={{ isWatched, toggle, markMany }}>
 			{children}
 		</WatchedContext.Provider>
 	);

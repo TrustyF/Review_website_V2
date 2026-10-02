@@ -15,6 +15,8 @@ import { useMediaCardDisplay } from "@/components/media/media-card-display-conte
 // import { MarkAsWatchedHoverButton } from "@/components/media/media-cards/media-mini-card/mark-as-watched-hover-button";
 import { PosterQuickEditButton } from "@/components/media/media-cards/media-mini-card/poster-quick-edit-button";
 import { useWatched } from "@/components/watched/watched-context";
+import { useMediaSelection } from "@/components/media/media-grids/media-selection/media-selection-context";
+import { MediaSelectOverlay } from "@/components/media/media-grids/media-selection/media-select-overlay";
 
 type Props = {
 	media: MediaRecord;
@@ -26,6 +28,9 @@ type Props = {
 export function MediaMiniCardShell({ media, children }: Props) {
 	const { showRating, showTitle, showReviewIcon, fade } = useMediaCardDisplay();
 	const { isWatched } = useWatched();
+	const selection = useMediaSelection();
+	const isSelecting = selection?.isActive ?? false;
+	const isSelected = isSelecting && selection!.selectedIds.has(media.id);
 	// Set optimistically when an alternate is picked — resolvePoster defers its resize/encode
 	// to after(), so the picker's own previewSrc (already resolved) stands in until it's ready.
 	const [posterOverrideSrc, setPosterOverrideSrc] = useState<string | null>(
@@ -35,7 +40,8 @@ export function MediaMiniCardShell({ media, children }: Props) {
 	return (
 		<div
 			className={
-				isWatched(media.id)
+				// Selected cards drop the watched dimming so the selection reads clearly.
+				isWatched(media.id) && !isSelected
 					? `${styles.wrapper} ${styles.watched}`
 					: styles.wrapper
 			}>
@@ -48,6 +54,13 @@ export function MediaMiniCardShell({ media, children }: Props) {
 					difficulty={media.review?.difficulty}
 					fade={fade}
 				/>
+				{isSelecting && (
+					<MediaSelectOverlay
+						title={media.title}
+						selected={isSelected}
+						onToggle={() => selection!.toggle(media.id)}
+					/>
+				)}
 				{/* eslint-disable-next-line comment-length/no-very-long -- disabled code, not prose */}
 				{/* Disabled for now — may come back later.
 				<div className={styles.status_buttons}>
@@ -80,14 +93,16 @@ export function MediaMiniCardShell({ media, children }: Props) {
 					{children}
 				</div>
 			</div>
-			<div className={styles.admin_actions}>
-				<MediaEditButton media={media} hitboxPadding={6} />
-				<PosterQuickEditButton
-					media={media}
-					onPosterChange={setPosterOverrideSrc}
-					hitboxPadding={6}
-				/>
-			</div>
+			{!isSelecting && (
+				<div className={styles.admin_actions}>
+					<MediaEditButton media={media} hitboxPadding={6} />
+					<PosterQuickEditButton
+						media={media}
+						onPosterChange={setPosterOverrideSrc}
+						hitboxPadding={6}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }

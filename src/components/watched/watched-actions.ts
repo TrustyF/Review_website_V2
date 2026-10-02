@@ -35,6 +35,21 @@ export async function markAsWatched(mediaId: number): Promise<void> {
 	revalidatePath("/activity");
 }
 
+// Bulk version for the grid's multi-select; already-watched ids are skipped.
+export async function markManyAsWatched(mediaIds: number[]): Promise<void> {
+	const userId = await requireUserId();
+	if (!mediaIds.length) return;
+
+	await db.watchedItem.createMany({
+		data: mediaIds.map((mediaId) => ({ userId, mediaId })),
+		skipDuplicates: true,
+	});
+
+	revalidatePath("/account");
+	revalidatePath("/activity");
+	for (const mediaId of mediaIds) revalidatePath(`/media/${mediaId}`);
+}
+
 export async function unmarkAsWatched(mediaId: number): Promise<void> {
 	const userId = await requireUserId();
 

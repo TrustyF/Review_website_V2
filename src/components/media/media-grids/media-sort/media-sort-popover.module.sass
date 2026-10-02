@@ -15,9 +15,15 @@
   font-size: 0.8rem
   cursor: pointer
 
-  &:hover
-    color: var(--foreground)
-    border-color: var(--foreground)
+// Hitbox's hit-area button sits on top of .trigger, so hover is read off the Hitbox wrapper.
+.trigger_hitbox:hover .trigger
+  color: var(--foreground)
+  border-color: var(--foreground)
+
+// While the popover is open — same brand look as MediaSelectToggle's pressed state. After :hover so it wins.
+.trigger.trigger_open
+  color: var(--brand)
+  border-color: var(--brand)
 
 .active_dot
   position: absolute

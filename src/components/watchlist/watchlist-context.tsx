@@ -10,6 +10,7 @@ import {
 import { useSession } from "next-auth/react";
 import {
 	addToWatchlist,
+	addManyToWatchlist,
 	getMyWatchlistMediaIds,
 	removeFromWatchlist,
 } from "@/components/watchlist/watchlist-actions";
@@ -17,6 +18,8 @@ import {
 type WatchlistContextValue = {
 	isInWatchlist: (mediaId: number) => boolean;
 	toggle: (mediaId: number) => void;
+	// Adds only (never removes); resolves once saved, rejects (after reverting) on failure.
+	addMany: (mediaIds: number[]) => Promise<void>;
 };
 
 const WatchlistContext = createContext<WatchlistContextValue | undefined>(
@@ -67,13 +70,32 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
 		[mediaIds],
 	);
 
+	const addMany = useCallback(
+		async (ids: number[]) => {
+			const added = ids.filter((id) => !mediaIds.has(id));
+			if (!added.length) return;
+			setMediaIds((prev) => new Set([...prev, ...added]));
+			try {
+				await addManyToWatchlist(added);
+			} catch (error) {
+				setMediaIds((prev) => {
+					const reverted = new Set(prev);
+					for (const id of added) reverted.delete(id);
+					return reverted;
+				});
+				throw error;
+			}
+		},
+		[mediaIds],
+	);
+
 	const isInWatchlist = useCallback(
 		(mediaId: number) => mediaIds.has(mediaId),
 		[mediaIds],
 	);
 
 	return (
-		<WatchlistContext.Provider value={{ isInWatchlist, toggle }}>
+		<WatchlistContext.Provider value={{ isInWatchlist, toggle, addMany }}>
 			{children}
 		</WatchlistContext.Provider>
 	);
