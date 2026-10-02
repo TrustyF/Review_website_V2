@@ -130,11 +130,7 @@ export default async function AccountPage() {
 									title={
 										locale === "fr" ? (list.titleFr ?? list.title) : list.title
 									}
-									description={
-										locale === "fr"
-											? (list.descriptionFr ?? list.description)
-											: list.description
-									}
+									description={null}
 									thumbnail={list.thumbnail}
 									itemCount={list._count.items}
 									linked={false}
