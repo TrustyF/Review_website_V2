@@ -1,15 +1,18 @@
 "use client";
 import { useRef, useState } from "react";
-import { Link } from "@/components/ui/link";
 import {
 	addMediaToList,
+	getListPickerData,
+	ListPickerData,
+	ListPickerOption,
 	removeMediaFromList,
-	searchLists,
 } from "@/components/lists/list-actions";
+import { UserPicker } from "@/components/lists/list-form/user-picker";
 import { Plus } from "lucide-react";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useOutsideClick } from "@/lib/use-outside-click";
+import { fuzzySearch } from "@/lib/fuzzy-search";
 import { Clickable } from "@/components/ui/clickable";
 import styles from "./add-to-list-button.module.sass";
 
@@ -24,7 +27,13 @@ type Props = {
 	className?: string | undefined;
 };
 
-const SEARCH_DEBOUNCE_MS = 200;
+type Tab = "public" | "users";
+
+const LIST_FUSE_OPTIONS = {
+	keys: ["title"],
+	threshold: 0.35,
+	ignoreLocation: true,
+};
 
 // Toggles list membership optimistically, rolling back on failure rather than waiting on the round trip.
 export function AddToListButton({ mediaId, memberLists, className }: Props) {
@@ -37,41 +46,34 @@ export function AddToListButton({ mediaId, memberLists, className }: Props) {
 		() => new Set(memberLists.map((l) => l.id)),
 	);
 	const [pendingId, setPendingId] = useState<number | null>(null);
+	const [data, setData] = useState<ListPickerData | null>(null);
+	const [isLoading, setIsLoading] = useState(false);
+	const [tab, setTab] = useState<Tab>("public");
+	const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 	const [query, setQuery] = useState("");
-	const [results, setResults] = useState<ListOption[]>([]);
-	const [isSearching, setIsSearching] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
-	const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	useOutsideClick(containerRef, () => setIsOpen(false), { enabled: isOpen });
 
-	// Debounced so idle typing doesn't fire a search action per keystroke.
-	function handleSearch(value: string) {
-		setQuery(value);
-		if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-
-		const trimmed = value.trim();
-		if (!trimmed) {
-			setResults([]);
-			setIsSearching(false);
-			return;
-		}
-		setIsSearching(true);
-		searchTimerRef.current = setTimeout(async () => {
-			try {
-				const found = await searchLists(trimmed, mediaId);
-				setResults(found);
-				setMemberIds((prev) => {
-					const toAdd = found.filter((r) => r.isMember && !prev.has(r.id));
-					if (toAdd.length === 0) return prev;
-					const next = new Set(prev);
-					for (const r of toAdd) next.add(r.id);
-					return next;
-				});
-			} finally {
-				setIsSearching(false);
+	// Refetched on every open so lists created elsewhere show up; tab/user defaults only on first load.
+	async function open() {
+		setIsOpen(true);
+		setIsLoading(true);
+		try {
+			const fresh = await getListPickerData(mediaId);
+			const members = fresh.lists.filter((l) => l.isMember);
+			setMemberIds(new Set(members.map((l) => l.id)));
+			if (!data) {
+				const firstUserMember = members.find((l) => l.targetUserId);
+				const onlyInUserLists =
+					members.length > 0 && members.every((l) => l.targetUserId);
+				setTab(onlyInUserLists ? "users" : "public");
+				setSelectedUserId(firstUserMember?.targetUserId ?? null);
 			}
-		}, SEARCH_DEBOUNCE_MS);
+			setData(fresh);
+		} finally {
+			setIsLoading(false);
+		}
 	}
 
 	async function toggle(listId: number) {
@@ -100,52 +102,107 @@ export function AddToListButton({ mediaId, memberLists, className }: Props) {
 
 	if (!isAdmin) return null;
 
+	const lists = data?.lists ?? [];
+	const users = data?.users ?? [];
+	const memberOf = lists.filter((l) => memberIds.has(l.id));
+	const publicCount = memberOf.filter((l) => !l.targetUserId).length;
+	const userCount = memberOf.length - publicCount;
+	const badgeIds = new Set(
+		memberOf.flatMap((l) => (l.targetUserId ? [l.targetUserId] : [])),
+	);
+	const selectedUser = users.find((u) => u.id === selectedUserId) ?? null;
+
+	const bucket: ListPickerOption[] =
+		tab === "public"
+			? lists.filter((l) => !l.targetUserId)
+			: selectedUser
+				? lists.filter((l) => l.targetUserId === selectedUser.id)
+				: [];
 	const trimmedQuery = query.trim();
-	const rows = trimmedQuery ? results : memberLists;
+	// Ordered by load-time membership, not live, so rows don't jump while toggling.
+	const rows = trimmedQuery
+		? fuzzySearch(bucket, LIST_FUSE_OPTIONS, trimmedQuery, bucket.length)
+		: [...bucket].sort((a, b) => Number(b.isMember) - Number(a.isMember));
+
+	const showRows = tab === "public" || selectedUser;
 
 	return (
 		<div className={className} ref={containerRef}>
 			<Clickable
-				className={styles.trigger}
+				className={`${styles.trigger} ${memberIds.size > 0 ? styles.trigger_active : ""}`}
 				title="Add to list"
 				aria-label="Add to list"
-				onClick={() => setIsOpen((v) => !v)}>
+				onClick={() => (isOpen ? setIsOpen(false) : open())}>
 				<Plus size={14} />
 			</Clickable>
 			{isOpen && (
 				<div className={styles.popover}>
-					<input
-						className={styles.search_input}
-						type="text"
-						placeholder="Search lists…"
-						value={query}
-						onChange={(e) => handleSearch(e.target.value)}
-						autoFocus
-					/>
-					{isSearching && <div className={styles.status}>Searching…</div>}
-					{!isSearching && trimmedQuery && rows.length === 0 && (
-						<div className={styles.status}>No matches.</div>
+					<div className={styles.tabs}>
+						<Clickable
+							className={`${styles.tab} ${tab === "public" ? styles.tab_active : ""}`}
+							aria-pressed={tab === "public"}
+							onClick={() => setTab("public")}>
+							Public{publicCount > 0 && ` (${publicCount})`}
+						</Clickable>
+						<Clickable
+							className={`${styles.tab} ${tab === "users" ? styles.tab_active : ""}`}
+							aria-pressed={tab === "users"}
+							onClick={() => setTab("users")}>
+							User lists{userCount > 0 && ` (${userCount})`}
+						</Clickable>
+					</div>
+
+					{!data && isLoading && <div className={styles.status}>Loading…</div>}
+
+					{data && tab === "users" && (
+						<div className={styles.users}>
+							<UserPicker
+								options={users}
+								value={selectedUserId}
+								onChange={setSelectedUserId}
+								hidePublicOption
+								badgeIds={badgeIds}
+								compact
+							/>
+						</div>
 					)}
-					{!trimmedQuery && memberLists.length === 0 && !isSearching && (
-						<Link href="/lists/new" className={styles.empty_link}>
-							Create a list
-						</Link>
+
+					{data && showRows && (
+						<>
+							<input
+								className={styles.search_input}
+								type="text"
+								placeholder="Filter lists…"
+								value={query}
+								onChange={(e) => setQuery(e.target.value)}
+								autoFocus
+							/>
+							{rows.length === 0 && (
+								<div className={styles.status}>
+									{trimmedQuery ? "No matches." : "No lists yet."}
+								</div>
+							)}
+							<ul className={styles.list}>
+								{rows.map((list) => (
+									<li key={list.id} className={styles.item}>
+										<label className={styles.label}>
+											<input
+												type="checkbox"
+												checked={memberIds.has(list.id)}
+												disabled={pendingId === list.id}
+												onChange={() => toggle(list.id)}
+											/>
+											{list.title}
+										</label>
+									</li>
+								))}
+							</ul>
+						</>
 					)}
-					<ul className={styles.list}>
-						{rows.map((list) => (
-							<li key={list.id} className={styles.item}>
-								<label className={styles.label}>
-									<input
-										type="checkbox"
-										checked={memberIds.has(list.id)}
-										disabled={pendingId === list.id}
-										onChange={() => toggle(list.id)}
-									/>
-									{list.title}
-								</label>
-							</li>
-						))}
-					</ul>
+
+					{data && tab === "users" && !selectedUser && (
+						<div className={styles.status}>Pick a user.</div>
+					)}
 				</div>
 			)}
 		</div>

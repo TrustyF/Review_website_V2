@@ -14,14 +14,17 @@
     color: var(--foreground)
     border-color: var(--foreground)
 
+.trigger_active
+  color: var(--brand)
+
 .popover
   position: absolute
   top: calc(100% + 0.4rem)
-  right: 0
+  left: 0
   z-index: 20
   padding: 0.6rem
-  min-width: 12rem
-  max-height: 20rem
+  width: 22rem
+  max-height: 28rem
   display: flex
   flex-flow: column
   gap: 0.4rem
@@ -58,7 +61,29 @@
   font-size: 0.9rem
   cursor: pointer
 
-.empty_link
-  color: var(--accent1)
+.tabs
+  display: flex
+  gap: 0.25rem
+  border-bottom: 1px solid var(--surface-border)
+
+.tab
+  flex: 1
+  padding: 0.35rem 0.5rem
   font-size: 0.85rem
-  text-decoration: underline
+  text-align: center
+  color: var(--accent3)
+  border-bottom: 2px solid transparent
+  margin-bottom: -1px
+  cursor: pointer
+
+  &:hover
+    color: var(--foreground)
+
+.tab_active
+  color: var(--foreground)
+  border-bottom-color: var(--brand)
+
+.users
+  flex-shrink: 0
+  max-height: 9rem
+  overflow-y: auto

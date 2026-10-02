@@ -10,7 +10,6 @@ import {
 import { readCroppedFile } from "@/server/resolvers/image-crop-resolver";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createNotification } from "@/components/notifications/notification-actions";
-import { fuzzySearch } from "@/lib/fuzzy-search";
 
 type ListInput = {
 	title: string;
@@ -104,7 +103,10 @@ export async function listRecommendationTargets(): Promise<
 	RecommendationTargetOption[]
 > {
 	await requireAdmin();
+	return findRecommendationTargets();
+}
 
+function findRecommendationTargets(): Promise<RecommendationTargetOption[]> {
 	return db.user.findMany({
 		where: { role: { not: "ADMIN" } },
 		orderBy: { createDate: "asc" },
@@ -169,37 +171,39 @@ export async function deleteList(id: number): Promise<void> {
 	revalidatePath("/lists");
 }
 
-export type ListSearchResult = { id: number; title: string; isMember: boolean };
-
-const LIST_SEARCH_LIMIT = 20;
-// Same typo tolerance as media-browser-actions.ts's FUSE_OPTIONS.
-const LIST_FUSE_OPTIONS = {
-	keys: ["title"],
-	threshold: 0.35,
-	ignoreLocation: true,
+export type ListPickerOption = {
+	id: number;
+	title: string;
+	// null = public list, otherwise the recommendation list's recipient.
+	targetUserId: string | null;
+	isMember: boolean;
 };
 
-// Powers AddToListButton's picker once list counts get too large to render flat.
-export async function searchLists(
-	query: string,
-	mediaId: number,
-): Promise<ListSearchResult[]> {
-	await requireAdmin();
-	const trimmed = query.trim();
-	if (!trimmed) return [];
+export type ListPickerData = {
+	lists: ListPickerOption[];
+	users: RecommendationTargetOption[];
+};
 
-	const [candidates, memberships] = await Promise.all([
+// Powers AddToListButton's picker: every list (newest first) with this media's membership flagged.
+export async function getListPickerData(
+	mediaId: number,
+): Promise<ListPickerData> {
+	await requireAdmin();
+
+	const [lists, memberships, users] = await Promise.all([
 		db.list.findMany({
-			select: { id: true, title: true },
-			orderBy: { id: "asc" },
+			select: { id: true, title: true, targetUserId: true },
+			orderBy: { createDate: "desc" },
 		}),
 		db.listItem.findMany({ where: { mediaId }, select: { listId: true } }),
+		findRecommendationTargets(),
 	]);
 	const memberIds = new Set(memberships.map((m) => m.listId));
 
-	return fuzzySearch(candidates, LIST_FUSE_OPTIONS, trimmed, LIST_SEARCH_LIMIT).map(
-		(l) => ({ id: l.id, title: l.title, isMember: memberIds.has(l.id) }),
-	);
+	return {
+		lists: lists.map((l) => ({ ...l, isMember: memberIds.has(l.id) })),
+		users,
+	};
 }
 
 export async function addMediaToList(

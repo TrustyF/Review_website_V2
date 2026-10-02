@@ -16,8 +16,8 @@ export async function AddToListButtonSection({ mediaId, className }: Props) {
 		);
 	}
 
-	// Only the lists this media is already in, via the indexed reverse lookup — the
-	// full list catalog is fetched on demand by search instead (see list-actions.ts's searchLists).
+	// Only seeds the trigger's "already listed" state; the full catalog loads when the
+	// picker opens (see list-actions.ts's getListPickerData).
 	const memberships = await db.listItem.findMany({
 		where: { mediaId },
 		select: { list: { select: { id: true, title: true } } },

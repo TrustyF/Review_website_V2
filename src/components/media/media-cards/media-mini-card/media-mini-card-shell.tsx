@@ -18,6 +18,7 @@ import { useWatched } from "@/components/watched/watched-context";
 import { useWatchlist } from "@/components/watchlist/watchlist-context";
 import { WatchlistIcon } from "@/components/icons/watchlist-icon";
 import { useDictionary } from "@/lib/i18n/i18n-context";
+import { useIsAdmin } from "@/lib/use-is-admin";
 import { useMediaSelection } from "@/components/media/media-grids/media-selection/media-selection-context";
 import { MediaSelectOverlay } from "@/components/media/media-grids/media-selection/media-select-overlay";
 
@@ -34,6 +35,7 @@ export function MediaMiniCardShell({ media, children }: Props) {
 	const dict = useDictionary();
 	const { isWatched } = useWatched();
 	const { isInWatchlist } = useWatchlist();
+	const isAdmin = useIsAdmin();
 	const selection = useMediaSelection();
 	const isSelecting = selection?.isActive ?? false;
 	const isSelected = isSelecting && selection!.selectedIds.has(media.id);
@@ -60,7 +62,7 @@ export function MediaMiniCardShell({ media, children }: Props) {
 					difficulty={media.review?.difficulty}
 					fade={fade}
 				/>
-				{showWatchlistPill && isInWatchlist(media.id) && (
+				{showWatchlistPill && !isAdmin && isInWatchlist(media.id) && (
 					<span
 						className={styles.watchlist_pill}
 						role="img"

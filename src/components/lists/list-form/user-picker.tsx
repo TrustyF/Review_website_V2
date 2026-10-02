@@ -12,6 +12,10 @@ type Props = {
 	onChange: (id: string | null) => void;
 	// Omits the "Public" tile — for pickers that only ever navigate to a specific user.
 	hidePublicOption?: boolean;
+	// Users whose tiles get a dot, e.g. those already holding the media in a list.
+	badgeIds?: Set<string>;
+	// Smaller tiles for tight spots like AddToListButton's popover.
+	compact?: boolean;
 };
 
 // "Recommend to" picker: avatar tiles instead of a <select>, so an admin recognizes a recipient by face.
@@ -20,6 +24,8 @@ export function UserPicker({
 	value,
 	onChange,
 	hidePublicOption,
+	badgeIds,
+	compact,
 }: Props) {
 	// Set, not one boolean, since multiple tiles' images can fail to load independently.
 	const [failedIds, setFailedIds] = useState<Set<string>>(new Set());
@@ -29,7 +35,7 @@ export function UserPicker({
 	}
 
 	return (
-		<div className={styles.grid}>
+		<div className={`${styles.grid} ${compact ? styles.compact : ""}`}>
 			{!hidePublicOption && (
 				<Clickable
 					className={`${styles.option} ${value === null ? styles.option_selected : ""}`}
@@ -65,6 +71,7 @@ export function UserPicker({
 								<UserRound size={20} />
 							</div>
 						)}
+						{badgeIds?.has(user.id) && <span className={styles.badge} />}
 						<span className={styles.name}>{label}</span>
 					</Clickable>
 				);

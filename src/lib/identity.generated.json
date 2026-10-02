@@ -10,6 +10,28 @@
 		"addressRegion": "BC",
 		"addressCountry": "CA"
 	},
+	"worksFor": {
+		"@type": "Organization",
+		"name": "Atomic Cartoons",
+		"sameAs": "https://www.linkedin.com/company/atomiccartoons/"
+	},
+	"alumniOf": {
+		"@type": "CollegeOrUniversity",
+		"name": "Digital Arts & Entertainment",
+		"sameAs": "https://www.digitalartsandentertainment.be/"
+	},
+	"knowsAbout": [
+		"Houdini",
+		"Visual effects",
+		"FX simulation",
+		"Procedural generation",
+		"Python"
+	],
+	"knowsLanguage": [
+		"fr",
+		"en",
+		"nl"
+	],
 	"sameAs": [
 		"https://review.arthursirjacobs.com/",
 		"https://arthur-sirjacobs.art/",
