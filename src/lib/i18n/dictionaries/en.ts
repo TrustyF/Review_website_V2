@@ -211,6 +211,19 @@ export const en = {
 			clear: "Clear",
 			selected: (count: number) => `${count} selected`,
 			addToWatchlist: "Add to watchlist",
+			markAsSeen: "Mark as seen",
+			unmarkAsSeen: "Unmark as seen",
+			removeFromWatchlist: "Remove from watchlist",
+			unmarkedResult: (count: number) => `${count} unmarked`,
+			removedResult: (count: number) => `${count} removed from watchlist`,
+			markedResult: (done: number, skipped: number) =>
+				skipped
+					? `${done} marked as seen · ${skipped} already ${skipped === 1 ? "was" : "were"}`
+					: `${done} marked as seen`,
+			addedResult: (done: number, skipped: number) =>
+				skipped
+					? `${done} added to watchlist · ${skipped} already ${skipped === 1 ? "was" : "were"}`
+					: `${done} added to watchlist`,
 			failed: "Something went wrong, try again.",
 		},
 		unrated: "Unrated",
@@ -278,6 +291,16 @@ export const en = {
 			COMIC: "Mark as read",
 			BOOK: "Mark as read",
 			GAME: "Mark as played",
+		},
+		// Multi-select's reverse action, when every selected item is already marked.
+		unmarkLabel: {
+			MOVIE: "Unmark as watched",
+			SHORT: "Unmark as watched",
+			TVSHOW: "Unmark as watched",
+			MANGA: "Unmark as read",
+			COMIC: "Unmark as read",
+			BOOK: "Unmark as read",
+			GAME: "Unmark as played",
 		},
 		alreadyLabel: {
 			MOVIE: "Already watched",

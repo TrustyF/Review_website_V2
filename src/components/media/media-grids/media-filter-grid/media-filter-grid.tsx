@@ -136,12 +136,7 @@ function MediaFilterGridInner({ media, showRating, showTitle }: Props) {
 					</MediaGridControls>
 					<MediaSortedGrid media={filteredMedia} sort={sort} />
 				</div>
-				{media[0] && (
-					<MediaSelectionBar
-						visibleIds={filteredMedia.map((m) => m.id)}
-						type={media[0].type}
-					/>
-				)}
+				<MediaSelectionBar visibleMedia={filteredMedia} />
 			</MediaSelectionProvider>
 		</MediaCardDisplayProvider>
 	);

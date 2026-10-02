@@ -475,6 +475,10 @@
 		"en": "0efb433dce7da49e",
 		"fr": "ae0ec98e056d3f31"
 	},
+	"media.selection.addedResult": {
+		"en": "436e97482be38c14",
+		"fr": "4c0bd6af1118dd18"
+	},
 	"media.selection.addToWatchlist": {
 		"en": "d4268d01c90b77a3",
 		"fr": "34bb1a4bc14dd7a7"
@@ -491,6 +495,22 @@
 		"en": "f552dcbe9cd20eef",
 		"fr": "e6380112ece534df"
 	},
+	"media.selection.markAsSeen": {
+		"en": "caef9641f6bea0aa",
+		"fr": "fa1a71c01f1fa725"
+	},
+	"media.selection.markedResult": {
+		"en": "8be9437ee7d0ef0e",
+		"fr": "b74174c0cb13d16d"
+	},
+	"media.selection.removedResult": {
+		"en": "c9d0f91c5ab70c6f",
+		"fr": "b34c0cabe99840a3"
+	},
+	"media.selection.removeFromWatchlist": {
+		"en": "93bea2b322d423ce",
+		"fr": "739e6a93afefea12"
+	},
 	"media.selection.select": {
 		"en": "d79c5bfdda1e4db0",
 		"fr": "85d86337f41b726c"
@@ -502,6 +522,14 @@
 	"media.selection.selected": {
 		"en": "d8e332e7a74c36b8",
 		"fr": "37b5452bedd50276"
+	},
+	"media.selection.unmarkAsSeen": {
+		"en": "a9aaf076cce0dd99",
+		"fr": "64a5f49bffaf76aa"
+	},
+	"media.selection.unmarkedResult": {
+		"en": "02bd34029ba020ff",
+		"fr": "52810c6f70b7cbe8"
 	},
 	"media.sort.rating": {
 		"en": "dc8880b9272dc093",
@@ -814,6 +842,34 @@
 	"mediaVerb.rewatchedVerb.TVSHOW": {
 		"en": "cf648a4217ef798f",
 		"fr": "cab241ebaffb8a86"
+	},
+	"mediaVerb.unmarkLabel.BOOK": {
+		"en": "5e53c1eb6ff0cc86",
+		"fr": "9cac76d75b129d2a"
+	},
+	"mediaVerb.unmarkLabel.COMIC": {
+		"en": "5e53c1eb6ff0cc86",
+		"fr": "9cac76d75b129d2a"
+	},
+	"mediaVerb.unmarkLabel.GAME": {
+		"en": "933d3c17035b1aa7",
+		"fr": "6228fa227be09a32"
+	},
+	"mediaVerb.unmarkLabel.MANGA": {
+		"en": "5e53c1eb6ff0cc86",
+		"fr": "9cac76d75b129d2a"
+	},
+	"mediaVerb.unmarkLabel.MOVIE": {
+		"en": "87ad3cf4e47016ea",
+		"fr": "64a5f49bffaf76aa"
+	},
+	"mediaVerb.unmarkLabel.SHORT": {
+		"en": "87ad3cf4e47016ea",
+		"fr": "64a5f49bffaf76aa"
+	},
+	"mediaVerb.unmarkLabel.TVSHOW": {
+		"en": "87ad3cf4e47016ea",
+		"fr": "58f19b19108dab9d"
 	},
 	"nav.activity": {
 		"en": "8df2926035af0f1c",

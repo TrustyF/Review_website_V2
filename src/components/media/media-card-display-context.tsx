@@ -8,6 +8,8 @@ type MediaCardDisplayOptions = {
 	// Movie/TV mini cards' own release date, in the info row's children slot — off
 	// by default since most grids already show a rating there instead.
 	showReleaseDate: boolean;
+	// Poster's "in watchlist" pill; off on /watchlist, where it'd be on every card.
+	showWatchlistPill: boolean;
 	// Off by default for small, fixed-count rows (home page sections) — the pop-in-avoidance
 	// fade only earns its keep on the large catalog grids where many posters batch-mount at once.
 	fade: boolean;
@@ -18,6 +20,7 @@ const defaultOptions: MediaCardDisplayOptions = {
 	showTitle: true,
 	showReviewIcon: true,
 	showReleaseDate: false,
+	showWatchlistPill: true,
 	fade: true,
 };
 
@@ -29,6 +32,7 @@ type ProviderProps = {
 	showTitle?: boolean | undefined;
 	showReviewIcon?: boolean | undefined;
 	showReleaseDate?: boolean | undefined;
+	showWatchlistPill?: boolean | undefined;
 	fade?: boolean | undefined;
 	children: ReactNode;
 };
@@ -39,12 +43,20 @@ export function MediaCardDisplayProvider({
 	showTitle = defaultOptions.showTitle,
 	showReviewIcon = defaultOptions.showReviewIcon,
 	showReleaseDate = defaultOptions.showReleaseDate,
+	showWatchlistPill = defaultOptions.showWatchlistPill,
 	fade = defaultOptions.fade,
 	children,
 }: ProviderProps) {
 	return (
 		<MediaCardDisplayContext.Provider
-			value={{ showRating, showTitle, showReviewIcon, showReleaseDate, fade }}>
+			value={{
+				showRating,
+				showTitle,
+				showReviewIcon,
+				showReleaseDate,
+				showWatchlistPill,
+				fade,
+			}}>
 			{children}
 		</MediaCardDisplayContext.Provider>
 	);

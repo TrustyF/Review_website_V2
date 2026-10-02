@@ -9,6 +9,10 @@ import { EditListLink } from "@/components/lists/edit-list-link/edit-list-link";
 import { ListIdBadge } from "@/components/lists/list-id-badge/list-id-badge";
 import { ListWatchedProgress } from "@/components/lists/list-watched-progress/list-watched-progress";
 import { BackButton } from "@/components/ui/back-button/back-button";
+import { MediaGridControls } from "@/components/media/media-grids/media-grid-controls/media-grid-controls";
+import { MediaSelectionProvider } from "@/components/media/media-grids/media-selection/media-selection-context";
+import { MediaSelectToggle } from "@/components/media/media-grids/media-selection/media-select-toggle";
+import { MediaSelectionBar } from "@/components/media/media-grids/media-selection/media-selection-bar";
 import { displayName } from "@/lib/display-name";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { getLocale } from "@/lib/i18n/get-locale";
@@ -55,7 +59,9 @@ export async function ListDetailPage({ id }: Props) {
 	// Falls back to English when untranslated, like Review.bodyFr.
 	const title = locale === "fr" ? (list.titleFr ?? list.title) : list.title;
 	const description =
-		locale === "fr" ? (list.descriptionFr ?? list.description) : list.description;
+		locale === "fr"
+			? (list.descriptionFr ?? list.description)
+			: list.description;
 
 	// A recommendation list is only visible to its recipient and admins; notFound() (not a login redirect) so a probing visitor can't tell "no such list" from "not yours."
 	if (list.targetUserId) {
@@ -69,16 +75,17 @@ export async function ListDetailPage({ id }: Props) {
 
 	// Read-only "already seen" badges: only meaningful to an admin browsing someone else's
 	// recommendation list — the recipient already knows their own watched state.
-	const seenMediaIds = list.targetUserId && isAdmin
-		? new Set(
-				(
-					await db.watchedItem.findMany({
-						where: { userId: list.targetUserId },
-						select: { mediaId: true },
-					})
-				).map((item) => item.mediaId),
-			)
-		: undefined;
+	const seenMediaIds =
+		list.targetUserId && isAdmin
+			? new Set(
+					(
+						await db.watchedItem.findMany({
+							where: { userId: list.targetUserId },
+							select: { mediaId: true },
+						})
+					).map((item) => item.mediaId),
+				)
+			: undefined;
 
 	return (
 		<div className={styles.wrapper}>
@@ -88,9 +95,7 @@ export async function ListDetailPage({ id }: Props) {
 					// eslint-disable-next-line @next/next/no-img-element
 					<img src={list.thumbnail} alt="" className={styles.thumbnail} />
 				) : (
-					<div className={styles.thumbnail_placeholder}>
-						{title.charAt(0)}
-					</div>
+					<div className={styles.thumbnail_placeholder}>{title.charAt(0)}</div>
 				)}
 				<div className={styles.header_info}>
 					<div className={styles.title_row}>
@@ -120,19 +125,29 @@ export async function ListDetailPage({ id }: Props) {
 
 			{media.length === 0 ? (
 				<p className={styles.empty}>{dict.lists.emptyMedia}</p>
-			) : list.sortMode === "RANKED" ? (
-				<RankedList
-					listId={list.id}
-					media={media}
-					seenMediaIds={seenMediaIds}
-				/>
 			) : (
-				<ListMediaView
-					listId={list.id}
-					media={media}
-					sortMode={list.sortMode}
-					seenMediaIds={seenMediaIds}
-				/>
+				<MediaSelectionProvider>
+					<MediaGridControls>
+						<MediaSelectToggle />
+					</MediaGridControls>
+					{list.sortMode === "RANKED" ? (
+						<RankedList
+							listId={list.id}
+							media={media}
+							seenMediaIds={seenMediaIds}
+						/>
+					) : (
+						<ListMediaView
+							listId={list.id}
+							media={media}
+							sortMode={list.sortMode}
+							seenMediaIds={seenMediaIds}
+						/>
+					)}
+					<MediaSelectionBar
+						visibleMedia={media.map(({ id, type }) => ({ id, type }))}
+					/>
+				</MediaSelectionProvider>
 			)}
 		</div>
 	);

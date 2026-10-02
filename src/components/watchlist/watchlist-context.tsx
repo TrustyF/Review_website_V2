@@ -13,13 +13,21 @@ import {
 	addManyToWatchlist,
 	getMyWatchlistMediaIds,
 	removeFromWatchlist,
+	removeManyFromWatchlist,
 } from "@/components/watchlist/watchlist-actions";
 
 type WatchlistContextValue = {
+	// False until the first fetch lands; callers fall back to server-rendered state meanwhile.
+	ready: boolean;
 	isInWatchlist: (mediaId: number) => boolean;
 	toggle: (mediaId: number) => void;
 	// Adds only (never removes); resolves once saved, rejects (after reverting) on failure.
 	addMany: (mediaIds: number[]) => Promise<void>;
+	// Removes only; same resolve/reject contract as addMany.
+	removeMany: (mediaIds: number[]) => Promise<void>;
+	// Local state only, for WatchedProvider: the server drops watchlist rows itself when marking watched.
+	dropLocally: (mediaIds: number[]) => void;
+	restoreLocally: (mediaIds: number[]) => void;
 };
 
 const WatchlistContext = createContext<WatchlistContextValue | undefined>(
@@ -31,6 +39,7 @@ const WatchlistContext = createContext<WatchlistContextValue | undefined>(
 export function WatchlistProvider({ children }: { children: ReactNode }) {
 	const { data: session } = useSession();
 	const [mediaIds, setMediaIds] = useState<Set<number>>(new Set());
+	const [ready, setReady] = useState(false);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -38,7 +47,9 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
 			? getMyWatchlistMediaIds()
 			: Promise.resolve<number[]>([]);
 		load.then((ids) => {
-			if (!cancelled) setMediaIds(new Set(ids));
+			if (cancelled) return;
+			setMediaIds(new Set(ids));
+			setReady(true);
 		});
 		return () => {
 			cancelled = true;
@@ -89,13 +100,53 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
 		[mediaIds],
 	);
 
+	const removeMany = useCallback(
+		async (ids: number[]) => {
+			const removed = ids.filter((id) => mediaIds.has(id));
+			if (!removed.length) return;
+			setMediaIds((prev) => {
+				const next = new Set(prev);
+				for (const id of removed) next.delete(id);
+				return next;
+			});
+			try {
+				await removeManyFromWatchlist(removed);
+			} catch (error) {
+				setMediaIds((prev) => new Set([...prev, ...removed]));
+				throw error;
+			}
+		},
+		[mediaIds],
+	);
+
+	const dropLocally = useCallback((ids: number[]) => {
+		setMediaIds((prev) => {
+			const next = new Set(prev);
+			for (const id of ids) next.delete(id);
+			return next;
+		});
+	}, []);
+
+	const restoreLocally = useCallback((ids: number[]) => {
+		setMediaIds((prev) => new Set([...prev, ...ids]));
+	}, []);
+
 	const isInWatchlist = useCallback(
 		(mediaId: number) => mediaIds.has(mediaId),
 		[mediaIds],
 	);
 
 	return (
-		<WatchlistContext.Provider value={{ isInWatchlist, toggle, addMany }}>
+		<WatchlistContext.Provider
+			value={{
+				ready,
+				isInWatchlist,
+				toggle,
+				addMany,
+				removeMany,
+				dropLocally,
+				restoreLocally,
+			}}>
 			{children}
 		</WatchlistContext.Provider>
 	);
@@ -103,6 +154,7 @@ export function WatchlistProvider({ children }: { children: ReactNode }) {
 
 export function useWatchlist(): WatchlistContextValue {
 	const ctx = useContext(WatchlistContext);
-	if (!ctx) throw new Error("useWatchlist must be used within WatchlistProvider");
+	if (!ctx)
+		throw new Error("useWatchlist must be used within WatchlistProvider");
 	return ctx;
 }

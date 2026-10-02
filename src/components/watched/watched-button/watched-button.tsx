@@ -1,11 +1,7 @@
 "use client";
-import { useState } from "react";
 import { Eye } from "lucide-react";
 import { MediaType } from "@prisma/client";
-import {
-	markAsWatched,
-	unmarkAsWatched,
-} from "@/components/watched/watched-actions";
+import { useWatched } from "@/components/watched/watched-context";
 import { Clickable } from "@/components/ui/clickable";
 import { Tip } from "@/components/tips/tip/tip";
 import {
@@ -30,22 +26,11 @@ export function WatchedButton({
 	className,
 }: Props) {
 	const dict = useDictionary();
-	const [isWatched, setIsWatched] = useState(initialIsWatched);
-	const [isPending, setIsPending] = useState(false);
-
-	async function toggle() {
-		const wasWatched = isWatched;
-		setIsPending(true);
-		setIsWatched(!wasWatched);
-		try {
-			if (wasWatched) await unmarkAsWatched(mediaId);
-			else await markAsWatched(mediaId);
-		} catch {
-			setIsWatched(wasWatched);
-		} finally {
-			setIsPending(false);
-		}
-	}
+	// Shared context (not local state) so marking watched also clears the watchlist button.
+	const watched = useWatched();
+	const isWatched = watched.ready
+		? watched.isWatched(mediaId)
+		: initialIsWatched;
 
 	const label = isWatched
 		? alreadyWatchedLabel(type, dict)
@@ -57,11 +42,11 @@ export function WatchedButton({
 				className={
 					className ? `${styles.trigger} ${className}` : styles.trigger
 				}
-				disabled={isPending}
+				disabled={!watched.ready}
 				aria-pressed={isWatched}
 				title={label}
 				aria-label={label}
-				onClick={toggle}>
+				onClick={() => watched.toggle(mediaId)}>
 				<Eye size={16} />
 			</Clickable>
 		</Tip>

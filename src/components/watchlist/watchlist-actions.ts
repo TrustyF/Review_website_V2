@@ -52,6 +52,23 @@ export async function addManyToWatchlist(mediaIds: number[]): Promise<void> {
 	for (const mediaId of mediaIds) revalidatePath(`/media/${mediaId}`);
 }
 
+// Bulk version for the grid's multi-select.
+export async function removeManyFromWatchlist(
+	mediaIds: number[],
+): Promise<void> {
+	const userId = await requireUserId();
+	if (!mediaIds.length) return;
+
+	await db.watchlistItem.deleteMany({
+		where: { userId, mediaId: { in: mediaIds } },
+	});
+
+	revalidatePath("/account");
+	revalidatePath("/watchlist");
+	revalidatePath("/activity");
+	for (const mediaId of mediaIds) revalidatePath(`/media/${mediaId}`);
+}
+
 export async function removeFromWatchlist(mediaId: number): Promise<void> {
 	const userId = await requireUserId();
 

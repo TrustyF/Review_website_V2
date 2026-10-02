@@ -18,13 +18,24 @@ export function rewatchedVerb(type: MediaType, dict: Dictionary): string {
 }
 
 // "Recently watched", "Recently read", "Recently played" — home page section titles.
-export function recentlyWatchedTitle(type: MediaType, dict: Dictionary): string {
+export function recentlyWatchedTitle(
+	type: MediaType,
+	dict: Dictionary,
+): string {
 	return dict.mediaVerb.recentlyLabel[type];
 }
 
 // "Mark as watched"/"Mark as read"/"Mark as played" — the per-user watched toggle's label.
 export function markAsWatchedLabel(type: MediaType, dict: Dictionary): string {
 	return dict.mediaVerb.markAsLabel[type];
+}
+
+// "Unmark as watched"/"Unmark as read"/"Unmark as played" — multi-select's reverse action.
+export function unmarkAsWatchedLabel(
+	type: MediaType,
+	dict: Dictionary,
+): string {
+	return dict.mediaVerb.unmarkLabel[type];
 }
 
 // "Already watched"/"Already read"/"Already played" — the toggle's active-state label.

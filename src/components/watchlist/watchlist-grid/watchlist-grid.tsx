@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { MediaRecord } from "@/components/media/types";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
+import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
 import { removeFromWatchlist } from "@/components/watchlist/watchlist-actions";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./watchlist-grid.module.sass";
@@ -25,19 +26,21 @@ export function WatchlistGrid({ media }: Props) {
 	}
 
 	return (
-		<LazyMediaGrid
-			items={media}
-			renderOverlay={(item) => (
-				<button
-					type="button"
-					className={styles.remove_button}
-					data-reveal-on-hover
-					aria-label={dict.watchlist.removeFromWatchlist(item.title)}
-					disabled={removingId === item.id}
-					onClick={() => handleRemove(item.id)}>
-					×
-				</button>
-			)}
-		/>
+		<MediaCardDisplayProvider showWatchlistPill={false}>
+			<LazyMediaGrid
+				items={media}
+				renderOverlay={(item) => (
+					<button
+						type="button"
+						className={styles.remove_button}
+						data-reveal-on-hover
+						aria-label={dict.watchlist.removeFromWatchlist(item.title)}
+						disabled={removingId === item.id}
+						onClick={() => handleRemove(item.id)}>
+						×
+					</button>
+				)}
+			/>
+		</MediaCardDisplayProvider>
 	);
 }

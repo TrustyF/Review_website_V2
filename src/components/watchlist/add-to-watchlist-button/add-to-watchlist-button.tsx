@@ -1,10 +1,6 @@
 "use client";
-import { useState } from "react";
 import { Clock } from "lucide-react";
-import {
-	addToWatchlist,
-	removeFromWatchlist,
-} from "@/components/watchlist/watchlist-actions";
+import { useWatchlist } from "@/components/watchlist/watchlist-context";
 import { Clickable } from "@/components/ui/clickable";
 import { Tip } from "@/components/tips/tip/tip";
 import { useDictionary } from "@/lib/i18n/i18n-context";
@@ -24,22 +20,11 @@ export function AddToWatchlistButton({
 	className,
 }: Props) {
 	const dict = useDictionary();
-	const [isInWatchlist, setIsInWatchlist] = useState(initialIsInWatchlist);
-	const [isPending, setIsPending] = useState(false);
-
-	async function toggle() {
-		const wasInWatchlist = isInWatchlist;
-		setIsPending(true);
-		setIsInWatchlist(!wasInWatchlist);
-		try {
-			if (wasInWatchlist) await removeFromWatchlist(mediaId);
-			else await addToWatchlist(mediaId);
-		} catch {
-			setIsInWatchlist(wasInWatchlist);
-		} finally {
-			setIsPending(false);
-		}
-	}
+	// Shared context (not local state) so marking watched elsewhere clears this too.
+	const watchlist = useWatchlist();
+	const isInWatchlist = watchlist.ready
+		? watchlist.isInWatchlist(mediaId)
+		: initialIsInWatchlist;
 
 	const label = isInWatchlist
 		? dict.watchlist.inWatchlist
@@ -51,11 +36,11 @@ export function AddToWatchlistButton({
 				className={
 					className ? `${styles.trigger} ${className}` : styles.trigger
 				}
-				disabled={isPending}
+				disabled={!watchlist.ready}
 				aria-pressed={isInWatchlist}
 				title={label}
 				aria-label={label}
-				onClick={toggle}>
+				onClick={() => watchlist.toggle(mediaId)}>
 				<Clock size={16} />
 			</Clickable>
 		</Tip>

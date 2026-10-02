@@ -25,27 +25,38 @@ export async function getMyWatchedMediaIds(): Promise<number[]> {
 export async function markAsWatched(mediaId: number): Promise<void> {
 	const userId = await requireUserId();
 
-	await db.watchedItem.createMany({
-		data: [{ userId, mediaId }],
-		skipDuplicates: true,
-	});
+	// Watching something takes it off the watchlist.
+	await db.$transaction([
+		db.watchedItem.createMany({
+			data: [{ userId, mediaId }],
+			skipDuplicates: true,
+		}),
+		db.watchlistItem.deleteMany({ where: { userId, mediaId } }),
+	]);
 
 	revalidatePath("/account");
+	revalidatePath("/watchlist");
 	revalidatePath(`/media/${mediaId}`);
 	revalidatePath("/activity");
 }
 
-// Bulk version for the grid's multi-select; already-watched ids are skipped.
+// Bulk version for the grid's multi-select; already-watched ids are skipped. Also drops them from the watchlist.
 export async function markManyAsWatched(mediaIds: number[]): Promise<void> {
 	const userId = await requireUserId();
 	if (!mediaIds.length) return;
 
-	await db.watchedItem.createMany({
-		data: mediaIds.map((mediaId) => ({ userId, mediaId })),
-		skipDuplicates: true,
-	});
+	await db.$transaction([
+		db.watchedItem.createMany({
+			data: mediaIds.map((mediaId) => ({ userId, mediaId })),
+			skipDuplicates: true,
+		}),
+		db.watchlistItem.deleteMany({
+			where: { userId, mediaId: { in: mediaIds } },
+		}),
+	]);
 
 	revalidatePath("/account");
+	revalidatePath("/watchlist");
 	revalidatePath("/activity");
 	for (const mediaId of mediaIds) revalidatePath(`/media/${mediaId}`);
 }
@@ -60,4 +71,18 @@ export async function unmarkAsWatched(mediaId: number): Promise<void> {
 	revalidatePath("/account");
 	revalidatePath(`/media/${mediaId}`);
 	revalidatePath("/activity");
+}
+
+// Bulk version for the grid's multi-select. Doesn't put anything back on the watchlist.
+export async function unmarkManyAsWatched(mediaIds: number[]): Promise<void> {
+	const userId = await requireUserId();
+	if (!mediaIds.length) return;
+
+	await db.watchedItem.deleteMany({
+		where: { userId, mediaId: { in: mediaIds } },
+	});
+
+	revalidatePath("/account");
+	revalidatePath("/activity");
+	for (const mediaId of mediaIds) revalidatePath(`/media/${mediaId}`);
 }

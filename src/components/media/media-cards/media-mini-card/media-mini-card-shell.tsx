@@ -15,6 +15,9 @@ import { useMediaCardDisplay } from "@/components/media/media-card-display-conte
 // import { MarkAsWatchedHoverButton } from "@/components/media/media-cards/media-mini-card/mark-as-watched-hover-button";
 import { PosterQuickEditButton } from "@/components/media/media-cards/media-mini-card/poster-quick-edit-button";
 import { useWatched } from "@/components/watched/watched-context";
+import { useWatchlist } from "@/components/watchlist/watchlist-context";
+import { WatchlistIcon } from "@/components/icons/watchlist-icon";
+import { useDictionary } from "@/lib/i18n/i18n-context";
 import { useMediaSelection } from "@/components/media/media-grids/media-selection/media-selection-context";
 import { MediaSelectOverlay } from "@/components/media/media-grids/media-selection/media-select-overlay";
 
@@ -26,8 +29,11 @@ type Props = {
 
 // Poster + title + rating only, for dense grid listings where full MediaCardShell is too much; per-type cards supply only the differing secondary info.
 export function MediaMiniCardShell({ media, children }: Props) {
-	const { showRating, showTitle, showReviewIcon, fade } = useMediaCardDisplay();
+	const { showRating, showTitle, showReviewIcon, showWatchlistPill, fade } =
+		useMediaCardDisplay();
+	const dict = useDictionary();
 	const { isWatched } = useWatched();
+	const { isInWatchlist } = useWatchlist();
 	const selection = useMediaSelection();
 	const isSelecting = selection?.isActive ?? false;
 	const isSelected = isSelecting && selection!.selectedIds.has(media.id);
@@ -54,6 +60,14 @@ export function MediaMiniCardShell({ media, children }: Props) {
 					difficulty={media.review?.difficulty}
 					fade={fade}
 				/>
+				{showWatchlistPill && isInWatchlist(media.id) && (
+					<span
+						className={styles.watchlist_pill}
+						role="img"
+						aria-label={dict.watchlist.inWatchlist}>
+						<WatchlistIcon size={11} />
+					</span>
+				)}
 				{isSelecting && (
 					<MediaSelectOverlay
 						title={media.title}
@@ -88,7 +102,7 @@ export function MediaMiniCardShell({ media, children }: Props) {
 						<ReviewIcon size={9} title="Has review" />
 					)}
 					{showReviewIcon && media.review?.liked && (
-						<HeartIcon size={10} title="Liked" />
+						<HeartIcon size={11} title="Liked" />
 					)}
 					{children}
 				</div>

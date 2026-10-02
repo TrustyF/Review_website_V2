@@ -218,6 +218,21 @@ export const fr = {
 			selected: (count: number) =>
 				`${count} sélectionné${count === 1 ? "" : "s"}`,
 			addToWatchlist: "Ajouter à la liste à voir",
+			markAsSeen: "Marquer comme vu",
+			unmarkAsSeen: "Marquer comme non vu",
+			removeFromWatchlist: "Retirer de la liste à voir",
+			unmarkedResult: (count: number) =>
+				`${count} marqué${count === 1 ? "" : "s"} comme non vu${count === 1 ? "" : "s"}`,
+			removedResult: (count: number) =>
+				`${count} retiré${count === 1 ? "" : "s"} de la liste à voir`,
+			markedResult: (done: number, skipped: number) =>
+				skipped
+					? `${done} marqué${done === 1 ? "" : "s"} comme vu${done === 1 ? "" : "s"} · ${skipped} l'étai${skipped === 1 ? "t" : "ent"} déjà`
+					: `${done} marqué${done === 1 ? "" : "s"} comme vu${done === 1 ? "" : "s"}`,
+			addedResult: (done: number, skipped: number) =>
+				skipped
+					? `${done} ajouté${done === 1 ? "" : "s"} à la liste à voir · ${skipped} y étai${skipped === 1 ? "t" : "ent"} déjà`
+					: `${done} ajouté${done === 1 ? "" : "s"} à la liste à voir`,
 			failed: "Une erreur s'est produite, réessayez.",
 		},
 		unrated: "Non noté",
@@ -287,6 +302,15 @@ export const fr = {
 			COMIC: "Marquer comme lu",
 			BOOK: "Marquer comme lu",
 			GAME: "Marquer comme joué",
+		},
+		unmarkLabel: {
+			MOVIE: "Marquer comme non vu",
+			SHORT: "Marquer comme non vu",
+			TVSHOW: "Marquer comme non vue",
+			MANGA: "Marquer comme non lu",
+			COMIC: "Marquer comme non lu",
+			BOOK: "Marquer comme non lu",
+			GAME: "Marquer comme non joué",
 		},
 		alreadyLabel: {
 			MOVIE: "Déjà vu",

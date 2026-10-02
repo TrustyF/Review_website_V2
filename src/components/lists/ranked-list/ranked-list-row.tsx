@@ -8,6 +8,8 @@ import { StarIcon } from "@/components/media/icons/star-icon";
 import { HeartIcon } from "@/components/media/icons/heart-icon";
 import { MediaRecord } from "@/components/media/types";
 import { SeenBadge } from "@/components/watched/seen-badge/seen-badge";
+import { useMediaSelection } from "@/components/media/media-grids/media-selection/media-selection-context";
+import { MediaSelectOverlay } from "@/components/media/media-grids/media-selection/media-select-overlay";
 import styles from "./ranked-list.module.sass";
 
 type Props = {
@@ -40,6 +42,8 @@ export function RankedListRow({
 		transition,
 		isDragging,
 	} = useSortable({ id: media.id, disabled: dragDisabled });
+	const selection = useMediaSelection();
+	const isSelecting = selection?.isActive ?? false;
 
 	return (
 		<div
@@ -47,7 +51,15 @@ export function RankedListRow({
 			className={`${styles.row} ${isDragging ? styles.row_dragging : ""}`}
 			style={{ transform: CSS.Transform.toString(transform), transition }}>
 			<div className={styles.rank}>{rank}</div>
-			{!dragDisabled && (
+			{/* Whole-row target in select mode; drag and remove are hidden meanwhile. */}
+			{selection && isSelecting && (
+				<MediaSelectOverlay
+					title={media.title}
+					selected={selection.selectedIds.has(media.id)}
+					onToggle={() => selection.toggle(media.id)}
+				/>
+			)}
+			{!dragDisabled && !isSelecting && (
 				// Listeners live only on this handle so the poster stays a plain click-through to /media/[id].
 				<button
 					type="button"
@@ -62,7 +74,6 @@ export function RankedListRow({
 				<MediaPoster
 					src={media.posterSrc}
 					title={media.title}
-					mediaId={media.id}
 					ratio={posterRatioFor(media.type)}
 					difficulty={media.review?.difficulty}
 				/>
@@ -82,7 +93,7 @@ export function RankedListRow({
 					</div>
 				)}
 			</div>
-			{canRemove && (
+			{canRemove && !isSelecting && (
 				<button
 					type="button"
 					className={styles.remove_button}
