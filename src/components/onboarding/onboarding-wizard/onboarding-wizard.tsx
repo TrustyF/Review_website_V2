@@ -269,7 +269,11 @@ export function OnboardingWizard({
 						onClick: () => goForward(3),
 					}}>
 					<div className={styles.avatar_picker}>
-						<AvatarPicker initialSrc={initial.image} groups={avatarGroups} />
+						<AvatarPicker
+							initialSrc={initial.image}
+							groups={avatarGroups}
+							alwaysShowEdit
+						/>
 					</div>
 				</OnboardingStep>
 

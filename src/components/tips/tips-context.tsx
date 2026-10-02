@@ -26,9 +26,8 @@ type TipsContextValue = {
 
 const TipsContext = createContext<TipsContextValue | undefined>(undefined);
 
-// TEMP for testing: ignores saved seen tips and doesn't save new ones, so each full
-// reload shows them all again. Set back to false to restore normal behavior.
-const ALWAYS_SHOW_TIPS = true;
+// Dev only: ignores saved seen tips and doesn't save new ones, so each full reload shows them all again.
+const ALWAYS_SHOW_TIPS = process.env.NODE_ENV === "development";
 
 // Fetched client-side like AvatarProvider, so RootLayout stays static.
 export function TipsProvider({ children }: { children: ReactNode }) {

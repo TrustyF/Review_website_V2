@@ -93,13 +93,14 @@ export const fr = {
 		changeProfilePicture: "Changer de photo de profil",
 		chooseProfilePicture: "Choisir une photo de profil",
 		useThisProfilePicture: "Utiliser cette photo de profil",
-		recommendations: "Recommandations",
+		recommendations: "Pour vous",
 		recommendationsEmpty:
-			"Aucune recommandation pour l'instant — les listes qu'un admin prépare spécialement pour vous apparaîtront ici.",
-		askForRecommendation: "Demander une recommandation",
-		askForRecommendationHint: "Arthur préparera une liste pour vous.",
+			"Vos listes personnelles apparaîtront ici. Demandez-en une ci-dessus.",
+		askForRecommendation: "Demander une liste personnelle",
+		askForRecommendationHint:
+			"Dites-moi ce qui vous tente, je choisirai des titres rien que pour vous.",
 		askForRecommendationPending:
-			"Votre demande est en attente — je reviens vers vous bientôt.",
+			"Demande reçue — votre liste apparaîtra ci-dessous quand elle sera prête.",
 		dangerZoneTitle: "Zone de danger",
 		dangerZoneSubtitle:
 			"Supprimer définitivement votre compte, votre liste à voir et vos listes. Cette action est irréversible.",
@@ -168,6 +169,8 @@ export const fr = {
 			watched: "Vu",
 			difficulty: "Difficulté",
 			recommendation: "Recommandations",
+			recommendationLists: "Pour vous",
+			accountWatchlist: "Liste à voir",
 			mediaTypeSwitcher: "Catégories",
 		},
 		watchlist: "Enregistrez-le pour plus tard.",
@@ -181,6 +184,9 @@ export const fr = {
 			hardDescription: "Expérimental/exigeant",
 		},
 		recommendation: "Dites-moi ce qui vous tente, je vous ferai une liste.",
+		recommendationLists: "Votre liste arrivera ici quand elle sera prête.",
+		accountWatchlist:
+			"Tout ce que vous ajoutez à votre liste à voir apparaît ici.",
 		mediaTypeSwitcher: "Passez d'un type à l'autre",
 	},
 	media: {
@@ -349,7 +355,7 @@ export const fr = {
 			`Ajouté à ${count} liste${count === 1 ? "" : "s"}`,
 	},
 	recommendationRequest: {
-		title: "Demander une recommandation",
+		title: "Demander une liste personnelle",
 		subtitle:
 			"Dites-moi ce qui vous ferait envie et je vous préparerai une liste.",
 		backToAccount: "← Compte",

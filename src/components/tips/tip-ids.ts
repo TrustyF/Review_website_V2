@@ -4,6 +4,8 @@ export const TIP_IDS = [
 	"watched",
 	"difficulty",
 	"recommendation",
+	"recommendationLists",
+	"accountWatchlist",
 	"mediaTypeSwitcher",
 ] as const;
 

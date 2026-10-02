@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Link } from "@/components/ui/link";
-import { List, MailPlus, Send, Settings, Sparkles } from "lucide-react";
+import { List, MailPlus, Settings } from "lucide-react";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
@@ -94,7 +94,7 @@ export default async function AccountPage() {
 				</Link>
 			</div>
 
-			<Tip id="recommendation" text={dict.tips.recommendation}>
+			<Tip id="recommendation" text={dict.tips.recommendation} side="top">
 				<Link
 					href="/account/recommendation-request"
 					className={styles.ask_recommendation}>
@@ -113,43 +113,59 @@ export default async function AccountPage() {
 			</Tip>
 
 			<div className={styles.grid}>
-				<Link href="/account/lists" className={styles.lists}>
-					<h2 className={styles.section_title}>
-						<List size={18} className={styles.section_icon} />
-						{dict.account.recommendations}
-					</h2>
-					{recommendationLists.length === 0 ? (
-						<p className={styles.empty}>{dict.account.recommendationsEmpty}</p>
-					) : (
-						<div className={styles.lists_stack}>
-							{recommendationLists.map((list) => (
-								<ListPreviewCard
-									key={list.id}
-									id={list.id}
-									// Falls back to English when untranslated, like Review.bodyFr.
-									title={
-										locale === "fr" ? (list.titleFr ?? list.title) : list.title
-									}
-									description={null}
-									thumbnail={list.thumbnail}
-									itemCount={list._count.items}
-									linked={false}
-								/>
-							))}
-						</div>
-					)}
-				</Link>
-				<Link href="/watchlist" className={styles.watchlist}>
-					<h2 className={styles.section_title}>
-						<WatchlistIcon size={18} className={styles.section_icon} />
-						{dict.account.watchlistCard}
-					</h2>
-					{watchlistMedia.length === 0 ? (
-						<p className={styles.empty}>{dict.watchlist.empty}</p>
-					) : (
-						<WatchlistStack media={watchlistMedia} />
-					)}
-				</Link>
+				<Tip
+					id="recommendationLists"
+					text={dict.tips.recommendationLists}
+					after="recommendation"
+					side="top">
+					<Link href="/account/lists" className={styles.lists}>
+						<h2 className={styles.section_title}>
+							<List size={18} className={styles.section_icon} />
+							{dict.account.recommendations}
+						</h2>
+						{recommendationLists.length === 0 ? (
+							<p className={styles.empty}>
+								{dict.account.recommendationsEmpty}
+							</p>
+						) : (
+							<div className={styles.lists_stack}>
+								{recommendationLists.map((list) => (
+									<ListPreviewCard
+										key={list.id}
+										id={list.id}
+										// Falls back to English when untranslated, like Review.bodyFr.
+										title={
+											locale === "fr"
+												? (list.titleFr ?? list.title)
+												: list.title
+										}
+										description={null}
+										thumbnail={list.thumbnail}
+										itemCount={list._count.items}
+										linked={false}
+									/>
+								))}
+							</div>
+						)}
+					</Link>
+				</Tip>
+				<Tip
+					id="accountWatchlist"
+					text={dict.tips.accountWatchlist}
+					after="recommendationLists"
+					side="top">
+					<Link href="/watchlist" className={styles.watchlist}>
+						<h2 className={styles.section_title}>
+							<WatchlistIcon size={18} className={styles.section_icon} />
+							{dict.account.watchlistCard}
+						</h2>
+						{watchlistMedia.length === 0 ? (
+							<p className={styles.empty}>{dict.watchlist.empty}</p>
+						) : (
+							<WatchlistStack media={watchlistMedia} />
+						)}
+					</Link>
+				</Tip>
 			</div>
 
 			<div className={styles.sign_out}>

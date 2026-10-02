@@ -92,13 +92,14 @@ export const en = {
 		changeProfilePicture: "Change profile picture",
 		chooseProfilePicture: "Choose a profile picture",
 		useThisProfilePicture: "Use this profile picture",
-		recommendations: "Recommendations",
+		recommendations: "Made for you",
 		recommendationsEmpty:
-			"Nothing recommended yet — lists an admin curates for you specifically will show up here.",
-		askForRecommendation: "Request recommendation",
-		askForRecommendationHint: "Arthur will craft a list for you.",
+			"Your personal lists will appear here. Ask for one above.",
+		askForRecommendation: "Request a personal list",
+		askForRecommendationHint:
+			"Tell me your mood, I'll pick titles just for you.",
 		askForRecommendationPending:
-			"Your request is pending — I'll follow up soon.",
+			"Request received — your list will appear below when it's ready.",
 		dangerZoneTitle: "Danger zone",
 		dangerZoneSubtitle:
 			"Permanently delete your account, watchlist, and lists. This can't be undone.",
@@ -167,6 +168,8 @@ export const en = {
 			watched: "Seen",
 			difficulty: "Difficulty",
 			recommendation: "Recommendations",
+			recommendationLists: "Made for you",
+			accountWatchlist: "Watchlist",
 			mediaTypeSwitcher: "Categories",
 		},
 		watchlist: "Save it for later.",
@@ -180,6 +183,8 @@ export const en = {
 			hardDescription: "Experimental/challenging",
 		},
 		recommendation: "Tell me your mood, I'll make you a list.",
+		recommendationLists: "Your list will land here when it's ready.",
+		accountWatchlist: "Everything you add to your watchlist shows up here.",
 		mediaTypeSwitcher: "Switch between different types",
 	},
 	media: {
@@ -338,7 +343,7 @@ export const en = {
 			`Added to ${count} list${count === 1 ? "" : "s"}`,
 	},
 	recommendationRequest: {
-		title: "Ask for a recommendation",
+		title: "Request a personal list",
 		subtitle:
 			"Tell me what you're in the mood for and I'll put a list together for you.",
 		backToAccount: "← Account",

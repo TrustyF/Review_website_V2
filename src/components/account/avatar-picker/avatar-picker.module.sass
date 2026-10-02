@@ -11,6 +11,14 @@
   cursor: pointer
   border-radius: 50%
   flex-shrink: 0
+  outline: 2px solid transparent
+  outline-offset: 2px
+  transition: outline-color 100ms ease
+
+  &:hover,
+  &:focus-visible,
+  &.current_highlighted
+    outline-color: var(--brand)
 
 // opacity+visibility (not opacity alone) so the badge leaves the tab order and
 // isn't hoverable/clickable while faded out; focus-visible covers keyboard users.
@@ -32,9 +40,10 @@
   transition: opacity 100ms ease, visibility 0s linear 100ms
 
   .current:hover &,
-  .current:focus-visible &
+  .current:focus-visible &,
+  &.edit_badge_visible
     opacity: 1
-    visibility: visible
+    visibility: inherit
     transition-delay: 0s
 
 .current_image
@@ -94,7 +103,8 @@
   cursor: pointer
   color: var(--accent1)
 
-  &:hover
+  &:hover,
+  &:focus-visible
     color: var(--foreground)
 
 .groups

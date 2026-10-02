@@ -1,15 +1,15 @@
 {
 	"account.askForRecommendation": {
-		"en": "4c5e6ec910ac800a",
-		"fr": "2976c4beb0e18699"
+		"en": "f40877f9f50646fe",
+		"fr": "35ee60f0b482747f"
 	},
 	"account.askForRecommendationHint": {
-		"en": "1b18d87d8b67df26",
-		"fr": "33530d5caa5e13ae"
+		"en": "ec977b20580de78c",
+		"fr": "7aaa3d6dd1fe1556"
 	},
 	"account.askForRecommendationPending": {
-		"en": "2807785b380b2f81",
-		"fr": "afa9e17a4f9c71cb"
+		"en": "a64baf7e4240a8d5",
+		"fr": "043713b4f61f7cf6"
 	},
 	"account.backToAccount": {
 		"en": "03c750790b255f52",
@@ -84,12 +84,12 @@
 		"fr": "d1bebceb4c8ca1ae"
 	},
 	"account.recommendations": {
-		"en": "621b4f64afca47e4",
-		"fr": "4c7f199980b78a84"
+		"en": "5df7123cb67d6fd9",
+		"fr": "ac31c61c1ad28271"
 	},
 	"account.recommendationsEmpty": {
-		"en": "eadffd5a8e6898a0",
-		"fr": "68ca70af3bfe92ca"
+		"en": "de88b48ed28fa10a",
+		"fr": "eb7db30d2263f8f2"
 	},
 	"account.settingsAriaLabel": {
 		"en": "805ea849d87cd2ec",
@@ -1152,8 +1152,8 @@
 		"fr": "f4640fc415bb1176"
 	},
 	"recommendationRequest.title": {
-		"en": "6afd785bb339d436",
-		"fr": "2976c4beb0e18699"
+		"en": "f40877f9f50646fe",
+		"fr": "35ee60f0b482747f"
 	},
 	"recommendationRequest.viewList": {
 		"en": "2b8f4106001bb336",
@@ -1311,6 +1311,10 @@
 		"en": "663175a9c461a96d",
 		"fr": "f14fe178f9324f7b"
 	},
+	"tips.accountWatchlist": {
+		"en": "a357db3841b3f21f",
+		"fr": "29e87e08383742b2"
+	},
 	"tips.difficulty": {
 		"en": "32daf948a54c5059",
 		"fr": "d1079af359838376"
@@ -1331,6 +1335,10 @@
 		"en": "31d874890f59e615",
 		"fr": "31d874890f59e615"
 	},
+	"tips.labels.accountWatchlist": {
+		"en": "d8a02d0c584aec5d",
+		"fr": "aa3f007ba707a87f"
+	},
 	"tips.labels.difficulty": {
 		"en": "f6178ff79946bddb",
 		"fr": "49bc78e28a6689eb"
@@ -1342,6 +1350,10 @@
 	"tips.labels.recommendation": {
 		"en": "621b4f64afca47e4",
 		"fr": "4c7f199980b78a84"
+	},
+	"tips.labels.recommendationLists": {
+		"en": "5df7123cb67d6fd9",
+		"fr": "ac31c61c1ad28271"
 	},
 	"tips.labels.watched": {
 		"en": "4b5c220e61d3b975",
@@ -1358,6 +1370,10 @@
 	"tips.recommendation": {
 		"en": "6b5e479c029e9ad4",
 		"fr": "3eaf42c1304c8296"
+	},
+	"tips.recommendationLists": {
+		"en": "a9227e42a2b5bb30",
+		"fr": "380d422560e666e8"
 	},
 	"tips.title": {
 		"en": "6825e24a3fa637f7",

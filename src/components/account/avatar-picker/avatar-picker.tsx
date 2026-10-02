@@ -12,9 +12,15 @@ import styles from "./avatar-picker.module.sass";
 type Props = {
 	initialSrc: string | null;
 	groups: AvatarGroup[];
+	// Shows the edit badge and outline permanently instead of on hover only.
+	alwaysShowEdit?: boolean;
 };
 
-export function AvatarPicker({ initialSrc, groups }: Props) {
+export function AvatarPicker({
+	initialSrc,
+	groups,
+	alwaysShowEdit = false,
+}: Props) {
 	const dict = useDictionary();
 	const { setAvatarSrc } = useAvatar();
 	const [currentSrc, setCurrentSrc] = useState(initialSrc);
@@ -49,7 +55,7 @@ export function AvatarPicker({ initialSrc, groups }: Props) {
 		<div className={styles.wrapper}>
 			{/* Same no-photo stand-in PersonPhoto uses for cast/crew. */}
 			<Clickable
-				className={styles.current}
+				className={`${styles.current} ${alwaysShowEdit ? styles.current_highlighted : ""}`}
 				aria-label={dict.account.changeProfilePicture}
 				onClick={() => setIsOpen(true)}>
 				{currentSrc && !imageFailed ? (
@@ -65,7 +71,8 @@ export function AvatarPicker({ initialSrc, groups }: Props) {
 						<UserRound size={36} />
 					</div>
 				)}
-				<div className={styles.edit_badge}>
+				<div
+					className={`${styles.edit_badge} ${alwaysShowEdit ? styles.edit_badge_visible : ""}`}>
 					<Pencil size={12} />
 				</div>
 			</Clickable>
