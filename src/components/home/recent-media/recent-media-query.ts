@@ -3,7 +3,7 @@ import { toMediaRecord, MediaRecord } from "@/components/media/types";
 import { EnrichmentStatus, MediaType } from "@prisma/client";
 
 // Shared by non-screen home sections (books/comics/games/manga). Fixed-size curated lists like movie sections, not paginated feed.
-export const RECENT_COUNT = 14;
+const RECENT_COUNT = 14;
 
 // All type-specific relations (others null for scoped query).
 const EVERY_TYPE_RELATION = {
@@ -75,7 +75,10 @@ async function getRecentlyWatched(
 			enrichmentStatus: EnrichmentStatus.DONE,
 			isAdult: false,
 			...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}),
-			review: { rating: { not: null }, createDate: { gte: monthsAgo(RECENT_MONTHS) } },
+			review: {
+				rating: { not: null },
+				createDate: { gte: monthsAgo(RECENT_MONTHS) },
+			},
 		},
 		include: EVERY_TYPE_RELATION,
 		orderBy: { review: { createDate: "desc" } },

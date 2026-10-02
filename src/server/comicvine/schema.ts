@@ -24,7 +24,7 @@ const ComicVinePublisherSchema = type({
 	name: "string",
 });
 
-export const ComicVineVolumeSchema = type({
+const ComicVineVolumeSchema = type({
 	id: "number",
 	name: "string",
 	"deck?": "string | null",
@@ -53,7 +53,7 @@ export const ComicVineVolumeSearchResponseSchema = type({
 });
 
 // Stand-in for "alternate posters": ComicVine has no volume-level cover-art concept, so issue covers are used instead.
-export const ComicVineIssueSchema = type({
+const ComicVineIssueSchema = type({
 	id: "number",
 	"name?": "string | null",
 	"issue_number?": "string | null",

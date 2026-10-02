@@ -51,7 +51,8 @@ export function MediaReviewMeta({
 			{/* "Reviewed on" isn't shown here — it's changelog-only, not duplicated on the card. */}
 			{watchedDate && (
 				<div className={`${styles.review_date} ${dateClassName ?? ""}`}>
-					{watchedOnLabel(type, dict)} {listDateFormatterFor(locale).format(watchedDate)}
+					{watchedOnLabel(type, dict)}{" "}
+					{listDateFormatterFor(locale).format(watchedDate)}
 				</div>
 			)}
 		</>
@@ -71,7 +72,8 @@ export function MediaReviewBody({
 	const locale = useLocale();
 	// Falls back to English silently when no French translation has been
 	// written yet — see Review.bodyFr in rating.prisma.
-	const text = locale === "fr" ? (review?.bodyFr ?? review?.body) : review?.body;
+	const text =
+		locale === "fr" ? (review?.bodyFr ?? review?.body) : review?.body;
 	if (!text) {
 		if (!overview) return null;
 		return <MediaOverview overview={overview} inReview />;
@@ -105,7 +107,8 @@ export function MediaOverview({
 	const dict = useDictionary();
 	if (bare) {
 		return (
-			<p className={`${styles.overview_text} ${className ?? ""} ${textClassName ?? ""}`}>
+			<p
+				className={`${styles.overview_text} ${className ?? ""} ${textClassName ?? ""}`}>
 				{overview}
 			</p>
 		);
@@ -113,8 +116,12 @@ export function MediaOverview({
 	return (
 		<div
 			className={`${styles.overview} ${inReview ? styles.overview_in_review : ""} ${className ?? ""}`}>
-			<div className={styles.overview_label}>{dict.mediaDetail.overviewLabel}</div>
-			<p className={`${styles.overview_text} ${textClassName ?? ""}`}>{overview}</p>
+			<div className={styles.overview_label}>
+				{dict.mediaDetail.overviewLabel}
+			</div>
+			<p className={`${styles.overview_text} ${textClassName ?? ""}`}>
+				{overview}
+			</p>
 		</div>
 	);
 }
@@ -156,14 +163,16 @@ const ReleaseDateFormatter = new Intl.DateTimeFormat("en-GB", {
 
 // A confirmed future date, or an announced title with no date yet — see
 // isUpcomingRelease in app/media/[id]/page.tsx for the actual rule.
-export function UpcomingReviewPlaceholder({
+function UpcomingReviewPlaceholder({
 	date,
 }: {
 	date: Date | null | undefined;
 }) {
 	return (
 		<div className={styles.upcoming}>
-			{date ? `Releasing ${ReleaseDateFormatter.format(date)}` : "Not yet released"}
+			{date
+				? `Releasing ${ReleaseDateFormatter.format(date)}`
+				: "Not yet released"}
 		</div>
 	);
 }

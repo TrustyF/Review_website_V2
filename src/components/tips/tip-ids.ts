@@ -1,5 +1,5 @@
 // Every one-time page tip; tips-actions.ts rejects any other id.
-export const TIP_IDS = [
+const TIP_IDS = [
 	"watchlist",
 	"watched",
 	"difficulty",

@@ -2,7 +2,7 @@
 import { MediaRecord } from "@/components/media/types";
 import { MediaPoster } from "@/components/media/primitives/poster";
 import { Hitbox } from "@/components/ui/hitbox";
-import { getAlternativePosters } from "@/components/media/media-management/media-editor/media-editor-actions";
+import { getAlternativePosters } from "@/components/media/media-management/media-editor/media-image-actions";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useImageEditPopover } from "@/components/media/media-management/media-detail-inline-editor/use-image-edit-popover";

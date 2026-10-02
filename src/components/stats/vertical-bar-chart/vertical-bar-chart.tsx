@@ -1,6 +1,6 @@
 import styles from "./vertical-bar-chart.module.sass";
 
-export type VerticalBarItem = {
+type VerticalBarItem = {
 	key: string;
 	tick: string;
 	value: number;
@@ -14,8 +14,7 @@ type Props = {
 	color?: string;
 };
 
-// Column chart with a hover/focus tooltip per bar — same shape as
-// media-grids/rating-distribution, generalized to arbitrary tick/value pairs.
+// Column chart with a hover/focus tooltip per bar, for arbitrary tick/value pairs.
 export function VerticalBarChart({ items, color = "var(--brand)" }: Props) {
 	const max = Math.max(...items.map((i) => i.value), 1);
 

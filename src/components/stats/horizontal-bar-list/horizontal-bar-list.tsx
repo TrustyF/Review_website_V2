@@ -1,7 +1,7 @@
 import { Link } from "@/components/ui/link";
 import styles from "./horizontal-bar-list.module.sass";
 
-export type HorizontalBarItem = {
+type HorizontalBarItem = {
 	key: string;
 	label: string;
 	value: number;

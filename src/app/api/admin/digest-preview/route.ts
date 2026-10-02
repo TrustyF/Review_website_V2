@@ -3,7 +3,7 @@ import { render } from "@react-email/render";
 import { auth } from "@/auth";
 import { buildDigestEmailProps } from "@/server/email/digest-email-props";
 import { buildUnsubscribeToken } from "@/server/email/unsubscribe-token";
-import { toAbsoluteUrl } from "@/server/email/mailer";
+import { toAbsoluteUrl } from "@/server/lib/site-url";
 import LatestActivityEmail from "@/emails/latest-activity-email";
 import { getLocale } from "@/lib/i18n/get-locale";
 

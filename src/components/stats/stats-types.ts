@@ -34,7 +34,7 @@ export type CountryStat = {
 	avgRating: number | null;
 };
 
-export type GenreStat = {
+type GenreStat = {
 	name: string;
 	count: number;
 	avgRating: number | null;

@@ -5,7 +5,7 @@ import { ImagePicker } from "@/components/media/media-management/media-editor/co
 import {
 	getAlternativeBanners,
 	getAlternativePosters,
-} from "@/components/media/media-management/media-editor/media-editor-actions";
+} from "@/components/media/media-management/media-editor/media-image-actions";
 import {
 	AssetBrowserSearchResult,
 	searchMediaLibrary,

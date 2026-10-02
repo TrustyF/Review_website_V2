@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
+import { fetchUntrustedImage } from "@/server/lib/fetch-image";
 import sharp from "sharp";
 import { getImageStorage } from "@/server/storage/image-storage";
-import { toAbsoluteUrl } from "@/server/email/mailer";
 
 // Capped well below actual render size (only shows in ListPreviewCard's grid or edit form). Exported so /dev/image-crop tool's "List thumbnail" shape can reuse.
 export const LIST_THUMBNAIL_MAX_WIDTH = 640;
@@ -36,10 +36,6 @@ export function isListThumbnailUrl(url: string): boolean {
 
 // Fallback for non-permanent URLs; downloads and self-hosts to avoid hotlinks
 export async function saveListThumbnailFromUrl(url: string): Promise<string> {
-	// AssetBrowser hands back a root-relative /api/image-proxy/... URL — fetch()
-	// has no implicit base URL server-side, so it needs to be absolute first.
-	const res = await fetch(toAbsoluteUrl(url));
-	if (!res.ok) throw new Error(`Image download failed: ${url}`);
-	const bytes = Buffer.from(await res.arrayBuffer());
+	const { bytes } = await fetchUntrustedImage(url);
 	return saveListThumbnail(bytes);
 }

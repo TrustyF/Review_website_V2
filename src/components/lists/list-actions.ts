@@ -126,7 +126,7 @@ export async function getRecommendationTarget(
 	});
 }
 
-export type UserListSummary = {
+type UserListSummary = {
 	id: number;
 	title: string;
 	description: string | null;
@@ -135,7 +135,7 @@ export type UserListSummary = {
 };
 
 // Powers the admin "User lists" browser: same query as AccountPage's own recommendations, parametrized to an admin-selected user.
-export async function getListsForUser(
+async function getListsForUser(
 	targetUserId: string,
 ): Promise<UserListSummary[]> {
 	await requireAdmin();

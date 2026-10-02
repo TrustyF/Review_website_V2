@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 import { auth } from "@/auth";
 
-export const SUPPORTED_LOCALES = ["en", "fr"] as const;
+const SUPPORTED_LOCALES = ["en", "fr"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
 export function isLocale(value: string | null | undefined): value is Locale {

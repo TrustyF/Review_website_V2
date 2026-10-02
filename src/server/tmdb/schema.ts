@@ -169,8 +169,6 @@ export const TmdbTranslationsResponseSchema = type({
 	}).array(),
 });
 
-export type TmdbTranslationsResponse = typeof TmdbTranslationsResponseSchema.infer;
-
 export const TmdbImagesResponseSchema = type({
 	id: "number",
 	posters: type({

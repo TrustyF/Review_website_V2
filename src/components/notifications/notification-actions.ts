@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { resolveChangelogPosterThumb } from "@/server/resolvers/poster-resolver";
 import type { MediaType, NotificationType } from "@prisma/client";
+import { groupListAdditions } from "@/lib/same-day-grouping";
 
 export type NotificationEntry = {
 	id: number;
@@ -16,15 +17,20 @@ export type NotificationEntry = {
 		titleFr: string | null;
 		thumbnail: string | null;
 	} | null;
-	media: { id: number; title: string; titleFr: string | null; posterSrc: string } | null;
+	media: {
+		id: number;
+		title: string;
+		titleFr: string | null;
+		posterSrc: string;
+	} | null;
 	// LIST_ITEM_ADDED row standing in for same-day notifications. id/media/list/createdAt are from most recent one.
 	groupedIds?: number[];
-	// Same list, items added same day (see groupSameDayListAdditions).
+	// Same list, items added same day (see groupListAdditions).
 	groupedMedia?: NonNullable<NotificationEntry["media"]>[];
 	// Same media added to multiple lists same day; only for rows unclaimed by list-grouping.
 	groupedLists?: NonNullable<NotificationEntry["list"]>[];
 	// True when this list's own LIST_CREATED row folded into the same-day group
-	// (see groupSameDayListAdditions) — caption reads "Created and added" instead of "Added".
+	// (see groupListAdditions) — caption reads "Created and added" instead of "Added".
 	listCreated?: boolean;
 };
 
@@ -71,7 +77,12 @@ async function toMediaEntry(
 				media.posterPath,
 			)) ?? PLACEHOLDER_POSTER_SRC)
 		: PLACEHOLDER_POSTER_SRC;
-	return { id: media.id, title: media.title, titleFr: media.titleFr, posterSrc };
+	return {
+		id: media.id,
+		title: media.title,
+		titleFr: media.titleFr,
+		posterSrc,
+	};
 }
 
 type RawNotification = {
@@ -94,75 +105,6 @@ type RawNotification = {
 		externalId: string | null;
 	} | null;
 };
-
-// Same-day LIST_ITEM_ADDED rows sharing a list or media item, newest-first. members[0] is representative. axis unset if group never grew past single member.
-type NotificationGroup = {
-	members: RawNotification[];
-	axis?: "list" | "media";
-};
-
-// Groups same-list additions by day; also folds in that list's own
-// LIST_CREATED row when it lands the same day, so it reads as one moment.
-function groupSameDayListAdditions(
-	entries: RawNotification[],
-): NotificationGroup[] {
-	const grouped: NotificationGroup[] = [];
-	const groupByKey = new Map<string, NotificationGroup>();
-
-	for (const entry of entries) {
-		const key =
-			(entry.type === "LIST_ITEM_ADDED" || entry.type === "LIST_CREATED") &&
-			entry.list
-				? `${entry.list.id}-${entry.createdAt.toDateString()}`
-				: null;
-		const existing = key ? groupByKey.get(key) : undefined;
-
-		if (existing) {
-			existing.members.push(entry);
-			existing.axis = "list";
-			continue;
-		}
-
-		const group: NotificationGroup = { members: [entry] };
-		grouped.push(group);
-		if (key) groupByKey.set(key, group);
-	}
-
-	return grouped;
-}
-
-// Inverse of list-grouping: same media to multiple lists. Runs second over unclaimed groups.
-function groupSameDayMediaAdditions(
-	groups: NotificationGroup[],
-): NotificationGroup[] {
-	const result: NotificationGroup[] = [];
-	const groupByKey = new Map<string, NotificationGroup>();
-
-	for (const group of groups) {
-		if (group.members.length > 1) {
-			result.push(group);
-			continue;
-		}
-
-		const entry = group.members[0]!;
-		const key =
-			entry.type === "LIST_ITEM_ADDED" && entry.media && entry.list
-				? `${entry.media.id}-${entry.createdAt.toDateString()}`
-				: null;
-		const existing = key ? groupByKey.get(key) : undefined;
-
-		if (existing) {
-			existing.members.push(entry);
-			existing.axis = "media";
-			continue;
-		}
-
-		result.push(group);
-		if (key) groupByKey.set(key, group);
-	}
-
-	return result;
-}
 
 async function requireUserId(): Promise<string> {
 	const session = await auth();
@@ -191,9 +133,7 @@ export async function getNotifications(): Promise<NotificationEntry[]> {
 		take: PAGE_SIZE,
 		select: NOTIFICATION_SELECT,
 	});
-	const groups = groupSameDayMediaAdditions(
-		groupSameDayListAdditions(notifications),
-	);
+	const groups = groupListAdditions(notifications);
 	return Promise.all(
 		groups.map(async ({ members, axis }): Promise<NotificationEntry> => {
 			// members is always non-empty (grouping always starts a group with
@@ -228,9 +168,7 @@ export async function getNotifications(): Promise<NotificationEntry[]> {
 				};
 			}
 
-			const groupedLists = members
-				.map((m) => m.list)
-				.filter((l) => l !== null);
+			const groupedLists = members.map((m) => m.list).filter((l) => l !== null);
 			return {
 				...representative,
 				media,

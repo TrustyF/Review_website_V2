@@ -213,12 +213,3 @@ export function getImageStorage(): ImageStorage {
 			: new LocalImageStorage();
 	return cached;
 }
-
-	// Cached separately, always local disk; app is long-lived container now.
-	// Local file outlives what actually needs it (not Vercel cold-start issue).
-let cachedLocal: ImageStorage | null = null;
-
-export function getLocalDiskStorage(): ImageStorage {
-	if (!cachedLocal) cachedLocal = new LocalImageStorage();
-	return cachedLocal;
-}

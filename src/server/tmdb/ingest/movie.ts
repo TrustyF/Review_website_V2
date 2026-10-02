@@ -41,7 +41,10 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 
 		const images = await fetchTmdbImages(externalId, MediaType.MOVIE);
 		const bannerPath = pickBestBackdrop(images.backdrops) ?? data.backdrop_path;
-		const french = await fetchTmdbFrenchTranslation(externalId, MediaType.MOVIE);
+		const french = await fetchTmdbFrenchTranslation(
+			externalId,
+			MediaType.MOVIE,
+		);
 
 		const media = await tx.media.create({
 			data: {
@@ -131,7 +134,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 				publicRating: data.vote_average,
 				posterPath: existing.posterPath ?? data.poster_path,
 				bannerPath,
-				countryId: existing.countryId ?? (country?.id ?? null),
+				countryId: existing.countryId ?? country?.id ?? null,
 				sourceUrl: `https://www.themoviedb.org/movie/${externalId}`,
 				lastEnrichedAt: new Date(),
 				enrichmentStatus: EnrichmentStatus.DONE,

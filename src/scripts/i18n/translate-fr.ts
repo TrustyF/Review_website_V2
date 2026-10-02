@@ -5,6 +5,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import ts from "typescript";
 import Anthropic from "@anthropic-ai/sdk";
 import { FRENCH_STYLE_RULES } from "@/lib/i18n/french-style";
+import { CLAUDE_MODEL } from "@/lib/claude-model";
 
 // Sole writer of fr.ts, so every French string goes through FRENCH_STYLE_RULES (usage in CLAUDE.md).
 // fr.lock.json records which English each French entry was translated from.
@@ -12,7 +13,6 @@ import { FRENCH_STYLE_RULES } from "@/lib/i18n/french-style";
 const EN_PATH = "src/lib/i18n/dictionaries/en.ts";
 const FR_PATH = "src/lib/i18n/dictionaries/fr.ts";
 const LOCK_PATH = "src/lib/i18n/dictionaries/fr.lock.json";
-const MODEL = "claude-opus-5-5";
 const CHUNK_SIZE = 60;
 
 type Lock = Record<string, { en: string; fr: string }>;
@@ -207,7 +207,7 @@ async function translateChunk(
 ): Promise<Map<string, string>> {
 	const message = await client.beta.messages
 		.stream({
-			model: MODEL,
+			model: CLAUDE_MODEL,
 			max_tokens: 64000,
 			betas: ["server-side-fallback-2026-07-01"],
 			fallbacks: "default",
@@ -305,7 +305,7 @@ async function translate(args: string[]) {
 
 	if (todo.length) {
 		console.log(
-			`Translating ${todo.length} entr${todo.length === 1 ? "y" : "ies"} with ${MODEL}…`,
+			`Translating ${todo.length} entr${todo.length === 1 ? "y" : "ies"} with ${CLAUDE_MODEL}…`,
 		);
 		const client = new Anthropic();
 		// Retranslating everything shouldn't anchor on the wording it's replacing.

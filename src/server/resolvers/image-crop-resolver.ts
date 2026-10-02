@@ -29,7 +29,8 @@ export const CROPPED_DIR = "cropped";
 
 // Reads temp file from saveCroppedImage (null for anything else).
 // Regex guards path traversal; matches hex-hash filename under /cropped/.
-const CROPPED_FILE_URL = /^(?:https?:\/\/[^/]+)?\/cropped\/([a-f0-9]+\.(?:webp|avif))$/;
+const CROPPED_FILE_URL =
+	/^(?:https?:\/\/[^/]+)?\/cropped\/([a-f0-9]+\.(?:webp|avif))$/;
 
 export async function readCroppedFile(url: string): Promise<Buffer | null> {
 	const match = CROPPED_FILE_URL.exec(url);
@@ -41,7 +42,11 @@ export async function readCroppedFile(url: string): Promise<Buffer | null> {
 }
 
 // Radial SVG gradient overlay composited to pixels; 55% inner stop matches preview
-function buildVignetteSvg(width: number, height: number, strength: number): Buffer {
+function buildVignetteSvg(
+	width: number,
+	height: number,
+	strength: number,
+): Buffer {
 	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><defs><radialGradient id="v" cx="50%" cy="50%" r="70%"><stop offset="55%" stop-color="black" stop-opacity="0"/><stop offset="100%" stop-color="black" stop-opacity="${strength}"/></radialGradient></defs><rect width="100%" height="100%" fill="url(#v)"/></svg>`;
 	return Buffer.from(svg);
 }
@@ -85,7 +90,10 @@ async function cropAndSave(
 		const outputWidth = Math.min(maxWidth, width);
 		const outputHeight = Math.round(height * (outputWidth / width));
 		pipeline = sharp(await pipeline.toBuffer()).composite([
-			{ input: buildVignetteSvg(outputWidth, outputHeight, vignette), blend: "over" },
+			{
+				input: buildVignetteSvg(outputWidth, outputHeight, vignette),
+				blend: "over",
+			},
 		]);
 	}
 
@@ -112,9 +120,25 @@ export async function saveCroppedImage(
 ): Promise<string> {
 	switch (shapeId) {
 		case "poster-2-3":
-			return cropAndSave(source, shapeId, crop, 500, POSTER_QUALITY, "webp", vignette);
+			return cropAndSave(
+				source,
+				shapeId,
+				crop,
+				500,
+				POSTER_QUALITY,
+				"webp",
+				vignette,
+			);
 		case "poster-3-4":
-			return cropAndSave(source, shapeId, crop, 500, POSTER_QUALITY, "webp", vignette);
+			return cropAndSave(
+				source,
+				shapeId,
+				crop,
+				500,
+				POSTER_QUALITY,
+				"webp",
+				vignette,
+			);
 		case "banner-16-9":
 			return cropAndSave(
 				source,

@@ -33,7 +33,7 @@ import {
 	AddableType,
 	MediaSearchResult,
 } from "@/components/media/media-management/media-add/addable-types";
-import { invalidateSearchIndex } from "@/components/search/search-actions";
+import { invalidateSearchIndex } from "@/server/lib/search-index-version";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { revalidateMediaPaths } from "@/server/cache/revalidate-media";
 
@@ -204,7 +204,7 @@ export async function addMediaToLibrary(
 		}
 	}
 
-	await invalidateSearchIndex();
+	invalidateSearchIndex();
 	revalidateMediaPaths(mediaId, type);
 	return mediaId;
 }

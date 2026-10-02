@@ -2,9 +2,10 @@
 import { db } from "@/server/db/client";
 import { resolveChangelogPosterThumb } from "@/server/resolvers/poster-resolver";
 import type { MediaType } from "@prisma/client";
+import { groupListAdditions, mergeSameDay } from "@/lib/same-day-grouping";
 
 // No dedicated ActivityLog table — every event is read live off its own source, so removing a row there removes it from this feed too.
-export type ActivityType =
+type ActivityType =
 	| "RATED"
 	| "RATING_CHANGED"
 	| "REVIEWED"
@@ -32,16 +33,18 @@ export type ActivityFeedEntry = {
 		titleFr: string | null;
 		thumbnail: string | null;
 	} | null;
-	// LIST_ITEM_ADDED row standing in for same-day additions (see notification-actions.ts's
-	// own grouping, mirrored here). id/media/list/createdAt are from the most recent one.
+	// Row standing in for same-day additions (see lib/same-day-grouping.ts).
+	// id/media/list/createdAt are from the most recent one.
 	groupedIds?: string[];
 	// Same list, or same RATED/REVIEWED/WATCHLIST_ADDED/REWATCHED type, on the same day.
 	// `value` is that member's own newValue — only set for RATED/REVIEWED, null otherwise.
-	groupedMedia?: (NonNullable<ActivityFeedEntry["media"]> & { value: string | null })[];
+	groupedMedia?: (NonNullable<ActivityFeedEntry["media"]> & {
+		value: string | null;
+	})[];
 	// Same media added to multiple lists same day; only for entries unclaimed by list-grouping.
 	groupedLists?: NonNullable<ActivityFeedEntry["list"]>[];
 	// True when this list's own LIST_CREATED entry folded into the same-day group
-	// (see groupSameDayListAdditions) — caption reads "Created and added" instead of "Added".
+	// (see groupListAdditions) — caption reads "Created and added" instead of "Added".
 	listCreated?: boolean;
 };
 
@@ -98,77 +101,15 @@ async function toMediaEntry(
 		title: media.title,
 		titleFr: media.titleFr,
 		type: media.type,
-		posterSrc: posterSrc ? ((await posterSrc) ?? PLACEHOLDER_POSTER_SRC) : PLACEHOLDER_POSTER_SRC,
+		posterSrc: posterSrc
+			? ((await posterSrc) ?? PLACEHOLDER_POSTER_SRC)
+			: PLACEHOLDER_POSTER_SRC,
 	};
 }
 
-type RawActivityEntry = Omit<ActivityFeedEntry, "media"> & { media: MediaSelection };
-
-// Same-day entries sharing a list, media item, or activity type, newest-first (members[0]
-// is representative). List/media mirrors notification-actions.ts's own grouping.
-type ActivityGroup = {
-	members: RawActivityEntry[];
-	axis?: "list" | "media" | "type";
+type RawActivityEntry = Omit<ActivityFeedEntry, "media"> & {
+	media: MediaSelection;
 };
-
-// Groups same-list additions by day; also folds in that list's own
-// LIST_CREATED entry when it lands the same day, so it reads as one moment.
-function groupSameDayListAdditions(entries: RawActivityEntry[]): ActivityGroup[] {
-	const grouped: ActivityGroup[] = [];
-	const groupByKey = new Map<string, ActivityGroup>();
-
-	for (const entry of entries) {
-		const key =
-			(entry.type === "LIST_ITEM_ADDED" || entry.type === "LIST_CREATED") &&
-			entry.list
-				? `${entry.list.id}-${entry.createdAt.toDateString()}`
-				: null;
-		const existing = key ? groupByKey.get(key) : undefined;
-
-		if (existing) {
-			existing.members.push(entry);
-			existing.axis = "list";
-			continue;
-		}
-
-		const group: ActivityGroup = { members: [entry] };
-		grouped.push(group);
-		if (key) groupByKey.set(key, group);
-	}
-
-	return grouped;
-}
-
-// Inverse of list-grouping: same media to multiple lists. Runs second over unclaimed groups.
-function groupSameDayMediaAdditions(groups: ActivityGroup[]): ActivityGroup[] {
-	const result: ActivityGroup[] = [];
-	const groupByKey = new Map<string, ActivityGroup>();
-
-	for (const group of groups) {
-		if (group.members.length > 1) {
-			result.push(group);
-			continue;
-		}
-
-		const entry = group.members[0]!;
-		const key =
-			entry.type === "LIST_ITEM_ADDED" && entry.media && entry.list
-				? `${entry.media.id}-${entry.createdAt.toDateString()}`
-				: null;
-		const existing = key ? groupByKey.get(key) : undefined;
-
-		if (existing) {
-			existing.members.push(entry);
-			existing.axis = "media";
-			continue;
-		}
-
-		result.push(group);
-		if (key) groupByKey.set(key, group);
-	}
-
-	return result;
-}
 
 // Types that read fine as an anonymous poster grid (no per-item value shown once grouped) —
 // RATING_CHANGED's old→new pair and LIST_ITEM_ADDED's own list already handle themselves.
@@ -181,33 +122,12 @@ const TYPE_GROUPABLE = new Set<ActivityType>([
 
 // Same-day entries of the same activity type; runs last over whatever list/media-grouping
 // didn't claim (those only ever match LIST_ITEM_ADDED, so nothing here overlaps them).
-function groupSameDayByType(groups: ActivityGroup[]): ActivityGroup[] {
-	const result: ActivityGroup[] = [];
-	const groupByKey = new Map<string, ActivityGroup>();
-
-	for (const group of groups) {
-		if (group.members.length > 1) {
-			result.push(group);
-			continue;
-		}
-
-		const entry = group.members[0]!;
-		const key = TYPE_GROUPABLE.has(entry.type)
-			? `${entry.type}-${entry.createdAt.toDateString()}`
-			: null;
-		const existing = key ? groupByKey.get(key) : undefined;
-
-		if (existing) {
-			existing.members.push(entry);
-			existing.axis = "type";
-			continue;
-		}
-
-		result.push(group);
-		if (key) groupByKey.set(key, group);
-	}
-
-	return result;
+function groupActivity(entries: RawActivityEntry[]) {
+	return mergeSameDay<RawActivityEntry, "list" | "media" | "type">(
+		groupListAdditions(entries),
+		"type",
+		(e) => (TYPE_GROUPABLE.has(e.type) ? e.type : null),
+	);
 }
 
 // Most-recent-first, capped not paginated. Each source query is capped/sorted independently,
@@ -222,120 +142,122 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 		listItems,
 		watchlistItems,
 	] = await Promise.all([
-			// RATED — every review has this, since a rating is required to save one.
-			db.review.findMany({
-				where: { media: { isAdult: false, isDeleted: false } },
-				orderBy: { createDate: "desc" },
-				take: PAGE_SIZE,
-				select: {
-					mediaId: true,
-					createDate: true,
-					rating: true,
-					initialRating: true,
-					media: { select: MEDIA_SELECT },
+		// RATED — every review has this, since a rating is required to save one.
+		db.review.findMany({
+			where: { media: { isAdult: false, isDeleted: false } },
+			orderBy: { createDate: "desc" },
+			take: PAGE_SIZE,
+			select: {
+				mediaId: true,
+				createDate: true,
+				rating: true,
+				initialRating: true,
+				media: { select: MEDIA_SELECT },
+			},
+		}),
+		// REVIEWED — reviewDate marks a separate, later moment (first time a body
+		// gets written), so it's ranked/capped by its own date, not ratedReviews'.
+		db.review.findMany({
+			where: {
+				reviewDate: { not: null },
+				media: { isAdult: false, isDeleted: false },
+			},
+			orderBy: { reviewDate: "desc" },
+			take: PAGE_SIZE,
+			select: {
+				mediaId: true,
+				reviewDate: true,
+				createDate: true,
+				rating: true,
+				initialRating: true,
+				media: { select: MEDIA_SELECT },
+			},
+		}),
+		db.mediaChangeLog.findMany({
+			where: {
+				field: "rating",
+				deletedAt: null,
+				media: { isAdult: false, isDeleted: false },
+			},
+			orderBy: { createdAt: "desc" },
+			take: PAGE_SIZE,
+			select: {
+				id: true,
+				mediaId: true,
+				oldValue: true,
+				newValue: true,
+				createdAt: true,
+				media: { select: MEDIA_SELECT },
+			},
+		}),
+		// REWATCHED — a real MediaChangeLog row, unlike RATED/REVIEWED's synthetic ones.
+		db.mediaChangeLog.findMany({
+			where: {
+				field: "rewatched",
+				deletedAt: null,
+				media: { isAdult: false, isDeleted: false },
+			},
+			orderBy: { createdAt: "desc" },
+			take: PAGE_SIZE,
+			select: {
+				id: true,
+				mediaId: true,
+				createdAt: true,
+				media: { select: MEDIA_SELECT },
+			},
+		}),
+		// targetUserId: null — a recommendation list is private to whoever it's for,
+		// so it (and anything added to it) shouldn't surface on this public feed.
+		db.list.findMany({
+			where: { targetUserId: null },
+			orderBy: { createDate: "desc" },
+			take: PAGE_SIZE,
+			select: {
+				id: true,
+				title: true,
+				titleFr: true,
+				thumbnail: true,
+				createDate: true,
+			},
+		}),
+		db.listItem.findMany({
+			where: {
+				media: { isAdult: false, isDeleted: false },
+				list: { targetUserId: null },
+			},
+			orderBy: { addedAt: "desc" },
+			take: PAGE_SIZE,
+			select: {
+				listId: true,
+				addedAt: true,
+				list: {
+					select: { id: true, title: true, titleFr: true, thumbnail: true },
 				},
-			}),
-			// REVIEWED — reviewDate marks a separate, later moment (first time a body
-			// gets written), so it's ranked/capped by its own date, not ratedReviews'.
-			db.review.findMany({
-				where: {
-					reviewDate: { not: null },
-					media: { isAdult: false, isDeleted: false },
-				},
-				orderBy: { reviewDate: "desc" },
-				take: PAGE_SIZE,
-				select: {
-					mediaId: true,
-					reviewDate: true,
-					createDate: true,
-					rating: true,
-					initialRating: true,
-					media: { select: MEDIA_SELECT },
-				},
-			}),
-			db.mediaChangeLog.findMany({
-				where: {
-					field: "rating",
-					deletedAt: null,
-					media: { isAdult: false, isDeleted: false },
-				},
-				orderBy: { createdAt: "desc" },
-				take: PAGE_SIZE,
-				select: {
-					id: true,
-					mediaId: true,
-					oldValue: true,
-					newValue: true,
-					createdAt: true,
-					media: { select: MEDIA_SELECT },
-				},
-			}),
-			// REWATCHED — a real MediaChangeLog row, unlike RATED/REVIEWED's synthetic ones.
-			db.mediaChangeLog.findMany({
-				where: {
-					field: "rewatched",
-					deletedAt: null,
-					media: { isAdult: false, isDeleted: false },
-				},
-				orderBy: { createdAt: "desc" },
-				take: PAGE_SIZE,
-				select: {
-					id: true,
-					mediaId: true,
-					createdAt: true,
-					media: { select: MEDIA_SELECT },
-				},
-			}),
-			// targetUserId: null — a recommendation list is private to whoever it's for,
-			// so it (and anything added to it) shouldn't surface on this public feed.
-			db.list.findMany({
-				where: { targetUserId: null },
-				orderBy: { createDate: "desc" },
-				take: PAGE_SIZE,
-				select: {
-					id: true,
-					title: true,
-					titleFr: true,
-					thumbnail: true,
-					createDate: true,
-				},
-			}),
-			db.listItem.findMany({
-				where: {
-					media: { isAdult: false, isDeleted: false },
-					list: { targetUserId: null },
-				},
-				orderBy: { addedAt: "desc" },
-				take: PAGE_SIZE,
-				select: {
-					listId: true,
-					addedAt: true,
-					list: {
-						select: { id: true, title: true, titleFr: true, thumbnail: true },
-					},
-					media: { select: MEDIA_SELECT },
-				},
-			}),
-			db.watchlistItem.findMany({
-				where: {
-					user: { role: "ADMIN" },
-					media: { isAdult: false, isDeleted: false },
-				},
-				orderBy: { addedAt: "desc" },
-				take: PAGE_SIZE,
-				select: {
-					userId: true,
-					mediaId: true,
-					addedAt: true,
-					media: { select: MEDIA_SELECT },
-				},
-			}),
-		]);
+				media: { select: MEDIA_SELECT },
+			},
+		}),
+		db.watchlistItem.findMany({
+			where: {
+				user: { role: "ADMIN" },
+				media: { isAdult: false, isDeleted: false },
+			},
+			orderBy: { addedAt: "desc" },
+			take: PAGE_SIZE,
+			select: {
+				userId: true,
+				mediaId: true,
+				addedAt: true,
+				media: { select: MEDIA_SELECT },
+			},
+		}),
+	]);
 
 	// Same-day tiebreak: REVIEWED (more specific) wins and RATED is dropped.
 	const sameDayReviewedMediaIds = new Set(
 		reviewedReviews
-			.filter((review) => isSameCalendarDay(review.reviewDate!, review.createDate))
+			.filter((review) =>
+				isSameCalendarDay(review.reviewDate!, review.createDate),
+			)
 			.map((review) => review.mediaId),
 	);
 
@@ -424,9 +346,7 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 
 	entries.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-	const groups = groupSameDayByType(
-		groupSameDayMediaAdditions(groupSameDayListAdditions(entries)),
-	);
+	const groups = groupActivity(entries);
 
 	const posterSrcCache = new Map<number, Promise<string | null>>();
 	return Promise.all(
@@ -449,7 +369,8 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 						members.map(async (m) => {
 							const mediaEntry = await toMediaEntry(m.media, posterSrcCache);
 							if (!mediaEntry) return null;
-							const value = m.type === "RATED" || m.type === "REVIEWED" ? m.newValue : null;
+							const value =
+								m.type === "RATED" || m.type === "REVIEWED" ? m.newValue : null;
 							return { ...mediaEntry, value };
 						}),
 					)

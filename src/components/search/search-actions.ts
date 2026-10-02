@@ -6,6 +6,7 @@ import { EnrichmentStatus, MediaType } from "@prisma/client";
 import { toPersonPhotoSrc, toPosterSrc } from "@/server/resolvers/asset-paths";
 import { hasPhotoEligibleRole } from "@/server/resolvers/person-photo-eligibility";
 import { getLocale } from "@/lib/i18n/get-locale";
+import { getSearchIndexVersion } from "@/server/lib/search-index-version";
 
 export type GlobalSearchResult =
 	| {
@@ -39,6 +40,9 @@ export type GlobalSearchResult =
 	  };
 
 const SEARCH_LIMIT = 8;
+// Caps client-supplied input to this public action.
+const MAX_SEARCH_LIMIT = 100;
+const MAX_QUERY_LENGTH = 200;
 
 // 0.35 threshold balances typo tolerance; unified Fuse index ranks media, people, companies.
 const FUSE_OPTIONS = {
@@ -117,19 +121,20 @@ function mainRoleFor(roleNames: string[]): string {
 
 // In-memory only: rebuilding from the DB is cheap in a long-lived container. Admin edits call invalidateSearchIndex();
 // standalone scripts (enrich-db cron etc.) run in another process, so they rely on the TTL.
-let cachedIndex: { fuse: Fuse<SearchableEntry>; expiresAt: number } | null =
-	null;
+let cachedIndex: {
+	fuse: Fuse<SearchableEntry>;
+	expiresAt: number;
+	version: number;
+} | null = null;
 // Shared by concurrent searches that hit an expired cache, so only one rebuild runs.
-let pendingIndex: Promise<Fuse<SearchableEntry>> | null = null;
+let pendingIndex: {
+	promise: Promise<Fuse<SearchableEntry>>;
+	version: number;
+} | null = null;
 const CACHE_TTL_MS = 60 * 60_000;
 
 // People with no photo and fewer credits than this are left out of search; they're the bulk of the index and rarely searched for.
 const MIN_PERSON_CREDITS_WITHOUT_PHOTO = 3;
-
-export async function invalidateSearchIndex() {
-	cachedIndex = null;
-	pendingIndex = null;
-}
 
 // Three independent queries; people/companies surface as own results,
 // only if credited on DONE non-deleted media.
@@ -343,25 +348,37 @@ function rankMatches<T extends ScoredEntry>(matches: T[], query: string): T[] {
 }
 
 async function getSearchIndex(): Promise<Fuse<SearchableEntry>> {
-	if (cachedIndex && cachedIndex.expiresAt > Date.now())
+	const version = getSearchIndexVersion();
+	if (
+		cachedIndex &&
+		cachedIndex.version === version &&
+		cachedIndex.expiresAt > Date.now()
+	)
 		return cachedIndex.fuse;
 
-	if (!pendingIndex) {
-		const pending: Promise<Fuse<SearchableEntry>> = fetchSearchEntriesFromDb()
-			.then((entries) => {
-				const fuse = new Fuse(entries, FUSE_OPTIONS);
-				// Invalidated mid-rebuild means these rows may predate the edit, so don't cache them.
-				if (pendingIndex === pending) {
-					cachedIndex = { fuse, expiresAt: Date.now() + CACHE_TTL_MS };
-				}
-				return fuse;
-			})
-			.finally(() => {
-				if (pendingIndex === pending) pendingIndex = null;
-			});
+	if (pendingIndex?.version !== version) {
+		const pending = {
+			version,
+			promise: fetchSearchEntriesFromDb()
+				.then((entries) => {
+					const fuse = new Fuse(entries, FUSE_OPTIONS);
+					// Invalidated mid-rebuild means these rows may predate the edit, so don't cache them.
+					if (getSearchIndexVersion() === version) {
+						cachedIndex = {
+							fuse,
+							version,
+							expiresAt: Date.now() + CACHE_TTL_MS,
+						};
+					}
+					return fuse;
+				})
+				.finally(() => {
+					if (pendingIndex === pending) pendingIndex = null;
+				}),
+		};
 		pendingIndex = pending;
 	}
-	return pendingIndex;
+	return pendingIndex.promise;
 }
 
 // Media/people/company fuzzy search (no overview-text for lighter payload).
@@ -369,8 +386,10 @@ export async function searchAllMedia(
 	query: string,
 	limit: number | { media: number; entities: number } = SEARCH_LIMIT,
 ): Promise<GlobalSearchResult[]> {
-	const trimmed = query.trim();
+	const trimmed = query.trim().slice(0, MAX_QUERY_LENGTH);
 	if (!trimmed) return [];
+	const clamp = (n: number) =>
+		Math.min(Math.max(Math.floor(n) || 0, 0), MAX_SEARCH_LIMIT);
 
 	// Falls back to English when untranslated, like Review.bodyFr/MediaTitle.
 	const locale = await getLocale();
@@ -383,14 +402,14 @@ export async function searchAllMedia(
 	// Per-kind limits stop the ~30x larger people pool from crowding media out of a shared cap.
 	const limited =
 		typeof limit === "number"
-			? ranked.slice(0, limit)
+			? ranked.slice(0, clamp(limit))
 			: [
 					...ranked
 						.filter((m) => m.item.kind === "media")
-						.slice(0, limit.media),
+						.slice(0, clamp(limit.media)),
 					...ranked
 						.filter((m) => m.item.kind !== "media")
-						.slice(0, limit.entities),
+						.slice(0, clamp(limit.entities)),
 				];
 
 	const results = limited.map(({ item }): GlobalSearchResult => {

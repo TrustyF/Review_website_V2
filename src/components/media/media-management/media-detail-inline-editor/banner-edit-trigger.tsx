@@ -2,7 +2,7 @@
 import { useRef, useState } from "react";
 import { MediaRecord } from "@/components/media/types";
 import { MediaBanner } from "@/components/media/primitives/banner";
-import { getAlternativeBanners } from "@/components/media/media-management/media-editor/media-editor-actions";
+import { getAlternativeBanners } from "@/components/media/media-management/media-editor/media-image-actions";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useImageEditPopover } from "@/components/media/media-management/media-detail-inline-editor/use-image-edit-popover";

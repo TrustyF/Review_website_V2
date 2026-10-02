@@ -3,7 +3,7 @@ import { toMediaRecord, MediaRecord } from "@/components/media/types";
 import { EnrichmentStatus, Prisma } from "@prisma/client";
 
 // Paginated instead of fetching every reviewed item (and relation) unbounded on every visit. AllReviewsListPage fetches the first page from loadReviewsPage below; AllReviewsFeed fetches the rest via all-reviews-actions.ts's loadMoreReviews, kept in a separate "use server" file since such a file may only export async functions.
-export const PAGE_SIZE = 6;
+const PAGE_SIZE = 6;
 
 // Every type-specific relation toMediaRecord might need, spanning every media type.
 const EVERY_TYPE_RELATION = {

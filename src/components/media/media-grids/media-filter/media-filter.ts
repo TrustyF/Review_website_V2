@@ -43,7 +43,7 @@ export function isFilterActive(filter: MediaFilterState): boolean {
 }
 
 // Only Movie/Short carry a runtime; everything else has nothing to compare against a runtime bound.
-export function getRuntimeMinutes(media: MediaCardRecord): number | null {
+function getRuntimeMinutes(media: MediaCardRecord): number | null {
 	if (media.type === "MOVIE" || media.type === "SHORT")
 		return media.movie.runtime;
 	return null;

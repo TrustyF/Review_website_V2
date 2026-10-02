@@ -1,5 +1,6 @@
 import { db } from "@/server/db/client";
-import { sendEmail, toAbsoluteUrl } from "@/server/email/mailer";
+import { sendEmail } from "@/server/email/mailer";
+import { toAbsoluteUrl } from "@/server/lib/site-url";
 import { displayName } from "@/lib/display-name";
 import NewAccountAlertEmail from "@/emails/new-account-alert-email";
 

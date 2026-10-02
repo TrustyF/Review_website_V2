@@ -2,7 +2,7 @@
 import { db } from "@/server/db/client";
 import { EnrichmentStatus, MediaType, Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { invalidateSearchIndex } from "@/components/search/search-actions";
+import { invalidateSearchIndex } from "@/server/lib/search-index-version";
 import { revalidateMediaPaths } from "@/server/cache/revalidate-media";
 
 type SubTableFields = Pick<
@@ -55,7 +55,7 @@ export async function createManualMedia(input: {
 		},
 	});
 
-	await invalidateSearchIndex();
+	invalidateSearchIndex();
 	revalidateMediaPaths(media.id, input.type);
 	return media.id;
 }

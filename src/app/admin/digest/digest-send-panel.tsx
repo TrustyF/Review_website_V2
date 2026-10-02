@@ -24,7 +24,10 @@ export function DigestSendPanel() {
 					: { state: "done", sent: false },
 			);
 		} catch {
-			setStatus({ state: "error", message: "Failed to send. Check /admin/logs." });
+			setStatus({
+				state: "error",
+				message: "Failed to send. Check /admin/logs.",
+			});
 		}
 	}
 

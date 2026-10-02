@@ -2,7 +2,6 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db/client";
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { toAbsoluteUrl } from "@/server/email/mailer";
 import {
 	isDigestBannerOverrideUrl,
 	saveDigestBannerOverride,
@@ -23,8 +22,7 @@ async function resolveOverrideImageUrl(
 	const trimmed = raw?.trim();
 	if (!trimmed) return null;
 	if (isDigestBannerOverrideUrl(trimmed)) return trimmed;
-	// AssetBrowser returns root-relative URL; needs absolute before fetch() server-side
-	return saveDigestBannerOverrideFromUrl(toAbsoluteUrl(trimmed));
+	return saveDigestBannerOverrideFromUrl(trimmed);
 }
 
 export async function updateDigestBannerOverride(

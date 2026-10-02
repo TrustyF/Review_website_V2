@@ -281,7 +281,7 @@ export function ActivityFeed({
 	const dict = useDictionary();
 	const locale = useLocale();
 	const dateFormatter = listDateFormatterFor(locale);
-	// Same reveal-more-on-scroll pattern as LazyMediaGrid/LazyMediaList — avoids
+	// Same reveal-more-on-scroll pattern as LazyMediaGrid — avoids
 	// mounting up to ~700 rows (each with its own poster Image) up front.
 	const { visibleCount, sentinelRef } = useLazyReveal(
 		entries,
@@ -306,11 +306,7 @@ export function ActivityFeed({
 						// (RATED/REVIEWED/WATCHLIST_ADDED/REWATCHED) never does.
 						if (entry.list) {
 							return (
-								<ListAdditionsCard
-									key={entry.id}
-									entry={entry}
-									index={index}
-								/>
+								<ListAdditionsCard key={entry.id} entry={entry} index={index} />
 							);
 						}
 						return (
@@ -325,11 +321,7 @@ export function ActivityFeed({
 					}
 					if (entry.groupedLists && entry.groupedLists.length > 0) {
 						return (
-							<MediaAdditionsCard
-								key={entry.id}
-								entry={entry}
-								index={index}
-							/>
+							<MediaAdditionsCard key={entry.id} entry={entry} index={index} />
 						);
 					}
 					return (

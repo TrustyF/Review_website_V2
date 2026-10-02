@@ -7,10 +7,12 @@ import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import {
 	publishMediaEdits,
 	saveReview,
+} from "@/components/media/media-management/media-editor/media-editor-actions";
+import {
 	updateMediaBanner,
 	updateMediaBannerFocus,
 	updateMediaPoster,
-} from "@/components/media/media-management/media-editor/media-editor-actions";
+} from "@/components/media/media-management/media-editor/media-image-actions";
 import { useMediaPublishStore } from "@/components/media/media-management/media-detail-inline-editor/media-publish-store";
 import styles from "./media-publish-button.module.sass";
 

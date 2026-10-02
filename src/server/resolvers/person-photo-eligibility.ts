@@ -1,5 +1,5 @@
 // Which roles are worth downloading/caching a photo for. Person.photoPath populated for all cast/crew (free to store); this prevents requests for people no one looks up (Gaffer, Sound Editor, ...).
-export const PHOTO_ELIGIBLE_CREDIT_ROLES = new Set([
+const PHOTO_ELIGIBLE_CREDIT_ROLES = new Set([
 	"Actor",
 	"Director",
 	"Writer",

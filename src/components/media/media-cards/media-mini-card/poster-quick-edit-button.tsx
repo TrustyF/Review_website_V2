@@ -11,7 +11,7 @@ import { EditImagePopover } from "@/components/media/media-management/media-deta
 import {
 	getAlternativePosters,
 	updateMediaPoster,
-} from "@/components/media/media-management/media-editor/media-editor-actions";
+} from "@/components/media/media-management/media-editor/media-image-actions";
 
 const POPOVER_WIDTH = 400;
 // Headroom to prevent overflow when opening near bottom.

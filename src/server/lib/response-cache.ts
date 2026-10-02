@@ -6,10 +6,6 @@ import path from "path";
 const CACHE_RESPONSES = process.env.CACHE_RESPONSES === "1";
 const FIXTURE_ROOT = path.join(process.cwd(), ".fixtures");
 
-export function isCachingResponses(): boolean {
-	return CACHE_RESPONSES;
-}
-
 // Lets callers report whether an item hit the network or replayed from a fixture, without threading it through every return type. Scoped per call tree so concurrent items don't share state.
 const cacheUsageTracker = new AsyncLocalStorage<{
 	calledApi: boolean;
@@ -22,11 +18,12 @@ export type CacheUsage = "api call" | "cache read" | null;
 export async function runWithCacheUsageTracking<T>(
 	fn: () => Promise<T>,
 ): Promise<
-	{ result: T; error?: undefined; cacheUsage: CacheUsage } | {
-		result?: undefined;
-		error: unknown;
-		cacheUsage: CacheUsage;
-	}
+	| { result: T; error?: undefined; cacheUsage: CacheUsage }
+	| {
+			result?: undefined;
+			error: unknown;
+			cacheUsage: CacheUsage;
+	  }
 > {
 	const store = { calledApi: false, readCache: false };
 	// Any real fetch in the tree means the item wasn't a pure cache replay.

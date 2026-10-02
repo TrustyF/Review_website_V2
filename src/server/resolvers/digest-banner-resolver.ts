@@ -1,4 +1,5 @@
 import { createHash } from "crypto";
+import { fetchUntrustedImage } from "@/server/lib/fetch-image";
 import sharp from "sharp";
 import { getImageStorage } from "@/server/storage/image-storage";
 import {
@@ -36,8 +37,6 @@ export function isDigestBannerOverrideUrl(url: string): boolean {
 export async function saveDigestBannerOverrideFromUrl(
 	url: string,
 ): Promise<string> {
-	const res = await fetch(url);
-	if (!res.ok) throw new Error(`Image download failed: ${url}`);
-	const bytes = Buffer.from(await res.arrayBuffer());
+	const { bytes } = await fetchUntrustedImage(url);
 	return saveDigestBannerOverride(bytes);
 }

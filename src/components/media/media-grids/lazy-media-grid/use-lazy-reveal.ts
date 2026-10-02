@@ -6,7 +6,7 @@ import { isHydrated, useMarkHydrated } from "@/lib/has-hydrated";
 // Sized past a typical viewport so the initial batch fills the screen, keeping the first IntersectionObserver check from firing immediately. Callers with differently-sized items can override via batchSize.
 const DEFAULT_BATCH_SIZE = 24;
 
-// Reveal-more-on-scroll bookkeeping shared by LazyMediaGrid, LazyMediaList, and ActivityFeed. Generic over id type since only the id is used (for itemsKey below).
+// Reveal-more-on-scroll bookkeeping shared by LazyMediaGrid and ActivityFeed. Generic over id type since only the id is used (for itemsKey below).
 export function useLazyReveal<T extends { id: string | number }>(
 	items: T[],
 	restoreKey?: string,

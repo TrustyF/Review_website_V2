@@ -56,10 +56,3 @@ export async function sendEmail(input: {
 			: {}),
 	});
 }
-
-// Absolute URLs required in email HTML (mail clients don't resolve relative paths). LocalImageStorage returns root-relative; this converts to absolute.
-export function toAbsoluteUrl(path: string): string {
-	if (path.startsWith("http://") || path.startsWith("https://")) return path;
-	const base = (process.env.SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
-	return `${base}${path}`;
-}

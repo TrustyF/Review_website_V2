@@ -2,12 +2,12 @@ import type { CountryStat } from "@/components/stats/stats-types";
 
 // A single- or double-digit-sample country's "average" is mostly noise —
 // excluded from any rating-based ranking, though it still shows on hover.
-export const MIN_SAMPLE_FOR_RATING = 1;
+const MIN_SAMPLE_FOR_RATING = 1;
 
 // Bayesian shrinkage applied to the rating value itself — blends toward the
 // global mean by this many "phantom" ratings, so a 1-2 title country can't
 // hit an extreme the way a well-sampled one can.
-export const RATING_SHRINKAGE_PRIOR = 5;
+const RATING_SHRINKAGE_PRIOR = 5;
 
 // Count-weighted mean across every rated country — the shrinkage target for
 // a country whose own sample is too small to fully trust.

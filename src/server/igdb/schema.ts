@@ -1,7 +1,7 @@
 import { type } from "arktype";
 
 // IGDB's /games endpoint returns a bare JSON array (no {data: ...} wrapper).
-export const IgdbGameSchema = type({
+const IgdbGameSchema = type({
 	id: "number",
 	name: "string",
 	url: "string",

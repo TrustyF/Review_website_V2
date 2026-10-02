@@ -3,7 +3,7 @@ import {
 	resolveEmailBanner,
 	resolveEmailPoster,
 } from "@/server/resolvers/poster-resolver";
-import { toAbsoluteUrl } from "@/server/email/mailer";
+import { toAbsoluteUrl } from "@/server/lib/site-url";
 import type LatestActivityEmail from "@/emails/latest-activity-email";
 import {
 	EnrichmentStatus,

@@ -38,7 +38,10 @@ export async function addTvShowFromTmdb(data: TmdbTvResponse) {
 
 		const images = await fetchTmdbImages(externalId, MediaType.TVSHOW);
 		const bannerPath = pickBestBackdrop(images.backdrops) ?? data.backdrop_path;
-		const french = await fetchTmdbFrenchTranslation(externalId, MediaType.TVSHOW);
+		const french = await fetchTmdbFrenchTranslation(
+			externalId,
+			MediaType.TVSHOW,
+		);
 
 		const media = await tx.media.create({
 			data: {
@@ -123,7 +126,7 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 				publicRating: data.vote_average,
 				posterPath: existing.posterPath ?? data.poster_path,
 				bannerPath,
-				countryId: existing.countryId ?? (country?.id ?? null),
+				countryId: existing.countryId ?? country?.id ?? null,
 				sourceUrl: `https://www.themoviedb.org/tv/${externalId}`,
 				lastEnrichedAt: new Date(),
 				enrichmentStatus: EnrichmentStatus.DONE,
@@ -132,7 +135,7 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 						episodeCount:
 							existing.tvShow?.episodeCount ?? data.number_of_episodes,
 						seasonCount: existing.tvShow?.seasonCount ?? data.number_of_seasons,
-						network: existing.tvShow?.network ?? (data.networks[0]?.name ?? null),
+						network: existing.tvShow?.network ?? data.networks[0]?.name ?? null,
 						// Refreshed every re-enrich, not just filled in once (see media.prisma).
 						popularity: data.popularity,
 					},

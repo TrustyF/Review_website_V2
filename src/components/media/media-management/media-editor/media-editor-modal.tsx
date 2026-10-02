@@ -4,6 +4,7 @@ import { useReviewEditorStore } from "./review-editor-store";
 import { MediaCardRecord, MediaRecord } from "@/components/media/types";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { errorMessageOr, useAsyncAction } from "@/lib/use-async-action";
 import {
 	finalizeMediaEditorSave,
 	getMediaForEditor,
@@ -12,10 +13,12 @@ import {
 	saveMediaDetails,
 	saveReview,
 	setMediaDeleted,
-	updateMediaBanner,
-	updateMediaPoster,
 	updateMediaType,
 } from "@/components/media/media-management/media-editor/media-editor-actions";
+import {
+	updateMediaBanner,
+	updateMediaPoster,
+} from "@/components/media/media-management/media-editor/media-image-actions";
 import type { MediaType } from "@prisma/client";
 import { ReviewBodyModal } from "@/components/media/media-management/media-editor/components/review-body-modal";
 import { StarIcon } from "@/components/media/icons/star-icon";
@@ -36,21 +39,20 @@ export default function MediaEditorModal() {
 
 	// Editable copy of the fetched record; every field edit patches this directly.
 	const [draft, setDraft] = useState<MediaRecord | null>(null);
-	const [isSaving, setIsSaving] = useState(false);
-	const [saveError, setSaveError] = useState<string | null>(null);
+	const save = useAsyncAction();
+	// Also set outside save.run, by the load effect below.
+	const setSaveError = save.setError;
 
 	// Soft delete (toggle) / hard delete (irreversible), in the danger zone below —
-	// separate from isSaving/saveError since either can run without touching the draft.
-	const [isDeleting, setIsDeleting] = useState(false);
-	const [deleteError, setDeleteError] = useState<string | null>(null);
+	// separate from save.pending/save.error since either can run without touching the draft.
+	const deletion = useAsyncAction();
 
 	// Applies immediately on select, like the delete toggle — not deferred to Save.
-	const [isChangingType, setIsChangingType] = useState(false);
-	const [typeError, setTypeError] = useState<string | null>(null);
+	const typeChange = useAsyncAction();
 
 	// Logging a rewatch is its own independent action — doesn't touch or wait on
 	// unsaved draft edits, so it gets its own request state instead of riding handleSave.
-	const [isLoggingRewatch, setIsLoggingRewatch] = useState(false);
+	const rewatch = useAsyncAction();
 	const [rewatchLogged, setRewatchLogged] = useState(false);
 	// Hard delete needs an explicit second click before it actually fires —
 	// this just tracks whether that warning is currently showing.
@@ -87,10 +89,10 @@ export default function MediaEditorModal() {
 		setIsBodyModalOpen(false);
 		setPosterUrlInput("");
 		setBannerUrlInput("");
-		setDeleteError(null);
+		deletion.setError(null);
 		setConfirmHardDelete(false);
 		setRewatchLogged(false);
-		setTypeError(null);
+		typeChange.setError(null);
 	}
 
 	// Cards hand over a trimmed record; the draft is the full row, fetched fresh.
@@ -109,7 +111,7 @@ export default function MediaEditorModal() {
 		return () => {
 			cancelled = true;
 		};
-	}, [mediaId, media]);
+	}, [mediaId, media, setSaveError]);
 
 	// Locks the background page's scroll while the modal (which scrolls internally)
 	// is open. Body has min-height not height, so <html> is the real scroller — both need it.
@@ -127,7 +129,7 @@ export default function MediaEditorModal() {
 	}, [mediaId]);
 
 	// Hidden until getMediaForEditor lands, unless loading failed and there's an error to show.
-	if (mediaId === null || (draft === null && saveError === null)) return null;
+	if (mediaId === null || (draft === null && save.error === null)) return null;
 
 	// Just swaps in the preview URL — no download or DB write, so trying a
 	// poster costs nothing. Media.posterPath is only touched on save.
@@ -149,7 +151,7 @@ export default function MediaEditorModal() {
 		setPendingPosterPath(null);
 		setPendingBannerPath(null);
 		setIsBodyModalOpen(false);
-		setDeleteError(null);
+		deletion.setError(null);
 		setConfirmHardDelete(false);
 		close();
 	}
@@ -158,71 +160,55 @@ export default function MediaEditorModal() {
 	// Applies immediately rather than waiting for Save — nothing here to preview first.
 	async function handleToggleDeleted() {
 		if (!draft) return;
-		setIsDeleting(true);
-		setDeleteError(null);
-		try {
-			const nextIsDeleted = !draft.isDeleted;
+		const nextIsDeleted = !draft.isDeleted;
+		await deletion.run(async () => {
 			await setMediaDeleted(draft.id, nextIsDeleted);
 			setDraft((prev) => (prev ? { ...prev, isDeleted: nextIsDeleted } : prev));
-		} catch {
-			setDeleteError("Failed to update. Try again.");
-		} finally {
-			setIsDeleting(false);
-		}
+		}, "Failed to update. Try again.");
 	}
 
 	// Only offered when draft.type is already one of RECLASSIFIABLE_TYPES — all
 	// three share the Movie submodel, so swapping type here is safe.
 	async function handleTypeChange(type: MediaType) {
 		if (!draft) return;
-		setIsChangingType(true);
-		setTypeError(null);
-		try {
+		await typeChange.run(async () => {
 			await updateMediaType(draft.id, type);
 			// Safe to cast — RECLASSIFIABLE_TYPES all carry the same `movie` field,
 			// so the rest of draft's shape stays valid under the new type.
 			setDraft((prev) => (prev ? ({ ...prev, type } as MediaRecord) : prev));
-		} catch (e) {
-			setTypeError(e instanceof Error ? e.message : "Failed to update type.");
-		} finally {
-			setIsChangingType(false);
-		}
+		}, errorMessageOr("Failed to update type."));
 	}
 
 	// Only reachable after confirmHardDelete's second click. Sends the browser home
 	// afterward, since the open page might be /media/[id] for the thing just deleted.
 	async function handleHardDelete() {
 		if (!draft) return;
-		setIsDeleting(true);
-		setDeleteError(null);
-		try {
-			await hardDeleteMedia(draft.id);
-			close();
-			router.push("/");
-		} catch {
-			setDeleteError("Failed to delete. Try again.");
-			setIsDeleting(false);
-		}
+		await deletion.run(
+			async () => {
+				await hardDeleteMedia(draft.id);
+				close();
+				router.push("/");
+			},
+			"Failed to delete. Try again.",
+			{ stayPendingOnSuccess: true },
+		);
 	}
 
 	// Fires immediately on click, no draft/confirmation step — matches logRewatch's
 	// one-click design. rewatchLogged is transient UI state, reset on reopen.
 	async function handleLogRewatch() {
 		if (!draft) return;
-		setIsLoggingRewatch(true);
-		try {
+		await rewatch.run(async () => {
 			await logRewatch(draft.id);
 			setRewatchLogged(true);
-		} finally {
-			setIsLoggingRewatch(false);
-		}
+		}, "Failed to log rewatch. Try again.");
 	}
 
 	async function handleSave() {
 		if (!draft) return;
-		setIsSaving(true);
-		setSaveError(null);
-		try {
+		// errorMessageOr surfaces saveReview's own message when that's what failed, rather than
+		// a generic one that gives no clue which of the four requests rejected.
+		await save.run(async () => {
 			await Promise.all([
 				// draft.review stays unset until patchReview's first call, so this is
 				// false for an untouched, never-rated media — saveReview itself rejects a null rating.
@@ -272,15 +258,7 @@ export default function MediaEditorModal() {
 			setPendingPosterPath(null);
 			setPendingBannerPath(null);
 			close();
-		} catch (e) {
-			// Surfaces saveReview's own message when that's what failed, rather than a
-			// generic one that gives no clue which of the four requests rejected.
-			setSaveError(
-				e instanceof Error ? e.message : "Failed to save. Try again.",
-			);
-		} finally {
-			setIsSaving(false);
-		}
+		}, errorMessageOr("Failed to save. Try again."));
 	}
 
 	// Generic patch helper for the review sub-record: fills in defaults for
@@ -349,7 +327,7 @@ export default function MediaEditorModal() {
 								<select
 									className={styles.field_input}
 									value={draft.type}
-									disabled={isChangingType}
+									disabled={typeChange.pending}
 									onChange={(e) =>
 										handleTypeChange(e.target.value as MediaType)
 									}>
@@ -358,7 +336,9 @@ export default function MediaEditorModal() {
 								</select>
 							</label>
 						)}
-						{typeError && <div className={styles.save_error}>{typeError}</div>}
+						{typeChange.error && (
+							<div className={styles.save_error}>{typeChange.error}</div>
+						)}
 						<label className={styles.field}>
 							Title
 							<input
@@ -552,14 +532,17 @@ export default function MediaEditorModal() {
 								<button
 									type="button"
 									className={styles.rewatch_button}
-									disabled={isLoggingRewatch || rewatchLogged}
+									disabled={rewatch.pending || rewatchLogged}
 									onClick={handleLogRewatch}>
 									{rewatchLogged
 										? "Logged"
-										: isLoggingRewatch
+										: rewatch.pending
 											? "Logging…"
 											: "Log today"}
 								</button>
+								{rewatch.error && (
+									<div className={styles.save_error}>{rewatch.error}</div>
+								)}
 							</div>
 						</div>
 
@@ -590,7 +573,7 @@ export default function MediaEditorModal() {
 							<button
 								type="button"
 								onClick={handleToggleDeleted}
-								disabled={isDeleting}>
+								disabled={deletion.pending}>
 								{draft?.isDeleted ? "Restore" : "Soft delete"}
 							</button>
 
@@ -599,7 +582,7 @@ export default function MediaEditorModal() {
 									type="button"
 									className={styles.danger_button}
 									onClick={() => setConfirmHardDelete(true)}
-									disabled={isDeleting}>
+									disabled={deletion.pending}>
 									Delete permanently…
 								</button>
 							) : (
@@ -610,30 +593,30 @@ export default function MediaEditorModal() {
 										type="button"
 										className={styles.danger_button}
 										onClick={handleHardDelete}
-										disabled={isDeleting}>
-										{isDeleting ? "Deleting…" : "Yes, delete forever"}
+										disabled={deletion.pending}>
+										{deletion.pending ? "Deleting…" : "Yes, delete forever"}
 									</button>
 									<button
 										type="button"
 										onClick={() => setConfirmHardDelete(false)}
-										disabled={isDeleting}>
+										disabled={deletion.pending}>
 										Cancel
 									</button>
 								</span>
 							)}
 						</div>
-						{deleteError && (
-							<div className={styles.save_error}>{deleteError}</div>
+						{deletion.error && (
+							<div className={styles.save_error}>{deletion.error}</div>
 						)}
 					</div>
 
-					{saveError && <div className={styles.save_error}>{saveError}</div>}
+					{save.error && <div className={styles.save_error}>{save.error}</div>}
 				</div>
 			</div>
 
 			<div className={styles.actions}>
-				<button onClick={handleSave} disabled={isSaving}>
-					{isSaving ? "Saving…" : "Save"}
+				<button onClick={handleSave} disabled={save.pending}>
+					{save.pending ? "Saving…" : "Save"}
 				</button>
 				<button onClick={handleClose}>Close</button>
 			</div>

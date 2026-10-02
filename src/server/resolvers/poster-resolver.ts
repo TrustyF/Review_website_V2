@@ -1,4 +1,5 @@
 import { readFile } from "fs/promises";
+import { fetchImage } from "@/server/lib/fetch-image";
 import path from "path";
 import sharp from "sharp";
 import { after } from "next/server";
@@ -79,9 +80,7 @@ async function cacheOrDownload(
 
 	try {
 		const bytes = await dedupeEncode(`${dir}/${filename}`, async () => {
-			const res = await fetch(sourceUrl);
-			if (!res.ok) throw new Error("Image download failed");
-			const source = Buffer.from(await res.arrayBuffer());
+			const { bytes: source } = await fetchImage(sourceUrl);
 			let image = sharp(source);
 			if (resize) {
 				image = image.resize({ ...resize, withoutEnlargement: true });
@@ -139,16 +138,15 @@ export async function resolvePoster(
 	const sourceUrl = posterUrlFor(type, externalId, posterPath, "full");
 	// A dead source (source site down, expired upload, ...) must degrade to the placeholder,
 	// not crash the request — same fallback as the no-posterPath case above.
-	const res = await fetch(sourceUrl).catch(() => null);
-	if (!res?.ok) {
+	const fetched = await fetchImage(sourceUrl).catch(() => null);
+	if (!fetched) {
 		return {
 			bytes: await readFile(PLACEHOLDER_POSTER_PATH),
 			contentType: "image/jpeg",
 			fresh: false,
 		};
 	}
-	const source = Buffer.from(await res.arrayBuffer());
-	const sourceContentType = res.headers.get("content-type") || "image/jpeg";
+	const { bytes: source, contentType: sourceContentType } = fetched;
 
 	// Posters are deliberately never resized down — just re-encoded to WebP.
 	const encode = () =>
@@ -176,12 +174,6 @@ export async function persistCroppedPoster(
 ): Promise<void> {
 	const filename = mediaAssetFilename(mediaId, posterPath);
 	await getImageStorage().write(POSTER_DIR, filename, croppedBytes);
-}
-
-async function fetchImageBytes(url: string): Promise<Buffer> {
-	const res = await fetch(url);
-	if (!res.ok) throw new Error(`Image download failed: ${url}`);
-	return Buffer.from(await res.arrayBuffer());
 }
 
 // Poster height: 90% of frame so blurred backdrop shows through as visible border
@@ -213,7 +205,7 @@ export async function resolveLinkEmbedImage(
 	const bytes = await dedupeEncode(
 		`${LINK_EMBED_DIR}/${filename}`,
 		async () => {
-			const posterBytes = await fetchImageBytes(
+			const { bytes: posterBytes } = await fetchImage(
 				posterUrlFor(type, externalId, posterPath, "full"),
 			);
 
@@ -315,7 +307,8 @@ export async function resolveBanner(
 	if (!bannerPath) return null;
 
 	const dir = variant === "mobile" ? BANNER_MOBILE_DIR : BANNER_DIR;
-	const maxWidth = variant === "mobile" ? BANNER_MOBILE_MAX_WIDTH : BANNER_MAX_WIDTH;
+	const maxWidth =
+		variant === "mobile" ? BANNER_MOBILE_MAX_WIDTH : BANNER_MAX_WIDTH;
 	const quality = variant === "mobile" ? BANNER_MOBILE_QUALITY : BANNER_QUALITY;
 	const filename = mediaAssetFilename(mediaId, bannerPath, BANNER_FORMAT);
 	const storage = getImageStorage();
@@ -331,12 +324,12 @@ export async function resolveBanner(
 
 	// A dead source (e.g. an expired cropped-image upload) must degrade to "no banner", not
 	// crash the request — resolveBanner has no fallback bytes to serve otherwise.
-	const res = await fetch(bannerUrlFor(type, bannerPath)).catch(() => null);
-	if (!res?.ok) return null;
-	const source = Buffer.from(await res.arrayBuffer());
-	// Read off the response rather than hardcoded, so it stays correct if a
-	// source ever changes format.
-	const sourceContentType = res.headers.get("content-type") || "image/jpeg";
+	const fetched = await fetchImage(bannerUrlFor(type, bannerPath)).catch(
+		() => null,
+	);
+	if (!fetched) return null;
+	// Content type read off the response, so it stays correct if a source ever changes format.
+	const { bytes: source, contentType: sourceContentType } = fetched;
 
 	// Deduped so concurrent misses on this banner don't each redo the
 	// resize/encode/write.
@@ -392,10 +385,9 @@ export async function resolvePersonPhoto(
 		return { bytes: cached, contentType: "image/webp", fresh: false };
 	}
 
-	const res = await fetch(personPhotoUrlFor(photoPath));
-	if (!res.ok) throw new Error("Person photo download failed");
-	const source = Buffer.from(await res.arrayBuffer());
-	const sourceContentType = res.headers.get("content-type") || "image/jpeg";
+	const { bytes: source, contentType: sourceContentType } = await fetchImage(
+		personPhotoUrlFor(photoPath),
+	);
 
 	after(async () => {
 		await dedupeEncode(`${PERSON_PHOTO_DIR}/${filename}`, async () => {

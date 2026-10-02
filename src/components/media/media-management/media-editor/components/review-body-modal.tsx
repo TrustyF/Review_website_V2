@@ -1,9 +1,10 @@
 "use client";
 import { useRef, useState } from "react";
+import { useAsyncAction } from "@/lib/use-async-action";
 import {
 	suggestReviewCorrection,
 	suggestReviewTranslation,
-} from "@/components/media/media-management/media-editor/media-editor-actions";
+} from "@/components/media/media-management/media-editor/review-ai-actions";
 import { ReviewDiff } from "@/components/media/media-management/media-editor/components/review-diff";
 import styles from "./review-body-modal.module.sass";
 
@@ -17,42 +18,34 @@ type Props = {
 
 // Its own modal, not inline, since the main modal's fixed-width columns had no room to show
 // the body textarea and AI suggestion side by side.
-export function ReviewBodyModal({ body, onChange, bodyFr, onChangeFr, onClose }: Props) {
+export function ReviewBodyModal({
+	body,
+	onChange,
+	bodyFr,
+	onChangeFr,
+	onClose,
+}: Props) {
 	const [activeLang, setActiveLang] = useState<"en" | "fr">("en");
 
 	const [suggestion, setSuggestion] = useState<string | null>(null);
-	const [isSuggesting, setIsSuggesting] = useState(false);
-	const [suggestError, setSuggestError] = useState<string | null>(null);
+	const suggest = useAsyncAction();
 	const enTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-	const [isTranslating, setIsTranslating] = useState(false);
-	const [translateError, setTranslateError] = useState<string | null>(null);
+	const translate = useAsyncAction();
 	const frTextareaRef = useRef<HTMLTextAreaElement>(null);
 
 	async function handleSuggest() {
 		if (!body.trim()) return;
-		setIsSuggesting(true);
-		setSuggestError(null);
-		try {
+		await suggest.run(async () => {
 			setSuggestion(await suggestReviewCorrection(body));
-		} catch {
-			setSuggestError("Failed to get a suggestion. Try again.");
-		} finally {
-			setIsSuggesting(false);
-		}
+		}, "Failed to get a suggestion. Try again.");
 	}
 
 	async function handleTranslate() {
 		if (!body.trim()) return;
-		setIsTranslating(true);
-		setTranslateError(null);
-		try {
+		await translate.run(async () => {
 			onChangeFr(await suggestReviewTranslation(body));
-		} catch {
-			setTranslateError("Failed to translate. Try again.");
-		} finally {
-			setIsTranslating(false);
-		}
+		}, "Failed to translate. Try again.");
 	}
 
 	// Wraps the current selection in before/after, or inserts a placeholder if nothing's selected.
@@ -67,7 +60,11 @@ export function ReviewBodyModal({ body, onChange, bodyFr, onChangeFr, onClose }:
 		const { selectionStart, selectionEnd } = textarea;
 		const selected = text.slice(selectionStart, selectionEnd) || placeholder;
 		const newText =
-			text.slice(0, selectionStart) + before + selected + after + text.slice(selectionEnd);
+			text.slice(0, selectionStart) +
+			before +
+			selected +
+			after +
+			text.slice(selectionEnd);
 		onChangeText(newText);
 
 		// The re-render from onChange hasn't landed yet — wait a frame before touching selection.
@@ -78,12 +75,20 @@ export function ReviewBodyModal({ body, onChange, bodyFr, onChangeFr, onClose }:
 		});
 	}
 
-	function handleSpoiler(text: string, onChangeText: (value: string) => void, textarea: HTMLTextAreaElement | null) {
+	function handleSpoiler(
+		text: string,
+		onChangeText: (value: string) => void,
+		textarea: HTMLTextAreaElement | null,
+	) {
 		if (!textarea) return;
 		wrapSelection(text, onChangeText, textarea, "||", "||", "spoiler");
 	}
 
-	function handleLink(text: string, onChangeText: (value: string) => void, textarea: HTMLTextAreaElement | null) {
+	function handleLink(
+		text: string,
+		onChangeText: (value: string) => void,
+		textarea: HTMLTextAreaElement | null,
+	) {
 		if (!textarea) return;
 		const url = window.prompt("Link URL:");
 		if (!url) return;
@@ -117,15 +122,17 @@ export function ReviewBodyModal({ body, onChange, bodyFr, onChangeFr, onClose }:
 									<button
 										type="button"
 										title="Wrap the selected text as a spoiler"
-										onClick={() => handleSpoiler(body, onChange, enTextareaRef.current)}
-									>
+										onClick={() =>
+											handleSpoiler(body, onChange, enTextareaRef.current)
+										}>
 										Spoiler
 									</button>
 									<button
 										type="button"
 										title="Turn the selected text into a link"
-										onClick={() => handleLink(body, onChange, enTextareaRef.current)}
-									>
+										onClick={() =>
+											handleLink(body, onChange, enTextareaRef.current)
+										}>
 										Link
 									</button>
 								</div>
@@ -147,14 +154,13 @@ export function ReviewBodyModal({ body, onChange, bodyFr, onChangeFr, onClose }:
 								<button
 									type="button"
 									onClick={handleSuggest}
-									disabled={isSuggesting || !body.trim()}
-								>
-									{isSuggesting ? "Suggesting…" : "Suggest correction"}
+									disabled={suggest.pending || !body.trim()}>
+									{suggest.pending ? "Suggesting…" : "Suggest correction"}
 								</button>
 							</div>
 
-							{suggestError && (
-								<div className={styles.suggest_error}>{suggestError}</div>
+							{suggest.error && (
+								<div className={styles.suggest_error}>{suggest.error}</div>
 							)}
 
 							{suggestion !== null ? (
@@ -165,8 +171,8 @@ export function ReviewBodyModal({ body, onChange, bodyFr, onChangeFr, onClose }:
 								/>
 							) : (
 								<div className={styles.placeholder}>
-									Click &quot;Suggest correction&quot; for an AI-proofread version
-									to compare against.
+									Click &quot;Suggest correction&quot; for an AI-proofread
+									version to compare against.
 								</div>
 							)}
 						</div>
@@ -180,15 +186,17 @@ export function ReviewBodyModal({ body, onChange, bodyFr, onChangeFr, onClose }:
 									<button
 										type="button"
 										title="Wrap the selected text as a spoiler"
-										onClick={() => handleSpoiler(bodyFr, onChangeFr, frTextareaRef.current)}
-									>
+										onClick={() =>
+											handleSpoiler(bodyFr, onChangeFr, frTextareaRef.current)
+										}>
 										Spoiler
 									</button>
 									<button
 										type="button"
 										title="Turn the selected text into a link"
-										onClick={() => handleLink(bodyFr, onChangeFr, frTextareaRef.current)}
-									>
+										onClick={() =>
+											handleLink(bodyFr, onChangeFr, frTextareaRef.current)
+										}>
 										Link
 									</button>
 								</div>
@@ -208,20 +216,22 @@ export function ReviewBodyModal({ body, onChange, bodyFr, onChangeFr, onClose }:
 								<button
 									type="button"
 									onClick={handleTranslate}
-									disabled={isTranslating || !body.trim()}
-								>
-									{isTranslating ? "Translating…" : "Translate from English"}
+									disabled={translate.pending || !body.trim()}>
+									{translate.pending
+										? "Translating…"
+										: "Translate from English"}
 								</button>
 							</div>
 
-							{translateError && (
-								<div className={styles.suggest_error}>{translateError}</div>
+							{translate.error && (
+								<div className={styles.suggest_error}>{translate.error}</div>
 							)}
 
 							<div className={styles.placeholder}>
-								Click &quot;Translate from English&quot; to fill the field on the
-								left with an AI translation of the current English body. This
-								overwrites whatever&apos;s already there — edit freely afterward.
+								Click &quot;Translate from English&quot; to fill the field on
+								the left with an AI translation of the current English body.
+								This overwrites whatever&apos;s already there — edit freely
+								afterward.
 							</div>
 						</div>
 					</div>

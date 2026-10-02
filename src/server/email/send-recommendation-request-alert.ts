@@ -1,11 +1,14 @@
 import { db } from "@/server/db/client";
-import { sendEmail, toAbsoluteUrl } from "@/server/email/mailer";
+import { sendEmail } from "@/server/email/mailer";
+import { toAbsoluteUrl } from "@/server/lib/site-url";
 import { displayName } from "@/lib/display-name";
 import RecommendationRequestAlertEmail from "@/emails/recommendation-request-alert-email";
 
 // Fired inline (not a cron job) — a one-off ops alert, not a batched digest.
 // Fans out to every ADMIN; the app doesn't assume there's only one.
-export async function sendRecommendationRequestAlert(requestId: number): Promise<void> {
+export async function sendRecommendationRequestAlert(
+	requestId: number,
+): Promise<void> {
 	const [request, admins] = await Promise.all([
 		db.recommendationRequest.findUniqueOrThrow({
 			where: { id: requestId },

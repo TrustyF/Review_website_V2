@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, KeyboardEvent, useState } from "react";
+import { useAsyncAction } from "@/lib/use-async-action";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { MediaType } from "@prisma/client";
@@ -38,8 +39,7 @@ export default function AddMediaPage() {
 	const [type, setType] = useState<AddableType>(MediaType.MOVIE);
 	const [query, setQuery] = useState("");
 	const [results, setResults] = useState<MediaSearchResult[]>([]);
-	const [isSearching, setIsSearching] = useState(false);
-	const [searchError, setSearchError] = useState<string | null>(null);
+	const search = useAsyncAction();
 	// The query a search actually ran for, so the "no results" message doesn't apply to unsearched typing.
 	const [searchedQuery, setSearchedQuery] = useState<string | null>(null);
 	const [addingId, setAddingId] = useState<string | null>(null);
@@ -51,26 +51,22 @@ export default function AddMediaPage() {
 	const [manualOverview, setManualOverview] = useState("");
 	const [manualReleaseDate, setManualReleaseDate] = useState("");
 	const [manualPosterUrl, setManualPosterUrl] = useState("");
-	const [isCreating, setIsCreating] = useState(false);
-	const [createError, setCreateError] = useState<string | null>(null);
+	const create = useAsyncAction();
 
 	// Fires on Enter, not on every keystroke — a manual trigger instead of a debounced effect.
 	function runSearch(searchType: AddableType, searchQuery: string) {
 		if (!searchQuery.trim()) return;
-		setIsSearching(true);
-		setSearchError(null);
 		setSearchedQuery(searchQuery);
-		searchMediaSources(searchType, searchQuery)
-			.then(setResults)
-			.catch(() => setSearchError("Search failed. Try again."))
-			.finally(() => setIsSearching(false));
+		void search.run(async () => {
+			setResults(await searchMediaSources(searchType, searchQuery));
+		}, "Search failed. Try again.");
 	}
 
 	function handleQueryChange(value: string) {
 		setQuery(value);
 		if (!value.trim()) {
 			setResults([]);
-			setSearchError(null);
+			search.setError(null);
 		}
 	}
 
@@ -95,22 +91,21 @@ export default function AddMediaPage() {
 	async function handleManualCreate(e: FormEvent) {
 		e.preventDefault();
 		if (!manualTitle.trim()) return;
-		setIsCreating(true);
-		setCreateError(null);
-		try {
-			const mediaId = await createManualMedia({
-				type: manualType,
-				title: manualTitle,
-				overview: manualOverview.trim() || null,
-				releaseDate: manualReleaseDate || null,
-				posterUrl: manualPosterUrl.trim() || null,
-			});
-			router.push(`/media/${mediaId}`);
-		} catch (err) {
-			const reason = err instanceof Error ? err.message : String(err);
-			setCreateError(`Failed to create: ${reason}`);
-			setIsCreating(false);
-		}
+		await create.run(
+			async () => {
+				const mediaId = await createManualMedia({
+					type: manualType,
+					title: manualTitle,
+					overview: manualOverview.trim() || null,
+					releaseDate: manualReleaseDate || null,
+					posterUrl: manualPosterUrl.trim() || null,
+				});
+				router.push(`/media/${mediaId}`);
+			},
+			(err) =>
+				`Failed to create: ${err instanceof Error ? err.message : String(err)}`,
+			{ stayPendingOnSuccess: true },
+		);
 	}
 
 	return (
@@ -205,12 +200,12 @@ export default function AddMediaPage() {
 							className={styles.manual_poster_preview}
 						/>
 					)}
-					{createError && <div className={styles.error}>{createError}</div>}
+					{create.error && <div className={styles.error}>{create.error}</div>}
 					<button
 						type="submit"
 						className={styles.add_button}
-						disabled={isCreating || !manualTitle.trim()}>
-						{isCreating ? "Creating…" : "Create"}
+						disabled={create.pending || !manualTitle.trim()}>
+						{create.pending ? "Creating…" : "Create"}
 					</button>
 				</form>
 			) : (
@@ -226,10 +221,10 @@ export default function AddMediaPage() {
 						autoFocus
 					/>
 
-					{searchError && <div className={styles.error}>{searchError}</div>}
+					{search.error && <div className={styles.error}>{search.error}</div>}
 					{addError && <div className={styles.error}>{addError}</div>}
 
-					{isSearching && <div className={styles.spinner} />}
+					{search.pending && <div className={styles.spinner} />}
 
 					<div className={styles.results}>
 						{results.map((result) => (
@@ -255,11 +250,11 @@ export default function AddMediaPage() {
 						))}
 					</div>
 
-					{!isSearching &&
+					{!search.pending &&
 						query.trim() &&
 						searchedQuery === query &&
 						results.length === 0 &&
-						!searchError && (
+						!search.error && (
 							<div className={styles.empty}>
 								No results for &quot;{query}&quot;.
 							</div>
