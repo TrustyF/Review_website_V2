@@ -140,7 +140,7 @@ export async function ChangeLogList({
 	review: Review | null | undefined;
 }) {
 	const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
-	const dateFormatter = listDateFormatterFor(locale);
+	const dateFormatter = listDateFormatterFor(locale, { year: true });
 	const fieldLabels: Record<string, string> = {
 		rating: dict.changeLog.fields.rating,
 		liked: dict.changeLog.fields.liked,

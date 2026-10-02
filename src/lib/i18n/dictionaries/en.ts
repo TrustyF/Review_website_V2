@@ -180,7 +180,7 @@ export const en = {
 			hardDescription: "Experimental/challenging",
 		},
 		recommendation: "Tell me your mood, I'll make you a list.",
-		mediaTypeSwitcher: "Switch categories here.",
+		mediaTypeSwitcher: "Switch between different types",
 	},
 	media: {
 		recentSuffix: "recent",
@@ -357,6 +357,7 @@ export const en = {
 		openOriginalSource: "Open original source",
 		detailsHeading: "Details",
 		reviewHeading: "Review",
+		overviewLabel: "Overview",
 		changeLogHeading: "Change log",
 		facts: {
 			network: "Network",

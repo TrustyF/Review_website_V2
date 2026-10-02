@@ -62,7 +62,7 @@ export function WatchedButton({
 				title={label}
 				aria-label={label}
 				onClick={toggle}>
-				<Eye size={15} />
+				<Eye size={16} />
 			</Clickable>
 		</Tip>
 	);

@@ -603,6 +603,10 @@
 		"en": "42a90fbc498cd2eb",
 		"fr": "a250de721698959a"
 	},
+	"mediaDetail.overviewLabel": {
+		"en": "f82745f8413486e5",
+		"fr": "b55d68e60332e87b"
+	},
 	"mediaDetail.returnOnInvestment": {
 		"en": "729267731bf6e990",
 		"fr": "575ddae0fbb8b7b2"
@@ -1320,8 +1324,8 @@
 		"fr": "aa3f007ba707a87f"
 	},
 	"tips.mediaTypeSwitcher": {
-		"en": "fb5ef7e907287cc4",
-		"fr": "47936ee089fe283e"
+		"en": "833afc147d5b9cdf",
+		"fr": "ec3961f0b692c2df"
 	},
 	"tips.recommendation": {
 		"en": "6b5e479c029e9ad4",

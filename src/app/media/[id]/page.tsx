@@ -13,6 +13,7 @@ import { formatRuntime } from "@/components/media/primitives/runtime";
 import { PosterEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/poster-edit-trigger";
 import { BannerEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/banner-edit-trigger";
 import { MediaPublishButton } from "@/components/media/media-management/media-detail-inline-editor/media-publish-button";
+import { MediaOverview } from "@/components/media/media-cards/media-card/review";
 import { ReviewBodyEditTrigger } from "@/components/media/media-management/media-detail-inline-editor/review-body-edit-trigger";
 import { AddToListButtonSection } from "@/components/lists/add-to-list-button/add-to-list-button-section";
 import { AddToWatchlistButtonSection } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-button-section";
@@ -157,6 +158,13 @@ export default async function MediaDetailPage({
 	// Media.overviewFr. Title is localized inside MediaTitle instead.
 	const overview =
 		locale === "fr" ? (media.overviewFr ?? media.overview) : media.overview;
+	// Same locale fallback as MediaReviewBody. Without body text, the overview takes
+	// the body's place instead of sitting in Details (desktop only; mobile keeps it up top).
+	const reviewText =
+		locale === "fr"
+			? (media.review?.bodyFr ?? media.review?.body)
+			: media.review?.body;
+	const overviewInReview = !!overview && !reviewText;
 
 	const hasMovieSubmodel = media.type === "MOVIE" || media.type === "SHORT";
 	// Only these types carry a tagline; falls back to English when untranslated, same as overview.
@@ -271,7 +279,7 @@ export default async function MediaDetailPage({
 											className={styles.source_link_button}
 											title={dict.mediaDetail.openOriginalSource}
 											aria-label={dict.mediaDetail.openOriginalSource}>
-											<ExternalLink size={15} />
+											<ExternalLink size={16} />
 										</a>
 									)}
 								</div>
@@ -429,7 +437,11 @@ export default async function MediaDetailPage({
 						)}
 
 						<div className={styles.review_col}>
-							<ReviewBodyEditTrigger media={media} isUpcoming={isUpcoming} />
+							<ReviewBodyEditTrigger
+								media={media}
+								overview={overview}
+								isUpcoming={isUpcoming}
+							/>
 						</div>
 
 						<MediaEditButton media={media} className={styles.edit_button} />
@@ -449,10 +461,11 @@ export default async function MediaDetailPage({
 						<h2 className={styles.section_title}>
 							{dict.mediaDetail.detailsHeading}
 						</h2>
-						{overview && (
-							<p className={`${styles.overview} ${styles.overview_details}`}>
-								{overview}
-							</p>
+						{overview && !overviewInReview && (
+							<MediaOverview
+								overview={overview}
+								className={styles.overview_details}
+							/>
 						)}
 
 						<MediaTypeFacts media={media} dict={dict} />

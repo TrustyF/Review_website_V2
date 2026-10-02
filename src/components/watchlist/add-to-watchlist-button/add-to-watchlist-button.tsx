@@ -56,7 +56,7 @@ export function AddToWatchlistButton({
 				title={label}
 				aria-label={label}
 				onClick={toggle}>
-				<Clock size={15} />
+				<Clock size={16} />
 			</Clickable>
 		</Tip>
 	);

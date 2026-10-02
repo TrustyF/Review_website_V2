@@ -4,7 +4,10 @@ import { MediaRecord } from "@/components/media/types";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaPoster } from "@/components/media/primitives/poster";
 import { MediaTitle } from "@/components/media/primitives/title";
-import { MediaReviewDisplay } from "@/components/media/media-cards/media-card/review";
+import {
+	MediaOverview,
+	MediaReviewDisplay,
+} from "@/components/media/media-cards/media-card/review";
 import { AddToListButtonSection } from "@/components/lists/add-to-list-button/add-to-list-button-section";
 import { BackButton } from "@/components/ui/back-button/back-button";
 import { AddToWatchlistButtonSection } from "@/components/watchlist/add-to-watchlist-button/add-to-watchlist-button-section";
@@ -87,7 +90,7 @@ export function MediaDetailHeaderMobile({
 								className={styles.source_link_button}
 								title={dict.mediaDetail.openOriginalSource}
 								aria-label={dict.mediaDetail.openOriginalSource}>
-								<ExternalLink size={15} />
+								<ExternalLink size={16} />
 							</a>
 						)}
 					</div>
@@ -118,7 +121,9 @@ export function MediaDetailHeaderMobile({
 				{media.alternateTitle && (
 					<div className={styles.alt_title}>{media.alternateTitle}</div>
 				)}
-				{overview && <p className={styles.overview}>{overview}</p>}
+				{overview && (
+					<MediaOverview overview={overview} bare textClassName={styles.overview} />
+				)}
 			</div>
 
 			<div className={styles.review}>

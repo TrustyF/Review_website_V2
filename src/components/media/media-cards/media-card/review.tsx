@@ -59,17 +59,23 @@ export function MediaReviewMeta({
 }
 
 // The review text with its own .body styling, so it still looks right wherever placed (not just inside MediaReview's own wrapper).
+// Shows `overview` in the body's place when there's no body text.
 export function MediaReviewBody({
 	review,
+	overview,
 	bodyClassName,
 }: {
 	review: Review | null | undefined;
+	overview?: string | null | undefined;
 } & Pick<ClassNameOverrides, "bodyClassName">) {
 	const locale = useLocale();
 	// Falls back to English silently when no French translation has been
 	// written yet — see Review.bodyFr in rating.prisma.
 	const text = locale === "fr" ? (review?.bodyFr ?? review?.body) : review?.body;
-	if (!text) return null;
+	if (!text) {
+		if (!overview) return null;
+		return <MediaOverview overview={overview} inReview />;
+	}
 
 	// One provider per review so a revealed spoiler doesn't bleed into another review's card.
 	return (
@@ -81,14 +87,47 @@ export function MediaReviewBody({
 	);
 }
 
+// Labeled, muted, bordered overview so it can't be mistaken for review text.
+// `inReview` when standing in for a missing review body; `bare` drops label and border.
+export function MediaOverview({
+	overview,
+	inReview = false,
+	bare = false,
+	className,
+	textClassName,
+}: {
+	overview: string;
+	inReview?: boolean;
+	bare?: boolean;
+	className?: string | undefined;
+	textClassName?: string | undefined;
+}) {
+	const dict = useDictionary();
+	if (bare) {
+		return (
+			<p className={`${styles.overview_text} ${className ?? ""} ${textClassName ?? ""}`}>
+				{overview}
+			</p>
+		);
+	}
+	return (
+		<div
+			className={`${styles.overview} ${inReview ? styles.overview_in_review : ""} ${className ?? ""}`}>
+			<div className={styles.overview_label}>{dict.mediaDetail.overviewLabel}</div>
+			<p className={`${styles.overview_text} ${textClassName ?? ""}`}>{overview}</p>
+		</div>
+	);
+}
+
 export function MediaReview({
 	review,
 	watchedDate,
 	type,
+	overview,
 	ratingClassName,
 	dateClassName,
 	bodyClassName,
-}: Props & ClassNameOverrides) {
+}: Props & { overview?: string | null | undefined } & ClassNameOverrides) {
 	if (!review) return null;
 
 	return (
@@ -100,7 +139,11 @@ export function MediaReview({
 				ratingClassName={ratingClassName}
 				dateClassName={dateClassName}
 			/>
-			<MediaReviewBody review={review} bodyClassName={bodyClassName} />
+			<MediaReviewBody
+				review={review}
+				overview={overview}
+				bodyClassName={bodyClassName}
+			/>
 		</div>
 	);
 }
@@ -125,29 +168,42 @@ export function UpcomingReviewPlaceholder({
 	);
 }
 
-// Read-only review, no edit affordance — ReviewBodyEditTrigger's non-admin
-// fallback, and used directly by the mobile header (which never edits).
+// Read-only review (ReviewBodyEditTrigger's non-admin fallback, and the mobile header).
+// Media without review text shows the overview where the body would be.
 export function MediaReviewDisplay({
 	review,
 	watchedDate,
 	type,
 	releaseDate,
 	isUpcoming,
+	overview,
 	ratingClassName,
 	dateClassName,
 	bodyClassName,
 }: Props & {
 	releaseDate: Date | null | undefined;
 	isUpcoming: boolean;
+	overview?: string | null | undefined;
 } & ClassNameOverrides) {
-	if (!review && isUpcoming) {
-		return <UpcomingReviewPlaceholder date={releaseDate} />;
+	if (!review) {
+		if (!isUpcoming && !overview) return null;
+		return (
+			<div className={styles.wrapper}>
+				{isUpcoming && <UpcomingReviewPlaceholder date={releaseDate} />}
+				<MediaReviewBody
+					review={null}
+					overview={overview}
+					bodyClassName={bodyClassName}
+				/>
+			</div>
+		);
 	}
 	return (
 		<MediaReview
 			review={review}
 			watchedDate={watchedDate}
 			type={type}
+			overview={overview}
 			ratingClassName={ratingClassName}
 			dateClassName={dateClassName}
 			bodyClassName={bodyClassName}

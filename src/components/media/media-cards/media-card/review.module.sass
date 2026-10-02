@@ -62,3 +62,27 @@
   .spoiler_text
     color: inherit
     background: none
+
+// MediaOverview; _in_review when it stands in for a missing review body.
+.overview
+  display: flex
+  flex-flow: column
+  gap: 0.35rem
+  padding-left: 0.75rem
+  border-left: 2px solid var(--accent1-tint)
+
+.overview_in_review
+  margin-top: 1rem
+
+.overview_label
+  color: var(--accent1)
+  font-size: 0.85rem
+  text-transform: uppercase
+  letter-spacing: 0.05em
+
+.overview_text
+  color: color-mix(in srgb, var(--body) 70%, var(--accent1))
+  font-family: $font-body
+  font-size: 0.9rem
+  line-height: 1.4rem
+  white-space: pre-wrap

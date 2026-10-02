@@ -256,10 +256,8 @@ export async function updateMediaType(mediaId: number, type: MediaType) {
 	}
 	if (existing.type === type) return;
 
+	// Not logged to the change log — a reclassification isn't a meaningful change to show.
 	await db.media.update({ where: { id: mediaId }, data: { type } });
-	await db.mediaChangeLog.create({
-		data: { mediaId, field: "type", oldValue: existing.type, newValue: type },
-	});
 
 	await invalidateSearchIndex();
 	revalidateMediaPaths(mediaId, existing.type);

@@ -14,12 +14,14 @@ import styles from "./review-body-edit-trigger.module.sass";
 
 type Props = {
 	media: MediaRecord;
+	// Locale-resolved; shown in place of the body when there's no review text.
+	overview: string | null;
 	// Server-computed to avoid Date.now() comparison during render (purity violation)
 	isUpcoming: boolean;
 };
 
 // Drop-in <MediaReview> replacement: click to open body editor with AI diff. Closing stages edit to media-publish-store (not save). Scoped to whole card since MediaReview doesn't expose body as targetable sub-element.
-export function ReviewBodyEditTrigger({ media, isUpcoming }: Props) {
+export function ReviewBodyEditTrigger({ media, overview, isUpcoming }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
 	// Mobile admin edits are intentionally unsupported.
@@ -42,6 +44,7 @@ export function ReviewBodyEditTrigger({ media, isUpcoming }: Props) {
 				type={media.type}
 				releaseDate={media.releaseDate}
 				isUpcoming={isUpcoming}
+				overview={overview}
 			/>
 		);
 	}
@@ -67,6 +70,7 @@ export function ReviewBodyEditTrigger({ media, isUpcoming }: Props) {
 					review={{ ...review, body }}
 					watchedDate={media.watchedDate}
 					type={media.type}
+					overview={overview}
 				/>
 				<div className={styles.hover_badge}>Edit review body</div>
 			</Hitbox>

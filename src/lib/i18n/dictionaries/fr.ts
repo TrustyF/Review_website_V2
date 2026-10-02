@@ -181,7 +181,7 @@ export const fr = {
 			hardDescription: "Expérimental/exigeant",
 		},
 		recommendation: "Dites-moi ce qui vous tente, je vous ferai une liste.",
-		mediaTypeSwitcher: "Changez de catégorie ici.",
+		mediaTypeSwitcher: "Passez d'un type à l'autre",
 	},
 	media: {
 		recentSuffix: "récents",
@@ -367,6 +367,7 @@ export const fr = {
 		openOriginalSource: "Ouvrir la source d'origine",
 		detailsHeading: "Détails",
 		reviewHeading: "Critique",
+		overviewLabel: "Résumé",
 		changeLogHeading: "Historique des modifications",
 		facts: {
 			network: "Chaîne",
