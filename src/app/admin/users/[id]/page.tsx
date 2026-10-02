@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { Link } from "@/components/ui/link";
@@ -11,6 +12,17 @@ import styles from "./user-overview.module.sass";
 
 // Admin's landing page for a specific user: their identity plus a preview of the
 // recommendation lists curated for them, mirroring /account's own lists panel.
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") return {};
+	const target = await getRecommendationTarget((await params).id);
+	return target ? { title: displayName(target) } : {};
+}
+
 export default async function AdminUserOverviewPage({
 	params,
 }: {
@@ -59,16 +71,16 @@ export default async function AdminUserOverviewPage({
 					Recommendations
 				</h2>
 				{lists.length === 0 ? (
-					<p className={styles.empty}>
-						Nothing recommended to this user yet.
-					</p>
+					<p className={styles.empty}>Nothing recommended to this user yet.</p>
 				) : (
 					<div className={styles.lists_stack}>
 						{lists.map((list) => (
 							<ListPreviewCard
 								key={list.id}
 								id={list.id}
-								title={locale === "fr" ? (list.titleFr ?? list.title) : list.title}
+								title={
+									locale === "fr" ? (list.titleFr ?? list.title) : list.title
+								}
 								description={
 									locale === "fr"
 										? (list.descriptionFr ?? list.description)

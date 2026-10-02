@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { MediaPoster } from "@/components/media/primitives/poster";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { MediaTitle } from "@/components/media/primitives/title";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import styles from "./media-mini-card-shell.module.sass";
 import { MediaEditButton } from "@/components/media/primitives/edit-button";
@@ -23,7 +23,7 @@ import { useMediaSelection } from "@/components/media/media-grids/media-selectio
 import { MediaSelectOverlay } from "@/components/media/media-grids/media-selection/media-select-overlay";
 
 type Props = {
-	media: MediaRecord;
+	media: MediaCardRecord;
 	// Type-specific bit (runtime for movies, episode count for TV, etc.)
 	children?: ReactNode;
 };

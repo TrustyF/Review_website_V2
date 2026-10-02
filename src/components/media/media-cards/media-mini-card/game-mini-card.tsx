@@ -1,10 +1,10 @@
 import { MediaMiniCardShell } from "@/components/media/media-cards/media-mini-card/media-mini-card-shell";
 import { formatPlatformSummary } from "@/components/media/primitives/platform";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import styles from "./media-mini-card-shell.module.sass";
 
 type Props = {
-	media: MediaRecord & { type: "GAME" };
+	media: MediaCardRecord & { type: "GAME" };
 };
 
 export function GameMiniCard({ media }: Props) {

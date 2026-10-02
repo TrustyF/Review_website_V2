@@ -1,11 +1,12 @@
 "use client";
 import styles from "./media-editor-modal.module.sass";
 import { useReviewEditorStore } from "./review-editor-store";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord, MediaRecord } from "@/components/media/types";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
 	finalizeMediaEditorSave,
+	getMediaForEditor,
 	hardDeleteMedia,
 	logRewatch,
 	saveMediaDetails,
@@ -76,9 +77,9 @@ export default function MediaEditorModal() {
 
 	// Reseed the draft the moment a new record shows up in the store — done during
 	// render, not an effect, so the preview never flashes empty before popping in.
-	const [draftSource, setDraftSource] = useState<MediaRecord | null>(null);
+	const [draftSource, setDraftSource] = useState<MediaCardRecord | null>(null);
 	if (media !== null && media !== draftSource) {
-		setDraft(media);
+		setDraft(null);
 		setDraftSource(media);
 		setSaveError(null);
 		setPendingPosterPath(null);
@@ -91,6 +92,24 @@ export default function MediaEditorModal() {
 		setRewatchLogged(false);
 		setTypeError(null);
 	}
+
+	// Cards hand over a trimmed record; the draft is the full row, fetched fresh.
+	useEffect(() => {
+		if (mediaId === null) return;
+		let cancelled = false;
+		getMediaForEditor(mediaId)
+			.then((full) => {
+				if (cancelled) return;
+				if (full) setDraft(full);
+				else setSaveError("This media no longer exists.");
+			})
+			.catch(() => {
+				if (!cancelled) setSaveError("Couldn't load this media. Try again.");
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [mediaId, media]);
 
 	// Locks the background page's scroll while the modal (which scrolls internally)
 	// is open. Body has min-height not height, so <html> is the real scroller — both need it.
@@ -107,7 +126,8 @@ export default function MediaEditorModal() {
 		};
 	}, [mediaId]);
 
-	if (mediaId === null) return null;
+	// Hidden until getMediaForEditor lands, unless loading failed and there's an error to show.
+	if (mediaId === null || (draft === null && saveError === null)) return null;
 
 	// Just swaps in the preview URL — no download or DB write, so trying a
 	// poster costs nothing. Media.posterPath is only touched on save.

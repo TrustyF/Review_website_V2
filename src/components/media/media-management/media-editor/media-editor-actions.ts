@@ -28,6 +28,7 @@ import { readCroppedFile } from "@/server/resolvers/image-crop-resolver";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
 import type { PickableImage } from "@/components/media/media-management/media-editor/components/image-picker";
 import { recordInvocation } from "@/server/dev/invocation-tracker";
+import { MediaRecord, toMediaRecord } from "@/components/media/types";
 import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/review-body-syntax";
 import { invalidateSearchIndex } from "@/components/search/search-actions";
 import { revalidateMediaPaths } from "@/server/cache/revalidate-media";
@@ -70,6 +71,26 @@ function diffFields(
 		});
 	}
 	return changes;
+}
+
+// The editor saves straight from its draft, so it loads the full row here rather than trusting a grid's trimmed MediaCardRecord.
+export async function getMediaForEditor(
+	mediaId: number,
+): Promise<MediaRecord | null> {
+	await requireAdmin();
+	const raw = await db.media.findUnique({
+		where: { id: mediaId },
+		include: {
+			movie: true,
+			tvShow: true,
+			manga: true,
+			comic: true,
+			game: true,
+			book: true,
+			review: true,
+		},
+	});
+	return raw ? toMediaRecord(raw) : null;
 }
 
 export async function saveReview(

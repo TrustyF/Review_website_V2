@@ -1,5 +1,5 @@
 "use client";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./rating-distribution.module.sass";
 
@@ -16,7 +16,7 @@ function tierLabel(tier: number): string {
 }
 
 type Props = {
-	media: MediaRecord[];
+	media: MediaCardRecord[];
 };
 
 // Small histogram of credited media's ratings. One series (counts), so a single flat hue, no legend needed.
@@ -36,28 +36,24 @@ export function RatingDistribution({ media }: Props) {
 			<h2 className={styles.title}>{dict.media.ratingDistribution.title}</h2>
 			<div className={styles.chart}>
 				{counts.map((count, tier) => (
-					<div
-						className={styles.column}
-						key={tier}
-					>
+					<div className={styles.column} key={tier}>
 						<div
 							className={styles.bar_track}
 							tabIndex={count > 0 ? 0 : undefined}
 							aria-label={dict.media.ratingDistribution.ratedAriaLabel(
 								count,
 								tierLabel(tier),
-							)}
-						>
+							)}>
 							<div
 								className={styles.bar}
 								style={{ height: `${(count / max) * 100}%` }}
 							/>
 							{count > 0 && (
-								<span
-									className={styles.tooltip}
-									aria-hidden
-								>
-									{dict.media.ratingDistribution.ratedTooltip(count, tierLabel(tier))}
+								<span className={styles.tooltip} aria-hidden>
+									{dict.media.ratingDistribution.ratedTooltip(
+										count,
+										tierLabel(tier),
+									)}
 								</span>
 							)}
 						</div>
@@ -68,17 +64,15 @@ export function RatingDistribution({ media }: Props) {
 					<div
 						className={styles.bar_track}
 						tabIndex={unrated > 0 ? 0 : undefined}
-						aria-label={dict.media.ratingDistribution.unratedAriaLabel(unrated)}
-					>
+						aria-label={dict.media.ratingDistribution.unratedAriaLabel(
+							unrated,
+						)}>
 						<div
 							className={`${styles.bar} ${styles.bar_unrated}`}
 							style={{ height: `${(unrated / max) * 100}%` }}
 						/>
 						{unrated > 0 && (
-							<span
-								className={styles.tooltip}
-								aria-hidden
-							>
+							<span className={styles.tooltip} aria-hidden>
 								{dict.media.ratingDistribution.unratedTooltip(unrated)}
 							</span>
 						)}

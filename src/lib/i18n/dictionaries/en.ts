@@ -18,10 +18,10 @@ export const en = {
 		movies: "Movies",
 		tv: "TV",
 		shorts: "Shorts",
-		reading: "Books",
+		reading: "Reading",
 		manga: "Manga",
 		comics: "Comics",
-		books: "Novels",
+		books: "Books",
 		games: "Games",
 		activity: "Activity",
 		reviews: "Reviews",
@@ -323,7 +323,7 @@ export const en = {
 		eyebrowNew: "New review",
 	},
 	watchlist: {
-		title: "Watchlisted",
+		title: "Watchlist",
 		backToAccount: "← Account",
 		empty: "Your watchlist is empty — add something from its media page.",
 		inWatchlist: "In watchlist",
@@ -381,6 +381,13 @@ export const en = {
 		statusFulfilled: "Fulfilled",
 		statusDismissed: "Dismissed",
 		viewList: "View list →",
+	},
+	// Browser-tab titles for pages whose <h1> isn't already a dictionary string.
+	pageTitles: {
+		account: "Account",
+		onboarding: "Welcome",
+		search: "Search",
+		searchResults: (query: string) => `Search: ${query}`,
 	},
 	searchPage: {
 		promptEmpty: "Search for a title, person, or company.",

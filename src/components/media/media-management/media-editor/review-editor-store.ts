@@ -1,10 +1,10 @@
 import { create } from "zustand";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 
 // Holds full record so editor renders preview immediately on open.
 export const useReviewEditorStore = create<{
-	media: MediaRecord | null;
-	open: (media: MediaRecord) => void;
+	media: MediaCardRecord | null;
+	open: (media: MediaCardRecord) => void;
 	close: () => void;
 }>((set) => ({
 	media: null,

@@ -3,11 +3,14 @@ import { MediaTypeListPage } from "@/components/media/media-pages/media-type-lis
 import { MediaType } from "@prisma/client";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 
-export const metadata: Metadata = {
-	title: "TV Show Reviews",
-	description: "Arthur Sirjacobs' ratings and reviews of TV shows.",
-	alternates: { canonical: "/tv" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+	const dict = await getDictionary();
+	return {
+		title: dict.nav.tv,
+		description: "Arthur Sirjacobs' ratings and reviews of TV shows.",
+		alternates: { canonical: "/tv" },
+	};
+}
 
 export default async function TvPage() {
 	const dict = await getDictionary();

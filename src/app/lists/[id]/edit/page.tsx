@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { db } from "@/server/db/client";
 import { EditListForm } from "@/components/lists/edit-list-form/edit-list-form";
 import styles from "./edit-list.module.sass";
+
+export const metadata: Metadata = { title: "Edit list" };
 
 export default async function EditListPage({
 	params,

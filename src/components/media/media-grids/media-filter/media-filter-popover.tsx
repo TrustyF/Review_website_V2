@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useRef, useState } from "react";
 import { Filter } from "lucide-react";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import {
 	availableFilterFields,
 	collectGenres,
@@ -19,7 +19,7 @@ import styles from "./media-filter-popover.module.sass";
 
 type Props = {
 	// The full, unfiltered media, used to derive which genres/fields are worth offering (e.g. no Runtime slider for a page of only games).
-	media: MediaRecord[];
+	media: MediaCardRecord[];
 	filter: MediaFilterState;
 	onChange: (next: MediaFilterState) => void;
 };
@@ -96,7 +96,9 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 				<div className={styles.popover}>
 					{availableFields.has("rating") && (
 						<div className={styles.section}>
-							<div className={styles.section_title}>{dict.media.filter.rating}</div>
+							<div className={styles.section_title}>
+								{dict.media.filter.rating}
+							</div>
 							<DualRangeSlider
 								min={RATING_MIN}
 								max={RATING_MAX}
@@ -119,7 +121,9 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 
 					{availableFields.has("runtime") && (
 						<div className={styles.section}>
-							<div className={styles.section_title}>{dict.media.filter.runtime}</div>
+							<div className={styles.section_title}>
+								{dict.media.filter.runtime}
+							</div>
 							<DualRangeSlider
 								min={RUNTIME_MIN}
 								max={RUNTIME_MAX}
@@ -142,7 +146,9 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 
 					{availableFields.has("genre") && availableGenres.length > 0 && (
 						<div className={styles.section}>
-							<div className={styles.section_title}>{dict.media.filter.genres}</div>
+							<div className={styles.section_title}>
+								{dict.media.filter.genres}
+							</div>
 							<ul className={styles.checkbox_list}>
 								{availableGenres.map((genre) => (
 									<li key={genre}>
@@ -162,7 +168,9 @@ export function MediaFilterPopover({ media, filter, onChange }: Props) {
 
 					{availableFields.has("difficulty") && (
 						<div className={styles.section}>
-							<div className={styles.section_title}>{dict.media.filter.difficulty}</div>
+							<div className={styles.section_title}>
+								{dict.media.filter.difficulty}
+							</div>
 							<ul className={styles.checkbox_list}>
 								{DIFFICULTY_LEVELS.map((level) => (
 									<li key={level.value}>

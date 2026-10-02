@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { getRecommendationRequestsForAdmin } from "@/components/recommendations/recommendation-request-actions";
 import { RecommendationRequestsPanel } from "./recommendation-requests-panel";
 import styles from "./recommendation-requests.module.sass";
+
+export const metadata: Metadata = { title: "Recommendation requests" };
 
 export default async function AdminRecommendationRequestsPage() {
 	const session = await auth();

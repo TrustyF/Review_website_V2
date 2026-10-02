@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { db, dbPublic } from "@/server/db/client";
 import { EnrichmentStatus } from "@prisma/client";
-import { toMediaRecord } from "@/components/media/types";
+import { toMediaCardRecord, toMediaRecord } from "@/components/media/types";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
 import { MediaCardDisplayProvider } from "@/components/media/media-card-display-context";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
@@ -38,7 +38,7 @@ export async function GenreMediaListPage({ name }: Props) {
 		}),
 		getDictionary(),
 	]);
-	const media = rawList.map(toMediaRecord);
+	const media = rawList.map((raw) => toMediaCardRecord(toMediaRecord(raw)));
 
 	return (
 		<div className={styles.wrapper}>

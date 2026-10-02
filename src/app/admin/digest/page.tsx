@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { DigestPageClient } from "./digest-page-client";
+
+export const metadata: Metadata = { title: "Digest" };
 
 // Admin area for the weekly digest email: override its banner
 // (src/emails/components/digest-banner.tsx) and trigger sends manually.

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { db } from "@/server/db/client";
 import {
 	bannerUrlFor,
@@ -13,6 +14,8 @@ import {
 } from "@/server/resolvers/poster-resolver";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { CompressionPlayground } from "./compression-playground";
+
+export const metadata: Metadata = { title: "Banner compression" };
 
 // Sample of real banners/posters to try settings against ("Custom URL…" covers the rest)
 const SAMPLE_SIZE = 30;
@@ -59,7 +62,12 @@ export default async function BannerCompressionDevPage() {
 		id: media.id,
 		title: media.title,
 		// Same "full" size resolvePoster itself downloads before re-encoding
-		sourceUrl: posterUrlFor(media.type, media.externalId, media.posterPath!, "full"),
+		sourceUrl: posterUrlFor(
+			media.type,
+			media.externalId,
+			media.posterPath!,
+			"full",
+		),
 		// Same aspect ratio MediaPoster renders at, so practical-scale previews size correctly
 		ratio: posterRatioFor(media.type),
 	}));

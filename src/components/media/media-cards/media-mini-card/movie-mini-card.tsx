@@ -6,11 +6,11 @@ import {
 } from "@/components/media/primitives/release-date";
 import { useMediaCardDisplay } from "@/components/media/media-card-display-context";
 import { useLocale } from "@/lib/i18n/i18n-context";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import styles from "./media-mini-card-shell.module.sass";
 
 type Props = {
-	media: MediaRecord & { type: "MOVIE" | "SHORT" };
+	media: MediaCardRecord & { type: "MOVIE" | "SHORT" };
 };
 
 export function MovieMiniCard({ media }: Props) {

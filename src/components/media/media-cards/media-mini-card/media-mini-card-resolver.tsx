@@ -4,10 +4,10 @@ import { MangaMiniCard } from "@/components/media/media-cards/media-mini-card/ma
 import { ComicMiniCard } from "@/components/media/media-cards/media-mini-card/comic-mini-card";
 import { GameMiniCard } from "@/components/media/media-cards/media-mini-card/game-mini-card";
 import { BookMiniCard } from "@/components/media/media-cards/media-mini-card/book-mini-card";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 
 type Props = {
-	media: MediaRecord;
+	media: MediaCardRecord;
 };
 
 export function MediaMiniCardResolver({ media }: Props) {

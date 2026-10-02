@@ -22,7 +22,7 @@ export const fr = {
 		reading: "Lectures",
 		manga: "Mangas",
 		comics: "Comics",
-		books: "Romans",
+		books: "Livres",
 		games: "Jeux",
 		activity: "Activité",
 		reviews: "Critiques",
@@ -394,6 +394,12 @@ export const fr = {
 		statusFulfilled: "Traitée",
 		statusDismissed: "Écartée",
 		viewList: "Voir la liste →",
+	},
+	pageTitles: {
+		account: "Compte",
+		onboarding: "Bienvenue",
+		search: "Recherche",
+		searchResults: (query: string) => `Recherche : ${query}`,
 	},
 	searchPage: {
 		promptEmpty: "Recherchez un titre, une personne ou une société.",

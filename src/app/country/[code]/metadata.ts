@@ -12,7 +12,7 @@ export async function generateCountryMetadata({
 	if (!name) return {};
 
 	return {
-		title: `${name} Reviews`,
+		title: name,
 		description: `Arthur Sirjacobs' reviews of movies, TV shows, books, comics, manga and games from ${name}.`,
 		alternates: { canonical: `/country/${code.toLowerCase()}` },
 	};

@@ -5,12 +5,15 @@ import { StatsPageClient } from "@/components/stats/stats-page-client";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./stats.module.sass";
 
-export const metadata: Metadata = {
-	title: "Stats",
-	description:
-		"Arthur Sirjacobs' viewing/reading stats — ratings breakdown, top genres, countries and people across every review.",
-	alternates: { canonical: "/stats" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+	const dict = await getDictionary();
+	return {
+		title: dict.stats.title,
+		description:
+			"Arthur Sirjacobs' viewing/reading stats — ratings breakdown, top genres, countries and people across every review.",
+		alternates: { canonical: "/stats" },
+	};
+}
 
 export default async function StatsPage() {
 	const [stats, dict] = await Promise.all([getStats(), getDictionary()]);

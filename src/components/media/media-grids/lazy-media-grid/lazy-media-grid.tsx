@@ -1,16 +1,16 @@
 "use client";
 import { ReactNode } from "react";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import { MediaMiniCardResolver } from "@/components/media/media-cards/media-mini-card/media-mini-card-resolver";
 import { useLazyReveal } from "@/components/media/media-grids/lazy-media-grid/use-lazy-reveal";
 import styles from "./lazy-media-grid.module.sass";
 
 type Props = {
-	items: MediaRecord[];
+	items: MediaCardRecord[];
 	// Stable id for this grid instance; when given, scroll depth survives a back-navigation.
 	restoreKey?: string;
 	// Per-item action overlay (e.g. a list's "remove" button); only list-media-view.tsx uses it.
-	renderOverlay?: ((item: MediaRecord) => ReactNode) | undefined;
+	renderOverlay?: ((item: MediaCardRecord) => ReactNode) | undefined;
 };
 
 // Reveals more cards as the sentinel scrolls into view instead of mounting everything up front.

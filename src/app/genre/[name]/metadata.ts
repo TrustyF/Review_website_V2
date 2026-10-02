@@ -10,7 +10,7 @@ export async function generateGenreMetadata({
 	if (!decoded) return {};
 
 	return {
-		title: `${decoded} Reviews`,
+		title: decoded,
 		description: `Arthur Sirjacobs' ${decoded.toLowerCase()} movie, TV, book, comic, manga and game reviews.`,
 		alternates: { canonical: `/genre/${encodeURIComponent(decoded)}` },
 	};

@@ -1,11 +1,12 @@
 import { CSSProperties, Fragment } from "react";
 import { MediaCardResolver } from "@/components/media/media-cards/media-card/media-card-resolver";
 import { MediaGroup } from "@/components/media/media-grids/grouped-media-grid/grouped-media-grid";
+import { MediaRecord } from "@/components/media/types";
 import listStyles from "@/components/media/media-grids/lazy-media-list/lazy-media-list.module.sass";
 import styles from "./grouped-media-list.module.sass";
 
 type Props = {
-	groups: MediaGroup[];
+	groups: MediaGroup<MediaRecord>[];
 };
 
 // No reveal-on-scroll of its own — the only caller already hands it only whatever's been fetched so far.
@@ -26,7 +27,9 @@ export function GroupedMediaList({ groups }: Props) {
 					</div>
 				);
 
-				const spacer = <div className={styles.month_spacer} aria-hidden="true" />;
+				const spacer = (
+					<div className={styles.month_spacer} aria-hidden="true" />
+				);
 
 				// First group ("this month") is self-evident, so it skips the label/details wrapper; only earlier groups get one.
 				if (groupIndex === 0) {

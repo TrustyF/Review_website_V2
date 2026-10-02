@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Link } from "@/components/ui/link";
 import { auth } from "@/auth";
@@ -5,6 +6,11 @@ import { getNotifications } from "@/components/notifications/notification-action
 import { NotificationFeed } from "@/components/notifications/notification-feed";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./notifications.module.sass";
+
+export async function generateMetadata(): Promise<Metadata> {
+	const dict = await getDictionary();
+	return { title: dict.notifications.title };
+}
 
 export default async function AccountNotificationsPage() {
 	const session = await auth();

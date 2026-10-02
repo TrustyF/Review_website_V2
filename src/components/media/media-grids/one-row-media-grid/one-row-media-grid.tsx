@@ -1,14 +1,14 @@
 "use client";
 import { ReactNode } from "react";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import { MediaMiniCardResolver } from "@/components/media/media-cards/media-mini-card/media-mini-card-resolver";
 import styles from "./one-row-media-grid.module.sass";
 
 type Props = {
-	items: MediaRecord[];
+	items: MediaCardRecord[];
 	// How many fixed rows to fill before hiding the rest. Capped in the sass file at $max-rows.
 	rows?: number;
-	renderOverlay?: ((item: MediaRecord) => ReactNode) | undefined;
+	renderOverlay?: ((item: MediaCardRecord) => ReactNode) | undefined;
 };
 
 // Always exactly `rows` rows: container-query breakpoints generated in the sass file size columns

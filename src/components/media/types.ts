@@ -56,6 +56,103 @@ export type MediaRecord =
 	| (BaseRecord & { type: "GAME"; game: Game })
 	| (BaseRecord & { type: "BOOK"; book: Book });
 
+type CardBase = Pick<
+	MediaRecord,
+	| "id"
+	| "title"
+	| "titleFr"
+	| "posterSrc"
+	| "externalId"
+	| "releaseDate"
+	| "watchedDate"
+	| "genres"
+> & {
+	review?: Pick<Review, "rating" | "difficulty" | "liked" | "body"> | null;
+};
+
+// Only what media grids, mini cards and their filters/sorts read. A full MediaRecord is assignable to it; a card needing a new field adds it here.
+export type MediaCardRecord =
+	| (CardBase & { type: "MOVIE"; movie: Pick<Movie, "runtime"> })
+	| (CardBase & { type: "SHORT"; movie: Pick<Movie, "runtime"> })
+	| (CardBase & {
+			type: "TVSHOW";
+			tvShow: Pick<TvShow, "seasonCount" | "episodeCount">;
+	  })
+	| (CardBase & {
+			type: "MANGA";
+			manga: Pick<Manga, "volumeCount" | "chapterCount">;
+	  })
+	| (CardBase & {
+			type: "COMIC";
+			comic: Pick<Comic, "volumeCount" | "chapterCount">;
+	  })
+	| (CardBase & { type: "GAME"; game: Pick<Game, "platform"> })
+	| (CardBase & { type: "BOOK"; book: Pick<Book, never> });
+
+// Trims a server-side list before it's serialized to the client; /movies goes from ~2MB to ~330KB.
+export function toMediaCardRecord(record: MediaRecord): MediaCardRecord {
+	const { review } = record;
+	const base: CardBase = {
+		id: record.id,
+		title: record.title,
+		titleFr: record.titleFr,
+		posterSrc: record.posterSrc,
+		externalId: record.externalId,
+		releaseDate: record.releaseDate,
+		watchedDate: record.watchedDate,
+		genres: record.genres,
+		review: review
+			? {
+					rating: review.rating,
+					difficulty: review.difficulty,
+					liked: review.liked,
+					body: review.body,
+				}
+			: null,
+	};
+	switch (record.type) {
+		case "MOVIE":
+		case "SHORT":
+			return {
+				...base,
+				type: record.type,
+				movie: { runtime: record.movie.runtime },
+			};
+		case "TVSHOW": {
+			const { seasonCount, episodeCount } = record.tvShow;
+			return {
+				...base,
+				type: record.type,
+				tvShow: { seasonCount, episodeCount },
+			};
+		}
+		case "MANGA": {
+			const { volumeCount, chapterCount } = record.manga;
+			return {
+				...base,
+				type: record.type,
+				manga: { volumeCount, chapterCount },
+			};
+		}
+		case "COMIC": {
+			const { volumeCount, chapterCount } = record.comic;
+			return {
+				...base,
+				type: record.type,
+				comic: { volumeCount, chapterCount },
+			};
+		}
+		case "GAME":
+			return {
+				...base,
+				type: record.type,
+				game: { platform: record.game.platform },
+			};
+		case "BOOK":
+			return { ...base, type: record.type, book: {} };
+	}
+}
+
 // Synchronous and I/O-free: posterSrc/bannerSrc point at /api/poster and /api/banner routes rather than a pre-resolved file, so reshaping a media list never blocks on downloading a single image. Each route resolves/caches lazily on actual request. Filename is content-addressed by posterPath/bannerPath, so the URL changes whenever the image does, making a long-lived immutable Cache-Control safe.
 export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 	const posterSrc = toPosterSrc(raw.id, raw.posterPath);
@@ -64,13 +161,15 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 		: null;
 	const bannerSrcMobile = raw.bannerPath ? `${bannerSrc}?size=mobile` : null;
 	const watchedDate = raw.review?.rating != null ? raw.review.createDate : null;
-	const genres = (raw.mediaGenres ?? []).map((mg) => mg.genre.name);
+	// Flattened into genres; the raw relation itself isn't passed along.
+	const { mediaGenres, ...base } = raw;
+	const genres = (mediaGenres ?? []).map((mg) => mg.genre.name);
 	switch (raw.type) {
 		case "MOVIE":
 		case "SHORT":
 			if (!raw.movie) break;
 			return {
-				...raw,
+				...base,
 				type: raw.type,
 				movie: raw.movie,
 				posterSrc,
@@ -82,7 +181,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 		case "TVSHOW":
 			if (!raw.tvShow) break;
 			return {
-				...raw,
+				...base,
 				type: raw.type,
 				tvShow: raw.tvShow,
 				posterSrc,
@@ -94,7 +193,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 		case "MANGA":
 			if (!raw.manga) break;
 			return {
-				...raw,
+				...base,
 				type: raw.type,
 				manga: raw.manga,
 				posterSrc,
@@ -106,7 +205,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 		case "COMIC":
 			if (!raw.comic) break;
 			return {
-				...raw,
+				...base,
 				type: raw.type,
 				comic: raw.comic,
 				posterSrc,
@@ -118,7 +217,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 		case "GAME":
 			if (!raw.game) break;
 			return {
-				...raw,
+				...base,
 				type: raw.type,
 				game: raw.game,
 				posterSrc,
@@ -130,7 +229,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 		case "BOOK":
 			if (!raw.book) break;
 			return {
-				...raw,
+				...base,
 				type: raw.type,
 				book: raw.book,
 				posterSrc,

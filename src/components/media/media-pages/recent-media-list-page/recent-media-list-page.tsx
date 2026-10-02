@@ -1,6 +1,6 @@
 import { Link } from "@/components/ui/link";
 import { dbPublic } from "@/server/db/client";
-import { toMediaRecord } from "@/components/media/types";
+import { toMediaCardRecord, toMediaRecord } from "@/components/media/types";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
 import { EnrichmentStatus, MediaType, Prisma } from "@prisma/client";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
@@ -33,7 +33,7 @@ export async function RecentMediaListPage({
 		},
 		orderBy: { releaseDate: "desc" },
 	});
-	const mediaList = rawList.map(toMediaRecord);
+	const mediaList = rawList.map((raw) => toMediaCardRecord(toMediaRecord(raw)));
 	const dict = await getDictionary();
 
 	return (

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import {
 	EMPTY_MEDIA_FILTER,
 	FILTER_DEBOUNCE_MS,
@@ -9,10 +9,12 @@ import {
 } from "@/components/media/media-grids/media-filter/media-filter";
 
 // Owns filter state and the live/debounced split: `filter` updates immediately so the slider tracks the pointer, `filteredMedia` lags by FILTER_DEBOUNCE_MS to avoid re-filtering on every tick.
-// `initialFilter` may be a lazy initializer (as accepted by useState), letting callers seed it from the URL without recomputing it on every render.
-export function useMediaFilter(
-	media: MediaRecord[],
-	initialFilter: MediaFilterState | (() => MediaFilterState) = EMPTY_MEDIA_FILTER,
+// `initialFilter` may be a lazy initializer (as accepted by useState), letting callers seed it from the URL without recomputing it on every render. Generic so full MediaRecords come back out of filteredMedia.
+export function useMediaFilter<T extends MediaCardRecord>(
+	media: T[],
+	initialFilter:
+		| MediaFilterState
+		| (() => MediaFilterState) = EMPTY_MEDIA_FILTER,
 ) {
 	const [filter, setFilter] = useState<MediaFilterState>(initialFilter);
 

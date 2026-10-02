@@ -1,8 +1,8 @@
 import { MediaMiniCardShell } from "@/components/media/media-cards/media-mini-card/media-mini-card-shell";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 
 type Props = {
-	media: MediaRecord & { type: "BOOK" };
+	media: MediaCardRecord & { type: "BOOK" };
 };
 
 export function BookMiniCard({ media }: Props) {

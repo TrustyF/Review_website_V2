@@ -1,11 +1,20 @@
+import type { Metadata } from "next";
 import { getActivityFeed } from "@/components/activity/activity-actions";
 import { ActivityFeed } from "@/components/activity/activity-feed/activity-feed";
 import { ActivityIcon } from "@/components/icons/activity-icon";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./activity.module.sass";
 
+export async function generateMetadata(): Promise<Metadata> {
+	const dict = await getDictionary();
+	return { title: dict.nav.activity };
+}
+
 export default async function ActivityPage() {
-	const [entries, dict] = await Promise.all([getActivityFeed(), getDictionary()]);
+	const [entries, dict] = await Promise.all([
+		getActivityFeed(),
+		getDictionary(),
+	]);
 
 	return (
 		<div className={styles.wrapper}>

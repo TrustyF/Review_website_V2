@@ -1,6 +1,6 @@
 "use client";
 import { memo, ReactNode, useMemo } from "react";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import {
 	GroupedMediaGrid,
 	MediaGroup,
@@ -9,7 +9,7 @@ import { StarIcon } from "@/components/media/icons/star-icon";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 
 // Whole-point tiers, not half-point, to avoid twenty collapsible sections. Unrated media get their own tier at the end.
-function ratingTierOf(media: MediaRecord): number | null {
+function ratingTierOf(media: MediaCardRecord): number | null {
 	const rating = media.review?.rating;
 	if (rating == null) return null;
 	return Math.floor(rating);
@@ -22,9 +22,9 @@ function tierLabel(tier: number | null, unratedLabel: string): string {
 }
 
 type Props = {
-	media: MediaRecord[];
+	media: MediaCardRecord[];
 	// Forwarded straight through to each tier's own LazyMediaGrid.
-	renderOverlay?: ((item: MediaRecord) => ReactNode) | undefined;
+	renderOverlay?: ((item: MediaCardRecord) => ReactNode) | undefined;
 };
 
 // Groups media into rating tiers, highest first (Unrated last), via GroupedMediaGrid. memo() + useMemo() keep a slider-drag re-render (before the debounced filter settles) from redoing the sort/bucket pass.
@@ -38,7 +38,7 @@ export const RatedTierGrid = memo(function RatedTierGrid({
 			(a, b) => (b.review?.rating ?? -1) - (a.review?.rating ?? -1),
 		);
 
-		const tiers = new Map<number | null, MediaRecord[]>();
+		const tiers = new Map<number | null, MediaCardRecord[]>();
 		for (const item of sorted) {
 			const tier = ratingTierOf(item);
 			const bucket = tiers.get(tier);

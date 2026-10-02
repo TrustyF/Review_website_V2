@@ -3,6 +3,7 @@ import { db } from "@/server/db/client";
 import {
 	MediaRecord,
 	RawMediaRecord,
+	toMediaCardRecord,
 	toMediaRecord,
 } from "@/components/media/types";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
@@ -250,7 +251,7 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 									: joinNames(topGroup.names)}
 							</h2>
 							<MediaCardDisplayProvider showTitle={false}>
-								<LazyMediaGrid items={topGroup.media} />
+								<LazyMediaGrid items={topGroup.media.map(toMediaCardRecord)} />
 							</MediaCardDisplayProvider>
 						</div>
 					)}
@@ -260,7 +261,7 @@ export async function CreditMediaListPage({ kind, id }: Props) {
 								{dict.media.credits.alsoInvolvedIn}
 							</h2>
 							<MediaCardDisplayProvider showTitle={false}>
-								<LazyMediaGrid items={otherMedia} />
+								<LazyMediaGrid items={otherMedia.map(toMediaCardRecord)} />
 							</MediaCardDisplayProvider>
 						</div>
 					)}

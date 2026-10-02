@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Link } from "@/components/ui/link";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import styles from "./unsubscribed.module.sass";
@@ -5,6 +6,18 @@ import styles from "./unsubscribed.module.sass";
 type Props = {
 	searchParams: Promise<{ status?: string }>;
 };
+
+export async function generateMetadata({
+	searchParams,
+}: Props): Promise<Metadata> {
+	const [{ status }, dict] = await Promise.all([searchParams, getDictionary()]);
+	return {
+		title:
+			status === "ok"
+				? dict.unsubscribed.title
+				: dict.unsubscribed.titleInvalid,
+	};
+}
 
 export default async function UnsubscribedPage({ searchParams }: Props) {
 	const [{ status }, dict] = await Promise.all([searchParams, getDictionary()]);

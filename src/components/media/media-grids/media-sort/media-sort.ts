@@ -1,4 +1,4 @@
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 
 // "rating" isn't a real sort — it means "use RatedTierGrid's grouped-by-tier view". The other two group by year, newest-first.
 export type MediaSortOption = "rating" | "releaseDate" | "watchedDate";
@@ -12,16 +12,19 @@ export const SORT_OPTIONS: { value: MediaSortOption; label: string }[] = [
 	{ value: "watchedDate", label: "Watch date" },
 ];
 
-function dateFor(media: MediaRecord, option: MediaDateSortOption): Date | null {
+function dateFor(
+	media: MediaCardRecord,
+	option: MediaDateSortOption,
+): Date | null {
 	if (option === "releaseDate") return media.releaseDate;
 	return media.watchedDate;
 }
 
 // Newest first; media missing the chosen date sorts last rather than being dropped.
 function sortMediaByDate(
-	media: MediaRecord[],
+	media: MediaCardRecord[],
 	option: MediaDateSortOption,
-): MediaRecord[] {
+): MediaCardRecord[] {
 	return [...media].sort((a, b) => {
 		const dateA = dateFor(a, option);
 		const dateB = dateFor(b, option);
@@ -34,17 +37,17 @@ function sortMediaByDate(
 
 export type MediaYearGroup = {
 	year: number | null;
-	items: MediaRecord[];
+	items: MediaCardRecord[];
 };
 
 // Buckets media by calendar year, newest first; media missing that date gets its own group at the end rather than being dropped.
 export function groupMediaByYear(
-	media: MediaRecord[],
+	media: MediaCardRecord[],
 	option: MediaDateSortOption,
 ): MediaYearGroup[] {
 	const sorted = sortMediaByDate(media, option);
 
-	const years = new Map<number | null, MediaRecord[]>();
+	const years = new Map<number | null, MediaCardRecord[]>();
 	for (const item of sorted) {
 		const date = dateFor(item, option);
 		const year = date ? date.getFullYear() : null;

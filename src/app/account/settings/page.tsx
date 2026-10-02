@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Link } from "@/components/ui/link";
 import { auth } from "@/auth";
@@ -6,6 +7,11 @@ import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { AccountSettingsForm } from "@/components/account/account-settings-form/account-settings-form";
 // import { DeleteAccountSection } from "@/components/account/delete-account-section/delete-account-section";
 import styles from "./settings.module.sass";
+
+export async function generateMetadata(): Promise<Metadata> {
+	const dict = await getDictionary();
+	return { title: dict.account.settingsTitle };
+}
 
 export default async function AccountSettingsPage() {
 	const session = await auth();

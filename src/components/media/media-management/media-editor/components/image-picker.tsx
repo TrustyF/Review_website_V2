@@ -13,7 +13,7 @@ const PAGE_SIZE = 10;
 
 export type ImageOptionsPage = { images: PickableImage[]; hasMore: boolean };
 
-// Only what this component reads (MediaRecord or bare search result satisfy this).
+// Only what this component reads (MediaCardRecord or bare search result satisfy this).
 type ImagePickerSource = {
 	id: number;
 	type: MediaType;

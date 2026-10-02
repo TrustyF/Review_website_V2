@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
+import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { getAvatarGroups } from "@/server/avatars/avatar-catalog";
 import { OnboardingWizard } from "@/components/onboarding/onboarding-wizard/onboarding-wizard";
 import { parseOnboardingStep } from "@/components/onboarding/onboarding-step";
+
+export async function generateMetadata(): Promise<Metadata> {
+	const dict = await getDictionary();
+	return { title: dict.pageTitles.onboarding };
+}
 
 type Props = {
 	searchParams: Promise<{ step?: string }>;

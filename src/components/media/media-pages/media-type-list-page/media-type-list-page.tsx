@@ -2,7 +2,7 @@ import { Link } from "@/components/ui/link";
 import { dbPublic } from "@/server/db/client";
 import { MediaFilterGrid } from "@/components/media/media-grids/media-filter-grid/media-filter-grid";
 import { MediaTypeSwitcher } from "@/components/media/media-pages/media-type-switcher/media-type-switcher";
-import { toMediaRecord } from "@/components/media/types";
+import { toMediaCardRecord, toMediaRecord } from "@/components/media/types";
 import { EnrichmentStatus, MediaType, Prisma } from "@prisma/client";
 import styles from "./media-type-list-page.module.sass";
 
@@ -37,7 +37,7 @@ export async function MediaTypeListPage({
 		// Without this, Postgres row order can shift between requests (e.g. an UPDATE moving a row). RatedTierGrid's stable sort-by-rating preserves arrival order within a tier, so pinning it here keeps ties from reshuffling.
 		orderBy: { id: "asc" },
 	});
-	const media = rawList.map(toMediaRecord);
+	const media = rawList.map((raw) => toMediaCardRecord(toMediaRecord(raw)));
 
 	return (
 		<div className={styles.wrapper}>

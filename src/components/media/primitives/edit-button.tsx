@@ -3,18 +3,22 @@
 import { useReviewEditorStore } from "@/components/media/media-management/media-editor/review-editor-store";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import { Hitbox } from "@/components/ui/hitbox";
 import Image from "next/image";
 
 type Props = {
-	media: MediaRecord;
+	media: MediaCardRecord;
 	className?: string | undefined;
 	// Smaller than default to avoid overlapping adjacent buttons when stacked
 	hitboxPadding?: number;
 };
 
-export function MediaEditButton({ media, className, hitboxPadding = 15 }: Props) {
+export function MediaEditButton({
+	media,
+	className,
+	hitboxPadding = 15,
+}: Props) {
 	const open = useReviewEditorStore((s) => s.open);
 	const editingMediaId = useReviewEditorStore((s) => s.media?.id ?? null);
 	const sessionIsAdmin = useIsAdmin();
@@ -28,7 +32,10 @@ export function MediaEditButton({ media, className, hitboxPadding = 15 }: Props)
 	if (editingMediaId === media.id) return null;
 
 	return (
-		<Hitbox className={className} onClick={() => open(media)} padding={hitboxPadding}>
+		<Hitbox
+			className={className}
+			onClick={() => open(media)}
+			padding={hitboxPadding}>
 			<Image
 				src={"/ui/edit_pen_1.svg"}
 				width={20}

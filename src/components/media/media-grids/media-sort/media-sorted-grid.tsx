@@ -1,6 +1,6 @@
 "use client";
 import { useMemo } from "react";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import { RatedTierGrid } from "@/components/media/media-grids/rated-tier-grid/rated-tier-grid";
 import {
 	GroupedMediaGrid,
@@ -14,7 +14,7 @@ import { MediaSortIcon } from "@/components/media/media-grids/media-sort/media-s
 import { useDictionary } from "@/lib/i18n/i18n-context";
 
 type Props = {
-	media: MediaRecord[];
+	media: MediaCardRecord[];
 	sort: MediaSortOption;
 };
 

@@ -1,5 +1,5 @@
 "use client";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord, MediaRecord } from "@/components/media/types";
 import { RatedTierGrid } from "@/components/media/media-grids/rated-tier-grid/rated-tier-grid";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
 import { useIsAdmin } from "@/lib/use-is-admin";
@@ -19,7 +19,12 @@ type Props = {
 };
 
 // Handles the two non-RANKED sort modes (RankedList covers RANKED); RATED reuses RatedTierGrid, UNSORTED reuses LazyMediaGrid directly. Neither grid has a built-in "remove from list", so it's supplied via renderOverlay — the seen badge rides along in the same slot.
-export function ListMediaView({ listId, media, sortMode, seenMediaIds }: Props) {
+export function ListMediaView({
+	listId,
+	media,
+	sortMode,
+	seenMediaIds,
+}: Props) {
 	const dict = useDictionary();
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
@@ -28,7 +33,7 @@ export function ListMediaView({ listId, media, sortMode, seenMediaIds }: Props) 
 	const { removingId, handleRemove } = useListItemRemoval(listId);
 	const { filteredMedia } = useMediaFilter(media);
 
-	const renderOverlay = (item: MediaRecord) => (
+	const renderOverlay = (item: MediaCardRecord) => (
 		<>
 			{seenMediaIds?.has(item.id) && (
 				<SeenBadge type={item.type} className={styles.seen_badge} />

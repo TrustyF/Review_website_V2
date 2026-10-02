@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { Link } from "@/components/ui/link";
@@ -10,6 +11,17 @@ import styles from "./user-lists.module.sass";
 
 // Full grid of one user's recommendation lists, reached from /admin/users/[id]. "New list"
 // here is pre-scoped to this user via /admin/users/[id]/lists/new.
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") return {};
+	const target = await getRecommendationTarget((await params).id);
+	return target ? { title: `Made for ${displayName(target)}` } : {};
+}
+
 export default async function AdminUserListsPage({
 	params,
 }: {
@@ -34,7 +46,7 @@ export default async function AdminUserListsPage({
 	return (
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
-				<h1>Recommendations for {displayName(target)}</h1>
+				<h1>Made for {displayName(target)}</h1>
 				<Link href={`/admin/users/${id}/lists/new`} className={styles.new_link}>
 					New list
 				</Link>
@@ -48,7 +60,9 @@ export default async function AdminUserListsPage({
 						<ListPreviewCard
 							key={list.id}
 							id={list.id}
-							title={locale === "fr" ? (list.titleFr ?? list.title) : list.title}
+							title={
+								locale === "fr" ? (list.titleFr ?? list.title) : list.title
+							}
 							description={
 								locale === "fr"
 									? (list.descriptionFr ?? list.description)

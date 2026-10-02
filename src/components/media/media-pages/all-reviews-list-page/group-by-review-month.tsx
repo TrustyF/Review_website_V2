@@ -19,13 +19,13 @@ export function groupMediaByReviewMonth(
 	media: MediaRecord[],
 	locale: Locale,
 	unknownLabel: string,
-): MediaGroup[] {
+): MediaGroup<MediaRecord>[] {
 	const monthLabel = new Intl.DateTimeFormat(MONTH_LABEL_LOCALE[locale], {
 		month: "long",
 		year: "numeric",
 	});
 
-	const groups: MediaGroup[] = [];
+	const groups: MediaGroup<MediaRecord>[] = [];
 	for (const item of media) {
 		const date = reviewMonthDate(item);
 		const key = date ? `${date.getFullYear()}-${date.getMonth()}` : "unknown";

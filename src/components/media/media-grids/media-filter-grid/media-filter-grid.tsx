@@ -1,7 +1,7 @@
 "use client";
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import { useMediaFilter } from "@/components/media/media-grids/media-filter/use-media-filter";
 import { MediaFilterPopover } from "@/components/media/media-grids/media-filter/media-filter-popover";
 import { MediaSortPopover } from "@/components/media/media-grids/media-sort/media-sort-popover";
@@ -43,7 +43,7 @@ function parseSort(params: URLSearchParams): MediaSortOption {
 }
 
 type Props = {
-	media: MediaRecord[];
+	media: MediaCardRecord[];
 	showRating?: boolean | undefined;
 	showTitle?: boolean | undefined;
 };

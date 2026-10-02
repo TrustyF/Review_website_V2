@@ -1,5 +1,5 @@
 import { MediaType } from "@prisma/client";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 
 export type MediaFilterState = {
 	// Empty = no filter. Non-empty = whitelist: show only media with at least one of these genres.
@@ -43,7 +43,7 @@ export function isFilterActive(filter: MediaFilterState): boolean {
 }
 
 // Only Movie/Short carry a runtime; everything else has nothing to compare against a runtime bound.
-export function getRuntimeMinutes(media: MediaRecord): number | null {
+export function getRuntimeMinutes(media: MediaCardRecord): number | null {
 	if (media.type === "MOVIE" || media.type === "SHORT")
 		return media.movie.runtime;
 	return null;
@@ -51,7 +51,7 @@ export function getRuntimeMinutes(media: MediaRecord): number | null {
 
 // A rating/runtime bound excludes media with no value for that field too, not just media outside the range.
 export function matchesMediaFilter(
-	media: MediaRecord,
+	media: MediaCardRecord,
 	filter: MediaFilterState,
 ): boolean {
 	if (
@@ -85,7 +85,7 @@ export function matchesMediaFilter(
 }
 
 // Sorted, deduped genre list for the popover's checkbox options. Usually derived from the unfiltered list so unchecking a genre doesn't hide its own checkbox.
-export function collectGenres(media: MediaRecord[]): string[] {
+export function collectGenres(media: MediaCardRecord[]): string[] {
 	const genres = new Set<string>();
 	for (const item of media) {
 		for (const genre of item.genres) genres.add(genre);
@@ -107,7 +107,9 @@ const FILTERABLE_FIELDS_BY_TYPE: Record<MediaType, ReadonlySet<FilterField>> = {
 };
 
 // Union of filterable fields across present media types; a mixed-type grid keeps a field visible if any item present could use it.
-export function availableFilterFields(media: MediaRecord[]): Set<FilterField> {
+export function availableFilterFields(
+	media: MediaCardRecord[],
+): Set<FilterField> {
 	const fields = new Set<FilterField>();
 	for (const item of media) {
 		for (const field of FILTERABLE_FIELDS_BY_TYPE[item.type]) fields.add(field);

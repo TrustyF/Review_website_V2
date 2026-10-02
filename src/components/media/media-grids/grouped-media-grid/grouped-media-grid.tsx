@@ -1,19 +1,19 @@
 import { ReactNode } from "react";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import { LazyMediaGrid } from "@/components/media/media-grids/lazy-media-grid/lazy-media-grid";
 import styles from "./grouped-media-grid.module.sass";
 
-export type MediaGroup = {
+export type MediaGroup<T extends MediaCardRecord = MediaCardRecord> = {
 	// Stable across re-renders; doubles as LazyMediaGrid's restoreKey so each group's scroll-reveal depth is independent.
 	key: string;
 	label: ReactNode;
-	items: MediaRecord[];
+	items: T[];
 };
 
 type Props = {
 	groups: MediaGroup[];
 	// Forwarded to each group's own LazyMediaGrid.
-	renderOverlay?: ((item: MediaRecord) => ReactNode) | undefined;
+	renderOverlay?: ((item: MediaCardRecord) => ReactNode) | undefined;
 };
 
 // Lays out pre-grouped media as collapsible, lazily-revealed grids, one per group; grouping/ordering is the caller's concern.

@@ -880,8 +880,8 @@
 		"fr": "eae33ecace958b5a"
 	},
 	"nav.books": {
-		"en": "06ddd5fda0e6bdf7",
-		"fr": "02b1ff6375801a8b"
+		"en": "ca56105dd11031ca",
+		"fr": "098b3b3a1aaa7c30"
 	},
 	"nav.closeMenu": {
 		"en": "696229fe6c75c7f9",
@@ -936,7 +936,7 @@
 		"fr": "85aaf6adcc23c290"
 	},
 	"nav.reading": {
-		"en": "ca56105dd11031ca",
+		"en": "34c65840f4daf3c4",
 		"fr": "ce30cfbd35ef02ca"
 	},
 	"nav.recommendationRequests": {
@@ -1158,6 +1158,22 @@
 	"onboarding.usernameStep.title": {
 		"en": "1366f037be247267",
 		"fr": "23c3eb9e5f01036e"
+	},
+	"pageTitles.account": {
+		"en": "8a10a023803d51a1",
+		"fr": "9a183d1564e3dc10"
+	},
+	"pageTitles.onboarding": {
+		"en": "1fa79baa5f6a65d4",
+		"fr": "385816e7e3e7464b"
+	},
+	"pageTitles.search": {
+		"en": "bde99b13e0a9d5a2",
+		"fr": "487d617206bd3f4e"
+	},
+	"pageTitles.searchResults": {
+		"en": "9f28d83f0a5a7ab8",
+		"fr": "617682f8169abb3a"
 	},
 	"recommendationRequest.alreadyPendingFailed": {
 		"en": "beb43e911c994fc9",
@@ -1484,7 +1500,7 @@
 		"fr": "7f205f9f62161b96"
 	},
 	"watchlist.title": {
-		"en": "fb6f64d6d7afa2e8",
+		"en": "d8a02d0c584aec5d",
 		"fr": "aa3f007ba707a87f"
 	}
 }

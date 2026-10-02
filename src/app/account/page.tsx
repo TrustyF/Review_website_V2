@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Link } from "@/components/ui/link";
 import { List, MailPlus, Settings } from "lucide-react";
@@ -15,6 +16,11 @@ import { displayName } from "@/lib/display-name";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { getLocale } from "@/lib/i18n/get-locale";
 import styles from "./account.module.sass";
+
+export async function generateMetadata(): Promise<Metadata> {
+	const dict = await getDictionary();
+	return { title: dict.pageTitles.account };
+}
 
 export default async function AccountPage() {
 	const session = await auth();

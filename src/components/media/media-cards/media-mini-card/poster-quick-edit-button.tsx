@@ -2,13 +2,16 @@
 import { CSSProperties, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ImageIcon } from "lucide-react";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import { Hitbox } from "@/components/ui/hitbox";
 import { useIsAdmin } from "@/lib/use-is-admin";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useImageEditPopover } from "@/components/media/media-management/media-detail-inline-editor/use-image-edit-popover";
 import { EditImagePopover } from "@/components/media/media-management/media-detail-inline-editor/edit-image-popover";
-import { getAlternativePosters, updateMediaPoster } from "@/components/media/media-management/media-editor/media-editor-actions";
+import {
+	getAlternativePosters,
+	updateMediaPoster,
+} from "@/components/media/media-management/media-editor/media-editor-actions";
 
 const POPOVER_WIDTH = 400;
 // Headroom to prevent overflow when opening near bottom.
@@ -16,7 +19,7 @@ const POPOVER_HEIGHT_BUDGET = 480;
 const GAP = 8;
 
 type Props = {
-	media: MediaRecord;
+	media: MediaCardRecord;
 	className?: string | undefined;
 	// Lets the card show the pick immediately (see media-mini-card-shell.tsx's own comment) —
 	// null reverts to media.posterSrc, e.g. after a failed save.

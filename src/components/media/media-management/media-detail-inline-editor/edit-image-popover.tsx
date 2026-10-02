@@ -1,5 +1,5 @@
 import { CSSProperties } from "react";
-import { MediaRecord } from "@/components/media/types";
+import { MediaCardRecord } from "@/components/media/types";
 import { MediaType } from "@prisma/client";
 import {
 	ImageOptionsPage,
@@ -10,7 +10,7 @@ import styles from "./edit-image-popover.module.sass";
 
 type Props = {
 	title: string;
-	draft: MediaRecord;
+	draft: MediaCardRecord;
 	fetchOptions: (
 		externalId: string,
 		type: MediaType,

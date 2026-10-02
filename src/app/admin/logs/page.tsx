@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CircleCheck, TriangleAlert } from "lucide-react";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { listDateFormatterFor } from "@/lib/format-list-date";
 import styles from "./logs.module.sass";
+
+export const metadata: Metadata = { title: "Cron job logs" };
 
 // Admin-only, no i18n locale context — always English.
 const DateFormatter = listDateFormatterFor("en");
@@ -43,7 +46,9 @@ export default async function AdminLogsPage() {
 											{DateFormatter.format(run.createdAt)}
 										</span>
 									</div>
-									{run.summary && <div className={styles.summary}>{run.summary}</div>}
+									{run.summary && (
+										<div className={styles.summary}>{run.summary}</div>
+									)}
 								</div>
 							</li>
 						);
