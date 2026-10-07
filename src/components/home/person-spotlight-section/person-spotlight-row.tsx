@@ -1,4 +1,5 @@
 "use client";
+import { Drama, Video } from "lucide-react";
 import { useState, useTransition } from "react";
 import { HomeMediaRow } from "@/components/home/home-media-row";
 import { SpinButton } from "@/components/home/spin-button/spin-button";
@@ -28,6 +29,12 @@ export function PersonSpotlightRow({
 	const { person } = data;
 	return (
 		<HomeMediaRow
+			icon={data.role === "DIRECTOR" ? Video : Drama}
+			subtitle={
+				data.role === "DIRECTOR"
+					? dict.home.subtitles.directorSpotlight
+					: dict.home.subtitles.actorSpotlight
+			}
 			title={
 				data.role === "DIRECTOR"
 					? dict.home.directorSpotlight

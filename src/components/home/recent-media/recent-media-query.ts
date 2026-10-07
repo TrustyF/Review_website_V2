@@ -1,6 +1,7 @@
 import { dbPublic } from "@/server/db/client";
 import { toMediaRecord, MediaRecord } from "@/components/media/types";
 import { EnrichmentStatus, MediaType } from "@prisma/client";
+import { RECENT_MEDIA_GROUPS, RecentMediaGroup } from "./recent-media-groups";
 
 // Shared by non-screen home sections (books/comics/games/manga). Fixed-size curated lists like movie sections, not paginated feed.
 const RECENT_COUNT = 14;
@@ -63,15 +64,14 @@ async function getRecentReleases(type: MediaType): Promise<MediaRecord[]> {
 	return fallback.map(toMediaRecord);
 }
 
-// Recent items (by rating date); excludeIds avoids repeating "Recent releases"
+// Recent items across the group's types (by rating date); excludeIds avoids repeating "Recent releases"
 async function getRecentlyWatched(
-	type: MediaType,
+	types: readonly MediaType[],
 	excludeIds: number[],
-	take: number,
 ): Promise<MediaRecord[]> {
 	const raw = await dbPublic.media.findMany({
 		where: {
-			type,
+			type: { in: [...types] },
 			enrichmentStatus: EnrichmentStatus.DONE,
 			isAdult: false,
 			...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}),
@@ -82,38 +82,34 @@ async function getRecentlyWatched(
 		},
 		include: EVERY_TYPE_RELATION,
 		orderBy: { review: { createDate: "desc" } },
-		take,
+		take: RECENT_COUNT,
 	});
 	return raw.map(toMediaRecord);
 }
 
 export type RecentMediaSectionData = {
-	recentReleases: MediaRecord[];
+	// One row per type that has any, in group order.
+	recentReleases: { type: MediaType; items: MediaRecord[] }[];
 	recentlyWatched: MediaRecord[];
 };
 
 // Comics don't get a "Recent releases" section — release dates for tracked issues aren't a
-// meaningful "new" signal here, unlike movies/books/games/manga.
-const SKIP_RECENT_RELEASES: MediaType[] = [MediaType.COMIC];
-
-// "Recently read" (books/comics/manga) shows fewer than "Recently watched"/"Recently played".
-const RECENTLY_READ_COUNT = 7;
-const RECENTLY_READ_TYPES: MediaType[] = [
-	MediaType.BOOK,
-	MediaType.COMIC,
-	MediaType.MANGA,
-];
+// meaningful "new" signal here. Games only show "Recently played".
+const SKIP_RECENT_RELEASES: MediaType[] = [MediaType.COMIC, MediaType.GAME];
 
 export async function loadRecentMediaSection(
-	type: MediaType,
+	group: RecentMediaGroup,
 ): Promise<RecentMediaSectionData> {
-	const recentReleases = SKIP_RECENT_RELEASES.includes(type)
-		? []
-		: await getRecentReleases(type);
+	const types = RECENT_MEDIA_GROUPS[group];
+	const releaseRows = await Promise.all(
+		types
+			.filter((type) => !SKIP_RECENT_RELEASES.includes(type))
+			.map(async (type) => ({ type, items: await getRecentReleases(type) })),
+	);
+	const recentReleases = releaseRows.filter((row) => row.items.length > 0);
 	const recentlyWatched = await getRecentlyWatched(
-		type,
-		recentReleases.map((m) => m.id),
-		RECENTLY_READ_TYPES.includes(type) ? RECENTLY_READ_COUNT : RECENT_COUNT,
+		types,
+		recentReleases.flatMap((row) => row.items.map((m) => m.id)),
 	);
 	return { recentReleases, recentlyWatched };
 }

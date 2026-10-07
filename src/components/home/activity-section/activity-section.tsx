@@ -1,3 +1,4 @@
+import { ActivityIcon } from "@/components/icons/activity-icon";
 import { getRecentRewatchesAndRatingChanges } from "@/components/activity/activity-actions";
 import { ActivityFeed } from "@/components/activity/activity-feed/activity-feed";
 import { HomeSectionHeader } from "@/components/home/home-section-header";
@@ -15,7 +16,9 @@ export async function ActivitySection() {
 	return (
 		<section className={styles.wrapper}>
 			<HomeSectionHeader
+				icon={ActivityIcon}
 				title={dict.nav.activity}
+				subtitle={dict.home.subtitles.activity}
 				seeAll={{ href: "/activity", label: dict.home.seeAll }}
 			/>
 			<div className={styles.body}>

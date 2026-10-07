@@ -8,6 +8,10 @@ import { RecentlyWatchedSection } from "@/components/home/recently-watched-secti
 import { MyWatchlistSection } from "@/components/home/my-watchlist-section/my-watchlist-section";
 import { AnticipatedReleasesSection } from "@/components/home/anticipated-releases-section/anticipated-releases-section";
 import { LazyRecentMediaSection } from "@/components/home/recent-media/lazy-recent-media-section";
+import {
+	RECENT_MEDIA_GROUPS,
+	type RecentMediaGroup,
+} from "@/components/home/recent-media/recent-media-groups";
 import { YourWatchlistSection } from "@/components/home/your-watchlist-section/your-watchlist-section";
 import { ActivitySection } from "@/components/home/activity-section/activity-section";
 import { FeaturedListsSection } from "@/components/home/featured-lists-section/featured-lists-section";
@@ -51,18 +55,14 @@ const EVERY_TYPE_RELATION = {
 } as const;
 
 // Screen releases only — these home sections cover movies/shorts/TV, not the full catalog.
+const RECENT_MEDIA_GROUP_KEYS = Object.keys(
+	RECENT_MEDIA_GROUPS,
+) as RecentMediaGroup[];
+
 const SCREEN_MEDIA_TYPES: MediaType[] = [
 	MediaType.MOVIE,
 	MediaType.SHORT,
 	MediaType.TVSHOW,
-];
-
-// Lazily fetched client-side on scroll via LazyRecentMediaSection
-const OTHER_MEDIA_TYPES: MediaType[] = [
-	MediaType.BOOK,
-	MediaType.COMIC,
-	MediaType.GAME,
-	MediaType.MANGA,
 ];
 
 // Recent releases *you've rated* — not just "what's new" (that's RecentMediaListPage's job). Scoped to RECENT_MOVIES_MONTHS, but the date filter drops entirely below MIN_RECENT_MOVIES rather than showing a half-empty section.
@@ -317,8 +317,9 @@ export default async function HomePage() {
 				<Suspense>
 					<PersonSpotlightSection />
 				</Suspense>
-				{OTHER_MEDIA_TYPES.map((type) => (
-					<LazyRecentMediaSection key={type} type={type} />
+				{/* Lazily fetched client-side on scroll. */}
+				{RECENT_MEDIA_GROUP_KEYS.map((group) => (
+					<LazyRecentMediaSection key={group} group={group} />
 				))}
 				<Suspense>
 					<MyWatchlistRow anticipated={anticipatedPromise} />

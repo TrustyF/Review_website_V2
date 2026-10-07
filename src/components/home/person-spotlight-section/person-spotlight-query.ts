@@ -137,30 +137,30 @@ async function loadSpotlight(
 	};
 }
 
-// Alternates weekly between a director and an actor, each rotating through its own candidates.
-export async function loadWeeklyPersonSpotlight() {
-	const week = currentWeekIndex();
-	const role: SpotlightRole = week % 2 === 0 ? "DIRECTOR" : "ACTOR";
-	const personId = pickForWeek(
-		await loadCandidates(role),
-		Math.floor(week / 2),
-	);
-	return personId == null ? null : loadSpotlight(role, personId);
-}
-
-// "Spin again": any other qualifying director or actor, whichever role the current pick has.
-export async function loadRandomPersonSpotlight(
-	currentRole: SpotlightRole | null,
-	currentId: number | null,
-) {
+// Directors and actors together, sorted by person id so the roles interleave week to week.
+async function loadPool() {
 	const [directors, actors] = await Promise.all([
 		loadCandidates("DIRECTOR"),
 		loadCandidates("ACTOR"),
 	]);
-	const pool = [
+	return [
 		...directors.map((personId) => ({ role: "DIRECTOR" as const, personId })),
 		...actors.map((personId) => ({ role: "ACTOR" as const, personId })),
-	];
+	].sort((a, b) => a.personId - b.personId || a.role.localeCompare(b.role));
+}
+
+// Rotates weekly through the combined director/actor pool.
+export async function loadWeeklyPersonSpotlight() {
+	const pick = pickForWeek(await loadPool(), currentWeekIndex());
+	return pick ? loadSpotlight(pick.role, pick.personId) : null;
+}
+
+// "Spin again": any other qualifying director or actor.
+export async function loadRandomPersonSpotlight(
+	currentRole: SpotlightRole | null,
+	currentId: number | null,
+) {
+	const pool = await loadPool();
 	const others = pool.filter(
 		(c) => c.role !== currentRole || c.personId !== currentId,
 	);

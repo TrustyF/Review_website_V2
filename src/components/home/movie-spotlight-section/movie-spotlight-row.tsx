@@ -1,4 +1,5 @@
 "use client";
+import { Cone } from "lucide-react";
 import { useState, useTransition } from "react";
 import type { MediaCardRecord } from "@/components/media/types";
 import { HomeMediaRow } from "@/components/home/home-media-row";
@@ -20,7 +21,9 @@ export function MovieSpotlightRow({ initial }: { initial: MediaCardRecord[] }) {
 
 	return (
 		<HomeMediaRow
+			icon={Cone}
 			title={dict.home.movieSpotlight}
+			subtitle={dict.home.subtitles.movieSpotlight}
 			items={items}
 			action={<SpinButton onSpin={spin} pending={isPending} />}
 			pending={isPending}

@@ -1,3 +1,4 @@
+import { WatchlistIcon } from "@/components/icons/watchlist-icon";
 import { db } from "@/server/db/client";
 import { toMediaCardRecord, toMediaRecord } from "@/components/media/types";
 import { HomeMediaRow } from "@/components/home/home-media-row";
@@ -35,7 +36,9 @@ export async function YourWatchlistSection({ userId }: Props) {
 
 	return (
 		<HomeMediaRow
+			icon={WatchlistIcon}
 			title={dict.home.yourWatchlist}
+			subtitle={dict.home.subtitles.yourWatchlist}
 			items={items.map((item) => toMediaCardRecord(toMediaRecord(item.media)))}
 			seeAll={{ href: "/watchlist", label: dict.home.seeAll }}
 		/>

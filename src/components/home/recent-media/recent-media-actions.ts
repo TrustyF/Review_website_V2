@@ -1,12 +1,13 @@
 "use server";
-import { MediaType } from "@prisma/client";
 import {
 	loadRecentMediaSection,
 	RecentMediaSectionData,
 } from "./recent-media-query";
+import { isRecentMediaGroup } from "./recent-media-groups";
 
 export async function fetchRecentMediaSection(
-	type: MediaType,
+	group: string,
 ): Promise<RecentMediaSectionData> {
-	return loadRecentMediaSection(type);
+	if (!isRecentMediaGroup(group)) throw new Error("Unknown media group");
+	return loadRecentMediaSection(group);
 }

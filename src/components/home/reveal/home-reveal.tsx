@@ -24,7 +24,8 @@ function Reveal({ children }: { children: ReactNode }) {
 				observer.disconnect();
 				setState("shown");
 			},
-			{ rootMargin: "0px 0px -10% 0px" },
+			// Positive bottom margin starts the fade just before the section crosses the viewport edge.
+			{ rootMargin: "0px 0px -7% 0px" },
 		);
 		observer.observe(el);
 		return () => observer.disconnect();

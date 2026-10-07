@@ -1,3 +1,4 @@
+import { List } from "lucide-react";
 import { db } from "@/server/db/client";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import { HomeSectionHeader } from "@/components/home/home-section-header";
@@ -32,7 +33,9 @@ export async function FeaturedListsSection() {
 	return (
 		<section className={sectionStyles.wrapper}>
 			<HomeSectionHeader
+				icon={List}
 				title={dict.home.newLists}
+				subtitle={dict.home.subtitles.newLists}
 				seeAll={{ href: "/lists", label: dict.home.seeAll }}
 			/>
 			<div className={`${sectionStyles.body} ${styles.grid}`}>

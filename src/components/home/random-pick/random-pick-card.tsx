@@ -1,4 +1,5 @@
 "use client";
+import { Archive } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Link } from "@/components/ui/link";
 import { MediaRecord } from "@/components/media/types";
@@ -104,7 +105,9 @@ export function RandomPickCard({ initial }: Props) {
 	return (
 		<section className={sectionStyles.wrapper}>
 			<HomeSectionHeader
+				icon={Archive}
 				title={dict.home.randomPick}
+				subtitle={dict.home.subtitles.randomPick}
 				action={<SpinButton onSpin={spin} pending={isPending} />}
 			/>
 			<div

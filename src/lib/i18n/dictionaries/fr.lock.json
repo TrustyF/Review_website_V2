@@ -391,10 +391,6 @@
 		"en": "e73e32a99c885a8d",
 		"fr": "81a728f20445e5ab"
 	},
-	"home.recentGames": {
-		"en": "d8da46d748154ee6",
-		"fr": "8fbcc6451b8e7a96"
-	},
 	"home.recentlyWatched": {
 		"en": "6fa2ef78b065beb4",
 		"fr": "86fd1c1228451892"
@@ -422,6 +418,58 @@
 	"home.spinAgain": {
 		"en": "e5563ebc02a8e191",
 		"fr": "7182675cbaebada3"
+	},
+	"home.subtitles.activity": {
+		"en": "9845c96d601c5f36",
+		"fr": "913da7d6dc7c2465"
+	},
+	"home.subtitles.actorSpotlight": {
+		"en": "2d089ff5af70e203",
+		"fr": "f1393b7d37b66279"
+	},
+	"home.subtitles.anticipatedReleases": {
+		"en": "1a84ee0e8c412278",
+		"fr": "3c2c9c6a16ea9a61"
+	},
+	"home.subtitles.directorSpotlight": {
+		"en": "8196baf8543b8490",
+		"fr": "d57ccd9658ef91e3"
+	},
+	"home.subtitles.movieSpotlight": {
+		"en": "a14d22a4f387f1fa",
+		"fr": "31f69f694b1220a9"
+	},
+	"home.subtitles.myWatchlist": {
+		"en": "5df97c0285b954a7",
+		"fr": "09ab176367279eae"
+	},
+	"home.subtitles.newLists": {
+		"en": "90c97b15d7d3ec7d",
+		"fr": "4dccc64343364812"
+	},
+	"home.subtitles.randomPick": {
+		"en": "cf63921257c6d661",
+		"fr": "41c4d61f34211ed5"
+	},
+	"home.subtitles.recentlyPlayed": {
+		"en": "cb859603ba9619a9",
+		"fr": "58246351c8abb830"
+	},
+	"home.subtitles.recentlyRead": {
+		"en": "6ca7d46bdbad480a",
+		"fr": "7e5d747919a33ce2"
+	},
+	"home.subtitles.recentlyWatched": {
+		"en": "74faa5e95bbfc8d0",
+		"fr": "82def6cb519658f1"
+	},
+	"home.subtitles.recentReleases": {
+		"en": "b6a7d1ab33f0b98d",
+		"fr": "a37009cab08b8a09"
+	},
+	"home.subtitles.yourWatchlist": {
+		"en": "61a50b142723f5a1",
+		"fr": "818e23ddec87517d"
 	},
 	"home.yourWatchlist": {
 		"en": "6fbc0eb065490ce4",
@@ -1544,7 +1592,7 @@
 		"fr": "7f205f9f62161b96"
 	},
 	"watchlist.title": {
-		"en": "d8a02d0c584aec5d",
+		"en": "fb6f64d6d7afa2e8",
 		"fr": "aa3f007ba707a87f"
 	}
 }
