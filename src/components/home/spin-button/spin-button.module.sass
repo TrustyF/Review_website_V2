@@ -1,0 +1,21 @@
+.spin
+  display: flex
+  align-items: center
+  gap: 0.4rem
+  margin-left: auto
+  color: var(--accent2)
+  font-size: 0.85rem
+  cursor: pointer
+  user-select: none
+
+  &:hover
+    color: var(--foreground)
+
+  &[aria-disabled="true"]
+    cursor: progress
+
+.icon
+  transition: transform 300ms ease
+
+  @media (prefers-reduced-motion: reduce)
+    transition: none

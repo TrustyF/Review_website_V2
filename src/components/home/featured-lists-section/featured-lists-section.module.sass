@@ -1,0 +1,19 @@
+@use "@/app/styles/variables" as *
+
+// One row of cards; scrolls sideways on mobile instead of wrapping.
+.grid
+  display: grid
+  grid-template-columns: repeat(4, minmax(0, 1fr))
+  gap: 1.5rem
+
+  @media (max-width: $mobile-breakpoint)
+    grid-template-columns: none
+    grid-auto-flow: column
+    grid-auto-columns: 42%
+    gap: 0.75rem
+    overflow-x: auto
+    scroll-snap-type: x mandatory
+    scrollbar-width: none
+
+    > *
+      scroll-snap-align: start

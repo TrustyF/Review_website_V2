@@ -27,6 +27,19 @@ export const MEDIA_TYPE_LABEL_KEY: Record<
 	BOOK: "book",
 };
 
+// Animation/Family are format/audience tags, not genre info; the rest sit
+// on 25-35% of the catalog — too broad to be distinctive in the ranking.
+export const BROAD_GENRES = new Set([
+	"Animation",
+	"Family",
+	"Adventure",
+	"Comedy",
+	"Drama",
+	"Action",
+	"Fantasy",
+	"Thriller",
+]);
+
 export type CountryStat = {
 	code: string;
 	name: string;

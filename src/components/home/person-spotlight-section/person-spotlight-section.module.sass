@@ -1,0 +1,28 @@
+.intro
+  display: flex
+  align-items: center
+  gap: 0.9rem
+  padding-top: 1rem
+  width: fit-content
+
+  &:hover .name
+    text-decoration: underline
+
+// Keeps PersonPhoto's own 3:4 portrait shape (no circle crop), just smaller.
+.photo,
+.photo_placeholder
+  width: 4.5rem
+  flex-shrink: 0
+
+.text
+  display: flex
+  flex-flow: column
+  gap: 0.15rem
+
+.name
+  font-size: 1.05rem
+  font-weight: 600
+
+.summary
+  color: var(--accent3)
+  font-size: 0.85rem

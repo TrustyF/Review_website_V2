@@ -351,9 +351,17 @@
 		"en": "0d49ffc4c81c8eb3",
 		"fr": "c51b06a3ae46a691"
 	},
+	"home.actorSpotlight": {
+		"en": "8889dd6f10d0e926",
+		"fr": "670a60fa264cd47f"
+	},
 	"home.anticipatedReleases": {
 		"en": "2ac5f5b15373edfb",
 		"fr": "211165bf855e2b74"
+	},
+	"home.directorSpotlight": {
+		"en": "16b37d5d2aa1377d",
+		"fr": "c568a9c00111c47f"
 	},
 	"home.eyebrowFeatured": {
 		"en": "61ce2271d241ab72",
@@ -362,6 +370,22 @@
 	"home.eyebrowNew": {
 		"en": "ec3145126b9e3c9a",
 		"fr": "0f2e061f7864742a"
+	},
+	"home.movieSpotlight": {
+		"en": "d137cf4d9d4b2d8b",
+		"fr": "fdb40ea1b293ffa8"
+	},
+	"home.newLists": {
+		"en": "184927884fe613f5",
+		"fr": "d195c197d5bf224f"
+	},
+	"home.personSummary": {
+		"en": "47af82294d59dd90",
+		"fr": "18f7480b1edac36d"
+	},
+	"home.randomPick": {
+		"en": "4e1622ea7013d043",
+		"fr": "151f9854a66162eb"
 	},
 	"home.readFullReview": {
 		"en": "e73e32a99c885a8d",
@@ -379,9 +403,29 @@
 		"en": "18e59e1c73da1076",
 		"fr": "c2fe369ae71fe659"
 	},
+	"home.recommendationCtaButton": {
+		"en": "6afd785bb339d436",
+		"fr": "2976c4beb0e18699"
+	},
+	"home.recommendationCtaTitle": {
+		"en": "31c5bf9fcbdfe34a",
+		"fr": "d2617534855d7177"
+	},
+	"home.seeAll": {
+		"en": "7b5352e7d8e88d3d",
+		"fr": "a0cd0ca9a38519ab"
+	},
 	"home.showFeaturedReview": {
 		"en": "fb9fa6cefa011979",
 		"fr": "abd13c2b0fd5c87e"
+	},
+	"home.spinAgain": {
+		"en": "e5563ebc02a8e191",
+		"fr": "7182675cbaebada3"
+	},
+	"home.yourWatchlist": {
+		"en": "6fbc0eb065490ce4",
+		"fr": "f91b06db6034592b"
 	},
 	"lists.empty": {
 		"en": "220a00ec85ee489a",

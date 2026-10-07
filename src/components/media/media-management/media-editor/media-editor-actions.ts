@@ -1,12 +1,13 @@
 "use server";
 import { db } from "@/server/db/client";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { MediaType } from "@prisma/client";
 import { recordInvocation } from "@/server/dev/invocation-tracker";
 import { MediaRecord, toMediaRecord } from "@/components/media/types";
 import { invalidateSearchIndex } from "@/server/lib/search-index-version";
 import { revalidateMediaPaths } from "@/server/cache/revalidate-media";
+import { PERSON_SPOTLIGHT_TAG } from "@/server/cache/media-cache-tag";
 
 // Returns a MediaChangeLog row per field that actually changed. A field going from no
 // prior value to having one is skipped too — it reads as noise ("— → 8"), not a real change.
@@ -130,6 +131,9 @@ export async function saveReview(
 			await db.mediaChangeLog.createMany({ data: changes });
 		}
 	}
+
+	// Outside the revalidate gate: a tag clear is cheap, and the batched publish path never re-does it.
+	if (existing?.rating !== review.rating) updateTag(PERSON_SPOTLIGHT_TAG);
 
 	if (revalidate) {
 		revalidateMediaPaths(mediaId, media.type);

@@ -49,6 +49,8 @@ export type ActivityFeedEntry = {
 };
 
 const PAGE_SIZE = 100;
+const CHANGE_LOG_PREVIEW_SIZE = 6;
+const CHANGE_LOG_PREVIEW_DAYS = 7;
 
 // Same fallback as asset-paths.ts's toPosterSrc for a posterPath-less media row.
 const PLACEHOLDER_POSTER_SRC = "/posters/placeholder.jpg";
@@ -130,6 +132,72 @@ function groupActivity(entries: RawActivityEntry[]) {
 	);
 }
 
+// Shared by the full feed and the home page's rewatches/rating-changes preview.
+function queryChangeLog(
+	fields: ("rating" | "rewatched")[],
+	take: number,
+	since?: Date,
+) {
+	return db.mediaChangeLog.findMany({
+		where: {
+			field: { in: fields },
+			...(since ? { createdAt: { gte: since } } : {}),
+			deletedAt: null,
+			media: { isAdult: false, isDeleted: false },
+		},
+		orderBy: { createdAt: "desc" },
+		take,
+		select: {
+			id: true,
+			mediaId: true,
+			field: true,
+			oldValue: true,
+			newValue: true,
+			createdAt: true,
+			media: { select: MEDIA_SELECT },
+		},
+	});
+}
+
+// REWATCHED + RATING_CHANGED from the past week, one row each — no same-day grouping, unlike the full feed.
+export async function getRecentRewatchesAndRatingChanges(): Promise<
+	ActivityFeedEntry[]
+> {
+	const since = new Date();
+	since.setDate(since.getDate() - CHANGE_LOG_PREVIEW_DAYS);
+	const rows = await queryChangeLog(
+		["rating", "rewatched"],
+		CHANGE_LOG_PREVIEW_SIZE,
+		since,
+	);
+	const posterSrcCache = new Map<number, Promise<string | null>>();
+	return Promise.all(
+		rows.map(async (row): Promise<ActivityFeedEntry> => {
+			const media = await toMediaEntry(row.media, posterSrcCache);
+			if (row.field === "rewatched") {
+				return {
+					id: `rewatch-${row.id}`,
+					type: "REWATCHED",
+					createdAt: row.createdAt,
+					oldValue: null,
+					newValue: null,
+					media,
+					list: null,
+				};
+			}
+			return {
+				id: `rating-${row.id}`,
+				type: "RATING_CHANGED",
+				createdAt: row.createdAt,
+				oldValue: row.oldValue,
+				newValue: row.newValue,
+				media,
+				list: null,
+			};
+		}),
+	);
+}
+
 // Most-recent-first, capped not paginated. Each source query is capped/sorted independently,
 // not re-capped globally, so high-volume RATED can't crowd out sparse REVIEWED after merging.
 export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
@@ -173,39 +241,9 @@ export async function getActivityFeed(): Promise<ActivityFeedEntry[]> {
 				media: { select: MEDIA_SELECT },
 			},
 		}),
-		db.mediaChangeLog.findMany({
-			where: {
-				field: "rating",
-				deletedAt: null,
-				media: { isAdult: false, isDeleted: false },
-			},
-			orderBy: { createdAt: "desc" },
-			take: PAGE_SIZE,
-			select: {
-				id: true,
-				mediaId: true,
-				oldValue: true,
-				newValue: true,
-				createdAt: true,
-				media: { select: MEDIA_SELECT },
-			},
-		}),
+		queryChangeLog(["rating"], PAGE_SIZE),
 		// REWATCHED — a real MediaChangeLog row, unlike RATED/REVIEWED's synthetic ones.
-		db.mediaChangeLog.findMany({
-			where: {
-				field: "rewatched",
-				deletedAt: null,
-				media: { isAdult: false, isDeleted: false },
-			},
-			orderBy: { createdAt: "desc" },
-			take: PAGE_SIZE,
-			select: {
-				id: true,
-				mediaId: true,
-				createdAt: true,
-				media: { select: MEDIA_SELECT },
-			},
-		}),
+		queryChangeLog(["rewatched"], PAGE_SIZE),
 		// targetUserId: null — a recommendation list is private to whoever it's for,
 		// so it (and anything added to it) shouldn't surface on this public feed.
 		db.list.findMany({

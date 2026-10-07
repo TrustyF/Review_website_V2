@@ -2,3 +2,6 @@
 export function mediaCacheTag(mediaId: number) {
 	return `media:${mediaId}`;
 }
+
+// The home page's person spotlight candidate list; cleared whenever a rating changes.
+export const PERSON_SPOTLIGHT_TAG = "person-spotlight";

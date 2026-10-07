@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { auth } from "@/auth";
 import { db, dbPublic } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
 import { FeaturedReview } from "@/components/home/featured-review/featured-review";
@@ -6,6 +8,14 @@ import { RecentlyWatchedSection } from "@/components/home/recently-watched-secti
 import { MyWatchlistSection } from "@/components/home/my-watchlist-section/my-watchlist-section";
 import { AnticipatedReleasesSection } from "@/components/home/anticipated-releases-section/anticipated-releases-section";
 import { LazyRecentMediaSection } from "@/components/home/recent-media/lazy-recent-media-section";
+import { YourWatchlistSection } from "@/components/home/your-watchlist-section/your-watchlist-section";
+import { ActivitySection } from "@/components/home/activity-section/activity-section";
+import { FeaturedListsSection } from "@/components/home/featured-lists-section/featured-lists-section";
+import { RecommendationCta } from "@/components/home/recommendation-cta/recommendation-cta";
+import { RandomPickSection } from "@/components/home/random-pick/random-pick-section";
+import { MovieSpotlightSection } from "@/components/home/movie-spotlight-section/movie-spotlight-section";
+import { HomeReveal } from "@/components/home/reveal/home-reveal";
+import { PersonSpotlightSection } from "@/components/home/person-spotlight-section/person-spotlight-section";
 import {
 	EnrichmentStatus,
 	MediaStatus,
@@ -23,6 +33,8 @@ const MY_WATCHLIST_COUNT = 7;
 const ANTICIPATED_RELEASES_COUNT = 14;
 // How far back "recent" reaches for getRecentMovies.
 const RECENT_MOVIES_MONTHS = 2;
+// How far back an already-released title still counts as "in theaters" for getAnticipatedReleases.
+const ANTICIPATED_RELEASED_WEEKS = 3;
 // How far out an UPCOMING release can be and still count as "soon" for getAnticipatedReleases.
 const ANTICIPATED_SOON_MONTHS = 2;
 // Floor below which the date filter is dropped, so the section doesn't look sparse after a quiet stretch.
@@ -85,11 +97,11 @@ async function getRecentMovies() {
 	});
 }
 
-// What's on the ADMIN account's watchlist (not an aggregate of visitor watchlists) that's worth anticipating: UPCOMING with a confirmed date within ANTICIPATED_SOON_MONTHS, or released within RECENT_MOVIES_MONTHS ("in theaters"), and not yet rated. Excludes older backlog.
+// What's on the ADMIN account's watchlist (not an aggregate of visitor watchlists) that's worth anticipating: UPCOMING with a confirmed date within ANTICIPATED_SOON_MONTHS, or released within ANTICIPATED_RELEASED_WEEKS ("in theaters"), and not yet rated. Excludes older backlog.
 // Queried from WatchlistItem, not dbPublic, so isDeleted/status are filtered explicitly here since this deliberately includes unreleased media.
 async function getAnticipatedReleases() {
 	const cutoff = new Date();
-	cutoff.setMonth(cutoff.getMonth() - RECENT_MOVIES_MONTHS);
+	cutoff.setDate(cutoff.getDate() - ANTICIPATED_RELEASED_WEEKS * 7);
 	const soonCutoff = new Date();
 	soonCutoff.setMonth(soonCutoff.getMonth() + ANTICIPATED_SOON_MONTHS);
 
@@ -222,34 +234,111 @@ function compareReviewRecency(
 	return b.review!.createDate.getTime() - a.review!.createDate.getTime();
 }
 
+// Streamed rows below the fold — each awaits only what it needs, so none of them hold up the first paint.
+async function AnticipatedRow({
+	anticipated,
+}: {
+	anticipated: Promise<AnticipatedMedia[]>;
+}) {
+	return (
+		<AnticipatedReleasesSection
+			items={(await anticipated).map(toMediaRecord)}
+		/>
+	);
+}
+
+// Waits on recentMovies (already resolved by the time this renders) only for its exclude list.
+async function RecentlyWatchedRow({
+	recentMovies,
+}: {
+	recentMovies: Promise<{ id: number }[]>;
+}) {
+	const excludeIds = (await recentMovies).map((m) => m.id);
+	const raw = await getRecentlyWatchedMovies(excludeIds);
+	return <RecentlyWatchedSection items={raw.map(toMediaRecord)} />;
+}
+
+async function MyWatchlistRow({
+	anticipated,
+}: {
+	anticipated: Promise<AnticipatedMedia[]>;
+}) {
+	const excludeIds = (await anticipated).map((m) => m.id);
+	const raw = await getMyWatchlist(excludeIds);
+	return <MyWatchlistSection items={raw.map(toMediaRecord)} />;
+}
+
+type AnticipatedMedia = Awaited<
+	ReturnType<typeof getAnticipatedReleases>
+>[number];
+
 export default async function HomePage() {
-	// dbPublic excludes soft-deleted media. recentMoviesRaw/anticipatedRaw resolve first since getRecentlyWatchedMovies/getMyWatchlist exclude those ids.
-	const [reviewed, recentMoviesRaw, anticipatedRaw] = await Promise.all([
+	// dbPublic excludes soft-deleted media. Only the hero and Recent releases block the first paint;
+	// anticipated starts now but is awaited inside its own (and the watchlist's) Suspense boundary.
+	const recentMoviesPromise = getRecentMovies();
+	const anticipatedPromise = getAnticipatedReleases();
+	const [reviewed, recentMoviesRaw, session] = await Promise.all([
 		getFeaturedReviewItems(),
-		getRecentMovies(),
-		getAnticipatedReleases(),
+		recentMoviesPromise,
+		auth(),
 	]);
-	const [recentlyWatchedRaw, myWatchlistRaw] = await Promise.all([
-		getRecentlyWatchedMovies(recentMoviesRaw.map((m) => m.id)),
-		getMyWatchlist(anticipatedRaw.map((m) => m.id)),
-	]);
+	const userId = session?.user?.id;
+	const isAdmin = session?.user?.role === UserRole.ADMIN;
 
 	const reviewedList = reviewed.map(toMediaRecord);
 	const recentMovies = recentMoviesRaw.map(toMediaRecord);
-	const recentlyWatched = recentlyWatchedRaw.map(toMediaRecord);
-	const anticipatedReleases = anticipatedRaw.map(toMediaRecord);
-	const myWatchlist = myWatchlistRaw.map(toMediaRecord);
 
 	return (
 		<div className={styles.wrapper}>
 			<FeaturedReview items={reviewedList} />
-			<RecentMoviesSection items={recentMovies} />
-			<AnticipatedReleasesSection items={anticipatedReleases} />
-			<RecentlyWatchedSection items={recentlyWatched} />
-			<MyWatchlistSection items={myWatchlist} />
-			{OTHER_MEDIA_TYPES.map((type) => (
-				<LazyRecentMediaSection key={type} type={type} />
-			))}
+			<HomeReveal>
+				<RecentMoviesSection items={recentMovies} />
+				{/* The admin's own watchlist already shows as MyWatchlistSection. */}
+				{userId && !isAdmin && (
+					<Suspense>
+						<YourWatchlistSection userId={userId} />
+					</Suspense>
+				)}
+				<Suspense>
+					<AnticipatedRow anticipated={anticipatedPromise} />
+				</Suspense>
+				<Suspense>
+					<RecentlyWatchedRow recentMovies={recentMoviesPromise} />
+				</Suspense>
+				<Suspense>
+					<FeaturedListsSection />
+				</Suspense>
+				<Suspense>
+					<RandomPickSection />
+				</Suspense>
+				<Suspense>
+					<MovieSpotlightSection />
+				</Suspense>
+				<Suspense>
+					<PersonSpotlightSection />
+				</Suspense>
+				{OTHER_MEDIA_TYPES.map((type) => (
+					<LazyRecentMediaSection key={type} type={type} />
+				))}
+				<Suspense>
+					<MyWatchlistRow anticipated={anticipatedPromise} />
+				</Suspense>
+				{/* Admins get no CTA, so the activity preview takes the full width. */}
+				{isAdmin ? (
+					<Suspense>
+						<ActivitySection />
+					</Suspense>
+				) : (
+					<div className={styles.split}>
+						<Suspense>
+							<ActivitySection />
+						</Suspense>
+						<aside className={styles.side}>
+							<RecommendationCta signedIn={Boolean(userId)} />
+						</aside>
+					</div>
+				)}
+			</HomeReveal>
 		</div>
 	);
 }

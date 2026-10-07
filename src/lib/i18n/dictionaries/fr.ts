@@ -332,6 +332,18 @@ export const fr = {
 			`Afficher la critique à la une : ${title}`,
 		eyebrowFeatured: "Critique à la une",
 		eyebrowNew: "Nouvelle critique",
+		seeAll: "Tout voir →",
+		yourWatchlist: "Votre liste à voir",
+		newLists: "Nouvelles listes",
+		randomPick: "Dans les archives",
+		spinAgain: "Relancer",
+		movieSpotlight: "Film à l'honneur",
+		directorSpotlight: "Réalisateur à l'honneur",
+		actorSpotlight: "Acteur à l'honneur",
+		personSummary: (count: number, avg: string) =>
+			`${count} ${count === 1 ? "film noté" : "films notés"} · ${avg}/10 de moyenne`,
+		recommendationCtaTitle: "Vous ne savez pas quoi regarder ensuite ?",
+		recommendationCtaButton: "Demander une recommandation",
 	},
 	watchlist: {
 		title: "Liste à voir",

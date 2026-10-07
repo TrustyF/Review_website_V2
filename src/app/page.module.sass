@@ -6,3 +6,20 @@
   display: flex
   flex-flow: column
   gap: 3rem
+
+// Activity feed beside the recommendation CTA; stacks below the mobile breakpoint.
+.split
+  display: grid
+  grid-template-columns: minmax(0, 1fr) 280px
+  gap: 2.5rem
+  align-items: start
+
+  @media (max-width: $mobile-breakpoint)
+    grid-template-columns: minmax(0, 1fr)
+    gap: 3rem
+
+.side
+  display: flex
+  flex-flow: column
+  gap: 2rem
+  min-width: 0

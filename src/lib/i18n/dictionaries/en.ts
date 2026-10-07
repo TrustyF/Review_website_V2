@@ -321,6 +321,18 @@ export const en = {
 		showFeaturedReview: (title: string) => `Show featured review: ${title}`,
 		eyebrowFeatured: "Featured review",
 		eyebrowNew: "New review",
+		seeAll: "See all →",
+		yourWatchlist: "Your watchlist",
+		newLists: "New lists",
+		randomPick: "From the archive",
+		spinAgain: "Spin again",
+		movieSpotlight: "Movie spotlight",
+		directorSpotlight: "Director spotlight",
+		actorSpotlight: "Actor spotlight",
+		personSummary: (count: number, avg: string) =>
+			`${count} rated ${count === 1 ? "film" : "films"} · ${avg}/10 average`,
+		recommendationCtaTitle: "Not sure what to watch next?",
+		recommendationCtaButton: "Ask for a recommendation",
 	},
 	watchlist: {
 		title: "Watchlist",

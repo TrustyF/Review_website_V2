@@ -4,6 +4,7 @@ import { MediaStatus, MediaType, type Prisma } from "@prisma/client";
 import { WORLD_MAP_COUNTRIES } from "@/components/stats/world-map/world-map-paths.generated";
 import { toPersonPhotoSrc } from "@/server/resolvers/asset-paths";
 import {
+	BROAD_GENRES,
 	MEDIA_TYPE_ORDER,
 	PERSON_ROLE_NAMES,
 	type PersonRole,
@@ -240,19 +241,6 @@ export async function getStats(
 		return seen < MAX_GENRES_PER_MEDIA;
 	});
 
-	// Animation/Family are format/audience tags, not genre info; the rest sit
-	// on 25-35% of the catalog — too broad to be distinctive in the ranking.
-	const EXCLUDED_GENRES = new Set([
-		"Animation",
-		"Family",
-		"Adventure",
-		"Comedy",
-		"Drama",
-		"Action",
-		"Fantasy",
-		"Thriller",
-	]);
-
 	const genreNameById = new Map(genres.map((g) => [g.id, g.name]));
 	const genreStatsByName = new Map<
 		string,
@@ -260,7 +248,7 @@ export async function getStats(
 	>();
 	for (const g of cappedGenreMediaRows) {
 		const name = genreNameById.get(g.genreId);
-		if (!name || EXCLUDED_GENRES.has(name)) continue;
+		if (!name || BROAD_GENRES.has(name)) continue;
 		const stat = genreStatsByName.get(name) ?? {
 			count: 0,
 			ratingSum: 0,

@@ -1,0 +1,24 @@
+// Inherits the page's own column gap so a section rendering several blocks (e.g. RecentMediaSections) keeps its spacing.
+.reveal
+  display: flex
+  flex-flow: column
+  gap: inherit
+  min-width: 0
+
+  // A section that rendered nothing shouldn't leave a gap behind.
+  &:empty
+    display: none
+
+  &[data-state="hidden"]
+    opacity: 0
+    transform: translateY(1.5rem)
+
+  &[data-state="shown"]
+    opacity: 1
+    transform: none
+    transition: opacity 350ms ease, transform 350ms ease
+
+  @media (prefers-reduced-motion: reduce)
+    &[data-state="hidden"]
+      opacity: 1
+      transform: none

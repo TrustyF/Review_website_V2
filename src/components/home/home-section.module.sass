@@ -1,0 +1,34 @@
+// Shared heading row for the newer home sections — same look as the older sections' own .title.
+.wrapper
+  display: flex
+  flex-flow: column
+  min-width: 0
+
+.header
+  display: flex
+  align-items: baseline
+  justify-content: space-between
+  gap: 1rem
+  border-bottom: 1px solid var(--accent1)
+  padding-bottom: 0.5rem
+
+.title
+  font-size: 1.2rem
+  font-weight: 600
+
+.see_all
+  flex-shrink: 0
+  color: var(--accent2)
+  font-size: 0.85rem
+
+  &:hover
+    color: var(--foreground)
+
+// Spacing below .header for non-grid content — OneRowMediaGrid already pads its own top.
+.body
+  padding-top: 1rem
+
+// Dims a section while "Spin again" fetches its replacement.
+.pending
+  opacity: 0.5
+  transition: opacity 200ms ease

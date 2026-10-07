@@ -1,0 +1,86 @@
+@use "@/app/styles/variables" as *
+
+// 2x2 grid of picks; stacked below the mobile breakpoint.
+.grid
+  display: grid
+  grid-template-columns: repeat(2, minmax(0, 1fr))
+  gap: 1.5rem 2rem
+  transition: opacity 200ms ease
+
+  @media (max-width: $mobile-breakpoint)
+    grid-template-columns: minmax(0, 1fr)
+    gap: 1.25rem
+
+.item
+  display: grid
+  grid-template-columns: 110px minmax(0, 1fr)
+  gap: 0.9rem
+  align-items: start
+
+.pending
+  opacity: 0.5
+
+.poster
+  min-width: 0
+
+// Fixed height (taller than the poster) so every pick cuts its excerpt off at the same point.
+.info
+  display: flex
+  flex-flow: column
+  gap: 0.5rem
+  min-width: 0
+  height: 12rem
+
+.title
+  font-size: 1rem
+  font-weight: 600
+  line-height: 1.25
+
+  &:hover
+    text-decoration: underline
+
+.meta_row
+  display: flex
+  align-items: center
+  gap: 0.75rem
+  color: var(--accent3)
+  font-size: 0.85rem
+
+.rating
+  display: flex
+  align-items: center
+  gap: 0.2rem
+  color: var(--foreground)
+
+// Fills whatever height .info leaves after the title; fades out only when it actually clips.
+.excerpt
+  flex: 1 1 0
+  min-height: 0
+  overflow: hidden
+  color: var(--body)
+  font-family: $font-body
+  font-size: 0.9rem
+  // Global line-height: 1 leaves no gap, so wrapped spoiler bars overlap; same value as the mobile featured excerpt.
+  line-height: 1.35rem
+
+.excerpt_clipped
+  mask-image: linear-gradient(to bottom, var(--foreground) 75%, transparent)
+
+.excerpt_line
+  white-space: pre-wrap
+
+  & + &
+    margin-top: 0.6rem
+
+// Pinned under the excerpt, which absorbs the leftover height.
+.read_more
+  flex-shrink: 0
+  margin-top: auto
+  color: var(--brand-active)
+  font-size: 0.85rem
+
+  &:hover
+    color: var(--brand)
+
+.read_more_hidden
+  visibility: hidden
