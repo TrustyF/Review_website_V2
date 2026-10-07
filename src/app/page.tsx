@@ -179,38 +179,7 @@ const REVIEWED_ORDER_BY: Prisma.MediaOrderByWithRelationInput[] = [
 	{ review: { createDate: "desc" } },
 ];
 
-// Deterministic PRNG (mulberry32) — same seed always produces the same sequence, so the shuffle below is stable within a day.
-function mulberry32(seed: number) {
-	return function random() {
-		seed |= 0;
-		seed = (seed + 0x6d2b79f5) | 0;
-		let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-	};
-}
-
-function hashString(str: string): number {
-	let hash = 0;
-	for (let i = 0; i < str.length; i++) {
-		hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
-	}
-	return hash;
-}
-
-// Fisher-Yates, seeded so the result only changes when the seed does, not on every render.
-function seededShuffle<T>(items: T[], seed: string): T[] {
-	const random = mulberry32(hashString(seed));
-	const shuffled = [...items];
-	for (let i = shuffled.length - 1; i > 0; i--) {
-		const j = Math.floor(random() * (i + 1));
-		[shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
-	}
-	return shuffled;
-}
-
-// Featured first, then recent non-featured (2x-overfetched); merged
-// then daily-shuffled by date-seed.
+// Featured first, then recent non-featured (2x-overfetched); merged then sorted newest review first.
 async function getFeaturedReviewItems() {
 	const take = 1 + RECENT_REVIEWS_COUNT;
 	const [featured, recent] = await Promise.all([
@@ -237,14 +206,7 @@ async function getFeaturedReviewItems() {
 		...recent.filter((m) => !featuredIds.has(m.id)),
 	].slice(0, take);
 
-	// Newest review always in hero (items[0]); re-prepended after shuffle so picker rotates daily.
-	const [newest, ...rest] = [...merged].sort((a, b) =>
-		compareReviewRecency(a, b),
-	);
-	if (!newest) return merged;
-
-	const todaySeed = new Date().toISOString().slice(0, 10);
-	return [newest, ...seededShuffle(rest, todaySeed)];
+	return merged.sort(compareReviewRecency);
 }
 
 // Comparator to re-sort merged pool with same precedence as REVIEWED_ORDER_BY

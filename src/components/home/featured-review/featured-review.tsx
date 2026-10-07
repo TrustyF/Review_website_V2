@@ -28,7 +28,7 @@ const CARD_TRANSITION_MS = 350;
 const AUTO_ADVANCE_MS = 15000;
 
 type Props = {
-	// items[0] is always the most-recently-reviewed item, pinned regardless of shuffle; the rest is a daily-seeded shuffle of the remaining pool (see getFeaturedReviewItems).
+	// Sorted newest review first (see getFeaturedReviewItems).
 	items: MediaRecord[];
 };
 
