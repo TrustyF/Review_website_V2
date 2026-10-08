@@ -93,12 +93,24 @@ export async function saveReview(
 	}
 
 	const [existing, media] = await Promise.all([
-		db.review.findUnique({ where: { mediaId } }),
+		db.review.findUnique({
+			where: { mediaId },
+			omit: { bodyDraft: false, bodyFrDraft: false, draftUpdatedAt: false },
+		}),
 		db.media.findUniqueOrThrow({
 			where: { id: mediaId },
 			select: { type: true },
 		}),
 	]);
+
+	// Publishing a draft's exact text retires it; a draft edited further since being staged survives.
+	const publishesDraft =
+		existing?.draftUpdatedAt != null &&
+		(existing.bodyDraft ?? "") === (review.body ?? "") &&
+		(existing.bodyFrDraft ?? "") === (review.bodyFr ?? existing.bodyFr ?? "");
+	const clearDraft = publishesDraft
+		? { bodyDraft: null, bodyFrDraft: null, draftUpdatedAt: null }
+		: {};
 
 	// Set once, the first time body goes from unset to set. Keyed off reviewDate's presence
 	// rather than re-derived every time, so clearing and rewriting the body later doesn't move it.
@@ -109,7 +121,7 @@ export async function saveReview(
 
 	await db.review.upsert({
 		where: { mediaId },
-		update: { ...review, ...(reviewDate ? { reviewDate } : {}) },
+		update: { ...review, ...clearDraft, ...(reviewDate ? { reviewDate } : {}) },
 		// initialRating only goes in the create branch — it never moves again once set, unlike `rating`.
 		create: {
 			mediaId,
@@ -139,6 +151,53 @@ export async function saveReview(
 		revalidateMediaPaths(mediaId, media.type);
 		revalidatePath("/activity");
 	}
+}
+
+export type ReviewDraft = {
+	body: string;
+	bodyFr: string;
+	updatedAt: Date;
+};
+
+// Drafts are globally omitted from every other query (db/client.ts), so the body modal loads them here.
+export async function getReviewDraft(
+	mediaId: number,
+): Promise<ReviewDraft | null> {
+	await requireAdmin();
+	const row = await db.review.findUnique({
+		where: { mediaId },
+		select: { bodyDraft: true, bodyFrDraft: true, draftUpdatedAt: true },
+	});
+	if (!row?.draftUpdatedAt) return null;
+	return {
+		body: row.bodyDraft ?? "",
+		bodyFr: row.bodyFrDraft ?? "",
+		updatedAt: row.draftUpdatedAt,
+	};
+}
+
+// No revalidation — nothing public reads drafts. Needs an existing review row (i.e. a saved rating).
+export async function saveReviewDraft(
+	mediaId: number,
+	draft: { body: string; bodyFr: string },
+): Promise<Date> {
+	await requireAdmin();
+	const draftUpdatedAt = new Date();
+	await db.review.update({
+		where: { mediaId },
+		data: { bodyDraft: draft.body, bodyFrDraft: draft.bodyFr, draftUpdatedAt },
+		select: { id: true },
+	});
+	return draftUpdatedAt;
+}
+
+export async function discardReviewDraft(mediaId: number): Promise<void> {
+	await requireAdmin();
+	await db.review.update({
+		where: { mediaId },
+		data: { bodyDraft: null, bodyFrDraft: null, draftUpdatedAt: null },
+		select: { id: true },
+	});
 }
 
 // A rewatch has no field to diff — "watched it again", not "rating changed" — so it's logged

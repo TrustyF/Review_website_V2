@@ -18,6 +18,12 @@ import {
 	toPosterSrc,
 } from "@/server/resolvers/asset-paths";
 
+// Review as every query returns it — the draft columns are globally omitted in db/client.ts.
+export type PublicReview = Omit<
+	Review,
+	"bodyDraft" | "bodyFrDraft" | "draftUpdatedAt"
+>;
+
 // What Prisma actually hands back — every relation still optional
 export type RawMediaRecord = Media & {
 	movie?: Movie | null;
@@ -26,14 +32,14 @@ export type RawMediaRecord = Media & {
 	comic?: Comic | null;
 	game?: Game | null;
 	book?: Book | null;
-	review?: Review | null;
+	review?: PublicReview | null;
 	credits?: Credit[];
 	mediaGenres?: (MediaGenre & { genre: Genre })[];
 };
 
 // The base record type we will fill out by media type
 type BaseRecord = Omit<Media, "type"> & {
-	review?: Review | null;
+	review?: PublicReview | null;
 	credits?: Credit[];
 	// Empty when a caller's query didn't include mediaGenres — same "just absent" handling as credits above, not an error case.
 	genres: string[];

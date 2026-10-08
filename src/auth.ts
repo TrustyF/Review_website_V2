@@ -2,12 +2,14 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import type { PrismaClient } from "@prisma/client";
 import { db } from "@/server/db/client";
 import { comparePassword } from "@/lib/password";
 import { sendNewAccountAlert } from "@/server/email/send-new-account-alert";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-	adapter: PrismaAdapter(db),
+	// Cast: db's global Review omit changes its type, but the adapter never touches Review.
+	adapter: PrismaAdapter(db as unknown as PrismaClient),
 	// Credentials requires JWT session strategy (all-or-nothing).
 	session: { strategy: "jwt" },
 	// newUser only fires for new Google sign-ins; Credentials/returning users skip redirect.

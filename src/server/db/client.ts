@@ -15,6 +15,10 @@ export const db = new PrismaClient({
 		timeout: 60_000, // default 5_000ms — large casts can take tens of seconds of sequential round trips
 		maxWait: 10_000, // default 2_000ms — time to acquire a connection slot
 	},
+	// Unpublished review drafts stay out of every query (including nested includes) unless explicitly selected.
+	omit: {
+		review: { bodyDraft: true, bodyFrDraft: true, draftUpdatedAt: true },
+	},
 });
 
 // Merges isDeleted: false in unless the caller already filters on it explicitly. Typed loosely; callers cast back to Prisma's generated arg type.

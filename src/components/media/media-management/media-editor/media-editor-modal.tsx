@@ -1,7 +1,11 @@
 "use client";
 import styles from "./media-editor-modal.module.sass";
 import { useReviewEditorStore } from "./review-editor-store";
-import { MediaCardRecord, MediaRecord } from "@/components/media/types";
+import {
+	MediaCardRecord,
+	MediaRecord,
+	PublicReview,
+} from "@/components/media/types";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { errorMessageOr, useAsyncAction } from "@/lib/use-async-action";
@@ -22,7 +26,6 @@ import {
 import type { MediaType } from "@prisma/client";
 import { ReviewBodyModal } from "@/components/media/media-management/media-editor/components/review-body-modal";
 import { StarIcon } from "@/components/media/icons/star-icon";
-import { Review } from "@prisma/client";
 import { MediaPoster } from "@/components/media/primitives/poster";
 import { posterRatioFor } from "@/components/media/poster-ratio";
 import { EnrichedAgo } from "@/components/media/primitives/enriched-ago";
@@ -263,10 +266,10 @@ export default function MediaEditorModal() {
 
 	// Generic patch helper for the review sub-record: fills in defaults for
 	// any fields not yet edited, then applies the given patch on top.
-	function patchReview(patch: Partial<Review>) {
+	function patchReview(patch: Partial<PublicReview>) {
 		setDraft((prev) => {
 			if (!prev) return prev;
-			const review: Review = {
+			const review: PublicReview = {
 				id: prev.review?.id ?? 0,
 				mediaId: prev.id,
 				rating: prev.review?.rating ?? null,
@@ -623,11 +626,15 @@ export default function MediaEditorModal() {
 
 			{isBodyModalOpen && draft && (
 				<ReviewBodyModal
-					body={draft.review?.body ?? ""}
-					onChange={(body) => patchReview({ body })}
-					bodyFr={draft.review?.bodyFr ?? ""}
-					onChangeFr={(bodyFr) => patchReview({ bodyFr })}
+					initialBody={draft.review?.body ?? ""}
+					initialBodyFr={draft.review?.bodyFr ?? ""}
+					onDone={(body, bodyFr) => {
+						patchReview({ body, bodyFr });
+						setIsBodyModalOpen(false);
+					}}
 					onClose={() => setIsBodyModalOpen(false)}
+					// patchReview leaves id at 0 until a rating is first saved — no row to hold a draft yet.
+					draftMediaId={draft.review?.id ? draft.id : null}
 				/>
 			)}
 		</div>

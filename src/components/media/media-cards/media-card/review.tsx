@@ -1,5 +1,6 @@
 "use client";
-import { MediaType, Review } from "@prisma/client";
+import { MediaType } from "@prisma/client";
+import type { PublicReview } from "@/components/media/types";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import { watchedOnLabel } from "@/components/media/media-verb-labels";
 import {
@@ -11,7 +12,7 @@ import { listDateFormatterFor } from "@/lib/format-list-date";
 import styles from "./review.module.sass";
 
 type Props = {
-	review: Review | null | undefined;
+	review: PublicReview | null | undefined;
 	// Not a Review column — derived from the "watched" MediaChangeLog milestone, the single source of truth for this date.
 	watchedDate?: Date | null | undefined;
 	type: MediaType;
@@ -66,7 +67,7 @@ export function MediaReviewBody({
 	overview,
 	bodyClassName,
 }: {
-	review: Review | null | undefined;
+	review: PublicReview | null | undefined;
 	overview?: string | null | undefined;
 } & Pick<ClassNameOverrides, "bodyClassName">) {
 	const locale = useLocale();

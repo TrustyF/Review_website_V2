@@ -1,7 +1,8 @@
 import { Fragment } from "react";
+import type { PublicReview } from "@/components/media/types";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
-import { MediaChangeLog, MediaType, Review } from "@prisma/client";
+import { MediaChangeLog, MediaType } from "@prisma/client";
 import { StarIcon } from "@/components/media/icons/star-icon";
 import {
 	rewatchedOnLabel,
@@ -137,7 +138,7 @@ export async function ChangeLogList({
 	externalId: string | null;
 	// "Watched on"/"Reviewed on" are never written to MediaChangeLog — synthesized from
 	// Review.createDate/reviewDate and merged in at display time instead.
-	review: Review | null | undefined;
+	review: PublicReview | null | undefined;
 }) {
 	const [dict, locale] = await Promise.all([getDictionary(), getLocale()]);
 	const dateFormatter = listDateFormatterFor(locale, { year: true });

@@ -120,6 +120,18 @@
   display: flex
   flex-flow: row
   justify-content: flex-end
+  align-items: center
+  gap: 0.5rem
 
   button
     padding: 5px 8px
+
+// Pushes the buttons right while staying in the same row.
+.draft_status
+  margin-right: auto
+  color: var(--accent1)
+  font-size: 0.85rem
+
+.draft_status_error
+  @extend .draft_status
+  color: var(--danger)

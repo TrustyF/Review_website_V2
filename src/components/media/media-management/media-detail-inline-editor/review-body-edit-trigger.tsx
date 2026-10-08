@@ -20,7 +20,7 @@ type Props = {
 	isUpcoming: boolean;
 };
 
-// Drop-in <MediaReview> replacement: click to open body editor with AI diff. Closing stages edit to media-publish-store (not save). Scoped to whole card since MediaReview doesn't expose body as targetable sub-element.
+// Drop-in <MediaReview> replacement: click to open body editor with AI diff. Done stages edit to media-publish-store (not save); Close just keeps the DB draft. Scoped to whole card since MediaReview doesn't expose body as targetable sub-element.
 export function ReviewBodyEditTrigger({ media, overview, isUpcoming }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
@@ -30,10 +30,13 @@ export function ReviewBodyEditTrigger({ media, overview, isUpcoming }: Props) {
 
 	const draft = useMediaPublishStore((s) => s.draft);
 	const stageReview = useMediaPublishStore((s) => s.stageReview);
-	const pendingReview = draft?.mediaId === media.id ? draft.pendingReview : undefined;
+	const pendingReview =
+		draft?.mediaId === media.id ? draft.pendingReview : undefined;
 
 	const [body, setBody] = useState(pendingReview?.body ?? review?.body ?? "");
-	const [bodyFr, setBodyFr] = useState(pendingReview?.bodyFr ?? review?.bodyFr ?? "");
+	const [bodyFr, setBodyFr] = useState(
+		pendingReview?.bodyFr ?? review?.bodyFr ?? "",
+	);
 	const [isOpen, setIsOpen] = useState(false);
 
 	if (!review || !isAdmin) {
@@ -49,23 +52,23 @@ export function ReviewBodyEditTrigger({ media, overview, isUpcoming }: Props) {
 		);
 	}
 
-	// Synchronous — nothing here touches the network; the actual save happens on Publish.
-	function handleClose() {
+	// Only stages — the actual save happens on Publish.
+	function handleDone(nextBody: string, nextBodyFr: string) {
+		setBody(nextBody);
+		setBodyFr(nextBodyFr);
 		setIsOpen(false);
 		stageReview(media.id, {
 			rating: review!.rating,
 			liked: review!.liked,
 			difficulty: review!.difficulty,
-			body,
-			bodyFr,
+			body: nextBody,
+			bodyFr: nextBodyFr,
 		});
 	}
 
 	return (
 		<div className={styles.wrapper}>
-			<Hitbox
-				className={styles.hitbox}
-				onClick={() => setIsOpen(true)}>
+			<Hitbox className={styles.hitbox} onClick={() => setIsOpen(true)}>
 				<MediaReview
 					review={{ ...review, body }}
 					watchedDate={media.watchedDate}
@@ -77,11 +80,11 @@ export function ReviewBodyEditTrigger({ media, overview, isUpcoming }: Props) {
 
 			{isOpen && (
 				<ReviewBodyModal
-					body={body}
-					onChange={setBody}
-					bodyFr={bodyFr}
-					onChangeFr={setBodyFr}
-					onClose={handleClose}
+					initialBody={body}
+					initialBodyFr={bodyFr}
+					onDone={handleDone}
+					onClose={() => setIsOpen(false)}
+					draftMediaId={media.id}
 				/>
 			)}
 		</div>

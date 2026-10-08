@@ -23,6 +23,13 @@ model Review {
   // admin-UI editor for this yet) — falls back to `body` when unset.
   bodyFr String?
 
+  // Unpublished work-in-progress body, autosaved from ReviewBodyModal. Globally
+  // omitted in db/client.ts so no public query can leak it; saveReview clears it
+  // once its exact text gets published.
+  bodyDraft      String?
+  bodyFrDraft    String?
+  draftUpdatedAt DateTime?
+
   // Curated by an admin via the homepage's "manage featured reviews" modal
   // (featured-manager-modal.tsx) — takes priority over plain recency in
   // FeaturedReview's hero (see app/page.tsx's getFeaturedReviewItems). No
