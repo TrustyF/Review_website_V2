@@ -1,4 +1,4 @@
-import { diffWordsWithSpace } from "diff";
+import { diffArrays } from "diff";
 import styles from "./review-diff.module.sass";
 
 type Props = {
@@ -8,17 +8,51 @@ type Props = {
 	onApplyChange: (newBody: string) => void;
 };
 
+type Part = { value: string; added?: boolean; removed?: boolean };
+
 const WHITESPACE_ONLY = /^\s+$/;
 
-// Makes a whitespace-only change visible; added newlines still break the line.
-function showWhitespace(value: string, added: boolean): string {
-	return value.replace(/\n/g, added ? "↵\n" : "↵").replace(/[ \t]/g, "·");
+// Words, whitespace runs and punctuation each become a token; apostrophes stay inside words.
+function tokenize(text: string): string[] {
+	return text.split(/(\s+|[^\p{L}\p{N}\s'’]+)/u).filter(Boolean);
 }
 
-// Word-level diff: added and removed both clickable. WithSpace, since plain diffWords takes
-// unchanged whitespace from `after`, which fused words when rebuilding `before`.
+// Line breaks are never corrected: whitespace with a line break on either side counts as unchanged.
+function sameToken(a: string, b: string): boolean {
+	if (a === b) return true;
+	return (
+		WHITESPACE_ONLY.test(a) &&
+		WHITESPACE_ONLY.test(b) &&
+		(a.includes("\n") || b.includes("\n"))
+	);
+}
+
+// Unchanged parts are rebuilt from `before`'s own tokens, so applying a change never touches
+// the rest of the body (plain diffWords took them from `after`, which fused words).
+function diffKeepingLineBreaks(before: string, after: string): Part[] {
+	const beforeTokens = tokenize(before);
+	const changes = diffArrays(beforeTokens, tokenize(after), {
+		comparator: sameToken,
+	});
+	let beforeIndex = 0;
+	return changes.map((change) => {
+		if (change.added) return { value: change.value.join(""), added: true };
+		const value = beforeTokens
+			.slice(beforeIndex, beforeIndex + change.value.length)
+			.join("");
+		beforeIndex += change.value.length;
+		return change.removed ? { value, removed: true } : { value };
+	});
+}
+
+// Makes a whitespace-only change visible (never a line break — those are never changes).
+function showWhitespace(value: string): string {
+	return value.replace(/\s/g, "·");
+}
+
+// Word-level diff: added and removed both clickable, unchanged plain.
 export function ReviewDiff({ before, after, onApplyChange }: Props) {
-	const parts = diffWordsWithSpace(before, after);
+	const parts = diffKeepingLineBreaks(before, after);
 
 	// Groups a run of changes into one click target, so accepting a replacement also drops the
 	// text it replaces. Whitespace between changes joins the run ("-a +x = -b +y" is one edit).
@@ -57,7 +91,7 @@ export function ReviewDiff({ before, after, onApplyChange }: Props) {
 				}
 				const blockIndex = blockOfPart[i]!;
 				const text = WHITESPACE_ONLY.test(part.value)
-					? showWhitespace(part.value, !!part.added)
+					? showWhitespace(part.value)
 					: part.value;
 				return (
 					<span

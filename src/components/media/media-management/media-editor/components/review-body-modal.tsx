@@ -402,7 +402,8 @@ export function ReviewBodyModal({
 								type="button"
 								title="Close and keep this as an unpublished draft"
 								onClick={handleClose}
-								disabled={!draftLoaded}>
+								// Stays enabled on a failed load so the modal can't trap you.
+								disabled={!draftLoaded && !draftError}>
 								Close
 							</button>
 						</>

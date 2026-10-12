@@ -105,7 +105,7 @@ export async function suggestReviewCorrection(body: string): Promise<string> {
 
 	const corrected = await generateText(
 		CLAUDE_PROOFREAD_MODEL,
-		"You proofread review text for a personal movie/TV/manga/game log. Fix grammar, spelling, clarity issues and repetitive wording. It should read like an essay. Preserve the reviewer's opinions. The text may contain placeholder tokens like ⟦MARKUP0⟧ — leave every one exactly as it is: don't add, remove, rename, translate, or explain them. Reply with only the corrected text: no preamble, no explanation, no surrounding quotes.",
+		"You proofread review text for a personal movie/TV/manga/game log. Fix grammar, spelling, clarity issues and repetitive wording. It should read like an essay. Preserve the reviewer's opinions. Keep every line break and paragraph break exactly where it is: don't merge or split paragraphs. The text may contain placeholder tokens like ⟦MARKUP0⟧ — leave every one exactly as it is: don't add, remove, rename, translate, or explain them. Reply with only the corrected text: no preamble, no explanation, no surrounding quotes.",
 		stripped,
 	);
 	return restoreMarkup(corrected, spans);
