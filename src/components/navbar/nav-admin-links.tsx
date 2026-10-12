@@ -12,7 +12,7 @@ type Props = {
 };
 
 // Pinned to its own corner, but still a child of <nav> so it hides/reveals
-// with the rest of the navbar on scroll. Hidden on mobile.
+// with the rest of the navbar on scroll. Hidden on mobile (NavBarMobile has Add media).
 export function NavAdminLinks({ pathname }: Props) {
 	const dict = useDictionary();
 	const [pendingCount, setPendingCount] = useState(0);

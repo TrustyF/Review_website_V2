@@ -62,6 +62,7 @@ export default function Navbar() {
 					onAvatarError={onAvatarError}
 					mobileOpen={mobileOpen}
 					onToggle={() => setMobileOpen((open) => !open)}
+					isAdmin={isAdmin}
 				/>
 			</nav>
 		</LucideProvider>

@@ -2,6 +2,7 @@
 import {
 	BookOpen,
 	ChartNoAxesCombined,
+	CirclePlus,
 	GamepadDirectional,
 	LayoutList,
 	List,
@@ -27,6 +28,7 @@ type Props = {
 	onAvatarError: () => void;
 	mobileOpen: boolean;
 	onToggle: () => void;
+	isAdmin: boolean;
 };
 
 // Collapsed bar (Media/Reading/Games + search + hamburger, closed; account +
@@ -40,6 +42,7 @@ export function NavBarMobile({
 	onAvatarError,
 	mobileOpen,
 	onToggle,
+	isAdmin,
 }: Props) {
 	const dict = useDictionary();
 
@@ -195,6 +198,20 @@ export function NavBarMobile({
 						{dict.nav.stats}
 					</NavLink>
 				</div>
+
+				{/* Only admin tool offered on mobile; the rest stay desktop-only. */}
+				{isAdmin && (
+					<div className={style.nav_group}>
+						<NavLink
+							href="/add"
+							icon={CirclePlus}
+							className={barStyle.link}
+							pathname={pathname}
+							iconSize={20}>
+							{dict.nav.addMedia}
+						</NavLink>
+					</div>
+				)}
 
 				{/* Anchored to the drawer's bottom edge (see .nav_group_signout) —
 				sign-out is normally account-page-only (SignOutButton's own
