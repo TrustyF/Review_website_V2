@@ -6,29 +6,30 @@
 # — this file exists so the schedule has *a* copy in version control, not to
 # silently override what's actually running.
 #
-# Every job here logs through run-and-notify.sh (see that script) except
-# backup-database.sh, which is self-contained and invoked directly.
+# Every job runs through run-and-notify.sh, which owns per-job logging
+# (cron-logs/<job>.log) and creates an in-app admin notification on any
+# non-zero exit. Last synced with the host's live crontab on 2026-10-12.
 
 REPO_DIR=/path/to/review_website_nextjs
 CRON_SH=$REPO_DIR/src/server/maintenance/cron/run-and-notify.sh
 
-# Nightly catalog enrichment (TMDB/IGDB/ComicVine/Google Books sync).
-0 3 * * *  $CRON_SH enrich_db sudo docker compose run --rm maintenance npm run enrich_db
-
 # Nightly cleanup of orphaned poster/cropped-image files.
-15 3 * * * $CRON_SH cleanup_posters sudo docker compose run --rm maintenance npm run cleanup_posters
-30 3 * * * $CRON_SH cleanup_cropped_images sudo docker compose run --rm maintenance npm run cleanup_cropped_images
+0 0 * * *  $CRON_SH cleanup_posters sudo docker compose run --rm maintenance npm run cleanup_posters
+0 5 * * *  $CRON_SH cleanup_cropped_images sudo docker compose run --rm maintenance npm run cleanup_cropped_images
 
-# Weekly: digest banners older than 90 days, keeping the newest 3 per language.
-45 3 * * 0 $CRON_SH cleanup_digest_banners sudo docker compose run --rm maintenance npm run cleanup_digest_banners
+# Nightly purge of soft-deleted change-log rows past their retention window.
+0 6 * * *  $CRON_SH purge_deleted_changelogs sudo docker compose run --rm maintenance npm run purge_deleted_changelogs
 
-# Weekly purge of soft-deleted change-log rows past their retention window.
-0 4 * * 0  $CRON_SH purge_deleted_changelogs sudo docker compose run --rm maintenance npm run purge_deleted_changelogs
+# Weekly (Sunday) catalog enrichment (TMDB/IGDB/ComicVine/Google Books sync).
+0 0 * * 0  $CRON_SH enrich_db sudo docker compose run --rm maintenance npm run enrich_db
+
+# Weekly (Sunday): digest banners older than 90 days, keeping the newest 3 per language.
+30 5 * * 0 $CRON_SH cleanup_digest_banners sudo docker compose run --rm maintenance npm run cleanup_digest_banners
+
+# Nightly database backup, uploaded to R2. backup-database.sh does its own
+# dump + upload + pruning; it isn't an `npm run` job, just wrapped for logging.
+0 3 * * *  $CRON_SH backup_database $REPO_DIR/src/server/maintenance/cron/backup-database.sh
 
 # No schedule for the weekly digest — it's sent manually from /admin/digest
 # now (see digest-send-actions.ts), not on a cron. `npm run weekly_digest`
 # still exists for a one-off CLI/manual send outside the admin UI.
-
-# Nightly database backup, uploaded to R2. No run-and-notify wrapper — the
-# script does its own dump + upload + pruning and isn't a `npm run` cron job.
-0 2 * * *  $REPO_DIR/src/server/maintenance/cron/backup-database.sh >> $REPO_DIR/cron-logs/backup-database.log 2>&1

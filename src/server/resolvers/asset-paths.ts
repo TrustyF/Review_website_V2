@@ -42,8 +42,9 @@ export const POSTER_QUALITY = 50;
 
 // Vignette darkens edges/corners, leaves center clear.
 export const EMAIL_BANNER_DIR = "banners/email-cache";
-export const EMAIL_BANNER_MAX_WIDTH = 900;
-export const EMAIL_BANNER_QUALITY = 65;
+// Matches the digest banner's 2x render width (digest-banner-image.tsx), so its photo isn't upscaled.
+export const EMAIL_BANNER_MAX_WIDTH = 1200;
+export const EMAIL_BANNER_QUALITY = 85;
 
 // Admin-uploaded override for the digest's banner (see Settings.digestBannerImage) — separate
 // from EMAIL_BANNER_DIR since it's content-addressed by uploaded bytes, not a mediaId+sourcePath.
@@ -122,6 +123,36 @@ export function bannerUrlFor(type: MediaType, bannerPath: string) {
 		return `https://images.igdb.com/igdb/image/upload/t_1080p/${bannerPath}.jpg`;
 	}
 	return `https://image.tmdb.org/t/p/w1280${bannerPath}`;
+}
+
+// Largest size each source offers — for the email banner, which needs 1200px and is cached
+// once, unlike the site's capped sizes above. External http(s) paths are used as-is.
+export function fullResBannerUrlFor(type: MediaType, bannerPath: string) {
+	if (bannerPath.startsWith("http://") || bannerPath.startsWith("https://")) {
+		return bannerPath;
+	}
+	if (type === MediaType.GAME) {
+		return `https://images.igdb.com/igdb/image/upload/t_original/${bannerPath}.jpg`;
+	}
+	return `https://image.tmdb.org/t/p/original${bannerPath}`;
+}
+
+export function fullResPosterUrlFor(
+	type: MediaType,
+	externalId: string | null,
+	posterPath: string,
+) {
+	if (posterPath.startsWith("http://") || posterPath.startsWith("https://")) {
+		return posterPath;
+	}
+	if (type === MediaType.MANGA) {
+		// No size suffix is MangaDex's original upload.
+		return `https://uploads.mangadex.org/covers/${externalId}/${posterPath}`;
+	}
+	if (type === MediaType.GAME) {
+		return `https://images.igdb.com/igdb/image/upload/t_original/${posterPath}.jpg`;
+	}
+	return `https://image.tmdb.org/t/p/original${posterPath}`;
 }
 
 // Only TMDB populates Person.photoPath, no per-source branching needed. w300 (not w185) so resolvePersonPhoto's resize to 300px isn't upscaling an already-too-small source.

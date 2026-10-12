@@ -27,6 +27,8 @@ import {
 	POSTER_DIR,
 	POSTER_QUALITY,
 	bannerUrlFor,
+	fullResBannerUrlFor,
+	fullResPosterUrlFor,
 	mediaAssetFilename,
 	personPhotoUrlFor,
 	posterUrlFor,
@@ -414,10 +416,15 @@ export async function resolveEmailBanner(
 	const sourcePath = bannerPath ?? posterPath;
 	if (!sourcePath) return null;
 
-	const filename = mediaAssetFilename(mediaId, sourcePath, "jpeg");
+	// Width and quality in the key so files cached with older settings get re-fetched, not reused.
+	const filename = mediaAssetFilename(
+		mediaId,
+		`${sourcePath}|w${EMAIL_BANNER_MAX_WIDTH}|q${EMAIL_BANNER_QUALITY}`,
+		"jpeg",
+	);
 	const sourceUrl = bannerPath
-		? bannerUrlFor(type, bannerPath)
-		: posterUrlFor(type, externalId, posterPath!, "full");
+		? fullResBannerUrlFor(type, bannerPath)
+		: fullResPosterUrlFor(type, externalId, posterPath!);
 
 	const result = await cacheOrDownload(
 		EMAIL_BANNER_DIR,

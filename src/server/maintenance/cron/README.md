@@ -13,7 +13,7 @@ sudo docker compose run --rm maintenance npm run <script> [-- <args>]
 
 ## Scheduled (see `crontab.example` for the live schedule)
 
-- `enrich_db` — nightly TMDB/IGDB/ComicVine/Google Books/MangaDex sync for stale
+- `enrich_db` — weekly (Sunday) TMDB/IGDB/ComicVine/Google Books/MangaDex sync for stale
   media rows (`lastEnrichedAt` > 3 days old, or null). Optional args:
   - media type filter, e.g. `-- movie` or `-- movie,tvshow` (case-insensitive,
     comma/space-separated; default is all types)
@@ -24,15 +24,16 @@ sudo docker compose run --rm maintenance npm run <script> [-- <args>]
 - `cleanup_cropped_images` — nightly, same idea for cropped images
 - `cleanup_digest_banners` — weekly, deletes digest banners older than 90 days,
   always keeping the newest 3 per language (sent emails link to them)
-- `purge_deleted_changelogs` — weekly, purges soft-deleted change-log rows past
+- `purge_deleted_changelogs` — nightly, purges soft-deleted change-log rows past
   their retention window
+- `backup_database` — nightly; `backup-database.sh` run directly by the host's
+  crontab (wrapped in `run-and-notify.sh` for logging), does its own dump + R2
+  upload + pruning
 
 ## Manual / one-off
 
 - `weekly_digest` — CLI/manual send of the weekly digest email; normally sent
   from `/admin/digest` instead (see `digest-send-actions.ts`)
-- `backup_database` — invoked directly by the host's crontab (not through
-  `run-and-notify.sh`), does its own dump + R2 upload + pruning
 - `purge_non_notable_crew` — one-off cleanup script, not scheduled
 
 ## Dev-only (`src/scripts/dev/`, run locally, not via `maintenance`)

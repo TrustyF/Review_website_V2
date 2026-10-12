@@ -4,7 +4,8 @@ import { EnrichmentStatus, MediaType } from "@prisma/client";
 import { RECENT_MEDIA_GROUPS, RecentMediaGroup } from "./recent-media-groups";
 
 // Shared by non-screen home sections (books/comics/games/manga). Fixed-size curated lists like movie sections, not paginated feed.
-const RECENT_COUNT = 14;
+// OneRowMediaGrid shows at most 6.
+const RECENT_COUNT = 6;
 
 // All type-specific relations (others null for scoped query).
 const EVERY_TYPE_RELATION = {
@@ -21,7 +22,7 @@ const EVERY_TYPE_RELATION = {
 const RECENT_MONTHS = 5;
 // Floor below which the date filter is dropped, so the section doesn't look sparse after a
 // quiet stretch — same MIN_RECENT_MOVIES fallback as getRecentMovies in page.tsx.
-const MIN_RECENT = 7;
+const MIN_RECENT = 6;
 
 function monthsAgo(months: number): Date {
 	const date = new Date();

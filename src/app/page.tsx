@@ -31,10 +31,12 @@ import styles from "./page.module.sass";
 
 // Extra reviewed items in FeaturedReview's picker strip, beyond the featured one itself.
 const RECENT_REVIEWS_COUNT = 6;
-const RECENT_MOVIES_COUNT = 14;
-const RECENTLY_WATCHED_COUNT = 14;
-const MY_WATCHLIST_COUNT = 7;
-const ANTICIPATED_RELEASES_COUNT = 14;
+// OneRowMediaGrid shows at most 6 (its $max-columns); fetching more would hide cards that
+// "From the archive" still excludes.
+const RECENT_MOVIES_COUNT = 6;
+const RECENTLY_WATCHED_COUNT = 6;
+const MY_WATCHLIST_COUNT = 6;
+const ANTICIPATED_RELEASES_COUNT = 6;
 // How far back "recent" reaches for getRecentMovies.
 const RECENT_MOVIES_MONTHS = 2;
 // How far back an already-released title still counts as "in theaters" for getAnticipatedReleases.
@@ -42,7 +44,7 @@ const ANTICIPATED_RELEASED_WEEKS = 3;
 // How far out an UPCOMING release can be and still count as "soon" for getAnticipatedReleases.
 const ANTICIPATED_SOON_MONTHS = 2;
 // Floor below which the date filter is dropped, so the section doesn't look sparse after a quiet stretch.
-const MIN_RECENT_MOVIES = 7;
+const MIN_RECENT_MOVIES = 6;
 
 // Every type-specific relation toMediaRecord might need — the reviewed feed spans all media types.
 const EVERY_TYPE_RELATION = {

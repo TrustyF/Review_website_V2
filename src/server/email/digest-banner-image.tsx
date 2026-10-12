@@ -39,10 +39,17 @@ async function fetchBytes(url: string): Promise<ArrayBuffer> {
 	return response.arrayBuffer();
 }
 
-// Normalized to JPEG since Satori can't decode WebP/AVIF sources.
+// JPEG/PNG within the render width pass through untouched (the email banner cache already is
+// one); only WebP/AVIF (Satori can't decode them) or oversized sources get re-encoded.
 async function photoDataUri(bannerSrc: string): Promise<string> {
-	const jpeg = await sharp(Buffer.from(await fetchBytes(bannerSrc)))
-		.resize({ width: DIGEST_BANNER_WIDTH * SCALE, withoutEnlargement: true })
+	const source = Buffer.from(await fetchBytes(bannerSrc));
+	const { format, width } = await sharp(source).metadata();
+	const maxWidth = DIGEST_BANNER_WIDTH * SCALE;
+	if ((format === "jpeg" || format === "png") && width <= maxWidth) {
+		return `data:image/${format};base64,${source.toString("base64")}`;
+	}
+	const jpeg = await sharp(source)
+		.resize({ width: maxWidth, withoutEnlargement: true })
 		.jpeg({ quality: 90 })
 		.toBuffer();
 	return `data:image/jpeg;base64,${jpeg.toString("base64")}`;

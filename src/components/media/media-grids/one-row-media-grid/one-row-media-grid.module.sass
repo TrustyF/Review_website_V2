@@ -1,8 +1,8 @@
 @use "@/app/styles/variables" as *
 
-// Highest column count worth a breakpoint for — matches the largest home-section fetch limit (14);
-// past that, more columns would never reveal more cards since no caller has more items to show.
-$max-columns: 14
+// Column cap: desktop's 950px content width fits exactly 6, and narrower mobile cards stretch
+// (1fr) instead of adding columns, so rows show at most 6 and callers can fetch just 6.
+$max-columns: 6
 // Highest `rows` prop value supported — raise if a caller needs more.
 $max-rows: 3
 
