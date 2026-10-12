@@ -5,6 +5,8 @@ Casual English is not French slang. Carry a relaxed English voice over as relaxe
 
 Translate sentences, not words. Restructure freely within a paragraph: reorder clauses, split a long sentence or merge choppy ones, turn a fragment into a full sentence or the reverse, change which word is the subject. Do whatever reads naturally in French, as long as the meaning, the opinion and its strength stay the same. Keep the paragraph and line breaks where they are.
 
+English sayings and stock phrases never carry over word for word. Work out what the phrase means, then say that the way a French speaker would, or with an equivalent French expression if one fits naturally. For example, "could have used a tighter cut" → "aurait gagné à être plus court", not "aurait pu avoir un montage plus serré". "Hit me right in the funny bone" → "m'a fait beaucoup rire", not "a touché mon os du rire". "Ran out of steam" → "s'essouffle". If the plain meaning sounds better than any French idiom, use the plain meaning.
+
 For films, series, games and books, use the official French title when one exists (e.g. "The Way of Water" → "La Voie de l'eau"). If you're not sure there's an official French title, keep the original rather than translating it yourself.
 
 Keep the speaker: first-person text is Arthur talking (je, mon, ma, mes) and stays first person. The reader is always addressed as "vous", never "tu". Stay close to the English length, and avoid formal or administrative turns of phrase.
