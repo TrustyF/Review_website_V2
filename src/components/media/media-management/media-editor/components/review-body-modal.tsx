@@ -14,6 +14,8 @@ import { ReviewDiff } from "@/components/media/media-management/media-editor/com
 import styles from "./review-body-modal.module.sass";
 
 const AUTOSAVE_DELAY_MS = 2000;
+// AI French translation turned off for now; flip back to re-enable the button.
+const TRANSLATE_ENABLED = false;
 
 type Texts = { body: string; bodyFr: string };
 
@@ -170,7 +172,7 @@ export function ReviewBodyModal({
 	}
 
 	async function handleTranslate() {
-		if (!body.trim()) return;
+		if (!TRANSLATE_ENABLED || !body.trim()) return;
 		await translate.run(async () => {
 			onChangeFr(await suggestReviewTranslation(body));
 		}, "Failed to translate. Try again.");
@@ -346,7 +348,9 @@ export function ReviewBodyModal({
 								<button
 									type="button"
 									onClick={handleTranslate}
-									disabled={translate.pending || !body.trim()}>
+									disabled={
+										!TRANSLATE_ENABLED || translate.pending || !body.trim()
+									}>
 									{translate.pending
 										? "Translating…"
 										: "Translate from English"}
@@ -358,10 +362,16 @@ export function ReviewBodyModal({
 							)}
 
 							<div className={styles.placeholder}>
-								Click &quot;Translate from English&quot; to fill the field on
-								the left with an AI translation of the current English body.
-								This overwrites whatever&apos;s already there — edit freely
-								afterward.
+								{TRANSLATE_ENABLED ? (
+									<>
+										Click &quot;Translate from English&quot; to fill the field
+										on the left with an AI translation of the current English
+										body. This overwrites whatever&apos;s already there — edit
+										freely afterward.
+									</>
+								) : (
+									"AI translation is turned off for now — write the French version by hand."
+								)}
 							</div>
 						</div>
 					</div>
