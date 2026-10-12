@@ -10,12 +10,14 @@ import {
 	getReviewDraft,
 	saveReviewDraft,
 } from "@/components/media/media-management/media-editor/media-editor-actions";
+import {
+	TRANSLATION_MODELS,
+	type TranslationModelId,
+} from "@/lib/claude-model";
 import { ReviewDiff } from "@/components/media/media-management/media-editor/components/review-diff";
 import styles from "./review-body-modal.module.sass";
 
 const AUTOSAVE_DELAY_MS = 2000;
-// AI French translation turned off for now; flip back to re-enable the button.
-const TRANSLATE_ENABLED = false;
 
 type Texts = { body: string; bodyFr: string };
 
@@ -162,6 +164,13 @@ export function ReviewBodyModal({
 	const enTextareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const translate = useAsyncAction();
+	const [translateModel, setTranslateModel] = useState<TranslationModelId>(
+		TRANSLATION_MODELS[0].id,
+	);
+	const [lastTranslation, setLastTranslation] = useState<{
+		label: string;
+		costUsd: number;
+	} | null>(null);
 	const frTextareaRef = useRef<HTMLTextAreaElement>(null);
 
 	async function handleSuggest() {
@@ -172,9 +181,17 @@ export function ReviewBodyModal({
 	}
 
 	async function handleTranslate() {
-		if (!TRANSLATE_ENABLED || !body.trim()) return;
+		if (!body.trim()) return;
 		await translate.run(async () => {
-			onChangeFr(await suggestReviewTranslation(body));
+			const { text, costUsd } = await suggestReviewTranslation(
+				body,
+				translateModel,
+			);
+			onChangeFr(text);
+			const label =
+				TRANSLATION_MODELS.find((option) => option.id === translateModel)
+					?.label ?? translateModel;
+			setLastTranslation({ label, costUsd });
 		}, "Failed to translate. Try again.");
 	}
 
@@ -345,33 +362,46 @@ export function ReviewBodyModal({
 						<div className={styles.column}>
 							<div className={styles.suggestion_header}>
 								Translate the English body into French
-								<button
-									type="button"
-									onClick={handleTranslate}
-									disabled={
-										!TRANSLATE_ENABLED || translate.pending || !body.trim()
-									}>
-									{translate.pending
-										? "Translating…"
-										: "Translate from English"}
-								</button>
+								<div className={styles.translate_controls}>
+									<select
+										title="Model used for the translation (low effort)"
+										value={translateModel}
+										disabled={translate.pending}
+										onChange={(e) =>
+											setTranslateModel(e.target.value as TranslationModelId)
+										}>
+										{TRANSLATION_MODELS.map((option) => (
+											<option key={option.id} value={option.id}>
+												{option.label}
+											</option>
+										))}
+									</select>
+									<button
+										type="button"
+										onClick={handleTranslate}
+										disabled={translate.pending || !body.trim()}>
+										{translate.pending
+											? "Translating…"
+											: "Translate from English"}
+									</button>
+								</div>
 							</div>
 
 							{translate.error && (
 								<div className={styles.suggest_error}>{translate.error}</div>
 							)}
+							{lastTranslation && !translate.pending && (
+								<div className={styles.translate_cost}>
+									Last translation: {lastTranslation.label}, $
+									{lastTranslation.costUsd.toFixed(4)}
+								</div>
+							)}
 
 							<div className={styles.placeholder}>
-								{TRANSLATE_ENABLED ? (
-									<>
-										Click &quot;Translate from English&quot; to fill the field
-										on the left with an AI translation of the current English
-										body. This overwrites whatever&apos;s already there — edit
-										freely afterward.
-									</>
-								) : (
-									"AI translation is turned off for now — write the French version by hand."
-								)}
+								Click &quot;Translate from English&quot; to fill the field on
+								the left with an AI translation of the current English body.
+								This overwrites whatever&apos;s already there — edit freely
+								afterward.
 							</div>
 						</div>
 					</div>

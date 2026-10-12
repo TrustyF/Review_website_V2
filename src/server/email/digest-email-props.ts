@@ -160,7 +160,6 @@ export async function buildDigestEmailProps(
 			select: {
 				mediaId: true,
 				rating: true,
-				initialRating: true,
 				reviewDate: true,
 				body: true,
 				bodyFr: true,
@@ -177,7 +176,6 @@ export async function buildDigestEmailProps(
 			select: {
 				mediaId: true,
 				rating: true,
-				initialRating: true,
 				media: { select: MEDIA_SELECT },
 			},
 		}),
@@ -203,7 +201,7 @@ export async function buildDigestEmailProps(
 			releaseYear: review.media.releaseDate
 				? String(review.media.releaseDate.getFullYear())
 				: null,
-			rating: review.initialRating ?? review.rating,
+			rating: review.rating,
 			watchedDateLabel: formatWatchedDate(review.reviewDate!, locale),
 			// Falls back to English silently when untranslated — see Review.bodyFr.
 			body: locale === "fr" ? (review.bodyFr ?? review.body) : review.body,
@@ -221,7 +219,7 @@ export async function buildDigestEmailProps(
 				title: localizedTitle(review.media, locale),
 				mediaUrl: toAbsoluteUrl(`/media/${review.mediaId}`),
 				posterSrc: await toPosterSrc(review.media),
-				rating: review.initialRating ?? review.rating,
+				rating: review.rating,
 			})),
 	);
 
