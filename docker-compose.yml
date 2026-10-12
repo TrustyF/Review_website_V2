@@ -58,27 +58,21 @@ services:
   # dev sidecar — so `app` depends on it directly rather than pointing at an
   # external host.
   #
-  # DATABASE_URL differs between build and runtime because the build
-  # container isn't attached to this compose file's network the way a
-  # running container is: the build secret (below) reads the plain
-  # DATABASE_URL from `.env` (host-facing, `localhost:5432` — the same value
-  # local dev already uses, since `db`'s port is published to the host) and
-  # `network: host` on the build makes that resolve correctly during `docker
-  # compose build`. The `environment:` entry below is a *different*,
-  # compose-network-facing URL (`db:5432`) for the actually-running
-  # container. `db` must already be up before building `app`, since compose
-  # doesn't gate `build:` on `depends_on`.
+  # The build never connects to `db` (no `network: host`, which Compose 5 +
+  # buildx 0.37.2+ refuse without an --allow flag Compose can't pass):
+  # migrations run in the `migrate` service below instead, and sitemap.ts
+  # renders per request. The database_url secret is still passed because
+  # prisma.config.ts reads DATABASE_URL on load, but nothing connects to it.
   #
   # No DIRECT_URL anywhere — that split only ever existed for Neon's pooler;
   # local Postgres has none, so prisma.config.ts's fallback to DATABASE_URL
-  # applies both at build and runtime, same as local dev already relied on.
+  # applies, same as local dev already relied on.
   #
   # R2 build secrets are only exposed at image-build time and never persisted
   # into the image's layers — see Dockerfile's --mount=type=secret usage.
   app:
     build:
       context: .
-      network: host
       # Passed through to the Dockerfile's own `ARG IMAGE_STORAGE_DRIVER=r2`
       # default — without this, the build always used "r2" regardless of
       # .env (nothing was overriding that ARG), so build-time steps would
@@ -98,6 +92,8 @@ services:
       db:
         condition: service_healthy
       firewall-init:
+        condition: service_completed_successfully
+      migrate:
         condition: service_completed_successfully
     # Loopback only: `cloudflared` reaches `app` over the compose network
     # (as `app:3000`), not through this published port — this is purely for
@@ -144,6 +140,21 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       EMAIL_FROM: ${EMAIL_FROM}
+
+  # One-shot: applies pending Prisma migrations before `app` starts (used to
+  # run inside `npm run build`, which needed the build to reach `db`).
+  migrate:
+    build:
+      context: .
+      target: maintenance
+      secrets:
+        - database_url
+    command: npm run migrate_deploy
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-review_db}
 
   # Cloudflare Tunnel exposing `app` at review.arthursirjacobs.com, so the
   # host needs no inbound port-forwarding. Token-based (created via the

@@ -31,11 +31,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# `npm run build` runs `prisma migrate deploy` against the real DB.
-# DATABASE_URL points at the `db` compose service's published port via
-# docker-compose.yml's `build: network: host` (no DIRECT_URL — local
-# Postgres has no pooler, so prisma.config.ts's fallback to DATABASE_URL
-# applies, same as local dev).
+# The build never connects to the DB (migrations run in docker-compose.yml's
+# `migrate` service); DATABASE_URL is only passed because prisma.config.ts
+# reads it on load.
 #
 # The R2_* secrets and IMAGE_STORAGE_DRIVER ARG below aren't used by any
 # current build step, but are still threaded through in case

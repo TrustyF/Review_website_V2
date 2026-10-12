@@ -3,6 +3,9 @@ import { dbPublic } from "@/server/db/client";
 import { EnrichmentStatus } from "@prisma/client";
 import { SITE_URL } from "@/lib/site-url";
 
+// Rendered per request so `next build` never needs a reachable database.
+export const dynamic = "force-dynamic";
+
 // Static, publicly-browsable routes — excludes auth/account/admin/dev pages.
 const STATIC_ROUTES = [
 	"",

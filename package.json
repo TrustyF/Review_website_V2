@@ -5,7 +5,8 @@
 	"scripts": {
 		"dev": "next dev",
 		"postinstall": "prisma generate",
-		"build": "npm run fetch_identity && prisma migrate deploy && next build",
+		"build": "npm run fetch_identity && next build",
+		"migrate_deploy": "prisma migrate deploy",
 		"start": "next start",
 		"lint": "eslint && npm run lint:colors && npm run lint:styles",
 		"lint:colors": "node scripts/check-color-literals.mjs",
