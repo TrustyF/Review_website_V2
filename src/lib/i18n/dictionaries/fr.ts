@@ -190,6 +190,7 @@ export const fr = {
 		mediaTypeSwitcher: "Passez d'un type à l'autre",
 	},
 	media: {
+		newBadge: "Nouveau",
 		recentSuffix: "récents",
 		recentBackToRating: "Par note",
 		filter: {
