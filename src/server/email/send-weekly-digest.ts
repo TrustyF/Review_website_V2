@@ -27,7 +27,10 @@ export async function sendWeeklyDigest(): Promise<WeeklyDigestResult> {
 	const propsByLocale = new Map<Locale, DigestEmailProps | null>();
 	async function propsFor(locale: Locale): Promise<DigestEmailProps | null> {
 		if (!propsByLocale.has(locale)) {
-			propsByLocale.set(locale, await buildDigestEmailProps(locale));
+			propsByLocale.set(
+				locale,
+				await buildDigestEmailProps(locale, { persistBanner: true }),
+			);
 		}
 		return propsByLocale.get(locale) ?? null;
 	}

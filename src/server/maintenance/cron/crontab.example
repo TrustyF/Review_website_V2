@@ -19,6 +19,9 @@ CRON_SH=$REPO_DIR/src/server/maintenance/cron/run-and-notify.sh
 15 3 * * * $CRON_SH cleanup_posters sudo docker compose run --rm maintenance npm run cleanup_posters
 30 3 * * * $CRON_SH cleanup_cropped_images sudo docker compose run --rm maintenance npm run cleanup_cropped_images
 
+# Weekly: digest banners older than 90 days, keeping the newest 3 per language.
+45 3 * * 0 $CRON_SH cleanup_digest_banners sudo docker compose run --rm maintenance npm run cleanup_digest_banners
+
 # Weekly purge of soft-deleted change-log rows past their retention window.
 0 4 * * 0  $CRON_SH purge_deleted_changelogs sudo docker compose run --rm maintenance npm run purge_deleted_changelogs
 

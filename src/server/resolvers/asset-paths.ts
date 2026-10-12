@@ -49,6 +49,9 @@ export const EMAIL_BANNER_QUALITY = 65;
 // from EMAIL_BANNER_DIR since it's content-addressed by uploaded bytes, not a mediaId+sourcePath.
 export const DIGEST_BANNER_OVERRIDE_DIR = "banners/digest-override";
 
+// Digest banners with headline/logo/date baked in (resolveDigestBannerImage), content-addressed.
+export const DIGEST_BANNER_COMPOSITE_DIR = "banners/digest-composite";
+
 // Own dir — /api/poster's by-id lookup re-resolves against whatever DB the
 // live site has *right now*, which an email can't depend on staying in sync.
 export const EMAIL_POSTER_DIR = "posters/email-cache";

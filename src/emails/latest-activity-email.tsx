@@ -41,6 +41,7 @@ type WatchProps = {
 type Props = {
 	dict: Dictionary;
 	bannerSrc: string | null;
+	composedBannerSrc: string | null;
 	dateLabel: string;
 	latestReviews: ReviewProps[];
 	recentWatches: WatchProps[];
@@ -63,7 +64,10 @@ if (existsSync(PREVIEW_DATA_PATH)) {
 	// `dict` isn't in the JSON (its functions wouldn't survive serialization) —
 	// seed-email-preview.ts omits it, so it's filled in fresh here instead.
 	LatestActivityEmail.PreviewProps = {
-		...(JSON.parse(readFileSync(PREVIEW_DATA_PATH, "utf-8")) as Omit<Props, "dict">),
+		...(JSON.parse(readFileSync(PREVIEW_DATA_PATH, "utf-8")) as Omit<
+			Props,
+			"dict"
+		>),
 		dict: getDictionaryForLocale("en"),
 	};
 }
@@ -71,6 +75,7 @@ if (existsSync(PREVIEW_DATA_PATH)) {
 export default function LatestActivityEmail({
 	dict,
 	bannerSrc,
+	composedBannerSrc,
 	dateLabel,
 	latestReviews,
 	recentWatches,
@@ -88,7 +93,13 @@ export default function LatestActivityEmail({
 				<Preview>{dict.digest.previewText}</Preview>
 				<Body className="m-0 bg-bg-2 font-sans">
 					<Container className="mx-auto w-full max-w-[600px]">
-						<DigestBanner dict={dict} bannerSrc={bannerSrc} dateLabel={dateLabel} />
+						<DigestBanner
+							dict={dict}
+							bannerSrc={bannerSrc}
+							// Older preview-data JSON predates this field.
+							composedBannerSrc={composedBannerSrc ?? null}
+							dateLabel={dateLabel}
+						/>
 
 						<Section className="bg-bg p-6">
 							{/*<Text className="m-2 mb-5 text-center text-[15px] text-fg-2">*/}

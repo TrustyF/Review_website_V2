@@ -4,6 +4,10 @@ import {
 	resolveEmailPoster,
 } from "@/server/resolvers/poster-resolver";
 import { toAbsoluteUrl } from "@/server/lib/site-url";
+import {
+	renderDigestBannerDataUri,
+	resolveDigestBannerImage,
+} from "@/server/email/digest-banner-image";
 import type LatestActivityEmail from "@/emails/latest-activity-email";
 import {
 	EnrichmentStatus,
@@ -139,8 +143,10 @@ export type DigestEmailProps = Omit<
 >;
 
 // null when no rating/review activity past week (digest skipped; preview has nothing real to render). Same admin-content scope as activity-actions.ts's getActivityFeed.
+// persistBanner: sends store the banner (emails link to it); previews inline it, leaving no files.
 export async function buildDigestEmailProps(
 	locale: Locale,
+	{ persistBanner }: { persistBanner: boolean },
 ): Promise<DigestEmailProps | null> {
 	const since = new Date(Date.now() - DIGEST_WINDOW_MS);
 
@@ -233,10 +239,27 @@ export async function buildDigestEmailProps(
 			? await toBannerSrc(featuredMedia)
 			: null;
 
-	return {
-		dict: getDictionaryForLocale(locale),
+	const dict = getDictionaryForLocale(locale);
+	const dateLabel = formatDigestDate(new Date(), locale);
+	const bannerContent = {
 		bannerSrc,
-		dateLabel: formatDigestDate(new Date(), locale),
+		headline:
+			dict.digest.weeklyDigestFallbackHeadline.toLocaleUpperCase(locale),
+		dateLabel,
+	};
+	let composedBannerSrc: string | null;
+	if (persistBanner) {
+		const storedPath = await resolveDigestBannerImage(bannerContent, locale);
+		composedBannerSrc = storedPath ? toAbsoluteUrl(storedPath) : null;
+	} else {
+		composedBannerSrc = await renderDigestBannerDataUri(bannerContent);
+	}
+
+	return {
+		dict,
+		bannerSrc,
+		composedBannerSrc,
+		dateLabel,
 		latestReviews,
 		recentWatches,
 		anticipatedReleases,

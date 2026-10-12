@@ -24,6 +24,7 @@
 		"fetch_identity": "tsx src/server/maintenance/fetch-identity.ts",
 		"cleanup_posters": "tsx src/server/maintenance/cron/cleanup-posters.ts",
 		"cleanup_cropped_images": "tsx src/server/maintenance/cron/cleanup-cropped-images.ts",
+		"cleanup_digest_banners": "tsx src/server/maintenance/cron/cleanup-digest-banners.ts",
 		"enrich_db": "tsx src/server/maintenance/cron/enrich-db.ts",
 		"purge_deleted_changelogs": "tsx src/server/maintenance/cron/purge-deleted-change-log.ts",
 		"backup_database": "tsx src/server/maintenance/cron/backup-database.ts",

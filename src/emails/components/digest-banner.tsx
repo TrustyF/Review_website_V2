@@ -5,15 +5,38 @@ import type { Dictionary } from "@/lib/i18n/dictionaries/en";
 type Props = {
 	dict: Dictionary;
 	bannerSrc: string | null;
+	// Single JPEG with everything baked in (resolveDigestBannerImage); null uses the HTML banner.
+	composedBannerSrc: string | null;
 	dateLabel: string;
 };
 
 // Tall, closer to the reference screenshot's proportions relative to a
 // 600px-wide email — a short banner read as a thin strip, not a hero.
 const BANNER_HEIGHT = 220;
+const BANNER_WIDTH = 600;
 
-// Two stacked CSS backgrounds; lets logo/date sit in normal flow.
-export function DigestBanner({ dict, bannerSrc, dateLabel }: Props) {
+export function DigestBanner({
+	dict,
+	bannerSrc,
+	composedBannerSrc,
+	dateLabel,
+}: Props) {
+	if (composedBannerSrc) {
+		return (
+			<Section>
+				<Img
+					src={composedBannerSrc}
+					width={BANNER_WIDTH}
+					height={BANNER_HEIGHT}
+					alt={`${dict.digest.weeklyDigestFallbackHeadline} · ${dateLabel}`}
+					className="block w-full"
+					style={{ height: "auto", backgroundColor: "#1a1a1a" }}
+				/>
+			</Section>
+		);
+	}
+
+	// Fallback: two stacked CSS backgrounds; lets logo/date sit in normal flow.
 	return (
 		<Section
 			className=""

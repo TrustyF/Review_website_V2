@@ -17,7 +17,7 @@ export async function GET() {
 	// getLocale() (cookie-first), not session.user.preferredLanguage directly —
 	// the JWT session only refreshes at sign-in, same as elsewhere in the app.
 	const locale = await getLocale();
-	const props = await buildDigestEmailProps(locale);
+	const props = await buildDigestEmailProps(locale, { persistBanner: false });
 	if (!props) {
 		return new NextResponse(
 			"No rating/review activity in the past week — there's nothing to preview yet.",

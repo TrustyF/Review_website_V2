@@ -22,6 +22,8 @@ sudo docker compose run --rm maintenance npm run <script> [-- <args>]
     e.g. `-- movie ignore-enrich-cutoff`
 - `cleanup_posters` — nightly, deletes orphaned poster/cropped-image files
 - `cleanup_cropped_images` — nightly, same idea for cropped images
+- `cleanup_digest_banners` — weekly, deletes digest banners older than 90 days,
+  always keeping the newest 3 per language (sent emails link to them)
 - `purge_deleted_changelogs` — weekly, purges soft-deleted change-log rows past
   their retention window
 
