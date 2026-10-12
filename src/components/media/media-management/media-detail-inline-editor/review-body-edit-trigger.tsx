@@ -5,7 +5,7 @@ import {
 	MediaReview,
 	MediaReviewDisplay,
 } from "@/components/media/media-cards/media-card/review";
-import { Hitbox } from "@/components/ui/hitbox";
+import { Clickable } from "@/components/ui/clickable";
 import { ReviewBodyModal } from "@/components/media/media-management/media-editor/components/review-body-modal";
 import { useMediaPublishStore } from "@/components/media/media-management/media-detail-inline-editor/media-publish-store";
 import { useIsAdmin } from "@/lib/use-is-admin";
@@ -20,7 +20,8 @@ type Props = {
 	isUpcoming: boolean;
 };
 
-// Drop-in <MediaReview> replacement: click to open body editor with AI diff. Done stages edit to media-publish-store (not save); Close just keeps the DB draft. Scoped to whole card since MediaReview doesn't expose body as targetable sub-element.
+// Drop-in <MediaReview> replacement: a small top-right control opens the body editor with AI diff.
+// Done stages the edit to media-publish-store (not save); Close just keeps the DB draft.
 export function ReviewBodyEditTrigger({ media, overview, isUpcoming }: Props) {
 	const sessionIsAdmin = useIsAdmin();
 	const isMobileViewport = useIsMobileViewport();
@@ -68,15 +69,18 @@ export function ReviewBodyEditTrigger({ media, overview, isUpcoming }: Props) {
 
 	return (
 		<div className={styles.wrapper}>
-			<Hitbox className={styles.hitbox} onClick={() => setIsOpen(true)}>
-				<MediaReview
-					review={{ ...review, body }}
-					watchedDate={media.watchedDate}
-					type={media.type}
-					overview={overview}
-				/>
-				<div className={styles.hover_badge}>Edit review body</div>
-			</Hitbox>
+			<MediaReview
+				review={{ ...review, body }}
+				watchedDate={media.watchedDate}
+				type={media.type}
+				overview={overview}
+			/>
+			<Clickable
+				className={styles.edit_button}
+				title="Edit review body"
+				onClick={() => setIsOpen(true)}>
+				Edit body
+			</Clickable>
 
 			{isOpen && (
 				<ReviewBodyModal

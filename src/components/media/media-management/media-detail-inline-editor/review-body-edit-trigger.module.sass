@@ -1,27 +1,25 @@
 .wrapper
-  display: flex
-  flex-flow: column
-  gap: 0.4rem
-
-.hitbox
   position: relative
-  border-radius: 0.25rem
-  transition: outline-color 0.15s
+  max-width: 30rem
 
-  &:hover
-    outline: 1px dashed var(--accent1)
-    outline-offset: 6px
-    cursor: pointer
-
-.hover_badge
+// Sits on the rating row's empty right side; outlines the review while hovered.
+.edit_button
   position: absolute
   top: 0
   right: 0
+  padding: 6px 14px
+  border: 1px solid var(--accent1)
+  border-radius: 0.25rem
   color: var(--accent1)
   font-size: 0.75rem
-  opacity: 0
-  pointer-events: none
+  cursor: pointer
+  opacity: 0.5
   transition: opacity 0.15s
 
-  .hitbox:hover &
+  &:hover, &:focus-visible
     opacity: 1
+
+.wrapper:has(.edit_button:hover)
+  outline: 1px dashed var(--accent1)
+  outline-offset: 6px
+  border-radius: 0.25rem
