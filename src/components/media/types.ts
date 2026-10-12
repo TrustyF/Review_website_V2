@@ -50,6 +50,8 @@ type BaseRecord = Omit<Media, "type"> & {
 	bannerSrcMobile: string | null;
 	// "Watched on" — Review.createDate itself, not a separate column, since saveReview now requires a rating to save at all. Still gated on rating as a defensive fallback for older rows.
 	watchedDate: Date | null;
+	// Rated or reviewed within NEW_BADGE_DAYS — computed server-side so render stays pure.
+	isNew: boolean;
 };
 
 // The shape components actually want to work with
@@ -71,6 +73,7 @@ type CardBase = Pick<
 	| "externalId"
 	| "releaseDate"
 	| "watchedDate"
+	| "isNew"
 	| "genres"
 > & {
 	review?: Pick<Review, "rating" | "difficulty" | "liked" | "body"> | null;
@@ -106,6 +109,7 @@ export function toMediaCardRecord(record: MediaRecord): MediaCardRecord {
 		externalId: record.externalId,
 		releaseDate: record.releaseDate,
 		watchedDate: record.watchedDate,
+		isNew: record.isNew,
 		genres: record.genres,
 		review: review
 			? {
@@ -160,6 +164,18 @@ export function toMediaCardRecord(record: MediaRecord): MediaCardRecord {
 }
 
 // Synchronous and I/O-free: posterSrc/bannerSrc point at /api/poster and /api/banner routes rather than a pre-resolved file, so reshaping a media list never blocks on downloading a single image. Each route resolves/caches lazily on actual request. Filename is content-addressed by posterPath/bannerPath, so the URL changes whenever the image does, making a long-lived immutable Cache-Control safe.
+const NEW_BADGE_DAYS = 7;
+
+function isRecentlyReviewed(
+	watchedDate: Date | null,
+	reviewDate: Date | null | undefined,
+): boolean {
+	const cutoff = Date.now() - NEW_BADGE_DAYS * 24 * 60 * 60 * 1000;
+	return [watchedDate, reviewDate].some(
+		(date) => date != null && date.getTime() >= cutoff,
+	);
+}
+
 export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 	const posterSrc = toPosterSrc(raw.id, raw.posterPath);
 	const bannerSrc = raw.bannerPath
@@ -167,6 +183,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 		: null;
 	const bannerSrcMobile = raw.bannerPath ? `${bannerSrc}?size=mobile` : null;
 	const watchedDate = raw.review?.rating != null ? raw.review.createDate : null;
+	const isNew = isRecentlyReviewed(watchedDate, raw.review?.reviewDate);
 	// Flattened into genres; the raw relation itself isn't passed along.
 	const { mediaGenres, ...base } = raw;
 	const genres = (mediaGenres ?? []).map((mg) => mg.genre.name);
@@ -182,6 +199,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				bannerSrc,
 				bannerSrcMobile,
 				watchedDate,
+				isNew,
 				genres,
 			};
 		case "TVSHOW":
@@ -194,6 +212,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				bannerSrc,
 				bannerSrcMobile,
 				watchedDate,
+				isNew,
 				genres,
 			};
 		case "MANGA":
@@ -206,6 +225,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				bannerSrc,
 				bannerSrcMobile,
 				watchedDate,
+				isNew,
 				genres,
 			};
 		case "COMIC":
@@ -218,6 +238,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				bannerSrc,
 				bannerSrcMobile,
 				watchedDate,
+				isNew,
 				genres,
 			};
 		case "GAME":
@@ -230,6 +251,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				bannerSrc,
 				bannerSrcMobile,
 				watchedDate,
+				isNew,
 				genres,
 			};
 		case "BOOK":
@@ -242,6 +264,7 @@ export function toMediaRecord(raw: RawMediaRecord): MediaRecord {
 				bannerSrc,
 				bannerSrcMobile,
 				watchedDate,
+				isNew,
 				genres,
 			};
 	}

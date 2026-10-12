@@ -188,6 +188,7 @@ export const en = {
 		mediaTypeSwitcher: "Switch between different types",
 	},
 	media: {
+		newBadge: "New",
 		recentSuffix: "recent",
 		recentBackToRating: "By rating",
 		filter: {

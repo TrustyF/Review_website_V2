@@ -22,7 +22,7 @@ export async function RecentlyWatchedSection({ items }: Props) {
 				subtitle={dict.home.subtitles.recentlyWatched}
 			/>
 			<MediaCardDisplayProvider showTitle={false} fade={false}>
-				<OneRowMediaGrid items={items} rows={2} />
+				<OneRowMediaGrid items={items} />
 			</MediaCardDisplayProvider>
 		</section>
 	);

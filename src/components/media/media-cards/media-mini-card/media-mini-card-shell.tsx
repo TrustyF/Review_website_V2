@@ -61,6 +61,7 @@ export function MediaMiniCardShell({ media, children }: Props) {
 					ratio={posterRatioFor(media.type)}
 					difficulty={media.review?.difficulty}
 					fade={fade}
+					isNew={media.isNew}
 				/>
 				{showWatchlistPill && !isAdmin && isInWatchlist(media.id) && (
 					<span

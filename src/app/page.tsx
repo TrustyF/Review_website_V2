@@ -247,14 +247,12 @@ async function AnticipatedRow({
 	);
 }
 
-// Waits on recentMovies (already resolved by the time this renders) only for its exclude list.
 async function RecentlyWatchedRow({
-	recentMovies,
+	recentlyWatched,
 }: {
-	recentMovies: Promise<{ id: number }[]>;
+	recentlyWatched: ReturnType<typeof getRecentlyWatchedMovies>;
 }) {
-	const excludeIds = (await recentMovies).map((m) => m.id);
-	const raw = await getRecentlyWatchedMovies(excludeIds);
+	const raw = await recentlyWatched;
 	return <RecentlyWatchedSection items={raw.map(toMediaRecord)} />;
 }
 
@@ -277,8 +275,19 @@ export default async function HomePage() {
 	// anticipated starts now but is awaited inside its own (and the watchlist's) Suspense boundary.
 	const recentMoviesPromise = getRecentMovies();
 	const anticipatedPromise = getAnticipatedReleases();
+	// Excludes Recent releases, so it can't start until those are in.
+	const recentlyWatchedPromise = recentMoviesPromise.then((recent) =>
+		getRecentlyWatchedMovies(recent.map((m) => m.id)),
+	);
+	const reviewedPromise = getFeaturedReviewItems();
+	// Everything shown above "From the archive", so it doesn't repeat them. Anticipated is unrated, so it can't overlap.
+	const archiveExcludeIds = Promise.all([
+		reviewedPromise,
+		recentMoviesPromise,
+		recentlyWatchedPromise,
+	]).then((sections) => sections.flat().map((m) => m.id));
 	const [reviewed, recentMoviesRaw, session] = await Promise.all([
-		getFeaturedReviewItems(),
+		reviewedPromise,
 		recentMoviesPromise,
 		auth(),
 	]);
@@ -303,13 +312,13 @@ export default async function HomePage() {
 					<AnticipatedRow anticipated={anticipatedPromise} />
 				</Suspense>
 				<Suspense>
-					<RecentlyWatchedRow recentMovies={recentMoviesPromise} />
+					<RecentlyWatchedRow recentlyWatched={recentlyWatchedPromise} />
+				</Suspense>
+				<Suspense>
+					<RandomPickSection excludeIds={archiveExcludeIds} />
 				</Suspense>
 				<Suspense>
 					<FeaturedListsSection />
-				</Suspense>
-				<Suspense>
-					<RandomPickSection />
 				</Suspense>
 				<Suspense>
 					<MovieSpotlightSection />

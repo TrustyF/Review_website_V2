@@ -26,6 +26,7 @@ export function MediaCardShellMobile({ media, children }: Props) {
 					title={media.title}
 					mediaId={media.id}
 					ratio={posterRatioFor(media.type)}
+					isNew={media.isNew}
 				/>
 			</div>
 			<div className={styles.top}>

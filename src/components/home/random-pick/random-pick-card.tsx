@@ -89,15 +89,19 @@ function RandomPickItem({ media }: { media: MediaRecord }) {
 
 type Props = {
 	initial: MediaRecord[];
+	excludeIds: number[];
 };
 
-export function RandomPickCard({ initial }: Props) {
+export function RandomPickCard({ initial, excludeIds }: Props) {
 	const dict = useDictionary();
 	const [picks, setPicks] = useState(initial);
 	const [isPending, startTransition] = useTransition();
 	function spin() {
 		startTransition(async () => {
-			const next = await fetchRandomPicks(picks.map((m) => m.id));
+			const next = await fetchRandomPicks([
+				...excludeIds,
+				...picks.map((m) => m.id),
+			]);
 			if (next.length > 0) setPicks(next);
 		});
 	}
