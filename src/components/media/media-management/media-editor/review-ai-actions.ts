@@ -1,7 +1,7 @@
 "use server";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import Anthropic from "@anthropic-ai/sdk";
-import { CLAUDE_MODEL } from "@/lib/claude-model";
+import { CLAUDE_MODEL, CLAUDE_PROOFREAD_MODEL } from "@/lib/claude-model";
 import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/review-body-syntax";
 import { FRENCH_STYLE_RULES } from "@/lib/i18n/french-style";
 
@@ -70,16 +70,17 @@ function unmarkTranslatedMarkup(text: string, urls: string[]): string {
 
 // Throws on any non-end_turn stop (max_tokens, refusal) so a truncated or refused reply is never pasted in.
 async function generateText(
+	model: string,
 	systemText: string,
 	content: string,
-	effort: "low" | "max",
 ): Promise<string> {
 	const client = new Anthropic();
 	const response = await client.messages.create({
-		model: CLAUDE_MODEL,
+		model,
 		// Thinking is always on and counts toward this, so leave room beyond the reply itself.
 		max_tokens: 16000,
-		output_config: { effort },
+		// Low on both: thinking is billed as output, and neither task gains much from more.
+		output_config: { effort: "low" },
 		// Below the ~1024-token minimum this prompt won't actually get cached
 		// today, but marking it costs nothing and covers it if it ever grows.
 		system: [
@@ -87,6 +88,7 @@ async function generateText(
 		],
 		messages: [{ role: "user", content }],
 	});
+	console.info(`[review-ai] ${model}`, response.usage);
 	if (response.stop_reason !== "end_turn") {
 		throw new Error(`AI reply stopped early: ${response.stop_reason}`);
 	}
@@ -102,9 +104,9 @@ export async function suggestReviewCorrection(body: string): Promise<string> {
 	const { stripped, spans } = extractMarkup(body);
 
 	const corrected = await generateText(
+		CLAUDE_PROOFREAD_MODEL,
 		"You proofread review text for a personal movie/TV/manga/game log. Fix grammar, spelling, clarity issues and repetitive wording. It should read like an essay. Preserve the reviewer's opinions. The text may contain placeholder tokens like ⟦MARKUP0⟧ — leave every one exactly as it is: don't add, remove, rename, translate, or explain them. Reply with only the corrected text: no preamble, no explanation, no surrounding quotes.",
 		stripped,
-		"low",
 	);
 	return restoreMarkup(corrected, spans);
 }
@@ -118,13 +120,13 @@ export async function suggestReviewTranslation(body: string): Promise<string> {
 	const { marked, urls } = markMarkupForTranslation(body);
 
 	const translated = await generateText(
+		CLAUDE_MODEL,
 		`You translate review text for a personal movie/TV/manga/game log from English to French. Keep the reviewer's tone, opinions, and level of formality — a natural translation, not a literal one.
 
 ${FRENCH_STYLE_RULES}
 
 The text contains marker tokens in pairs, e.g. ${SPOILER_OPEN}some phrase${SPOILER_CLOSE} or ${LINK_OPEN}some phrase${LINK_CLOSE_PREFIX}0⟧ — translate the phrase inside a pair normally, as part of the surrounding sentence, but leave the marker tokens themselves exactly as they are, immediately before/after the translated phrase: don't add, remove, rename, reorder, or explain them. Reply with only the translated text: no preamble, no explanation, no surrounding quotes.`,
 		marked,
-		"max",
 	);
 	return unmarkTranslatedMarkup(translated, urls);
 }

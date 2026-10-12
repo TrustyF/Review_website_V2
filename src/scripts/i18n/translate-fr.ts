@@ -156,7 +156,19 @@ function isArrowFunction(expression: string): boolean {
 	return init !== undefined && ts.isArrowFunction(init);
 }
 
-function systemPrompt(enSource: string, frSource: string | null): string {
+// Only the top-level sections being translated, as {key: source} — sending all of en.ts and
+// fr.ts for a one-entry change was most of each run's input.
+function sectionContext(
+	leaves: Map<string, string>,
+	sections: Set<string>,
+): string {
+	const picked = [...leaves].filter(([key]) =>
+		sections.has(key.split(".")[0] ?? ""),
+	);
+	return JSON.stringify(Object.fromEntries(picked), null, 1);
+}
+
+function systemPrompt(enContext: string, frContext: string | null): string {
 	return `You translate the UI strings of arthur's corner, a personal website where Arthur logs and reviews the movies, TV, books, manga, comics and games they've gotten through. Visitors can browse that library, keep a watchlist, make lists, and ask Arthur for recommendations.
 
 You get a JSON object mapping dictionary keys (dot paths, e.g. "nav.movies" or "account.settingsAriaLabel" — they tell you where the text appears) to TypeScript expressions taken from the English dictionary. Return the French TypeScript expression for every key:
@@ -166,18 +178,18 @@ You get a JSON object mapping dictionary keys (dot paths, e.g. "nav.movies" or "
 
 ${FRENCH_STYLE_RULES}
 
-The full English dictionary, for context on where each string is used:
+The English entries of the dictionary sections being translated (key → source), for context on where each string is used:
 
-\`\`\`ts
-${enSource}
+\`\`\`json
+${enContext}
 \`\`\`${
-		frSource
+		frContext
 			? `
 
-The current French dictionary, for consistency with the wording already in use:
+The current French entries of those sections, for consistency with the wording already in use:
 
-\`\`\`ts
-${frSource}
+\`\`\`json
+${frContext}
 \`\`\``
 			: ""
 	}`;
@@ -212,7 +224,7 @@ async function translateChunk(
 			betas: ["server-side-fallback-2026-07-01"],
 			fallbacks: "default",
 			output_config: {
-				effort: "high",
+				effort: "medium",
 				format: { type: "json_schema", schema: OUTPUT_SCHEMA },
 			},
 			system: [
@@ -227,6 +239,11 @@ async function translateChunk(
 		})
 		.finalMessage();
 
+	const { input_tokens, cache_read_input_tokens, output_tokens } =
+		message.usage;
+	console.log(
+		`  ${chunk.length} keys: ${input_tokens} in (+${cache_read_input_tokens ?? 0} cached), ${output_tokens} out`,
+	);
 	if (message.stop_reason !== "end_turn") {
 		throw new Error(`Translation stopped early: ${message.stop_reason}`);
 	}
@@ -309,9 +326,10 @@ async function translate(args: string[]) {
 		);
 		const client = new Anthropic();
 		// Retranslating everything shouldn't anchor on the wording it's replacing.
+		const sections = new Set(todo.map((key) => key.split(".")[0] ?? ""));
 		const system = systemPrompt(
-			readFileSync(EN_PATH, "utf8"),
-			all ? null : readFileSync(FR_PATH, "utf8"),
+			sectionContext(en, sections),
+			all ? null : sectionContext(fr, sections),
 		);
 		const chunks: [string, string][][] = [];
 		for (let i = 0; i < todo.length; i += CHUNK_SIZE) {
@@ -319,9 +337,16 @@ async function translate(args: string[]) {
 				todo.slice(i, i + CHUNK_SIZE).map((k) => [k, en.get(k) ?? ""]),
 			);
 		}
-		const results = await Promise.all(
-			chunks.map((chunk) => translateChunk(client, system, chunk)),
-		);
+		// First chunk alone writes the system-prompt cache; the rest then read it in parallel.
+		const [first, ...rest] = chunks;
+		const results = first
+			? [
+					await translateChunk(client, system, first),
+					...(await Promise.all(
+						rest.map((chunk) => translateChunk(client, system, chunk)),
+					)),
+				]
+			: [];
 		for (const result of results) {
 			for (const [key, source] of result) fr.set(key, source);
 		}
