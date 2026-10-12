@@ -36,9 +36,14 @@
   font-size: 0.85rem
   cursor: pointer
 
+// Clips the scaled frame, since a transform doesn't shrink its layout box.
+.preview_box
+  width: 100%
+  overflow: hidden
+
 .preview_frame
-  width: 602px
-  aspect-ratio: 600 / 900
+  display: block
+  transform-origin: top left
   border: 1px solid var(--accent1)
   border-radius: 0.4rem
   background: var(--surface1)

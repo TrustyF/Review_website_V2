@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { SyntheticEvent, useEffect, useRef, useState } from "react";
 import { Clickable } from "@/components/ui/clickable";
 import styles from "./digest.module.sass";
 import { DigestBannerForm } from "./digest-banner-form";
@@ -12,12 +12,34 @@ type Props = {
 };
 
 const PREVIEW_SRC = "/api/admin/digest-preview";
+// Email layout width plus the iframe border; the preview renders at this size, then scales.
+const PREVIEW_WIDTH = 602;
 
 // previewKey busts the iframe's cache after a save — src alone wouldn't
 // reload since the URL never changes.
 export function DigestPageClient({ initial }: Props) {
 	const [previewKey, setPreviewKey] = useState(0);
 	const [reviewsKey, setReviewsKey] = useState(0);
+	const frameBoxRef = useRef<HTMLDivElement>(null);
+	const [scale, setScale] = useState(1);
+	const [contentHeight, setContentHeight] = useState(900);
+
+	// Shrinks the native-width preview to fit the column, never enlarging it.
+	useEffect(() => {
+		const box = frameBoxRef.current;
+		if (!box) return;
+		const observer = new ResizeObserver(([entry]) => {
+			if (entry) setScale(Math.min(1, entry.contentRect.width / PREVIEW_WIDTH));
+		});
+		observer.observe(box);
+		return () => observer.disconnect();
+	}, []);
+
+	// Same-origin, so the email's full height is readable; the frame grows to show all of it.
+	function handleFrameLoad(e: SyntheticEvent<HTMLIFrameElement>) {
+		const doc = e.currentTarget.contentDocument;
+		if (doc) setContentHeight(doc.documentElement.scrollHeight);
+	}
 
 	return (
 		<div className={styles.layout}>
@@ -44,12 +66,23 @@ export function DigestPageClient({ initial }: Props) {
 						Refresh
 					</Clickable>
 				</div>
-				<iframe
-					key={previewKey}
-					src={`${PREVIEW_SRC}?v=${previewKey}`}
-					className={styles.preview_frame}
-					title="Digest email preview"
-				/>
+				<div
+					ref={frameBoxRef}
+					className={styles.preview_box}
+					style={{ height: contentHeight * scale }}>
+					<iframe
+						key={previewKey}
+						src={`${PREVIEW_SRC}?v=${previewKey}`}
+						className={styles.preview_frame}
+						style={{
+							width: PREVIEW_WIDTH,
+							height: contentHeight,
+							transform: `scale(${scale})`,
+						}}
+						onLoad={handleFrameLoad}
+						title="Digest email preview"
+					/>
+				</div>
 			</div>
 		</div>
 	);
