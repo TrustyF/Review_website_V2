@@ -2,15 +2,13 @@ import { dbPublic } from "@/server/db/client";
 import { EnrichmentStatus, Prisma } from "@prisma/client";
 import { MediaRecord, toMediaRecord } from "@/components/media/types";
 
-// Out of 10 — only well-liked, written-up titles are worth resurfacing.
-const MIN_RATING = 7;
 export const RANDOM_PICK_COUNT = 4;
 
+// Any written-up review, regardless of rating.
 const RANDOM_PICK_WHERE: Prisma.MediaWhereInput = {
 	enrichmentStatus: EnrichmentStatus.DONE,
 	isAdult: false,
 	review: {
-		rating: { gte: MIN_RATING },
 		AND: [{ body: { not: null } }, { body: { not: "" } }],
 	},
 };

@@ -4,12 +4,12 @@
 .grid
   display: grid
   grid-template-columns: repeat(2, minmax(0, 1fr))
-  gap: 1.5rem 2rem
+  gap: 3rem 2rem
   transition: opacity 200ms ease
 
   @media (max-width: $mobile-breakpoint)
     grid-template-columns: minmax(0, 1fr)
-    gap: 1.25rem
+    gap: 2rem
 
 .item
   display: grid
@@ -23,13 +23,13 @@
 .poster
   min-width: 0
 
-// Fixed height (taller than the poster) so every pick cuts its excerpt off at the same point.
+// Capped height so long excerpts clip at the same point, while short ones stay compact.
 .info
   display: flex
   flex-flow: column
   gap: 0.5rem
   min-width: 0
-  height: 12rem
+  max-height: 18rem
 
 .title
   font-size: 1rem
@@ -52,9 +52,9 @@
   gap: 0.2rem
   color: var(--foreground)
 
-// Fills whatever height .info leaves after the title; fades out only when it actually clips.
+// Sized to its content, shrinking once .info hits its max-height; fades out only when it actually clips.
 .excerpt
-  flex: 1 1 0
+  flex: 0 1 auto
   min-height: 0
   overflow: hidden
   color: var(--body)

@@ -336,7 +336,7 @@ export const en = {
 		// One-line descriptions under each section title.
 		subtitles: {
 			anticipatedReleases: "Coming to theaters soon",
-			randomPick: "Highly rated reviews",
+			randomPick: "Past reviews",
 			movieSpotlight: "Selection of good movies",
 			activity: "Latest changes",
 			recentReleases: "Out in the last few months",

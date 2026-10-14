@@ -311,10 +311,10 @@ export default async function HomePage() {
 					</Suspense>
 				)}
 				<Suspense>
-					<AnticipatedRow anticipated={anticipatedPromise} />
+					<RecentlyWatchedRow recentlyWatched={recentlyWatchedPromise} />
 				</Suspense>
 				<Suspense>
-					<RecentlyWatchedRow recentlyWatched={recentlyWatchedPromise} />
+					<AnticipatedRow anticipated={anticipatedPromise} />
 				</Suspense>
 				<Suspense>
 					<RandomPickSection excludeIds={archiveExcludeIds} />

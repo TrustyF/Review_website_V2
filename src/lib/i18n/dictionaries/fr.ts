@@ -346,7 +346,7 @@ export const fr = {
 		recommendationCtaButton: "Demander une recommandation",
 		subtitles: {
 			anticipatedReleases: "Bientôt en salles",
-			randomPick: "Critiques bien notées",
+			randomPick: "Anciennes critiques",
 			movieSpotlight: "Sélection de bons films",
 			activity: "Dernières modifications",
 			recentReleases: "Sortis ces derniers mois",
