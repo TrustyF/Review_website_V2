@@ -114,6 +114,23 @@ model Movie {
   // a stable fact like runtime/budget. Refreshed on every re-enrich the same
   // way publicRating is (see movie.ts), not just filled in once.
   popularity       Float?
+
+  // TMDB's belongs_to_collection (a franchise, e.g. "Toy Story Collection"); refreshed every re-enrich.
+  collectionId Int?
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+
+  @@index([collectionId])
+}
+
+// A TMDB movie collection. Only ever created through movie ingest, so it can't exist without a member.
+model Collection {
+  id         Int     @id @default(autoincrement())
+  externalId String  @unique
+  name       String
+  // Filled once at creation from TMDB's /collection/{id}/translations; falls back to name.
+  nameFr     String?
+
+  movies Movie[]
 }
 
 model TvShow {

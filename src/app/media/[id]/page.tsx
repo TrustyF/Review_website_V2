@@ -23,6 +23,7 @@ import { BANNER_GRAIN_OPACITY } from "@/server/resolvers/poster-resolver";
 import { MediaDirectorCredit, MediaCreditsDetails } from "./credits-section";
 import { MediaChangeLogSection } from "./change-log-section";
 import { MediaSimilarSection } from "./similar-section";
+import { MediaCollectionSection } from "./collection-section";
 import { MediaDetailHeaderMobile } from "./media-detail-header-mobile";
 import styles from "./media-detail.module.sass";
 import { CircularGauge } from "@/components/ui/circular-gauge";
@@ -475,6 +476,12 @@ export default async function MediaDetailPage({
 							<MediaCreditsDetails mediaId={media.id} type={media.type} />
 						</Suspense>
 					</section>
+
+					{hasMovieSubmodel && (
+						<Suspense fallback={null}>
+							<MediaCollectionSection mediaId={media.id} />
+						</Suspense>
+					)}
 
 					<Suspense fallback={null}>
 						<MediaSimilarSection mediaId={media.id} />

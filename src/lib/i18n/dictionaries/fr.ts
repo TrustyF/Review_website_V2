@@ -443,6 +443,7 @@ export const fr = {
 		overviewLabel: "Résumé",
 		changeLogHeading: "Historique des modifications",
 		similarHeading: "Dans le même genre",
+		collectionWatchOrder: "Ordre de visionnage",
 		facts: {
 			network: "Chaîne",
 			seasons: "Saisons",

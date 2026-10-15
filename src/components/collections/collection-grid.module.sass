@@ -1,0 +1,20 @@
+// Fixed small posters that wrap, so a long franchise never gets cut off.
+.compact
+  display: flex
+  flex-flow: row wrap
+  gap: 0.6rem
+
+.compact_item
+  position: relative
+  width: 5rem
+
+// Sized to the poster (aspect-ratio set inline), not the card, which also holds the review/liked icons below it.
+.current_ring
+  position: absolute
+  top: 0
+  left: 0
+  width: 100%
+  border-radius: 0.25rem
+  outline: 1px solid var(--brand)
+  outline-offset: 2px
+  pointer-events: none

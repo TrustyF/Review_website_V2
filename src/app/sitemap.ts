@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { dbPublic } from "@/server/db/client";
 import { EnrichmentStatus } from "@prisma/client";
 import { SITE_URL } from "@/lib/site-url";
+import { collectionHref } from "@/components/collections/collection-media";
 
 // Rendered per request so `next build` never needs a reachable database.
 export const dynamic = "force-dynamic";
@@ -40,12 +41,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			createDate: true,
 			originCountry: { select: { countryCode2: true } },
 			mediaGenres: { select: { genre: { select: { name: true } } } },
+			movie: { select: { collectionId: true } },
 		},
 	});
 
 	let latestOverall: Date | undefined;
 	const latestByGenre = new Map<string, Date | undefined>();
 	const latestByCountry = new Map<string, Date | undefined>();
+	const latestByCollection = new Map<string, Date | undefined>();
+	const collectionSizes = new Map<string, number>();
 	const mediaEntries: MetadataRoute.Sitemap = [];
 
 	for (const item of media) {
@@ -59,6 +63,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			bumpLatest(latestByGenre, genre.name, date);
 		const code = item.originCountry?.countryCode2;
 		if (code) bumpLatest(latestByCountry, code.toLowerCase(), date);
+		const collectionId = item.movie?.collectionId;
+		if (collectionId != null) {
+			const key = String(collectionId);
+			bumpLatest(latestByCollection, key, date);
+			collectionSizes.set(key, (collectionSizes.get(key) ?? 0) + 1);
+		}
 	}
 
 	return [
@@ -74,6 +84,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 			url: `${SITE_URL}/country/${code}`,
 			lastModified: date,
 		})),
+		// Single-entry collections are never linked from a media page, so they stay out too.
+		...[...latestByCollection]
+			.filter(([id]) => (collectionSizes.get(id) ?? 0) >= 2)
+			.map(([id, date]) => ({
+				url: `${SITE_URL}${collectionHref(Number(id))}`,
+				lastModified: date,
+			})),
 		...mediaEntries,
 	];
 }

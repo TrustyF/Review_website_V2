@@ -3,6 +3,7 @@ import { TmdbMovieResponse } from "@/server/tmdb/schema";
 import { db } from "@/server/db/client";
 import { resolveCountry } from "@/server/resolvers/entity-resolver";
 import { syncMovieCreditsAndGenres } from "@/server/tmdb/ingest/movie-credits";
+import { resolveMovieCollection } from "@/server/tmdb/ingest/movie-collection";
 import {
 	fetchTmdbFrenchTranslation,
 	fetchTmdbImages,
@@ -45,6 +46,7 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 			externalId,
 			MediaType.MOVIE,
 		);
+		const collectionId = await resolveMovieCollection(tx, data);
 
 		const media = await tx.media.create({
 			data: {
@@ -74,6 +76,7 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 						imdbID: data.imdb_id,
 						originalLanguage: data.original_language,
 						popularity: data.popularity,
+						collectionId,
 					},
 				},
 			},
@@ -114,6 +117,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 			existing.titleFr && existing.overviewFr && existing.movie?.taglineFr
 				? null
 				: await fetchTmdbFrenchTranslation(externalId, MediaType.MOVIE);
+		const collectionId = await resolveMovieCollection(tx, data);
 
 		// Re-enrichment only fills in still-empty fields; budget/revenue/publicRating/popularity/status
 		// genuinely change over time at the source, so those always refresh.
@@ -150,6 +154,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 							existing.movie?.originalLanguage ?? data.original_language,
 						// Refreshed every re-enrich, not just filled in once (see media.prisma).
 						popularity: data.popularity,
+						collectionId,
 					},
 				},
 			},

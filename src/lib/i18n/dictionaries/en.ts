@@ -432,6 +432,7 @@ export const en = {
 		overviewLabel: "Overview",
 		changeLogHeading: "Change log",
 		similarHeading: "More like this",
+		collectionWatchOrder: "Watch order",
 		facts: {
 			network: "Network",
 			seasons: "Seasons",

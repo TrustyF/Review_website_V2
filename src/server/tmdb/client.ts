@@ -140,40 +140,53 @@ export async function fetchTmdbImages(
 	return parseOrThrow(TmdbImagesResponseSchema, json);
 }
 
-// One lightweight request (every language at once), not a second full detail
-// fetch with language=fr-FR. TMDB's empty-string "no content" is treated as absent.
-export async function fetchTmdbFrenchTranslation(
-	id: string,
-	media_type: MediaType,
-): Promise<{ title: string | null; overview: string | null; tagline: string | null }> {
+// Prefers France's own entry over other French-speaking regions (CA, BE, ...) when both exist.
+async function fetchFrenchTranslationEntry(segment: string, id: string) {
 	const json = await cachedJson(
 		"tmdb",
-		`${ConvertTypeToString(media_type)}-${id}-translations`,
+		`${segment}-${id}-translations`,
 		async () => {
-			const res = await tmdbFetch(
-				`${TMDB_BASE}/${ConvertTypeToString(media_type)}/${id}/translations`,
-			);
+			const res = await tmdbFetch(`${TMDB_BASE}/${segment}/${id}/translations`);
 			if (!res.ok) {
 				const errorText = await res.text();
 				throw new Error(
-					`TMDB translations fetch failed for ${media_type} ${id} : ${errorText}`,
+					`TMDB translations fetch failed for ${segment} ${id} : ${errorText}`,
 				);
 			}
 			return res.json();
 		},
 	);
 	const { translations } = parseOrThrow(TmdbTranslationsResponseSchema, json);
-
 	const french = translations.filter((t) => t.iso_639_1 === "fr");
-	// Prefer France's own entry over other French-speaking regions (CA, BE, ...) when both exist.
-	const best =
-		french.find((t) => t.iso_3166_1 === "FR") ?? french[0] ?? null;
+	return french.find((t) => t.iso_3166_1 === "FR") ?? french[0] ?? null;
+}
 
+// One lightweight request (every language at once), not a second full detail
+// fetch with language=fr-FR. TMDB's empty-string "no content" is treated as absent.
+export async function fetchTmdbFrenchTranslation(
+	id: string,
+	media_type: MediaType,
+): Promise<{
+	title: string | null;
+	overview: string | null;
+	tagline: string | null;
+}> {
+	const best = await fetchFrenchTranslationEntry(
+		ConvertTypeToString(media_type),
+		id,
+	);
 	return {
 		title: best?.data.title || best?.data.name || null,
 		overview: best?.data.overview || null,
 		tagline: best?.data.tagline || null,
 	};
+}
+
+export async function fetchTmdbCollectionFrenchName(
+	id: string,
+): Promise<string | null> {
+	const best = await fetchFrenchTranslationEntry("collection", id);
+	return best?.data.title || best?.data.name || null;
 }
 
 type TmdbBackdrop = TmdbImagesResponse["backdrops"][number];

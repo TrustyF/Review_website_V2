@@ -20,6 +20,7 @@ export const TmdbMovieResponseSchema = type({
 	vote_average: "number | null",
 	popularity: "number | null",
 	origin_country: "string[]",
+	belongs_to_collection: type({ id: "number", name: "string" }).or("null"),
 	genres: type({
 		id: "number",
 		name: "string",

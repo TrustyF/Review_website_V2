@@ -45,6 +45,22 @@ const CREDIT_FILTER: Prisma.CreditWhereInput = {
 	],
 };
 
+// Media outside this collection. A plain NOT on collectionId would also drop collection-less movies (NULL comparison).
+function outsideCollection(
+	collectionId: number | null | undefined,
+): Prisma.MediaWhereInput {
+	if (collectionId == null) return {};
+	return {
+		AND: {
+			OR: [
+				{ movie: null },
+				{ movie: { collectionId: null } },
+				{ movie: { collectionId: { not: collectionId } } },
+			],
+		},
+	};
+}
+
 type CreditKeyRow = {
 	personId: number | null;
 	companyId: number | null;
@@ -77,6 +93,7 @@ async function querySimilarIds(mediaId: number): Promise<number[]> {
 			isAdult: true,
 			countryId: true,
 			releaseDate: true,
+			movie: { select: { collectionId: true } },
 			mediaGenres: { select: { genreId: true } },
 			credits: {
 				where: CREDIT_FILTER,
@@ -103,6 +120,8 @@ async function querySimilarIds(mediaId: number): Promise<number[]> {
 			enrichmentStatus: EnrichmentStatus.DONE,
 			...(source.isAdult ? {} : { isAdult: false }),
 			review: { rating: { gte: MIN_RATING } },
+			// Same-franchise entries already get their own collection section.
+			...outsideCollection(source.movie?.collectionId),
 			OR: [
 				{ mediaGenres: { some: { genreId: { in: [...genreIds] } } } },
 				{
@@ -194,10 +213,20 @@ const getSimilarIds = (mediaId: number) =>
 
 export const getSimilarMedia = cache(
 	async (mediaId: number): Promise<MediaCardRecord[]> => {
-		const ids = await getSimilarIds(mediaId);
+		const [ids, source] = await Promise.all([
+			getSimilarIds(mediaId),
+			db.movie.findUnique({
+				where: { mediaID: mediaId },
+				select: { collectionId: true },
+			}),
+		]);
 		if (ids.length === 0) return [];
 		const raw = await dbPublic.media.findMany({
-			where: { id: { in: ids } },
+			where: {
+				id: { in: ids },
+				// Repeated uncached: the cached ids can predate this movie's collection being set.
+				...outsideCollection(source?.collectionId),
+			},
 			include: {
 				movie: true,
 				tvShow: true,
