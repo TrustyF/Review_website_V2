@@ -431,6 +431,7 @@ export const en = {
 		reviewHeading: "Review",
 		overviewLabel: "Overview",
 		changeLogHeading: "Change log",
+		similarHeading: "More like this",
 		facts: {
 			network: "Network",
 			seasons: "Seasons",

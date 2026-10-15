@@ -13,7 +13,8 @@ $max-rows: 3
 
 .grid
   display: grid
-  grid-template-columns: 1fr
+  // minmax(0, ...) so a long nowrap title can't widen its column past the others.
+  grid-template-columns: minmax(0, 1fr)
   gap: $mini-card-gap
   padding: 1rem 0 1.25rem
   overflow: hidden
@@ -38,7 +39,7 @@ $max-rows: 3
         // Width at which n cards of $min-width fit edge-to-edge with (n-1) gaps between them.
         @container (min-width: calc(#{$min-width} * #{$n} + #{$gap} * #{$n - 1}))
           .grid
-            grid-template-columns: repeat($n, 1fr)
+            grid-template-columns: repeat($n, minmax(0, 1fr))
 
           .item:nth-child(-n + #{$n * $rows})
             display: block

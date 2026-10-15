@@ -67,28 +67,15 @@
 // Inside the poster's corner, not overhanging it — one-row grids clip their overflow.
 .new_badge
   position: absolute
-  top: 4px
-  left: 4px
-  width: clamp(28px, 30%, 44px)
+  top: 6px
+  left: 6px
+  width: 10px
   aspect-ratio: 1
+  border-radius: 50%
+  background: var(--brand)
+  box-shadow: 0 0 0 2px var(--background), 0 1px 3px var(--overlay-backdrop)
   z-index: 1
   pointer-events: none
-  filter: drop-shadow(0 1px 2px var(--overlay-backdrop))
-
-  // Same-colour round-joined stroke rounds off the starburst's points.
-  polygon
-    fill: var(--brand)
-    stroke: var(--brand)
-    stroke-width: 4
-    stroke-linejoin: round
-
-  text
-    fill: var(--on-brand)
-    // filter, not text-shadow — Chrome ignores text-shadow on SVG text. Lengths are viewBox units (~0.4px each).
-    filter: drop-shadow(2px 3px 2px var(--background))
-    letter-spacing: 1px
-    font-size: 30px
-    font-weight: 800
 
 .title
   font-size: 1.3rem

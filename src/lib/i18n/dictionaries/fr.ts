@@ -442,6 +442,7 @@ export const fr = {
 		reviewHeading: "Critique",
 		overviewLabel: "Résumé",
 		changeLogHeading: "Historique des modifications",
+		similarHeading: "Dans le même genre",
 		facts: {
 			network: "Chaîne",
 			seasons: "Saisons",

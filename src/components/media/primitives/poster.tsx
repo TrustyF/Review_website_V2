@@ -6,34 +6,9 @@ import styles from "./primitives.module.sass";
 import { Tooltip } from "@/components/ui/tooltip";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 
-// 24-point starburst in a 100x100 box, alternating outer/inner radius; inset so the rounding stroke stays in the box.
-const STARBURST_POINTS = Array.from({ length: 48 }, (_, i) => {
-	const radius = i % 2 === 0 ? 48 : 40;
-	const angle = (i * Math.PI) / 24;
-	return `${(50 + radius * Math.sin(angle)).toFixed(2)},${(50 - radius * Math.cos(angle)).toFixed(2)}`;
-}).join(" ");
-
 function NewBadge() {
 	const dict = useDictionary();
-	return (
-		<svg
-			viewBox="0 0 100 100"
-			className={styles.new_badge}
-			role="img"
-			aria-label={dict.media.newBadge}>
-			<polygon points={STARBURST_POINTS} />
-			<text
-				x="50"
-				y="50"
-				transform="rotate(-35 50 50)"
-				textAnchor="middle"
-				dominantBaseline="central"
-				textLength="62"
-				lengthAdjust="spacingAndGlyphs">
-				{dict.media.newBadge.toUpperCase()}
-			</text>
-		</svg>
-	);
+	return <span className={styles.new_badge} role="img" aria-label={dict.media.newBadge} />;
 }
 
 export function MediaPoster({
@@ -54,7 +29,7 @@ export function MediaPoster({
 	// Grid/list contexts render many posters at once, where fading avoids a jarring simultaneous
 	// pop; single/few-poster contexts (featured review, detail page, admin previews) don't need it.
 	fade?: boolean;
-	// Starburst "New" badge in the top-left corner.
+	// "New" dot in the top-left corner.
 	isNew?: boolean | undefined;
 }) {
 	// aspect-ratio already reserves the space (no CLS), but a blank-to-loaded snap still reads as a jarring pop, especially with whole batches mounting at once (LazyMediaGrid). Fade in over a placeholder frame instead.
