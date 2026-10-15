@@ -3,6 +3,7 @@ import { TmdbTvResponse } from "@/server/tmdb/schema";
 import { db } from "@/server/db/client";
 import { resolveCountry } from "@/server/resolvers/entity-resolver";
 import { syncTvShowCreditsAndGenres } from "@/server/tmdb/ingest/tv-show-credits";
+import { syncTmdbKeywords } from "@/server/tmdb/ingest/sync-keywords";
 import {
 	fetchTmdbFrenchTranslation,
 	fetchTmdbImages,
@@ -67,12 +68,14 @@ export async function addTvShowFromTmdb(data: TmdbTvResponse) {
 						seasonCount: data.number_of_seasons,
 						network: data.networks[0]?.name ?? null,
 						popularity: data.popularity,
+						originalLanguage: data.original_language,
 					},
 				},
 			},
 		});
 
 		await syncTvShowCreditsAndGenres(tx, media.id, data);
+		await syncTmdbKeywords(tx, media.id, data.keywords?.results ?? []);
 
 		return media;
 	});
@@ -138,12 +141,15 @@ export async function updateTvShowFromTmdb(data: TmdbTvResponse) {
 						network: existing.tvShow?.network ?? data.networks[0]?.name ?? null,
 						// Refreshed every re-enrich, not just filled in once (see media.prisma).
 						popularity: data.popularity,
+						originalLanguage:
+							existing.tvShow?.originalLanguage ?? data.original_language,
 					},
 				},
 			},
 		});
 
 		await syncTvShowCreditsAndGenres(tx, existing.id, data);
+		await syncTmdbKeywords(tx, existing.id, data.keywords?.results ?? []);
 
 		return existing;
 	});

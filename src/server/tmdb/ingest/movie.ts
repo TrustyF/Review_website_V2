@@ -4,6 +4,7 @@ import { db } from "@/server/db/client";
 import { resolveCountry } from "@/server/resolvers/entity-resolver";
 import { syncMovieCreditsAndGenres } from "@/server/tmdb/ingest/movie-credits";
 import { resolveMovieCollection } from "@/server/tmdb/ingest/movie-collection";
+import { syncTmdbKeywords } from "@/server/tmdb/ingest/sync-keywords";
 import {
 	fetchTmdbFrenchTranslation,
 	fetchTmdbImages,
@@ -83,6 +84,7 @@ export async function addMovieFromTmdb(data: TmdbMovieResponse) {
 		});
 
 		await syncMovieCreditsAndGenres(tx, media.id, data);
+		await syncTmdbKeywords(tx, media.id, data.keywords?.keywords ?? []);
 
 		return media;
 	});
@@ -161,6 +163,7 @@ export async function updateMovieFromTmdb(data: TmdbMovieResponse) {
 		});
 
 		await syncMovieCreditsAndGenres(tx, existing.id, data);
+		await syncTmdbKeywords(tx, existing.id, data.keywords?.keywords ?? []);
 
 		return existing;
 	});

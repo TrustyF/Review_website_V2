@@ -2,6 +2,9 @@ import { type } from "arktype";
 
 const zeroToNull = type("number").pipe((n) => (n === 0 ? null : n));
 
+const TmdbKeyword = type({ id: "number", name: "string" });
+export type TmdbKeywordInput = typeof TmdbKeyword.infer;
+
 export const TmdbMovieResponseSchema = type({
 	id: "number",
 	title: "string",
@@ -21,6 +24,8 @@ export const TmdbMovieResponseSchema = type({
 	popularity: "number | null",
 	origin_country: "string[]",
 	belongs_to_collection: type({ id: "number", name: "string" }).or("null"),
+	// Appended via append_to_response; movies nest them under `keywords`, TV under `results`.
+	"keywords?": { keywords: TmdbKeyword.array() },
 	genres: type({
 		id: "number",
 		name: "string",
@@ -87,6 +92,7 @@ export const TmdbTvResponseSchema = type({
 		iso_3166_1: "string",
 		name: "string",
 	}).array(),
+	"keywords?": { results: TmdbKeyword.array() },
 	// A distinct top-level field, not a crew job — backs a TV show's "by ..." byline (tv-show-credits.ts).
 	created_by: type({
 		id: "number",

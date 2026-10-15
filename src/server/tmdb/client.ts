@@ -63,10 +63,11 @@ export async function fetchTmdbById(
 ): Promise<TmdbMovieResponse> {
 	const json = await cachedJson(
 		"tmdb",
-		`${ConvertTypeToString(media_type)}-${id}`,
+		// -kw: fixtures cached before keywords were appended lack them.
+		`${ConvertTypeToString(media_type)}-${id}-kw`,
 		async () => {
 			const res = await tmdbFetch(
-				`${TMDB_BASE}/${ConvertTypeToString(media_type)}/${id}?&language=en-US&append_to_response=content_ratings,credits,external_ids`,
+				`${TMDB_BASE}/${ConvertTypeToString(media_type)}/${id}?&language=en-US&append_to_response=content_ratings,credits,external_ids,keywords`,
 			);
 
 			if (!res.ok) {
@@ -98,10 +99,11 @@ export async function fetchTmdbByName(
 }
 
 export async function fetchTvShowById(id: string): Promise<TmdbTvResponse> {
-	const json = await cachedJson("tmdb", `tv-${id}`, async () => {
+	// -kw: same fixture split as fetchTmdbById.
+	const json = await cachedJson("tmdb", `tv-${id}-kw`, async () => {
 		// aggregate_credits, not credits — see TmdbTvResponseSchema for why.
 		const res = await tmdbFetch(
-			`${TMDB_BASE}/tv/${id}?&language=en-US&append_to_response=content_ratings,aggregate_credits,external_ids`,
+			`${TMDB_BASE}/tv/${id}?&language=en-US&append_to_response=content_ratings,aggregate_credits,external_ids,keywords`,
 		);
 
 		if (!res.ok) {

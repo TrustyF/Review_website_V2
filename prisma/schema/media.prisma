@@ -44,6 +44,7 @@ model Media {
   lastEnrichedAt   DateTime?
 
   mediaGenres    MediaGenre[]
+  mediaKeywords  MediaKeyword[]
   listItems      ListItem[]
   watchlistItems WatchlistItem[]
   watchedItems   WatchedItem[]
@@ -143,6 +144,8 @@ model TvShow {
   // Same TMDB rolling score as Movie.popularity — see that field's own
   // comment.
   popularity   Float?
+  // TMDB's original_language (ISO 639-1); fill-once like Movie.originalLanguage.
+  originalLanguage String?
 }
 
 model Manga {
@@ -174,4 +177,24 @@ model Book {
 
   pageCount Int?
   isbn      String?
+}
+
+// TMDB keyword ("time travel", "heist"); only movies/shorts/TV carry them. Replaced wholesale every re-enrich.
+model Keyword {
+  id         Int    @id @default(autoincrement())
+  externalId String @unique
+  name       String
+
+  media MediaKeyword[]
+}
+
+model MediaKeyword {
+  mediaId   Int
+  keywordId Int
+
+  media   Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  keyword Keyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, keywordId])
+  @@index([keywordId])
 }
