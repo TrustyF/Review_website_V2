@@ -47,6 +47,10 @@ export async function readCroppedFile(url: string): Promise<Buffer | null> {
 	return getImageStorage().read(CROPPED_DIR, filename);
 }
 
+// The crop tool's optional overrides of a shape's defaults. width: exact output width (upscaling
+// allowed); quality: encoder quality 1-100.
+export type OutputOverrides = { width?: number; quality?: number };
+
 // Shared crop+resize+encode+write for every case of
 // saveCroppedImage below.
 async function cropAndSave(
@@ -57,8 +61,7 @@ async function cropAndSave(
 	maxWidth: number | null,
 	quality: number,
 	format: ShapeFormat,
-	// The optional resize step: exact width, overriding maxWidth, upscaling allowed.
-	outputWidth: number | undefined,
+	output: OutputOverrides,
 ): Promise<SavedCrop> {
 	const meta = await sharp(source).metadata();
 	if (!meta.width || !meta.height) {
@@ -80,24 +83,25 @@ async function cropAndSave(
 				top,
 				width,
 				height,
-				outputWidth,
+				output,
 			}),
 		)
 		.digest("hex")
 		.slice(0, 16);
 	const filename = `${hash}.${format}`;
 
-	const finalWidth = outputWidth ?? Math.min(maxWidth ?? width, width);
+	const finalWidth = output.width ?? Math.min(maxWidth ?? width, width);
 	const pipeline = sharp(source)
 		.extract({ left, top, width, height })
 		.resize({ width: finalWidth });
 
+	const finalQuality = output.quality ?? quality;
 	const encoded =
 		format === "avif"
-			? pipeline.avif({ quality })
+			? pipeline.avif({ quality: finalQuality })
 			: format === "jpeg"
-				? pipeline.jpeg({ quality })
-				: pipeline.webp({ quality });
+				? pipeline.jpeg({ quality: finalQuality })
+				: pipeline.webp({ quality: finalQuality });
 	const bytes = await encoded.toBuffer();
 
 	const storage = getImageStorage();
@@ -114,7 +118,7 @@ export async function saveCroppedImage(
 	source: Buffer,
 	shapeId: CropShapeId,
 	crop: CropRect,
-	outputWidth?: number,
+	output: OutputOverrides = {},
 ): Promise<SavedCrop> {
 	switch (shapeId) {
 		case "freeform":
@@ -125,7 +129,7 @@ export async function saveCroppedImage(
 				null,
 				FREEFORM_QUALITY,
 				"webp",
-				outputWidth,
+				output,
 			);
 		case "poster-2-3":
 			return cropAndSave(
@@ -135,7 +139,7 @@ export async function saveCroppedImage(
 				500,
 				POSTER_QUALITY,
 				"webp",
-				outputWidth,
+				output,
 			);
 		case "poster-3-4":
 			return cropAndSave(
@@ -145,7 +149,7 @@ export async function saveCroppedImage(
 				500,
 				POSTER_QUALITY,
 				"webp",
-				outputWidth,
+				output,
 			);
 		case "banner-16-9":
 			return cropAndSave(
@@ -155,7 +159,7 @@ export async function saveCroppedImage(
 				BANNER_MAX_WIDTH,
 				BANNER_QUALITY,
 				BANNER_FORMAT,
-				outputWidth,
+				output,
 			);
 		case "digest-banner":
 			return cropAndSave(
@@ -165,7 +169,7 @@ export async function saveCroppedImage(
 				EMAIL_BANNER_MAX_WIDTH,
 				EMAIL_BANNER_QUALITY,
 				"jpeg",
-				outputWidth,
+				output,
 			);
 		case "list-thumbnail-16-9":
 			return cropAndSave(
@@ -175,7 +179,7 @@ export async function saveCroppedImage(
 				LIST_THUMBNAIL_MAX_WIDTH,
 				LIST_THUMBNAIL_QUALITY,
 				"webp",
-				outputWidth,
+				output,
 			);
 		case "avatar-1-1":
 			return cropAndSave(
@@ -185,7 +189,7 @@ export async function saveCroppedImage(
 				AVATAR_MAX_WIDTH,
 				AVATAR_QUALITY,
 				"webp",
-				outputWidth,
+				output,
 			);
 	}
 }

@@ -34,6 +34,9 @@ const FULL_CROP: PercentCrop = {
 // Width of the result-preview panel; height follows from the shape's ratio.
 const PREVIEW_SIZE = 160;
 
+// Where the compression slider starts; the shapes' own defaults range from 50 (posters) to 85 (freeform).
+const DEFAULT_QUALITY = 80;
+
 // How much smaller the avatar "safe zone" guide is than the outer crop circle.
 // 0.86 leaves a 7%-of-diameter margin; visual guide only, doesn't affect save.
 const AVATAR_SAFE_MARGIN_RATIO = 0.86;
@@ -80,6 +83,9 @@ export function ImageCropTool() {
 	// Optional resize step: exact output width, overriding the shape's default size.
 	const [resizeEnabled, setResizeEnabled] = useState(false);
 	const [outputWidth, setOutputWidth] = useState("");
+	// Optional compression override, 1-100 (higher = better quality, bigger file).
+	const [qualityEnabled, setQualityEnabled] = useState(false);
+	const [quality, setQuality] = useState(DEFAULT_QUALITY);
 
 	useEffect(() => {
 		return () => {
@@ -220,6 +226,8 @@ export function ImageCropTool() {
 		setFreeCrop(FULL_CROP);
 		setResizeEnabled(false);
 		setOutputWidth("");
+		setQualityEnabled(false);
+		setQuality(DEFAULT_QUALITY);
 	}
 
 	function handleShapeChange(next: CropShapeId) {
@@ -243,6 +251,7 @@ export function ImageCropTool() {
 			formData.append("shapeId", shapeId);
 			formData.append("crop", JSON.stringify(cropArea));
 			if (resizeEnabled) formData.append("outputWidth", outputWidth);
+			if (qualityEnabled) formData.append("quality", String(quality));
 			const { url: path, sizeBytes } = await saveCroppedImageAction(formData);
 			setResultPath(path);
 			setResultSize(sizeBytes);
@@ -502,6 +511,33 @@ export function ImageCropTool() {
 									{outputWidthValid
 										? `→ ${parsedOutputWidth} × ${Math.round(parsedOutputWidth / cropRatio)} px`
 										: `${MIN_OUTPUT_WIDTH}–${MAX_OUTPUT_WIDTH} px`}
+								</span>
+							</>
+						)}
+					</div>
+
+					<div className={styles.resize_row}>
+						<label className={styles.shape_option}>
+							<input
+								type="checkbox"
+								checked={qualityEnabled}
+								onChange={(e) => setQualityEnabled(e.target.checked)}
+							/>
+							Compression quality
+						</label>
+						{qualityEnabled && (
+							<>
+								<input
+									type="range"
+									min={1}
+									max={100}
+									step={1}
+									className={styles.quality_slider}
+									value={quality}
+									onChange={(e) => setQuality(Number(e.target.value))}
+								/>
+								<span className={styles.resize_hint}>
+									{quality} — lower is smaller and blurrier
 								</span>
 							</>
 						)}

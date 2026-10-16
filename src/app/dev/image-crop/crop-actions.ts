@@ -48,8 +48,21 @@ export async function saveCroppedImageAction(
 		}
 	}
 
+	// Absent/empty = the shape's own quality
+	const rawQuality = formData.get("quality");
+	let quality: number | undefined;
+	if (typeof rawQuality === "string" && rawQuality !== "") {
+		quality = Number(rawQuality);
+		if (!Number.isInteger(quality) || quality < 1 || quality > 100) {
+			throw new Error("Invalid quality");
+		}
+	}
+
 	const bytes = Buffer.from(await file.arrayBuffer());
-	return saveCroppedImage(bytes, shapeId as CropShapeId, crop, outputWidth);
+	return saveCroppedImage(bytes, shapeId as CropShapeId, crop, {
+		...(outputWidth !== undefined ? { width: outputWidth } : {}),
+		...(quality !== undefined ? { quality } : {}),
+	});
 }
 
 // Server-side fetch (arbitrary host won't send CORS headers). Returned as data URL so client can turn it straight into File.
