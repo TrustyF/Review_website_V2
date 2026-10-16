@@ -8,7 +8,7 @@
 #
 # Every job runs through run-and-notify.sh, which owns per-job logging
 # (cron-logs/<job>.log) and creates an in-app admin notification on any
-# non-zero exit. Last synced with the host's live crontab on 2026-10-12.
+# non-zero exit. Last synced with the host's live crontab on 2026-10-16.
 
 REPO_DIR=/path/to/review_website_nextjs
 CRON_SH=$REPO_DIR/src/server/maintenance/cron/run-and-notify.sh
