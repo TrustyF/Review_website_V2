@@ -6,7 +6,10 @@ import {
 	useContext,
 	useState,
 } from "react";
-import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/review-body-syntax";
+import {
+	parseImageSize,
+	REVIEW_MARKUP_REGEX,
+} from "@/components/media/media-cards/media-card/review-body-syntax";
 import styles from "./review.module.sass";
 
 // http(s) only, or a same-site relative path — never a scheme like
@@ -75,17 +78,22 @@ function SpoilerText({
 }
 
 // A paragraph's worth of inline content, split apart only on \n\n; a spoiler never forces its own paragraph break even if its captured text contains \n\n.
-// Images split the paragraph they sit in; successive ones (only whitespace between) share one row.
-type ReviewImage = { url: string; alt: string };
+// Images and spacers split the paragraph they sit in; successive images (only whitespace between) share one row.
+type ReviewImage = {
+	url: string;
+	alt: string;
+	size: ReturnType<typeof parseImageSize>;
+};
 type ReviewBodyBlock =
 	| { kind: "paragraph"; key: number; nodes: ReactNode[] }
-	| { kind: "images"; key: number; images: ReviewImage[] };
+	| { kind: "images"; key: number; images: ReviewImage[] }
+	| { kind: "spacer"; key: number; height: string | undefined };
 
 function isBlank(node: ReactNode): boolean {
 	return typeof node === "string" && node.trim() === "";
 }
 
-// Parses ||spoiler||, ![alt](url) and [text](url) over the entire input in one pass (rather than per-paragraph) so a spoiler can span a paragraph break.
+// Parses ||spoiler||, ![alt](url), [text](url) and [spacer] over the entire input in one pass (rather than per-paragraph) so a spoiler can span a paragraph break.
 function splitReviewBody(
 	text: string,
 	spoilersInteractive: boolean,
@@ -129,14 +137,24 @@ function splitReviewBody(
 				currentNodes.push(match[0]);
 			} else if (showImages) {
 				flushParagraph();
-				const image = { url, alt: match[2]! };
+				const image = { url, alt: match[2]!, size: parseImageSize(match[4]) };
 				const last = blocks.at(-1);
 				if (last?.kind === "images") last.images.push(image);
 				else blocks.push({ kind: "images", key: blockKey++, images: [image] });
 			}
+		} else if (match[7] !== undefined) {
+			// Layout only, so dropped along with images where those are hidden.
+			if (showImages) {
+				flushParagraph();
+				blocks.push({
+					kind: "spacer",
+					key: blockKey++,
+					height: match[8] && `${match[8]}px`,
+				});
+			}
 		} else {
-			const linkText = match[4]!;
-			const url = match[5]!;
+			const linkText = match[5]!;
+			const url = match[6]!;
 			if (isSafeUrl(url)) {
 				const external = !url.startsWith("/");
 				currentNodes.push(
@@ -184,7 +202,7 @@ export function ReviewBody({
 	imageClassName,
 }: ReviewBodyProps) {
 	const blocks = splitReviewBody(text, spoilersInteractive, showImages);
-	const renderImage = ({ url, alt }: ReviewImage, key: number) => (
+	const renderImage = ({ url, alt, size }: ReviewImage, key: number) => (
 		// Plain <img>, not next/image: the host is an arbitrary pasted URL with unknown dimensions.
 		// eslint-disable-next-line @next/next/no-img-element
 		<img
@@ -192,13 +210,21 @@ export function ReviewBody({
 			src={url}
 			alt={alt}
 			className={imageClassName ?? styles.image}
+			style={size}
 			loading="lazy"
 		/>
 	);
 	return (
 		<>
 			{blocks.map((block) =>
-				block.kind === "images" ? (
+				block.kind === "spacer" ? (
+					<div
+						key={block.key}
+						className={styles.spacer}
+						style={block.height ? { height: block.height } : undefined}
+						aria-hidden="true"
+					/>
+				) : block.kind === "images" ? (
 					block.images.length === 1 ? (
 						renderImage(block.images[0]!, block.key)
 					) : (

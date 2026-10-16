@@ -32,8 +32,8 @@ function tokenizeBody(body: string): Atom[] {
 				pushWords(atoms, paragraph.slice(lastIndex, match.index));
 			}
 
-			// Images (groups 2/3) are dropped: too heavy for a 60-word excerpt.
-			const [, spoilerText, , , linkText, linkUrl] = match;
+			// Images (groups 2-4) and spacers (7-8) are dropped: too heavy / pointless in a 60-word excerpt.
+			const [, spoilerText, , , , linkText, linkUrl] = match;
 			if (spoilerText != null) {
 				atoms.push({ kind: "spoiler" });
 			} else if (linkText != null && linkUrl != null) {

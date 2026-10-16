@@ -252,60 +252,95 @@ export function ReviewBodyModal({
 
 	const imageInsert = useAsyncAction();
 
-	// Inserts ![selection](url) as its own paragraph; an empty selection leaves the cursor in the alt brackets.
+	// Inserts open + selected text + close as its own paragraph (blank lines added only where missing),
+	// then selects the wrapped text. Functional update, so it's safe after an await.
+	function insertBlock(
+		setText: Dispatch<SetStateAction<string>>,
+		textarea: HTMLTextAreaElement,
+		selectionStart: number,
+		selectionEnd: number,
+		open: string,
+		close: string,
+	) {
+		let innerStart = 0;
+		let innerLength = 0;
+		setText((text) => {
+			const start = Math.min(selectionStart, text.length);
+			const end = Math.min(selectionEnd, text.length);
+			const prefix = text.slice(0, start);
+			const suffix = text.slice(end);
+			const inner = text.slice(start, end);
+			const before =
+				prefix === "" || prefix.endsWith("\n\n")
+					? ""
+					: prefix.endsWith("\n")
+						? "\n"
+						: "\n\n";
+			const after =
+				suffix === "" || suffix.startsWith("\n\n")
+					? ""
+					: suffix.startsWith("\n")
+						? "\n"
+						: "\n\n";
+			innerStart = start + before.length + open.length;
+			innerLength = inner.length;
+			return `${prefix}${before}${open}${inner}${close}${after}${suffix}`;
+		});
+
+		requestAnimationFrame(() => {
+			if (!textarea.isConnected) return;
+			textarea.focus();
+			textarea.setSelectionRange(innerStart, innerStart + innerLength);
+		});
+	}
+
+	// Inserts [spacer] after the selection, cursor before "]" so " =40" can be typed straight away.
+	function handleSpacer(
+		setText: Dispatch<SetStateAction<string>>,
+		textarea: HTMLTextAreaElement | null,
+	) {
+		if (!textarea) return;
+		const at = textarea.selectionEnd;
+		insertBlock(setText, textarea, at, at, "[spacer", "]");
+	}
+
+	// Inserts ![selection](clipboard URL) as its own paragraph; an empty selection leaves the cursor in the alt brackets.
 	// A /cropped/ URL is first copied into the media's review-image dir, since crops expire after 24h.
 	async function handleImage(
 		setText: Dispatch<SetStateAction<string>>,
 		textarea: HTMLTextAreaElement | null,
 	) {
 		if (!textarea) return;
-		const input = window.prompt("Image URL:")?.trim();
-		if (!input) return;
 		const { selectionStart, selectionEnd } = textarea;
 
-		await imageInsert.run(async () => {
-			let result = await resolveReviewImageUrl(mediaId, input);
-			if ("heavyBytes" in result) {
-				const keep = window.confirm(
-					`This image is ${formatBytes(result.heavyBytes)}, over the ${formatBytes(HEAVY_IMAGE_BYTES)} guideline. Resize it in the crop tool to keep storage down, or insert it anyway?`,
+		await imageInsert.run(
+			async () => {
+				const input = await readClipboardImageUrl();
+				let result = await resolveReviewImageUrl(mediaId, input);
+				if ("heavyBytes" in result) {
+					const keep = window.confirm(
+						`This image is ${formatBytes(result.heavyBytes)}, over the ${formatBytes(HEAVY_IMAGE_BYTES)} guideline. Resize it in the crop tool to keep storage down, or insert it anyway?`,
+					);
+					if (!keep) return;
+					result = await resolveReviewImageUrl(mediaId, input, true);
+				}
+				if (!("url" in result)) return;
+				const { url } = result;
+				// Selection becomes the alt text; the text may have changed while the URL resolved.
+				insertBlock(
+					setText,
+					textarea,
+					selectionStart,
+					selectionEnd,
+					"![",
+					`](${url})`,
 				);
-				if (!keep) return;
-				result = await resolveReviewImageUrl(mediaId, input, true);
-			}
-			if (!("url" in result)) return;
-			const { url } = result;
-			let altStart = 0;
-			let altLength = 0;
-			// Functional update: the text may have changed while the URL resolved.
-			setText((text) => {
-				const start = Math.min(selectionStart, text.length);
-				const end = Math.min(selectionEnd, text.length);
-				const prefix = text.slice(0, start);
-				const suffix = text.slice(end);
-				const alt = text.slice(start, end);
-				const before =
-					prefix === "" || prefix.endsWith("\n\n")
-						? ""
-						: prefix.endsWith("\n")
-							? "\n"
-							: "\n\n";
-				const after =
-					suffix === "" || suffix.startsWith("\n\n")
-						? ""
-						: suffix.startsWith("\n")
-							? "\n"
-							: "\n\n";
-				altStart = start + before.length + 2;
-				altLength = alt.length;
-				return `${prefix}${before}![${alt}](${url})${after}${suffix}`;
-			});
-
-			requestAnimationFrame(() => {
-				if (!textarea.isConnected) return;
-				textarea.focus();
-				textarea.setSelectionRange(altStart, altStart + altLength);
-			});
-		}, "Failed to save the image. Try again.");
+			},
+			(error) =>
+				error instanceof ClipboardImageError
+					? error.message
+					: "Failed to save the image. Try again.",
+		);
 	}
 
 	function handleLink(
@@ -362,12 +397,20 @@ export function ReviewBodyModal({
 									</button>
 									<button
 										type="button"
-										title="Insert an image from a URL or a /dev/image-crop path (selected text becomes its description)"
+										title="Insert the image URL on the clipboard, e.g. a path the crop tool just copied (selected text becomes its description)"
 										disabled={imageInsert.pending}
 										onClick={() =>
 											handleImage(onChange, enTextareaRef.current)
 										}>
 										{imageInsert.pending ? "Saving…" : "Image"}
+									</button>
+									<button
+										type="button"
+										title="Insert blank vertical space; add =N inside the brackets for N px"
+										onClick={() =>
+											handleSpacer(onChange, enTextareaRef.current)
+										}>
+										Spacer
 									</button>
 								</div>
 							</div>
@@ -440,12 +483,20 @@ export function ReviewBodyModal({
 									</button>
 									<button
 										type="button"
-										title="Insert an image from a URL or a /dev/image-crop path (selected text becomes its description)"
+										title="Insert the image URL on the clipboard, e.g. a path the crop tool just copied (selected text becomes its description)"
 										disabled={imageInsert.pending}
 										onClick={() =>
 											handleImage(onChangeFr, frTextareaRef.current)
 										}>
 										{imageInsert.pending ? "Saving…" : "Image"}
+									</button>
+									<button
+										type="button"
+										title="Insert blank vertical space; add =N inside the brackets for N px"
+										onClick={() =>
+											handleSpacer(onChangeFr, frTextareaRef.current)
+										}>
+										Spacer
 									</button>
 								</div>
 							</div>
@@ -572,4 +623,25 @@ function ReviewPreview({ text }: { text: string }) {
 			</div>
 		</div>
 	);
+}
+
+// Clipboard problems get their own message instead of the generic save failure.
+class ClipboardImageError extends Error {}
+
+// The Image button's source: whatever URL is on the clipboard, e.g. a path the crop tool just copied.
+async function readClipboardImageUrl(): Promise<string> {
+	let text: string;
+	try {
+		text = (await navigator.clipboard.readText()).trim();
+	} catch {
+		throw new ClipboardImageError(
+			"Couldn't read the clipboard. Allow clipboard access and try again.",
+		);
+	}
+	if (!/^(https?:\/\/|\/)\S+$/.test(text)) {
+		throw new ClipboardImageError(
+			"Copy an image URL (or save a crop) first. The clipboard doesn't hold one.",
+		);
+	}
+	return text;
 }

@@ -21,6 +21,10 @@ const IMAGE_CLOSE_REGEX = new RegExp(
 	"g",
 );
 
+// Standalone token for markup restored verbatim (spacers); its index points into `urls` too.
+const KEEP_PREFIX = "⟦KEEP";
+const KEEP_REGEX = new RegExp(`${KEEP_PREFIX}(\\d+)⟧`, "g");
+
 export function markMarkupForTranslation(body: string): {
 	marked: string;
 	urls: string[];
@@ -28,13 +32,29 @@ export function markMarkupForTranslation(body: string): {
 	const urls: string[] = [];
 	const marked = body.replace(
 		REVIEW_MARKUP_REGEX,
-		(_match, spoilerText, imageAlt, imageUrl, linkText, linkUrl) => {
+		(
+			match,
+			spoilerText,
+			imageAlt,
+			imageUrl,
+			imageSize,
+			linkText,
+			linkUrl,
+			spacer,
+		) => {
 			if (spoilerText !== undefined) {
 				return `${SPOILER_OPEN}${spoilerText}${SPOILER_CLOSE}`;
 			}
 			if (imageUrl !== undefined) {
-				const index = urls.push(imageUrl) - 1;
+				// The size rides along with the URL, so it's restored untouched.
+				const target = imageSize ? `${imageUrl} =${imageSize}` : imageUrl;
+				const index = urls.push(target) - 1;
 				return `${IMAGE_OPEN}${imageAlt}${IMAGE_CLOSE_PREFIX}${index}⟧`;
+			}
+			if (spacer !== undefined) {
+				// Nothing to translate; an opaque token keeps "spacer" from becoming French.
+				const index = urls.push(match) - 1;
+				return `${KEEP_PREFIX}${index}⟧`;
 			}
 			const index = urls.push(linkUrl) - 1;
 			return `${LINK_OPEN}${linkText}${LINK_CLOSE_PREFIX}${index}⟧`;
@@ -46,7 +66,11 @@ export function markMarkupForTranslation(body: string): {
 export function unmarkTranslatedMarkup(text: string, urls: string[]): string {
 	const withSpoilers = text
 		.replaceAll(SPOILER_OPEN, "||")
-		.replaceAll(SPOILER_CLOSE, "||");
+		.replaceAll(SPOILER_CLOSE, "||")
+		.replace(
+			KEEP_REGEX,
+			(full, indexStr: string) => urls[Number(indexStr)] ?? full,
+		);
 	const withImages = withSpoilers.replace(
 		IMAGE_CLOSE_REGEX,
 		(full, alt: string, indexStr: string) => {
@@ -67,4 +91,4 @@ export const REVIEW_TRANSLATION_SYSTEM = `You translate review text for a person
 
 ${FRENCH_STYLE_RULES}
 
-The text contains marker tokens in pairs, e.g. ${SPOILER_OPEN}some phrase${SPOILER_CLOSE} or ${LINK_OPEN}some phrase${LINK_CLOSE_PREFIX}0⟧ or ${IMAGE_OPEN}some phrase${IMAGE_CLOSE_PREFIX}1⟧ (the phrase may be empty) — translate the phrase inside a pair normally, as part of the surrounding sentence, but leave the marker tokens themselves exactly as they are, immediately before/after the translated phrase: don't add, remove, rename, reorder, or explain them. Reply with only the translated text: no preamble, no explanation, no surrounding quotes.`;
+The text contains marker tokens in pairs, e.g. ${SPOILER_OPEN}some phrase${SPOILER_CLOSE} or ${LINK_OPEN}some phrase${LINK_CLOSE_PREFIX}0⟧ or ${IMAGE_OPEN}some phrase${IMAGE_CLOSE_PREFIX}1⟧ (the phrase may be empty) — translate the phrase inside a pair normally, as part of the surrounding sentence, but leave the marker tokens themselves exactly as they are, immediately before/after the translated phrase: don't add, remove, rename, reorder, or explain them. Standalone tokens like ${KEEP_PREFIX}2⟧ stand for layout and must stay exactly where they are. Reply with only the translated text: no preamble, no explanation, no surrounding quotes.`;

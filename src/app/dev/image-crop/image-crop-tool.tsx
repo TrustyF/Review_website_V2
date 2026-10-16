@@ -43,6 +43,8 @@ const AVATAR_SAFE_MARGIN_RATIO = 0.86;
 export function ImageCropTool() {
 	const isAdmin = useIsAdmin();
 	const cropperRef = useRef<InstanceType<typeof Cropper>>(null);
+	// Set by loadFile so the next freeform image load re-applies a kept ratio lock.
+	const fitOnLoadRef = useRef(false);
 	const [file, setFile] = useState<File | null>(null);
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const [shapeId, setShapeId] = useState<CropShapeId>(DEFAULT_SHAPE);
@@ -121,9 +123,9 @@ export function ImageCropTool() {
 		setZoom(1);
 		setCroppedAreaPixels(null);
 		setMediaSize(null);
+		// Shape, ratio lock and resize are settings and carry over; only the crop box is per-image.
 		setFreeCrop(FULL_CROP);
-		setFreeformAspect(null);
-		setResizeEnabled(false);
+		fitOnLoadRef.current = true;
 		setResultPath(null);
 		setResultSize(null);
 		setError(null);
@@ -201,28 +203,23 @@ export function ImageCropTool() {
 		setFreeformAspect(next);
 		const ratio = parseAspect(next);
 		if (!ratio || !mediaSize) return;
-		const { naturalWidth, naturalHeight } = mediaSize;
-		const widest = makeAspectCrop(
-			{ unit: "%", width: 100 },
-			ratio,
-			naturalWidth,
-			naturalHeight,
+		setFreeCrop(
+			fitAspectCrop(ratio, mediaSize.naturalWidth, mediaSize.naturalHeight),
 		);
-		const fitted =
-			widest.height > 100
-				? makeAspectCrop(
-						{ unit: "%", height: 100 },
-						ratio,
-						naturalWidth,
-						naturalHeight,
-					)
-				: widest;
-		setFreeCrop(centerCrop(fitted, naturalWidth, naturalHeight));
 	}
 
 	function handleFullImage() {
 		setFreeformAspect(null);
 		setFreeCrop(FULL_CROP);
+	}
+
+	// Back to a fresh tool: default shape, no ratio lock, no resize, crop box reset.
+	function handleClearSettings() {
+		handleShapeChange(DEFAULT_SHAPE);
+		setFreeformAspect(null);
+		setFreeCrop(FULL_CROP);
+		setResizeEnabled(false);
+		setOutputWidth("");
 	}
 
 	function handleShapeChange(next: CropShapeId) {
@@ -312,6 +309,13 @@ export function ImageCropTool() {
 						{shape.label}
 					</label>
 				))}
+				<button
+					type="button"
+					className={styles.clear_button}
+					title="Reset shape, ratio lock, resize and crop box (settings otherwise carry over between images)"
+					onClick={handleClearSettings}>
+					Clear settings
+				</button>
 			</div>
 
 			{shapeRatio === null && (
@@ -382,6 +386,19 @@ export function ImageCropTool() {
 												naturalWidth: img.naturalWidth,
 												naturalHeight: img.naturalHeight,
 											});
+											// A kept ratio lock re-fits a newly loaded image (not a shape-switch remount).
+											if (fitOnLoadRef.current) {
+												fitOnLoadRef.current = false;
+												if (lockedAspect) {
+													setFreeCrop(
+														fitAspectCrop(
+															lockedAspect,
+															img.naturalWidth,
+															img.naturalHeight,
+														),
+													);
+												}
+											}
 										}}
 									/>
 								</ReactCrop>
@@ -536,6 +553,30 @@ export function ImageCropTool() {
 			/>
 		</div>
 	);
+}
+
+// Largest centered crop of the given ratio that fits the image.
+function fitAspectCrop(
+	ratio: number,
+	naturalWidth: number,
+	naturalHeight: number,
+): PercentCrop {
+	const widest = makeAspectCrop(
+		{ unit: "%", width: 100 },
+		ratio,
+		naturalWidth,
+		naturalHeight,
+	);
+	const fitted =
+		widest.height > 100
+			? makeAspectCrop(
+					{ unit: "%", height: 100 },
+					ratio,
+					naturalWidth,
+					naturalHeight,
+				)
+			: widest;
+	return centerCrop(fitted, naturalWidth, naturalHeight);
 }
 
 // Valid W:H lock → ratio; anything incomplete or non-positive → null (unlocked).
