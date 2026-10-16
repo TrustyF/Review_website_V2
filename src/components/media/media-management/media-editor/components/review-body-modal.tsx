@@ -614,7 +614,7 @@ function ReviewPreview({ text }: { text: string }) {
 				{text.trim() ? (
 					<div className={reviewStyles.body}>
 						<ReviewSpoilerProvider>
-							<ReviewBody text={text} />
+							<ReviewBody text={text} spoilerNotice />
 						</ReviewSpoilerProvider>
 					</div>
 				) : (

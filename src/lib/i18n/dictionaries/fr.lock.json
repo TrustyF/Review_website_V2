@@ -83,6 +83,10 @@
 		"en": "96ad4bd0f7baa40e",
 		"fr": "d1bebceb4c8ca1ae"
 	},
+	"account.readingSection": {
+		"en": "34c65840f4daf3c4",
+		"fr": "c4c8eb5e18acf300"
+	},
 	"account.recommendations": {
 		"en": "5df7123cb67d6fd9",
 		"fr": "ac31c61c1ad28271"
@@ -98,6 +102,14 @@
 	"account.settingsTitle": {
 		"en": "83909f82446ee9c3",
 		"fr": "b8af7531fed1b7b7"
+	},
+	"account.showSpoilers": {
+		"en": "3b4024bbc8a5e497",
+		"fr": "d8f3885d80c187de"
+	},
+	"account.showSpoilersDescription": {
+		"en": "b446d6b78d51c944",
+		"fr": "16133390186f0eb2"
 	},
 	"account.signOut": {
 		"en": "d46969bdd3258d1d",
@@ -638,6 +650,22 @@
 	"media.sort.watchedDate": {
 		"en": "5b3dbad22fe320ee",
 		"fr": "6598aca143a74dc6"
+	},
+	"media.spoilerLabel": {
+		"en": "0509819e167f7088",
+		"fr": "6c5bdd7192dde5f3"
+	},
+	"media.spoilerNotice": {
+		"en": "b4da89bee74d5e56",
+		"fr": "ed08c7e6049c5529"
+	},
+	"media.spoilerOverlay": {
+		"en": "bd48a7d004909c7d",
+		"fr": "ea8eba045d11d6ad"
+	},
+	"media.spoilerRevealAll": {
+		"en": "17e4416b47650cc4",
+		"fr": "e5fe33c6408f8db7"
 	},
 	"media.unknownMonth": {
 		"en": "14c4849191d018fc",

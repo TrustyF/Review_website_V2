@@ -1,15 +1,23 @@
 "use client";
 import {
 	createContext,
+	type CSSProperties,
+	Fragment,
 	type KeyboardEvent as ReactKeyboardEvent,
 	ReactNode,
 	useContext,
+	useLayoutEffect,
+	useRef,
 	useState,
 } from "react";
 import {
 	parseImageSize,
 	REVIEW_MARKUP_REGEX,
 } from "@/components/media/media-cards/media-card/review-body-syntax";
+import { Clickable } from "@/components/ui/clickable";
+import { useDictionary } from "@/lib/i18n/i18n-context";
+import { useShowSpoilers } from "@/lib/spoilers/show-spoilers-context";
+import { EyeOff } from "lucide-react";
 import styles from "./review.module.sass";
 
 // http(s) only, or a same-site relative path — never a scheme like
@@ -41,30 +49,93 @@ export function ReviewSpoilerProvider({ children }: { children: ReactNode }) {
 	);
 }
 
-// Accessible name for the unrevealed state — there's no visible on-screen label.
-const SPOILER_LABEL = "Spoilers, click to reveal";
+// Explains the redaction bars, which readers didn't recognize as clickable. Fallback for when the
+// in-bar overlay (see SpoilerText) has no line wide enough; sits above the first spoiler's paragraph.
+function SpoilerNotice() {
+	const { revealed, reveal } = useContext(SpoilerRevealContext);
+	const dict = useDictionary();
+	const alwaysShow = useShowSpoilers();
+	if (revealed || alwaysShow) return null;
+	return (
+		<div className={styles.spoiler_notice}>
+			<EyeOff size={14} aria-hidden="true" />
+			<span>{dict.media.spoilerNotice}</span>
+			<Clickable className={styles.spoiler_notice_reveal} onClick={reveal}>
+				{dict.media.spoilerRevealAll}
+			</Clickable>
+		</div>
+	);
+}
 
-// Click or Enter/Space reveals this and every other spoiler in the review.
-// interactive=false (used when nested in a navigating ancestor <Link>, e.g. featured-review.tsx) drops all handlers/role so a click just bubbles up to the link instead of fighting its navigation.
+// How far below the spoiler's top edge the notice box sits.
+const OVERLAY_TOP_OFFSET_PX = 8;
+
+// Click/Enter/Space reveals every spoiler in the review. interactive=false (inside a navigating <Link>, e.g. featured-review.tsx) drops handlers so clicks reach the link.
+// onNoticeFit (first spoiler only): notice box centered over the bar, no shift on reveal; false = bar too narrow, ReviewBody falls back.
 function SpoilerText({
 	children,
 	interactive = true,
+	onNoticeFit,
 }: {
 	children: string;
 	interactive?: boolean;
+	onNoticeFit?: ((fits: boolean) => void) | undefined;
 }) {
 	const { revealed, reveal } = useContext(SpoilerRevealContext);
-	const isRevealed = interactive && revealed;
+	const dict = useDictionary();
+	// The "never hide spoilers" account setting shows them as plain text, even where they aren't clickable.
+	const alwaysShow = useShowSpoilers();
+	const clickable = interactive && !alwaysShow;
+	const isRevealed = alwaysShow || (interactive && revealed);
+	const showOverlay = onNoticeFit !== undefined && clickable && !revealed;
+
+	const textRef = useRef<HTMLSpanElement>(null);
+	const overlayRef = useRef<HTMLSpanElement>(null);
+	const [placement, setPlacement] = useState<CSSProperties | null>(null);
+
+	useLayoutEffect(() => {
+		const text = textRef.current;
+		const overlay = overlayRef.current;
+		if (!showOverlay || !text || !overlay) return;
+		// Centers the box horizontally on the spoiler's bounding block (all its line rects), just below its
+		// top, against offsetParent (the paragraph). Too narrow a block (a short one-liner) falls back instead.
+		const measure = () => {
+			const parent = overlay.offsetParent;
+			if (!parent) return;
+			const lines = Array.from(text.getClientRects()).filter(
+				(rect) => rect.width > 0,
+			);
+			const left = Math.min(...lines.map((rect) => rect.left));
+			const right = Math.max(...lines.map((rect) => rect.right));
+			if (!lines.length || right - left < overlay.offsetWidth) {
+				setPlacement(null);
+				onNoticeFit(false);
+				return;
+			}
+			const box = parent.getBoundingClientRect();
+			setPlacement({
+				left: (left + right) / 2 - box.left - parent.clientLeft,
+				top: lines[0]!.top - box.top - parent.clientTop + OVERLAY_TOP_OFFSET_PX,
+			});
+			onNoticeFit(true);
+		};
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(overlay.offsetParent ?? text);
+		return () => observer.disconnect();
+	}, [showOverlay, onNoticeFit, children]);
 
 	return (
 		<span
 			className={`${styles.spoiler} ${isRevealed ? styles.spoiler_revealed : ""}`}
-			role={interactive ? "button" : undefined}
-			tabIndex={interactive ? 0 : undefined}
-			aria-label={interactive && !isRevealed ? SPOILER_LABEL : undefined}
-			onClick={interactive && !isRevealed ? reveal : undefined}
+			role={clickable ? "button" : undefined}
+			tabIndex={clickable ? 0 : undefined}
+			aria-label={
+				clickable && !isRevealed ? dict.media.spoilerLabel : undefined
+			}
+			onClick={clickable && !isRevealed ? reveal : undefined}
 			onKeyDown={
-				interactive
+				clickable
 					? (e: ReactKeyboardEvent) => {
 							if (isRevealed || (e.key !== "Enter" && e.key !== " ")) return;
 							e.preventDefault();
@@ -72,7 +143,21 @@ function SpoilerText({
 						}
 					: undefined
 			}>
-			<span className={styles.spoiler_text}>{children}</span>
+			<span ref={textRef} className={styles.spoiler_text}>
+				{children}
+			</span>
+			{/* A DOM child of the spoiler, so clicking it bubbles to the spoiler's reveal. */}
+			{showOverlay && (
+				<span
+					ref={overlayRef}
+					className={styles.spoiler_overlay}
+					style={placement ?? undefined}
+					data-placed={placement ? "" : undefined}
+					aria-hidden="true">
+					<EyeOff size={13} />
+					{dict.media.spoilerOverlay}
+				</span>
+			)}
 		</span>
 	);
 }
@@ -85,7 +170,7 @@ type ReviewImage = {
 	size: ReturnType<typeof parseImageSize>;
 };
 type ReviewBodyBlock =
-	| { kind: "paragraph"; key: number; nodes: ReactNode[] }
+	| { kind: "paragraph"; key: number; nodes: ReactNode[]; hasSpoiler: boolean }
 	| { kind: "images"; key: number; images: ReviewImage[] }
 	| { kind: "spacer"; key: number; height: string | undefined };
 
@@ -98,18 +183,26 @@ function splitReviewBody(
 	text: string,
 	spoilersInteractive: boolean,
 	showImages: boolean,
+	onNoticeFit: ((fits: boolean) => void) | undefined,
 ): ReviewBodyBlock[] {
 	const blocks: ReviewBodyBlock[] = [];
 	let currentNodes: ReactNode[] = [];
+	let currentHasSpoiler = false;
 	let blockKey = 0;
 	let inlineKey = 0;
 
 	// A whitespace-only paragraph is dropped, so it can't separate two images either.
 	function flushParagraph() {
 		if (!currentNodes.every(isBlank)) {
-			blocks.push({ kind: "paragraph", key: blockKey++, nodes: currentNodes });
+			blocks.push({
+				kind: "paragraph",
+				key: blockKey++,
+				nodes: currentNodes,
+				hasSpoiler: currentHasSpoiler,
+			});
 		}
 		currentNodes = [];
+		currentHasSpoiler = false;
 	}
 
 	function pushPlainText(raw: string) {
@@ -126,8 +219,16 @@ function splitReviewBody(
 		if (index > lastIndex) pushPlainText(text.slice(lastIndex, index));
 
 		if (match[1] !== undefined) {
+			const isFirstSpoiler =
+				!blocks.some(
+					(block) => block.kind === "paragraph" && block.hasSpoiler,
+				) && !currentHasSpoiler;
+			currentHasSpoiler = true;
 			currentNodes.push(
-				<SpoilerText key={inlineKey++} interactive={spoilersInteractive}>
+				<SpoilerText
+					key={inlineKey++}
+					interactive={spoilersInteractive}
+					onNoticeFit={isFirstSpoiler ? onNoticeFit : undefined}>
 					{match[1]}
 				</SpoilerText>,
 			);
@@ -191,6 +292,8 @@ type ReviewBodyProps = {
 	showImages?: boolean | undefined;
 	// Replaces the default image styling, e.g. to cap height inside a clamped excerpt.
 	imageClassName?: string | undefined;
+	// Explains the first spoiler: in-bar overlay, else SpoilerNotice above its paragraph. Needs a ReviewSpoilerProvider.
+	spoilerNotice?: boolean | undefined;
 };
 
 // Renders a review body as paragraphs with spoilers/links inline in their original position.
@@ -200,8 +303,21 @@ export function ReviewBody({
 	spoilersInteractive = true,
 	showImages = true,
 	imageClassName,
+	spoilerNotice = false,
 }: ReviewBodyProps) {
-	const blocks = splitReviewBody(text, spoilersInteractive, showImages);
+	// null until measured; only false (no bar line wide enough) shows the above-paragraph notice.
+	const [overlayFits, setOverlayFits] = useState<boolean | null>(null);
+	const blocks = splitReviewBody(
+		text,
+		spoilersInteractive,
+		showImages,
+		spoilerNotice ? setOverlayFits : undefined,
+	);
+	const noticeBlockKey =
+		spoilerNotice && overlayFits === false
+			? blocks.find((block) => block.kind === "paragraph" && block.hasSpoiler)
+					?.key
+			: undefined;
 	const renderImage = ({ url, alt, size }: ReviewImage, key: number) => (
 		// Plain <img>, not next/image: the host is an arbitrary pasted URL with unknown dimensions.
 		// eslint-disable-next-line @next/next/no-img-element
@@ -233,9 +349,10 @@ export function ReviewBody({
 						</div>
 					)
 				) : (
-					<p className={paragraphClassName} key={block.key}>
-						{block.nodes}
-					</p>
+					<Fragment key={block.key}>
+						{block.key === noticeBlockKey && <SpoilerNotice />}
+						<p className={paragraphClassName}>{block.nodes}</p>
+					</Fragment>
 				),
 			)}
 		</>

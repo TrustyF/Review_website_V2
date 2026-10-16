@@ -25,6 +25,7 @@ export default async function AccountSettingsPage() {
 				preferredLanguage: true,
 				newsletterOptIn: true,
 				listAddEmailOptIn: true,
+				showSpoilers: true,
 				username: true,
 				passwordHash: true,
 			},
@@ -44,6 +45,7 @@ export default async function AccountSettingsPage() {
 					preferredLanguage: user.preferredLanguage,
 					newsletterOptIn: user.newsletterOptIn,
 					listAddEmailOptIn: user.listAddEmailOptIn,
+					showSpoilers: user.showSpoilers,
 					username: user.username,
 				}}
 			/>

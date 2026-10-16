@@ -14,17 +14,29 @@
   border: 1px solid var(--surface-border)
   border-radius: 0.5rem
 
-// Pulls whatever follows closer than the section's 0.9rem gap.
+// 1rem below the heading (section gap 0.9rem + 0.1rem).
 .section_title
   font-size: 1.1rem
-  margin-bottom: -0.5rem
+  margin-bottom: 0.1rem
+  display: flex
+  align-items: center
+  gap: 0.5rem
 
+// Same treatment as the /account page's section icons.
+.section_icon
+  flex-shrink: 0
+  color: var(--brand)
+
+// The label reads as the heading's subtitle: it hugs the heading (0.4rem), and the gap sits before the input.
 .field
   display: flex
   flex-flow: column
-  gap: 0.6rem
+  gap: 1rem
   color: var(--accent1)
   font-size: 0.85rem
+
+.section_title + .field
+  margin-top: -0.6rem
 
 .input
   padding: 0.5rem 0.7rem

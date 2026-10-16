@@ -10,6 +10,7 @@ declare module "next-auth" {
 			role: UserRole;
 			preferredLanguage: string;
 			newsletterOptIn: boolean;
+			showSpoilers: boolean;
 		} & DefaultSession["user"];
 	}
 
@@ -17,6 +18,7 @@ declare module "next-auth" {
 		role: UserRole;
 		preferredLanguage: string;
 		newsletterOptIn: boolean;
+		showSpoilers: boolean;
 	}
 }
 
@@ -27,5 +29,6 @@ declare module "@auth/core/jwt" {
 		role: UserRole;
 		preferredLanguage: string;
 		newsletterOptIn: boolean;
+		showSpoilers: boolean;
 	}
 }

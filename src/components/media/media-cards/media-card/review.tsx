@@ -84,7 +84,11 @@ export function MediaReviewBody({
 	return (
 		<div className={`${styles.body} ${bodyClassName ?? ""}`}>
 			<ReviewSpoilerProvider>
-				<ReviewBody text={text} paragraphClassName={styles.body_line} />
+				<ReviewBody
+					text={text}
+					paragraphClassName={styles.body_line}
+					spoilerNotice
+				/>
 			</ReviewSpoilerProvider>
 		</div>
 	);

@@ -17,6 +17,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { I18nProvider } from "@/lib/i18n/i18n-context";
 import { getLocale } from "@/lib/i18n/get-locale";
+import { getShowSpoilers } from "@/lib/spoilers/get-show-spoilers";
+import { ShowSpoilersProvider } from "@/lib/spoilers/show-spoilers-context";
 import { personIdentity } from "@/lib/identity";
 
 import { fontVariables } from "./fonts";
@@ -59,7 +61,10 @@ export default async function RootLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const locale = await getLocale();
+	const [locale, showSpoilers] = await Promise.all([
+		getLocale(),
+		getShowSpoilers(),
+	]);
 	const personJsonLd = {
 		"@context": "https://schema.org",
 		"@type": "Person",
@@ -83,24 +88,26 @@ export default async function RootLayout({
 			</head>
 			<body>
 				<I18nProvider locale={locale}>
-					<AuthSessionProvider>
-						<AvatarProvider>
-							<WatchlistProvider>
-								<WatchedProvider>
-									<TipsProvider>
-										<Navbar />
-										<DevMenu />
-										<MobileViewportListener />
-										<RrwebAnalytics />
-										<MediaEditorModal />
-										<FeaturedManagerModal />
-										<VersionBadge />
-										<main>{children}</main>
-									</TipsProvider>
-								</WatchedProvider>
-							</WatchlistProvider>
-						</AvatarProvider>
-					</AuthSessionProvider>
+					<ShowSpoilersProvider value={showSpoilers}>
+						<AuthSessionProvider>
+							<AvatarProvider>
+								<WatchlistProvider>
+									<WatchedProvider>
+										<TipsProvider>
+											<Navbar />
+											<DevMenu />
+											<MobileViewportListener />
+											<RrwebAnalytics />
+											<MediaEditorModal />
+											<FeaturedManagerModal />
+											<VersionBadge />
+											<main>{children}</main>
+										</TipsProvider>
+									</WatchedProvider>
+								</WatchlistProvider>
+							</AvatarProvider>
+						</AuthSessionProvider>
+					</ShowSpoilersProvider>
 				</I18nProvider>
 			</body>
 			<SpeedInsights />

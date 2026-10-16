@@ -6,11 +6,13 @@ import { auth } from "@/auth";
 import { isValidAvatarSrc } from "@/server/avatars/avatar-catalog";
 import { comparePassword } from "@/lib/password";
 import { isLocale } from "@/lib/i18n/get-locale";
+import { SHOW_SPOILERS_COOKIE } from "@/lib/spoilers/get-show-spoilers";
 
 export type AccountSettingsInput = {
 	preferredLanguage: string;
 	newsletterOptIn: boolean;
 	listAddEmailOptIn: boolean;
+	showSpoilers: boolean;
 	// null clears the override, falling back to `name`.
 	username: string | null;
 };
@@ -27,6 +29,7 @@ export async function updateAccountSettings(
 			preferredLanguage: input.preferredLanguage,
 			newsletterOptIn: input.newsletterOptIn,
 			listAddEmailOptIn: input.listAddEmailOptIn,
+			showSpoilers: input.showSpoilers,
 			username: input.username,
 		},
 	});
@@ -40,7 +43,13 @@ export async function updateAccountSettings(
 		});
 	}
 
-	// Locale affects every page, not just /account — drop all cached routes.
+	// Same reason as the locale cookie: makes the setting apply now, not at next sign-in.
+	(await cookies()).set(SHOW_SPOILERS_COOKIE, input.showSpoilers ? "1" : "0", {
+		path: "/",
+		maxAge: 60 * 60 * 24 * 365,
+	});
+
+	// Locale/spoilers affect every page, not just /account — drop all cached routes.
 	revalidatePath("/", "layout");
 }
 

@@ -67,9 +67,54 @@
   height: 1.5rem
   flex-shrink: 0
 
-// Inline so a spoiler sits mid-sentence instead of breaking onto its own line; redaction look comes from .spoiler_text below.
-.spoiler
+// Above a body with spoilers; .body's pre-wrap would otherwise keep the JSX whitespace.
+.spoiler_notice
+  display: flex
+  flex-flow: row wrap
+  align-items: center
+  gap: 0.4rem
+  padding: 0.4rem 0.6rem
+  border-radius: 0.25rem
+  background: var(--accent1-tint)
+  color: var(--accent1)
+  font-size: 0.85rem
+  line-height: 1.2rem
+  white-space: normal
+
+.spoiler_notice_reveal
+  color: var(--link)
+  text-decoration: underline
   cursor: pointer
+
+// Inline so a spoiler sits mid-sentence instead of breaking onto its own line; redaction look comes from .spoiler_text below.
+// static, overriding globals.sass's `* { position: relative }`, so the overlay positions against the paragraph.
+.spoiler
+  position: static
+  cursor: pointer
+
+// The notice drawn over one bar line (placed inline by SpoilerText); hidden until measured to fit.
+// left (set inline) is the spoiler block's horizontal center, which the transform centers the box on; top is just below the block's top.
+.spoiler_overlay
+  position: absolute
+  z-index: 1
+  transform: translateX(-50%)
+  display: inline-flex
+  align-items: center
+  gap: 0.3rem
+  padding: 0.3rem 0.6rem
+  border: 1px solid var(--surface-border)
+  border-radius: 0.4rem
+  background: var(--surface)
+  box-shadow: 0 1px 4px var(--overlay-backdrop)
+  visibility: hidden
+  white-space: nowrap
+  color: var(--foreground)
+  font-size: 0.8rem
+  line-height: 1
+  cursor: pointer
+
+  &[data-placed]
+    visibility: visible
 
 // background (not on .spoiler) paints per wrapped line box, so a multi-line spoiler reads as separate redacted bars; box-decoration-break: clone rounds each fragment.
 .spoiler_text

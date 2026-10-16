@@ -79,6 +79,10 @@ export const fr = {
 		newsletterOptIn: "Newsletter hebdomadaire",
 		newsletterOptInDescription:
 			"Un récap hebdomadaire de ce qu'Arthur a noté et critiqué.",
+		readingSection: "Lecture",
+		showSpoilers: "Ne jamais masquer les spoilers",
+		showSpoilersDescription:
+			"Afficher les spoilers des critiques comme du texte normal au lieu de les masquer.",
 		listAddEmailOptIn: "Suivi des recommandations",
 		listAddEmailOptInDescription:
 			"Un e-mail quand Arthur ajoute un titre à une liste faite pour vous.",
@@ -191,6 +195,11 @@ export const fr = {
 	},
 	media: {
 		newBadge: "Nouveau",
+		spoilerNotice:
+			"Contient des spoilers. Touchez le texte masqué pour l'afficher.",
+		spoilerRevealAll: "Tout afficher",
+		spoilerOverlay: "Spoilers · touchez pour afficher",
+		spoilerLabel: "Spoilers, cliquez pour afficher",
 		recentSuffix: "récents",
 		recentBackToRating: "Par note",
 		filter: {

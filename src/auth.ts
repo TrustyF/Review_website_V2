@@ -49,6 +49,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 					role: user.role,
 					preferredLanguage: user.preferredLanguage,
 					newsletterOptIn: user.newsletterOptIn,
+					showSpoilers: user.showSpoilers,
 				};
 			},
 		}),
@@ -72,6 +73,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 				token.role = user.role;
 				token.preferredLanguage = user.preferredLanguage;
 				token.newsletterOptIn = user.newsletterOptIn;
+				token.showSpoilers = user.showSpoilers;
 			}
 			return token;
 		},
@@ -80,6 +82,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 			session.user.role = token.role;
 			session.user.preferredLanguage = token.preferredLanguage;
 			session.user.newsletterOptIn = token.newsletterOptIn;
+			session.user.showSpoilers = token.showSpoilers;
 			return session;
 		},
 	},

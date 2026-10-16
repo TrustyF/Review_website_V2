@@ -1,6 +1,7 @@
 "use client";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { BookOpen, Languages, Mail, UserRound } from "lucide-react";
 import { updateAccountSettings } from "@/components/account/account-actions";
 import { LanguagePicker } from "@/components/account/language-picker/language-picker";
 import { useDictionary } from "@/lib/i18n/i18n-context";
@@ -11,6 +12,7 @@ type Props = {
 		preferredLanguage: string;
 		newsletterOptIn: boolean;
 		listAddEmailOptIn: boolean;
+		showSpoilers: boolean;
 		username: string | null;
 	};
 };
@@ -27,6 +29,7 @@ export function AccountSettingsForm({ initial }: Props) {
 	const [listAddEmailOptIn, setListAddEmailOptIn] = useState(
 		initial.listAddEmailOptIn,
 	);
+	const [showSpoilers, setShowSpoilers] = useState(initial.showSpoilers);
 	const [username, setUsername] = useState(initial.username ?? "");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [saved, setSaved] = useState(false);
@@ -39,10 +42,11 @@ export function AccountSettingsForm({ initial }: Props) {
 				preferredLanguage,
 				newsletterOptIn,
 				listAddEmailOptIn,
+				showSpoilers,
 				username: username.trim() || null,
 			});
 			setSaved(true);
-			// Picks up the just-saved locale cookie immediately, instead of
+			// Picks up the just-saved locale/spoiler cookies immediately, instead of
 			// waiting for the next full navigation.
 			router.refresh();
 		} finally {
@@ -53,7 +57,10 @@ export function AccountSettingsForm({ initial }: Props) {
 	return (
 		<form className={styles.form} onSubmit={handleSubmit}>
 			<section className={styles.section}>
-				<h2 className={styles.section_title}>{dict.account.profileSection}</h2>
+				<h2 className={styles.section_title}>
+					<UserRound size={18} className={styles.section_icon} />
+					{dict.account.profileSection}
+				</h2>
 				<label className={styles.field}>
 					{dict.account.username}
 					<input
@@ -70,7 +77,10 @@ export function AccountSettingsForm({ initial }: Props) {
 			</section>
 
 			<section className={styles.section}>
-				<h2 className={styles.section_title}>{dict.account.languageSection}</h2>
+				<h2 className={styles.section_title}>
+					<Languages size={18} className={styles.section_icon} />
+					{dict.account.languageSection}
+				</h2>
 				<div className={styles.field}>
 					{dict.account.preferredLanguage}
 					<LanguagePicker
@@ -84,7 +94,33 @@ export function AccountSettingsForm({ initial }: Props) {
 			</section>
 
 			<section className={styles.section}>
-				<h2 className={styles.section_title}>{dict.account.emailsSection}</h2>
+				<h2 className={styles.section_title}>
+					<BookOpen size={18} className={styles.section_icon} />
+					{dict.account.readingSection}
+				</h2>
+				<label className={styles.checkbox_field}>
+					<input
+						type="checkbox"
+						checked={showSpoilers}
+						onChange={(e) => {
+							setShowSpoilers(e.target.checked);
+							setSaved(false);
+						}}
+					/>
+					<span className={styles.option_text}>
+						<span>{dict.account.showSpoilers}</span>
+						<span className={styles.option_description}>
+							{dict.account.showSpoilersDescription}
+						</span>
+					</span>
+				</label>
+			</section>
+
+			<section className={styles.section}>
+				<h2 className={styles.section_title}>
+					<Mail size={18} className={styles.section_icon} />
+					{dict.account.emailsSection}
+				</h2>
 				<label className={styles.checkbox_field}>
 					<input
 						type="checkbox"

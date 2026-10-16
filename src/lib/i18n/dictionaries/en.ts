@@ -78,6 +78,10 @@ export const en = {
 		newsletterOptIn: "Weekly newsletter",
 		newsletterOptInDescription:
 			"A weekly recap of what Arthur rated and reviewed.",
+		readingSection: "Reading",
+		showSpoilers: "Never hide spoilers",
+		showSpoilersDescription:
+			"Show spoilers in reviews as normal text instead of hiding them.",
 		listAddEmailOptIn: "Recommendation updates",
 		listAddEmailOptInDescription:
 			"An email when Arthur adds media to a list made for you.",
@@ -189,6 +193,12 @@ export const en = {
 	},
 	media: {
 		newBadge: "New",
+		spoilerNotice: "Contains spoilers. Tap the hidden text to reveal it.",
+		spoilerRevealAll: "Reveal all",
+		// Short form drawn inside the spoiler bar itself, so keep it compact.
+		spoilerOverlay: "Spoilers · tap to reveal",
+		// Screen-reader name of a still-hidden spoiler; there's no visible label.
+		spoilerLabel: "Spoilers, click to reveal",
 		recentSuffix: "recent",
 		recentBackToRating: "By rating",
 		filter: {
