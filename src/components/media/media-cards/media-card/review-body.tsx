@@ -75,10 +75,15 @@ function SpoilerText({
 }
 
 // A paragraph's worth of inline content, split apart only on \n\n; a spoiler never forces its own paragraph break even if its captured text contains \n\n.
-// An image always gets its own block, splitting the paragraph it sits in.
+// Images split the paragraph they sit in; successive ones (only whitespace between) share one row.
+type ReviewImage = { url: string; alt: string };
 type ReviewBodyBlock =
 	| { kind: "paragraph"; key: number; nodes: ReactNode[] }
-	| { kind: "image"; key: number; url: string; alt: string };
+	| { kind: "images"; key: number; images: ReviewImage[] };
+
+function isBlank(node: ReactNode): boolean {
+	return typeof node === "string" && node.trim() === "";
+}
 
 // Parses ||spoiler||, ![alt](url) and [text](url) over the entire input in one pass (rather than per-paragraph) so a spoiler can span a paragraph break.
 function splitReviewBody(
@@ -91,9 +96,11 @@ function splitReviewBody(
 	let blockKey = 0;
 	let inlineKey = 0;
 
+	// A whitespace-only paragraph is dropped, so it can't separate two images either.
 	function flushParagraph() {
-		if (currentNodes.length === 0) return;
-		blocks.push({ kind: "paragraph", key: blockKey++, nodes: currentNodes });
+		if (!currentNodes.every(isBlank)) {
+			blocks.push({ kind: "paragraph", key: blockKey++, nodes: currentNodes });
+		}
 		currentNodes = [];
 	}
 
@@ -122,7 +129,10 @@ function splitReviewBody(
 				currentNodes.push(match[0]);
 			} else if (showImages) {
 				flushParagraph();
-				blocks.push({ kind: "image", key: blockKey++, url, alt: match[2]! });
+				const image = { url, alt: match[2]! };
+				const last = blocks.at(-1);
+				if (last?.kind === "images") last.images.push(image);
+				else blocks.push({ kind: "images", key: blockKey++, images: [image] });
 			}
 		} else {
 			const linkText = match[4]!;
@@ -174,19 +184,28 @@ export function ReviewBody({
 	imageClassName,
 }: ReviewBodyProps) {
 	const blocks = splitReviewBody(text, spoilersInteractive, showImages);
+	const renderImage = ({ url, alt }: ReviewImage, key: number) => (
+		// Plain <img>, not next/image: the host is an arbitrary pasted URL with unknown dimensions.
+		// eslint-disable-next-line @next/next/no-img-element
+		<img
+			key={key}
+			src={url}
+			alt={alt}
+			className={imageClassName ?? styles.image}
+			loading="lazy"
+		/>
+	);
 	return (
 		<>
 			{blocks.map((block) =>
-				block.kind === "image" ? (
-					// Plain <img>, not next/image: the host is an arbitrary pasted URL with unknown dimensions.
-					// eslint-disable-next-line @next/next/no-img-element
-					<img
-						key={block.key}
-						src={block.url}
-						alt={block.alt}
-						className={imageClassName ?? styles.image}
-						loading="lazy"
-					/>
+				block.kind === "images" ? (
+					block.images.length === 1 ? (
+						renderImage(block.images[0]!, block.key)
+					) : (
+						<div key={block.key} className={styles.image_row}>
+							{block.images.map((image, i) => renderImage(image, i))}
+						</div>
+					)
 				) : (
 					<p className={paragraphClassName} key={block.key}>
 						{block.nodes}

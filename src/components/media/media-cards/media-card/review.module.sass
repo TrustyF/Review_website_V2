@@ -51,6 +51,17 @@
   max-width: 100%
   border-radius: 0.25rem
 
+// Successive images side by side; each keeps its natural size, shrinking proportionally only when the row is too wide.
+.image_row
+  display: flex
+  flex-flow: row nowrap
+  align-items: flex-start
+  gap: 0.5rem
+  max-width: 100%
+
+  img
+    min-width: 0
+
 // Inline so a spoiler sits mid-sentence instead of breaking onto its own line; redaction look comes from .spoiler_text below.
 .spoiler
   cursor: pointer
