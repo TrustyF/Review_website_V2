@@ -50,6 +50,13 @@
   background: var(--surface)
   border-radius: 4px
 
+  // globals.sass's `* { position: relative }` turns these unstyled wrappers into 0-height containing
+  // blocks, stacking every handle (and the thirds grid) on the top edge. Back to static, as the library expects.
+  :global(.ReactCrop__drag-elements),
+  :global(.ReactCrop__rule-of-thirds-hz),
+  :global(.ReactCrop__rule-of-thirds-vt)
+    position: static
+
 .freeform_image
   display: block
   max-width: 100%

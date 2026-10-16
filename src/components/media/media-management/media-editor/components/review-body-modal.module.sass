@@ -18,7 +18,7 @@
   background-color: var(--modal-bg)
   border: 1px solid var(--accent1)
   border-radius: 0.5rem
-  width: min(80rem, 100%)
+  width: min(110rem, 100%)
   height: 100%
   overflow-y: auto
   padding: 1.5rem
@@ -42,7 +42,8 @@
 // Grows to fill .panel's available height rather than a fixed value; both columns stretch to match.
 .columns
   display: grid
-  grid-template-columns: 1fr 1fr
+  // Preview | body | suggestion/translation
+  grid-template-columns: repeat(3, minmax(0, 1fr))
   gap: 1.5rem
   flex: 1
   min-height: 0
@@ -87,6 +88,19 @@
   font-family: $font-body
   font-size: 1rem
   line-height: 1.5rem
+
+// Same box as .textarea so the columns line up; scrolls on its own for long reviews.
+.preview
+  flex: 1
+  min-height: 0
+  overflow-y: auto
+  padding: 0.5rem
+  border: 1px solid var(--accent1)
+  border-radius: 0.25rem
+
+.preview_empty
+  color: var(--accent1)
+  font-size: 0.85rem
 
 .suggestion_header
   display: flex

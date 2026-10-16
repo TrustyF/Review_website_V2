@@ -26,6 +26,11 @@ import {
 	HEAVY_IMAGE_BYTES,
 } from "@/app/dev/image-crop/crop-shapes";
 import { ReviewDiff } from "@/components/media/media-management/media-editor/components/review-diff";
+import {
+	ReviewBody,
+	ReviewSpoilerProvider,
+} from "@/components/media/media-cards/media-card/review-body";
+import reviewStyles from "@/components/media/media-cards/media-card/review.module.sass";
 import styles from "./review-body-modal.module.sass";
 
 const AUTOSAVE_DELAY_MS = 2000;
@@ -334,6 +339,7 @@ export function ReviewBodyModal({
 
 				{activeLang === "en" ? (
 					<div className={styles.columns}>
+						<ReviewPreview text={body} />
 						<label className={styles.column}>
 							<div className={styles.body_header}>
 								Body
@@ -411,6 +417,7 @@ export function ReviewBodyModal({
 					</div>
 				) : (
 					<div className={styles.columns}>
+						<ReviewPreview text={bodyFr} />
 						<label className={styles.column}>
 							<div className={styles.body_header}>
 								Corps (français)
@@ -542,6 +549,26 @@ export function ReviewBodyModal({
 						Done
 					</button>
 				</div>
+			</div>
+		</div>
+	);
+}
+
+// Live render of the text as it'll appear on the media page, same component and .body styling.
+function ReviewPreview({ text }: { text: string }) {
+	return (
+		<div className={styles.column}>
+			<div className={styles.body_header}>Preview</div>
+			<div className={styles.preview}>
+				{text.trim() ? (
+					<div className={reviewStyles.body}>
+						<ReviewSpoilerProvider>
+							<ReviewBody text={text} />
+						</ReviewSpoilerProvider>
+					</div>
+				) : (
+					<span className={styles.preview_empty}>Nothing to preview yet.</span>
+				)}
 			</div>
 		</div>
 	);
