@@ -199,11 +199,15 @@ function FeaturedReviewCard({
 	useEffect(() => {
 		const el = excerptRef.current;
 		if (!el) return;
-		const observer = new ResizeObserver(() => {
-			setIsOverflowing(el.scrollHeight > el.clientHeight);
-		});
+		const measure = () => setIsOverflowing(el.scrollHeight > el.clientHeight);
+		const observer = new ResizeObserver(measure);
 		observer.observe(el);
-		return () => observer.disconnect();
+		// An image loading past max-height grows scrollHeight without resizing el. load doesn't bubble, so capture.
+		el.addEventListener("load", measure, true);
+		return () => {
+			observer.disconnect();
+			el.removeEventListener("load", measure, true);
+		};
 	}, []);
 
 	const review = media.review;
@@ -282,6 +286,7 @@ function FeaturedReviewCard({
 								paragraphClassName={styles.excerpt_line}
 								// The whole card is already a Link — a spoiler's click-to-reveal would fight that navigation, so clicks fall through untouched.
 								spoilersInteractive={false}
+								imageClassName={styles.excerpt_image}
 							/>
 						</ReviewSpoilerProvider>
 					</div>

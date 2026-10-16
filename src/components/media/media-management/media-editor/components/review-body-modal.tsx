@@ -1,5 +1,11 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import {
+	type Dispatch,
+	type SetStateAction,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { useAsyncAction } from "@/lib/use-async-action";
 import {
 	suggestReviewCorrection,
@@ -14,6 +20,11 @@ import {
 	TRANSLATION_MODELS,
 	type TranslationModelId,
 } from "@/lib/claude-model";
+import { resolveReviewImageUrl } from "@/components/media/media-management/media-editor/review-image-actions";
+import {
+	formatBytes,
+	HEAVY_IMAGE_BYTES,
+} from "@/app/dev/image-crop/crop-shapes";
 import { ReviewDiff } from "@/components/media/media-management/media-editor/components/review-diff";
 import styles from "./review-body-modal.module.sass";
 
@@ -31,6 +42,8 @@ type Props = {
 	onClose: () => void;
 	// null when there's no review row yet (no saved rating) to hold a draft.
 	draftMediaId: number | null;
+	// Owns the reviews/images/<mediaId>/ dir pasted crops are copied into.
+	mediaId: number;
 };
 
 // Its own modal, not inline, since the main modal's fixed-width columns had no room to show
@@ -41,6 +54,7 @@ export function ReviewBodyModal({
 	onDone,
 	onClose,
 	draftMediaId,
+	mediaId,
 }: Props) {
 	const [activeLang, setActiveLang] = useState<"en" | "fr">("en");
 
@@ -231,6 +245,64 @@ export function ReviewBodyModal({
 		wrapSelection(text, onChangeText, textarea, "||", "||", "spoiler");
 	}
 
+	const imageInsert = useAsyncAction();
+
+	// Inserts ![selection](url) as its own paragraph; an empty selection leaves the cursor in the alt brackets.
+	// A /cropped/ URL is first copied into the media's review-image dir, since crops expire after 24h.
+	async function handleImage(
+		setText: Dispatch<SetStateAction<string>>,
+		textarea: HTMLTextAreaElement | null,
+	) {
+		if (!textarea) return;
+		const input = window.prompt("Image URL:")?.trim();
+		if (!input) return;
+		const { selectionStart, selectionEnd } = textarea;
+
+		await imageInsert.run(async () => {
+			let result = await resolveReviewImageUrl(mediaId, input);
+			if ("heavyBytes" in result) {
+				const keep = window.confirm(
+					`This image is ${formatBytes(result.heavyBytes)}, over the ${formatBytes(HEAVY_IMAGE_BYTES)} guideline. Resize it in the crop tool to keep storage down, or insert it anyway?`,
+				);
+				if (!keep) return;
+				result = await resolveReviewImageUrl(mediaId, input, true);
+			}
+			if (!("url" in result)) return;
+			const { url } = result;
+			let altStart = 0;
+			let altLength = 0;
+			// Functional update: the text may have changed while the URL resolved.
+			setText((text) => {
+				const start = Math.min(selectionStart, text.length);
+				const end = Math.min(selectionEnd, text.length);
+				const prefix = text.slice(0, start);
+				const suffix = text.slice(end);
+				const alt = text.slice(start, end);
+				const before =
+					prefix === "" || prefix.endsWith("\n\n")
+						? ""
+						: prefix.endsWith("\n")
+							? "\n"
+							: "\n\n";
+				const after =
+					suffix === "" || suffix.startsWith("\n\n")
+						? ""
+						: suffix.startsWith("\n")
+							? "\n"
+							: "\n\n";
+				altStart = start + before.length + 2;
+				altLength = alt.length;
+				return `${prefix}${before}![${alt}](${url})${after}${suffix}`;
+			});
+
+			requestAnimationFrame(() => {
+				if (!textarea.isConnected) return;
+				textarea.focus();
+				textarea.setSelectionRange(altStart, altStart + altLength);
+			});
+		}, "Failed to save the image. Try again.");
+	}
+
 	function handleLink(
 		text: string,
 		onChangeText: (value: string) => void,
@@ -282,8 +354,20 @@ export function ReviewBodyModal({
 										}>
 										Link
 									</button>
+									<button
+										type="button"
+										title="Insert an image from a URL or a /dev/image-crop path (selected text becomes its description)"
+										disabled={imageInsert.pending}
+										onClick={() =>
+											handleImage(onChange, enTextareaRef.current)
+										}>
+										{imageInsert.pending ? "Saving…" : "Image"}
+									</button>
 								</div>
 							</div>
+							{imageInsert.error && (
+								<div className={styles.suggest_error}>{imageInsert.error}</div>
+							)}
 							<textarea
 								ref={enTextareaRef}
 								className={styles.textarea}
@@ -347,8 +431,20 @@ export function ReviewBodyModal({
 										}>
 										Link
 									</button>
+									<button
+										type="button"
+										title="Insert an image from a URL or a /dev/image-crop path (selected text becomes its description)"
+										disabled={imageInsert.pending}
+										onClick={() =>
+											handleImage(onChangeFr, frTextareaRef.current)
+										}>
+										{imageInsert.pending ? "Saving…" : "Image"}
+									</button>
 								</div>
 							</div>
+							{imageInsert.error && (
+								<div className={styles.suggest_error}>{imageInsert.error}</div>
+							)}
 							<textarea
 								ref={frTextareaRef}
 								className={styles.textarea}

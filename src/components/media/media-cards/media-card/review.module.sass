@@ -43,6 +43,14 @@
   &:hover
     text-decoration-color: var(--foreground)
 
+// Natural size (set it with the crop tool's resize step); only shrinks when wider than the column.
+.image
+  display: block
+  // .body is a flex column, which would otherwise stretch it to full width.
+  align-self: flex-start
+  max-width: 100%
+  border-radius: 0.25rem
+
 // Inline so a spoiler sits mid-sentence instead of breaking onto its own line; redaction look comes from .spoiler_text below.
 .spoiler
   cursor: pointer

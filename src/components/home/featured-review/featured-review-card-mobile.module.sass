@@ -146,6 +146,14 @@ $page-padding: 1.25rem
 .excerpt_line
   white-space: pre-wrap
 
+// Natural size, same as the review page; .excerpt's 8.1rem clips whatever doesn't fit.
+.excerpt_image
+  display: block
+  // .excerpt is a flex column, which would otherwise stretch it to full width.
+  align-self: flex-start
+  max-width: 100%
+  border-radius: 0.25rem
+
 .read_more
   grid-area: more
   position: relative

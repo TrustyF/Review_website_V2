@@ -197,6 +197,14 @@ $page-padding: 1.25rem
 .excerpt_line
   white-space: pre-wrap
 
+// Natural size, same as the review page; .excerpt's 9rem clips whatever doesn't fit.
+.excerpt_image
+  display: block
+  // .excerpt is a flex column, which would otherwise stretch it to full width.
+  align-self: flex-start
+  max-width: 100%
+  border-radius: 0.25rem
+
 // margin-top: auto pins this to the bottom of .info's stretched flex column instead of wherever .excerpt ends. Full-width so ::before's fade below spans the whole column, not just the text.
 .read_more
   position: relative

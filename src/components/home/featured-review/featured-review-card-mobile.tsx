@@ -45,11 +45,15 @@ export function FeaturedReviewCardMobile({
 	useEffect(() => {
 		const el = excerptRef.current;
 		if (!el) return;
-		const observer = new ResizeObserver(() => {
-			setIsOverflowing(el.scrollHeight > el.clientHeight);
-		});
+		const measure = () => setIsOverflowing(el.scrollHeight > el.clientHeight);
+		const observer = new ResizeObserver(measure);
 		observer.observe(el);
-		return () => observer.disconnect();
+		// An image loading past the fixed height grows scrollHeight without resizing el. load doesn't bubble, so capture.
+		el.addEventListener("load", measure, true);
+		return () => {
+			observer.disconnect();
+			el.removeEventListener("load", measure, true);
+		};
 	}, []);
 
 	const review = media.review;
@@ -124,6 +128,7 @@ export function FeaturedReviewCardMobile({
 								text={body!}
 								paragraphClassName={styles.excerpt_line}
 								spoilersInteractive={false}
+								imageClassName={styles.excerpt_image}
 							/>
 						</ReviewSpoilerProvider>
 					</div>

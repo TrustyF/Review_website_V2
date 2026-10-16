@@ -24,6 +24,7 @@
 		"fetch_identity": "tsx src/server/maintenance/fetch-identity.ts",
 		"cleanup_posters": "tsx src/server/maintenance/cron/cleanup-posters.ts",
 		"cleanup_cropped_images": "tsx src/server/maintenance/cron/cleanup-cropped-images.ts",
+		"cleanup_review_images": "tsx src/server/maintenance/cron/cleanup-review-images.ts",
 		"cleanup_digest_banners": "tsx src/server/maintenance/cron/cleanup-digest-banners.ts",
 		"enrich_db": "tsx src/server/maintenance/cron/enrich-db.ts",
 		"purge_deleted_changelogs": "tsx src/server/maintenance/cron/purge-deleted-change-log.ts",
@@ -64,6 +65,7 @@
 		"react": "19.2.4",
 		"react-dom": "19.2.4",
 		"react-easy-crop": "^6.2.3",
+		"react-image-crop": "^11.1.2",
 		"rrweb": "^2.1.4",
 		"sharp": "^0.35.3",
 		"zustand": "^5.0.14"

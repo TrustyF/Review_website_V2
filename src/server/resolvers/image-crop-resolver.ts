@@ -21,7 +21,13 @@ type ShapeFormat = "webp" | "avif" | "jpeg";
 const AVATAR_MAX_WIDTH = 256;
 const AVATAR_QUALITY = 80;
 
+// General-purpose crops (e.g. review images): a bit higher than posters since they can be shown large.
+const FREEFORM_QUALITY = 85;
+
 export type CropRect = { x: number; y: number; width: number; height: number };
+
+// sizeBytes lets the crop tool flag heavy output before it gets kept anywhere.
+export type SavedCrop = { url: string; sizeBytes: number };
 
 // Single dir (content-addressed); different shapes never collide. Transient (24h sweep) — any save
 // action accepting a crop must persist it via readCroppedFile immediately, never store this URL.
@@ -41,27 +47,19 @@ export async function readCroppedFile(url: string): Promise<Buffer | null> {
 	return getImageStorage().read(CROPPED_DIR, filename);
 }
 
-// Radial SVG gradient overlay composited to pixels; 55% inner stop matches preview
-function buildVignetteSvg(
-	width: number,
-	height: number,
-	strength: number,
-): Buffer {
-	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><defs><radialGradient id="v" cx="50%" cy="50%" r="70%"><stop offset="55%" stop-color="black" stop-opacity="0"/><stop offset="100%" stop-color="black" stop-opacity="${strength}"/></radialGradient></defs><rect width="100%" height="100%" fill="url(#v)"/></svg>`;
-	return Buffer.from(svg);
-}
-
-// Shared crop+resize+vignette+encode+write for every case of
+// Shared crop+resize+encode+write for every case of
 // saveCroppedImage below.
 async function cropAndSave(
 	source: Buffer,
 	shapeId: CropShapeId,
 	crop: CropRect,
-	maxWidth: number,
+	// null keeps the crop's own width (freeform).
+	maxWidth: number | null,
 	quality: number,
 	format: ShapeFormat,
-	vignette: number,
-): Promise<string> {
+	// The optional resize step: exact width, overriding maxWidth, upscaling allowed.
+	outputWidth: number | undefined,
+): Promise<SavedCrop> {
 	const meta = await sharp(source).metadata();
 	if (!meta.width || !meta.height) {
 		throw new Error("Could not read image dimensions");
@@ -75,27 +73,24 @@ async function cropAndSave(
 
 	const hash = createHash("sha256")
 		.update(source)
-		.update(JSON.stringify({ shapeId, left, top, width, height, vignette }))
+		.update(
+			JSON.stringify({
+				shapeId,
+				left,
+				top,
+				width,
+				height,
+				outputWidth,
+			}),
+		)
 		.digest("hex")
 		.slice(0, 16);
 	const filename = `${hash}.${format}`;
 
-	let pipeline = sharp(source)
+	const finalWidth = outputWidth ?? Math.min(maxWidth ?? width, width);
+	const pipeline = sharp(source)
 		.extract({ left, top, width, height })
-		.resize({ width: maxWidth, withoutEnlargement: true });
-
-	if (vignette > 0) {
-		// resize({width}) preserves rect ratio; mirrors that rather than
-		// re-reading metadata.
-		const outputWidth = Math.min(maxWidth, width);
-		const outputHeight = Math.round(height * (outputWidth / width));
-		pipeline = sharp(await pipeline.toBuffer()).composite([
-			{
-				input: buildVignetteSvg(outputWidth, outputHeight, vignette),
-				blend: "over",
-			},
-		]);
-	}
+		.resize({ width: finalWidth });
 
 	const encoded =
 		format === "avif"
@@ -107,7 +102,10 @@ async function cropAndSave(
 
 	const storage = getImageStorage();
 	await storage.write(CROPPED_DIR, filename, bytes);
-	return storage.urlFor(CROPPED_DIR, filename);
+	return {
+		url: storage.urlFor(CROPPED_DIR, filename),
+		sizeBytes: bytes.length,
+	};
 }
 
 // Crops to explicit pixel rect (client-computed), resizes per shape settings.
@@ -116,9 +114,19 @@ export async function saveCroppedImage(
 	source: Buffer,
 	shapeId: CropShapeId,
 	crop: CropRect,
-	vignette = 0,
-): Promise<string> {
+	outputWidth?: number,
+): Promise<SavedCrop> {
 	switch (shapeId) {
+		case "freeform":
+			return cropAndSave(
+				source,
+				shapeId,
+				crop,
+				null,
+				FREEFORM_QUALITY,
+				"webp",
+				outputWidth,
+			);
 		case "poster-2-3":
 			return cropAndSave(
 				source,
@@ -127,7 +135,7 @@ export async function saveCroppedImage(
 				500,
 				POSTER_QUALITY,
 				"webp",
-				vignette,
+				outputWidth,
 			);
 		case "poster-3-4":
 			return cropAndSave(
@@ -137,7 +145,7 @@ export async function saveCroppedImage(
 				500,
 				POSTER_QUALITY,
 				"webp",
-				vignette,
+				outputWidth,
 			);
 		case "banner-16-9":
 			return cropAndSave(
@@ -147,7 +155,7 @@ export async function saveCroppedImage(
 				BANNER_MAX_WIDTH,
 				BANNER_QUALITY,
 				BANNER_FORMAT,
-				vignette,
+				outputWidth,
 			);
 		case "digest-banner":
 			return cropAndSave(
@@ -157,7 +165,7 @@ export async function saveCroppedImage(
 				EMAIL_BANNER_MAX_WIDTH,
 				EMAIL_BANNER_QUALITY,
 				"jpeg",
-				vignette,
+				outputWidth,
 			);
 		case "list-thumbnail-16-9":
 			return cropAndSave(
@@ -167,7 +175,7 @@ export async function saveCroppedImage(
 				LIST_THUMBNAIL_MAX_WIDTH,
 				LIST_THUMBNAIL_QUALITY,
 				"webp",
-				vignette,
+				outputWidth,
 			);
 		case "avatar-1-1":
 			return cropAndSave(
@@ -177,7 +185,7 @@ export async function saveCroppedImage(
 				AVATAR_MAX_WIDTH,
 				AVATAR_QUALITY,
 				"webp",
-				vignette,
+				outputWidth,
 			);
 	}
 }

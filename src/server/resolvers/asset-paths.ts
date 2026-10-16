@@ -21,6 +21,13 @@ export const BANNER_MOBILE_QUALITY = 45;
 // Own directory, same reasoning as CHANGELOG_THUMB_DIR vs POSTER_DIR.
 export const CHANGELOG_BANNER_THUMB_DIR = "banners/changelog-cache";
 
+// Images embedded in a review body, one subdirectory per media: reviews/images/<mediaId>/<hash>.<ext>.
+export const REVIEW_IMAGE_DIR = "reviews/images";
+
+export function reviewImageDir(mediaId: number): string {
+	return `${REVIEW_IMAGE_DIR}/${mediaId}`;
+}
+
 // Keyed by personId (not mediaId) since a person's photo is shared across every media they're credited on.
 export const PERSON_PHOTO_DIR = "people/photo-cache";
 

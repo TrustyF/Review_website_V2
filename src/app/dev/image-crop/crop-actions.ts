@@ -1,9 +1,19 @@
 "use server";
-import { saveCroppedImage } from "@/server/resolvers/image-crop-resolver";
-import { CROP_SHAPES, CropShapeId } from "@/app/dev/image-crop/crop-shapes";
+import {
+	type SavedCrop,
+	saveCroppedImage,
+} from "@/server/resolvers/image-crop-resolver";
+import {
+	CROP_SHAPES,
+	CropShapeId,
+	MAX_OUTPUT_WIDTH,
+	MIN_OUTPUT_WIDTH,
+} from "@/app/dev/image-crop/crop-shapes";
 import { requireAdmin } from "@/lib/auth/require-admin";
 
-export async function saveCroppedImageAction(formData: FormData): Promise<string> {
+export async function saveCroppedImageAction(
+	formData: FormData,
+): Promise<SavedCrop> {
 	await requireAdmin();
 
 	const file = formData.get("file");
@@ -24,16 +34,22 @@ export async function saveCroppedImageAction(formData: FormData): Promise<string
 		throw new Error("Invalid crop rect");
 	}
 
-	// Absent on older callers — defaults to 0 (no vignette) rather than rejecting
-	const rawVignette = formData.get("vignette");
-	const vignette =
-		typeof rawVignette === "string" && rawVignette !== "" ? Number(rawVignette) : 0;
-	if (!Number.isFinite(vignette) || vignette < 0 || vignette > 1) {
-		throw new Error("Invalid vignette");
+	// Absent/empty = no resize step, the shape's own size applies
+	const rawOutputWidth = formData.get("outputWidth");
+	let outputWidth: number | undefined;
+	if (typeof rawOutputWidth === "string" && rawOutputWidth !== "") {
+		outputWidth = Number(rawOutputWidth);
+		if (
+			!Number.isInteger(outputWidth) ||
+			outputWidth < MIN_OUTPUT_WIDTH ||
+			outputWidth > MAX_OUTPUT_WIDTH
+		) {
+			throw new Error("Invalid output width");
+		}
 	}
 
 	const bytes = Buffer.from(await file.arrayBuffer());
-	return saveCroppedImage(bytes, shapeId as CropShapeId, crop, vignette);
+	return saveCroppedImage(bytes, shapeId as CropShapeId, crop, outputWidth);
 }
 
 // Server-side fetch (arbitrary host won't send CORS headers). Returned as data URL so client can turn it straight into File.

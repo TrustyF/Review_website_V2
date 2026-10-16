@@ -89,6 +89,7 @@ export function ReviewBodyEditTrigger({ media, overview, isUpcoming }: Props) {
 					onDone={handleDone}
 					onClose={() => setIsOpen(false)}
 					draftMediaId={media.id}
+					mediaId={media.id}
 				/>
 			)}
 		</div>

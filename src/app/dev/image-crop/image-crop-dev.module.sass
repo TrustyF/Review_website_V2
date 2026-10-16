@@ -41,23 +41,21 @@
   border-radius: 4px
   overflow: hidden
 
-// Shared vignette gradient by cropper overlay and preview panel
-.vignette_gradient
-  pointer-events: none
-  background: radial-gradient(ellipse at center, transparent 55%, black 100%)
+// Freeform (react-image-crop): sized by the image itself, capped to the same 420px as .cropper_frame
+.freeform_frame
+  flex: 1 1 auto
+  min-width: 0
+  display: flex
+  justify-content: center
+  background: var(--surface)
+  border-radius: 4px
 
-// Positioned to match crop rect exactly; inline styles for varying parts
-.vignette_overlay
-  @extend .vignette_gradient
-  position: absolute
-  top: 50%
-  left: 50%
-  transform: translate(-50%, -50%)
+.freeform_image
+  display: block
+  max-width: 100%
+  max-height: 420px
 
-.vignette_overlay_round
-  border-radius: 50%
-
-// Plain outline (not gradient); inline styles for varying diameter
+// Plain outline; inline styles for varying diameter
 .safe_margin_circle
   position: absolute
   top: 50%
@@ -66,13 +64,6 @@
   pointer-events: none
   border-radius: 50%
   border: 1px dashed rgba(255, 255, 255, 0.6)
-
-// Doesn't need vignette_overlay's own centering math — preview_frame below
-// is already sized to exactly the crop rect, so this just fills it.
-.preview_vignette
-  @extend .vignette_gradient
-  position: absolute
-  inset: 0
 
 .preview_column
   flex: 0 0 auto
@@ -94,6 +85,26 @@
 
 .preview_frame_round
   border-radius: 50%
+
+.aspect_row,
+.resize_row
+  display: flex
+  flex-flow: row wrap
+  align-items: center
+  gap: 8px
+  font-size: 0.85rem
+
+.number_input
+  width: 6rem
+  padding: 0.3rem 0.5rem
+  font-size: 0.85rem
+  background: var(--surface)
+  color: var(--foreground)
+  border: 1px solid var(--border-highlight)
+  border-radius: 4px
+
+.resize_hint
+  opacity: 0.7
 
 .control_row
   display: flex
@@ -158,3 +169,8 @@
   color: var(--foreground)
   border: 1px solid var(--border-highlight)
   border-radius: 4px
+
+.size_warning
+  margin: 0
+  font-size: 0.85rem
+  color: var(--warning)

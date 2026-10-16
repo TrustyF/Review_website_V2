@@ -635,6 +635,7 @@ export default function MediaEditorModal() {
 					onClose={() => setIsBodyModalOpen(false)}
 					// patchReview leaves id at 0 until a rating is first saved — no row to hold a draft yet.
 					draftMediaId={draft.review?.id ? draft.id : null}
+					mediaId={draft.id}
 				/>
 			)}
 		</div>

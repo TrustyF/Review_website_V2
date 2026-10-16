@@ -16,6 +16,7 @@ CRON_SH=$REPO_DIR/src/server/maintenance/cron/run-and-notify.sh
 # Nightly cleanup of orphaned poster/cropped-image files.
 0 0 * * *  $CRON_SH cleanup_posters sudo docker compose run --rm maintenance npm run cleanup_posters
 0 5 * * *  $CRON_SH cleanup_cropped_images sudo docker compose run --rm maintenance npm run cleanup_cropped_images
+15 5 * * * $CRON_SH cleanup_review_images sudo docker compose run --rm maintenance npm run cleanup_review_images
 
 # Nightly purge of soft-deleted change-log rows past their retention window.
 0 6 * * *  $CRON_SH purge_deleted_changelogs sudo docker compose run --rm maintenance npm run purge_deleted_changelogs

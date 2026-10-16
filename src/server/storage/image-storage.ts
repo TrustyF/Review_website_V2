@@ -13,7 +13,8 @@ import {
 export interface ImageStorage {
 	read(dir: string, filename: string): Promise<Buffer | null>;
 	write(dir: string, filename: string, bytes: Buffer): Promise<void>;
-	// Filenames only (not full keys) — matches what readdir gave maintenance scripts before abstraction, so set-membership checks didn't need shape change.
+	// Paths relative to dir (not full keys), so set-membership checks stay simple. Includes nested
+	// files as "sub/file" on both backends, e.g. reviews/images/<mediaId>/.
 	list(dir: string): Promise<string[]>;
 	// Returns whether file existed; cleanup scripts use or ignore.
 	remove(dir: string, filename: string): Promise<boolean>;
@@ -49,8 +50,21 @@ class LocalImageStorage implements ImageStorage {
 	}
 
 	async list(dir: string): Promise<string[]> {
+		const absDir = this.absDir(dir);
 		try {
-			return await readdir(this.absDir(dir));
+			const entries = await readdir(absDir, {
+				recursive: true,
+				withFileTypes: true,
+			});
+			// Files only, "/"-joined relative paths, matching R2's prefix listing of nested keys.
+			return entries
+				.filter((entry) => entry.isFile())
+				.map((entry) =>
+					path
+						.relative(absDir, path.join(entry.parentPath, entry.name))
+						.split(path.sep)
+						.join("/"),
+				);
 		} catch {
 			return [];
 		}

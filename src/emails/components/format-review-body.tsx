@@ -3,7 +3,7 @@ import { Fragment, ReactNode } from "react";
 import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/review-body-syntax";
 
 // Mirrors review-body.tsx's ||spoiler||/[text](url) parsing, but redacts
-// spoilers since no JS runs in a mail client for click-to-reveal.
+// spoilers since no JS runs in a mail client for click-to-reveal, and drops images.
 type Atom =
 	| { kind: "word"; text: string }
 	| { kind: "para-break" }
@@ -32,7 +32,8 @@ function tokenizeBody(body: string): Atom[] {
 				pushWords(atoms, paragraph.slice(lastIndex, match.index));
 			}
 
-			const [, spoilerText, linkText, linkUrl] = match;
+			// Images (groups 2/3) are dropped: too heavy for a 60-word excerpt.
+			const [, spoilerText, , , linkText, linkUrl] = match;
 			if (spoilerText != null) {
 				atoms.push({ kind: "spoiler" });
 			} else if (linkText != null && linkUrl != null) {

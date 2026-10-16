@@ -75,12 +75,16 @@ function SpoilerText({
 }
 
 // A paragraph's worth of inline content, split apart only on \n\n; a spoiler never forces its own paragraph break even if its captured text contains \n\n.
-type ReviewBodyBlock = { key: number; nodes: ReactNode[] };
+// An image always gets its own block, splitting the paragraph it sits in.
+type ReviewBodyBlock =
+	| { kind: "paragraph"; key: number; nodes: ReactNode[] }
+	| { kind: "image"; key: number; url: string; alt: string };
 
-// Parses ||spoiler|| and [text](url) over the entire input in one pass (rather than per-paragraph) so a spoiler can span a paragraph break.
+// Parses ||spoiler||, ![alt](url) and [text](url) over the entire input in one pass (rather than per-paragraph) so a spoiler can span a paragraph break.
 function splitReviewBody(
 	text: string,
 	spoilersInteractive: boolean,
+	showImages: boolean,
 ): ReviewBodyBlock[] {
 	const blocks: ReviewBodyBlock[] = [];
 	let currentNodes: ReactNode[] = [];
@@ -89,7 +93,7 @@ function splitReviewBody(
 
 	function flushParagraph() {
 		if (currentNodes.length === 0) return;
-		blocks.push({ key: blockKey++, nodes: currentNodes });
+		blocks.push({ kind: "paragraph", key: blockKey++, nodes: currentNodes });
 		currentNodes = [];
 	}
 
@@ -112,9 +116,17 @@ function splitReviewBody(
 					{match[1]}
 				</SpoilerText>,
 			);
+		} else if (match[3] !== undefined) {
+			const url = match[3];
+			if (!isSafeUrl(url)) {
+				currentNodes.push(match[0]);
+			} else if (showImages) {
+				flushParagraph();
+				blocks.push({ kind: "image", key: blockKey++, url, alt: match[2]! });
+			}
 		} else {
-			const linkText = match[2]!;
-			const url = match[3]!;
+			const linkText = match[4]!;
+			const url = match[5]!;
 			if (isSafeUrl(url)) {
 				const external = !url.startsWith("/");
 				currentNodes.push(
@@ -147,6 +159,10 @@ type ReviewBodyProps = {
 	paragraphClassName?: string | undefined;
 	// Passed through to every spoiler — see SpoilerText's interactive param.
 	spoilersInteractive?: boolean | undefined;
+	// false for clamped excerpts, where an image would eat the whole preview.
+	showImages?: boolean | undefined;
+	// Replaces the default image styling, e.g. to cap height inside a clamped excerpt.
+	imageClassName?: string | undefined;
 };
 
 // Renders a review body as paragraphs with spoilers/links inline in their original position.
@@ -154,15 +170,29 @@ export function ReviewBody({
 	text,
 	paragraphClassName,
 	spoilersInteractive = true,
+	showImages = true,
+	imageClassName,
 }: ReviewBodyProps) {
-	const blocks = splitReviewBody(text, spoilersInteractive);
+	const blocks = splitReviewBody(text, spoilersInteractive, showImages);
 	return (
 		<>
-			{blocks.map((block) => (
-				<p className={paragraphClassName} key={block.key}>
-					{block.nodes}
-				</p>
-			))}
+			{blocks.map((block) =>
+				block.kind === "image" ? (
+					// Plain <img>, not next/image: the host is an arbitrary pasted URL with unknown dimensions.
+					// eslint-disable-next-line @next/next/no-img-element
+					<img
+						key={block.key}
+						src={block.url}
+						alt={block.alt}
+						className={imageClassName ?? styles.image}
+						loading="lazy"
+					/>
+				) : (
+					<p className={paragraphClassName} key={block.key}>
+						{block.nodes}
+					</p>
+				),
+			)}
 		</>
 	);
 }

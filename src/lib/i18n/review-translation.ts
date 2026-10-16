@@ -13,6 +13,13 @@ const LINK_CLOSE_REGEX = new RegExp(
 	`${LINK_OPEN}([\\s\\S]*?)${LINK_CLOSE_PREFIX}(\\d+)⟧`,
 	"g",
 );
+// Same shape as links; the pair wraps the alt text, which may be empty.
+const IMAGE_OPEN = "⟦IMAGE_OPEN⟧";
+const IMAGE_CLOSE_PREFIX = "⟦IMAGE_CLOSE";
+const IMAGE_CLOSE_REGEX = new RegExp(
+	`${IMAGE_OPEN}([\\s\\S]*?)${IMAGE_CLOSE_PREFIX}(\\d+)⟧`,
+	"g",
+);
 
 export function markMarkupForTranslation(body: string): {
 	marked: string;
@@ -21,11 +28,15 @@ export function markMarkupForTranslation(body: string): {
 	const urls: string[] = [];
 	const marked = body.replace(
 		REVIEW_MARKUP_REGEX,
-		(_match, spoilerText, linkText, url) => {
+		(_match, spoilerText, imageAlt, imageUrl, linkText, linkUrl) => {
 			if (spoilerText !== undefined) {
 				return `${SPOILER_OPEN}${spoilerText}${SPOILER_CLOSE}`;
 			}
-			const index = urls.push(url) - 1;
+			if (imageUrl !== undefined) {
+				const index = urls.push(imageUrl) - 1;
+				return `${IMAGE_OPEN}${imageAlt}${IMAGE_CLOSE_PREFIX}${index}⟧`;
+			}
+			const index = urls.push(linkUrl) - 1;
 			return `${LINK_OPEN}${linkText}${LINK_CLOSE_PREFIX}${index}⟧`;
 		},
 	);
@@ -36,7 +47,14 @@ export function unmarkTranslatedMarkup(text: string, urls: string[]): string {
 	const withSpoilers = text
 		.replaceAll(SPOILER_OPEN, "||")
 		.replaceAll(SPOILER_CLOSE, "||");
-	return withSpoilers.replace(
+	const withImages = withSpoilers.replace(
+		IMAGE_CLOSE_REGEX,
+		(full, alt: string, indexStr: string) => {
+			const url = urls[Number(indexStr)];
+			return url ? `![${alt}](${url})` : full;
+		},
+	);
+	return withImages.replace(
 		LINK_CLOSE_REGEX,
 		(full, linkText: string, indexStr: string) => {
 			const url = urls[Number(indexStr)];
@@ -49,4 +67,4 @@ export const REVIEW_TRANSLATION_SYSTEM = `You translate review text for a person
 
 ${FRENCH_STYLE_RULES}
 
-The text contains marker tokens in pairs, e.g. ${SPOILER_OPEN}some phrase${SPOILER_CLOSE} or ${LINK_OPEN}some phrase${LINK_CLOSE_PREFIX}0⟧ — translate the phrase inside a pair normally, as part of the surrounding sentence, but leave the marker tokens themselves exactly as they are, immediately before/after the translated phrase: don't add, remove, rename, reorder, or explain them. Reply with only the translated text: no preamble, no explanation, no surrounding quotes.`;
+The text contains marker tokens in pairs, e.g. ${SPOILER_OPEN}some phrase${SPOILER_CLOSE} or ${LINK_OPEN}some phrase${LINK_CLOSE_PREFIX}0⟧ or ${IMAGE_OPEN}some phrase${IMAGE_CLOSE_PREFIX}1⟧ (the phrase may be empty) — translate the phrase inside a pair normally, as part of the surrounding sentence, but leave the marker tokens themselves exactly as they are, immediately before/after the translated phrase: don't add, remove, rename, reorder, or explain them. Reply with only the translated text: no preamble, no explanation, no surrounding quotes.`;
