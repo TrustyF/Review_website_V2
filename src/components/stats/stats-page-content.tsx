@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { HorizontalBarList } from "@/components/stats/horizontal-bar-list/horizontal-bar-list";
 import { VerticalBarChart } from "@/components/stats/vertical-bar-chart/vertical-bar-chart";
+import { RatingLineChart } from "@/components/stats/rating-line-chart/rating-line-chart";
 import { StatsSection } from "@/components/stats/stats-section/stats-section";
 import {
 	WorldMap,
@@ -16,6 +17,7 @@ import {
 	type StatsMode,
 } from "@/components/stats/mode-toggle/mode-toggle";
 import { TopPeople } from "@/components/stats/top-people/top-people";
+import { VsPublicSections } from "@/components/stats/vs-public/vs-public-sections";
 import { countryFlagEmoji } from "@/lib/country-flag";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import {
@@ -117,29 +119,23 @@ export function StatsPageContent({ stats }: Props) {
 					href: `/country/${c.code}`,
 				}));
 
-	// Reuses media.ratingDistribution's existing pluralized copy — same
-	// tier-bucket histogram shape as that credited-media chart, just sitewide.
-	const ratingItems = stats.ratingHistogram.counts.map((count, tier) => {
-		const tierLabel = `${tier}–${tier + 1}`;
-		return {
-			key: `tier-${tier}`,
-			tick: String(tier),
-			value: count,
-			ariaLabel: dict.media.ratingDistribution.ratedAriaLabel(count, tierLabel),
-			tooltip: dict.media.ratingDistribution.ratedTooltip(count, tierLabel),
-		};
-	});
-	ratingItems.push({
-		key: "unrated",
-		tick: "—",
-		value: stats.ratingHistogram.unrated,
-		ariaLabel: dict.media.ratingDistribution.unratedAriaLabel(
-			stats.ratingHistogram.unrated,
-		),
-		tooltip: dict.media.ratingDistribution.unratedTooltip(
-			stats.ratingHistogram.unrated,
-		),
-	});
+	const ratingTicks = stats.ratingHistogram.counts.map((_, tier) =>
+		String(tier + 1),
+	);
+	const ratingSeries = [
+		{
+			key: "you",
+			label: dict.stats.ratingDistribution.mySeries,
+			color: "var(--chart-1)",
+			values: stats.ratingHistogram.counts,
+		},
+		{
+			key: "public",
+			label: dict.stats.ratingDistribution.publicSeries,
+			color: "var(--chart-red)",
+			values: stats.ratingHistogram.publicCounts,
+		},
+	];
 
 	const yearItems = stats.reviewsByYear.map((y) => {
 		const tooltip = dict.stats.reviewsByYear.tooltip(y.count, y.year);
@@ -230,16 +226,25 @@ export function StatsPageContent({ stats }: Props) {
 			</StatsSection>
 
 			<StatsSection
+				title={dict.stats.ratingDistribution.title}
+				subtitle={dict.stats.ratingDistribution.subtitle(
+					dict.stats.vsPublic.typePlurals[
+						MEDIA_TYPE_LABEL_KEY[stats.vsPublic.type]
+					],
+					stats.ratingHistogram.unrated,
+				)}>
+				<RatingLineChart series={ratingSeries} ticks={ratingTicks} />
+			</StatsSection>
+
+			<VsPublicSections vsPublic={stats.vsPublic} />
+
+			<StatsSection
 				title={dict.stats.topPeople.title}
 				actions={<ModeToggle mode={peopleMode} onModeChange={setPeopleMode} />}>
 				<TopPeople topPeople={stats.topPeople} mode={peopleMode} />
 			</StatsSection>
 
 			<div className={styles.chart_row}>
-				<StatsSection title={dict.stats.ratingDistribution.title}>
-					<VerticalBarChart items={ratingItems} color="var(--warning)" />
-				</StatsSection>
-
 				<StatsSection title={dict.stats.reviewsByYear.title}>
 					<VerticalBarChart items={yearItems} color="var(--link)" />
 				</StatsSection>

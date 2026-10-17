@@ -541,6 +541,76 @@ export const en = {
 		},
 		ratingDistribution: {
 			title: "Rating distribution",
+			subtitle: (items: string, unrated: number) =>
+				unrated > 0
+					? `Number of ${items} per rating · ${unrated} unrated`
+					: `Number of ${items} per rating`,
+			mySeries: "My ratings",
+			publicSeries: "Public ratings",
+		},
+		vsPublic: {
+			mySeries: "My average",
+			publicSeries: "Public average",
+			// Plural nouns filled into the copy below, keyed like nav.search.typeLabels.
+			typePlurals: {
+				movie: "movies",
+				short: "shorts",
+				tvShow: "TV shows",
+				manga: "manga",
+				comic: "comics",
+				game: "games",
+				book: "books",
+			},
+			notEnoughData: (items: string) => `Not enough rated ${items} yet.`,
+			byDecade: {
+				title: "Ratings by release decade",
+				subtitle: (items: string) =>
+					`How I rated ${items} from each decade, compared with the public (50 = typical)`,
+			},
+			byReviewYear: {
+				title: "Ratings by year reviewed",
+				subtitle: (items: string) =>
+					`How I rated the ${items} I reviewed each year, compared with the public (50 = typical)`,
+			},
+			byRuntime: {
+				title: "Ratings by runtime",
+				subtitle:
+					"How I rated movies of each length in minutes, compared with the public (50 = typical)",
+				tickUnder: (minutes: number) => `<${minutes}`,
+				tickOver: (minutes: number) => `${minutes}+`,
+			},
+			byPopularity: {
+				title: "Ratings by popularity",
+				subtitle: (items: string) =>
+					`How I rated ${items} from least to most popular, compared with the public (50 = typical)`,
+				tick: (from: number, to: number) => `${from}–${to}%`,
+			},
+			scatter: {
+				title: "My rating vs. public rating",
+				subtitleRelative: (items: string) =>
+					`One dot per title, ranked among my ratings of ${items} vs. among public scores for ${items}`,
+				subtitleRaw: (items: string) =>
+					`One dot per title among ${items}, ratings as given out of 10`,
+				relative: "Relative",
+				raw: "Raw",
+				xLabel: "Public rating",
+				yLabel: "My rating",
+				xLabelRelative: "Public rating (percentile)",
+				yLabelRelative: "My rating (percentile)",
+				trend: "My average at each public score",
+				diagonal: "Same rating",
+				diagonalRelative: "Same standing",
+				higherLegend: "I rated higher",
+				lowerLegend: "I rated lower",
+				higher: "Rated higher than the public",
+				same: "About the same (within 0.5)",
+				sameRelative: "About the same (within 10 points)",
+				lower: "Rated lower than the public",
+				avgDiff: "Average difference",
+				avgDiffRelative: "Average difference (percentile points)",
+				agreement: "Taste agreement (−1 to 1)",
+				percent: (value: number) => `${value}%`,
+			},
 		},
 		reviewsByYear: {
 			title: "Reviews per year",

@@ -5,10 +5,14 @@ import { WORLD_MAP_COUNTRIES } from "@/components/stats/world-map/world-map-path
 import { toPersonPhotoSrc } from "@/server/resolvers/asset-paths";
 import {
 	BROAD_GENRES,
+	type ComparisonBin,
 	MEDIA_TYPE_ORDER,
 	PERSON_ROLE_NAMES,
 	type PersonRole,
 	type PersonStat,
+	RUNTIME_BAND_MINUTES,
+	RUNTIME_MAX,
+	RUNTIME_MIN,
 	type StatsData,
 } from "@/components/stats/stats-types";
 
@@ -25,6 +29,13 @@ const RATING_TIER_COUNT = 10;
 // one or two credits shouldn't be able to top the avg-rating leaderboard.
 const MIN_SAMPLE_FOR_PERSON_RATING = 3;
 const TOP_PEOPLE_COUNT = 12;
+// Min titles behind a me-vs-public average: a fixed floor, or a share of the
+// chart's titles when there are many. Matches the scatter's average line.
+const MIN_SAMPLE_FOR_COMPARISON = 8;
+const MIN_SHARE_FOR_COMPARISON = 0.02;
+// Bins pooled on each side when averaging a point.
+const COMPARISON_WINDOW = 1;
+const POPULARITY_BUCKETS = 5;
 // Top-10-billed only — cuts off cameos/bit parts (Stan Lee's Marvel cameos
 // all land at order 18+, median 35) that shouldn't dominate the ranking.
 const TOP_BILLING_CUTOFF = 10;
@@ -61,12 +72,89 @@ function reviewedMediaFilter(
 	return range ? { ...base, review: { createDate: range } } : base;
 }
 
+// 0 is TMDB's "no votes yet", not a real score.
+function isRealPublicRating(r: number | null): r is number {
+	return r != null && r > 0;
+}
+
+// Mid-rank percentile (0–100): ties share the middle of their run.
+function percentileRank(sorted: number[], v: number): number {
+	let lo = 0;
+	let hi = sorted.length;
+	while (lo < hi) {
+		const mid = (lo + hi) >> 1;
+		if (sorted[mid]! < v) lo = mid + 1;
+		else hi = mid;
+	}
+	let end = lo;
+	while (end < sorted.length && sorted[end] === v) end++;
+	return ((lo + (end - lo) / 2) / sorted.length) * 100;
+}
+
+// Ranks my rating among mine and the public one among the public's.
+function percentileScales(population: { my: number; pub: number }[]) {
+	const mine = population.map((p) => p.my).sort((a, b) => a - b);
+	const pubs = population.map((p) => p.pub).sort((a, b) => a - b);
+	return (my: number, pub: number) => ({
+		my: percentileRank(mine, my),
+		pub: percentileRank(pubs, pub),
+	});
+}
+
+const average = (values: number[]) =>
+	values.reduce((a, b) => a + b, 0) / values.length;
+
+// Contiguous bins from the lowest to highest well-sampled key; thin bins in
+// between become gaps. Each average pools the bin with its neighbours.
+function compareBins(
+	entries: { key: number; my: number; pub: number }[],
+	step: number,
+): ComparisonBin[] {
+	const groups = new Map<number, { my: number[]; pub: number[] }>();
+	for (const { key, my, pub } of entries) {
+		const group = groups.get(key) ?? { my: [], pub: [] };
+		group.my.push(my);
+		group.pub.push(pub);
+		groups.set(key, group);
+	}
+	const minSample = Math.max(
+		MIN_SAMPLE_FOR_COMPARISON,
+		Math.ceil(entries.length * MIN_SHARE_FOR_COMPARISON),
+	);
+	const enough = (key: number) =>
+		(groups.get(key)?.my.length ?? 0) >= minSample;
+	const keys = [...groups.keys()].filter(enough);
+	if (keys.length === 0) return [];
+	const bins: ComparisonBin[] = [];
+	for (let key = Math.min(...keys); key <= Math.max(...keys); key += step) {
+		if (!enough(key)) {
+			bins.push({ key, myAvg: null, publicAvg: null });
+			continue;
+		}
+		const window = { my: [] as number[], pub: [] as number[] };
+		for (let k = -COMPARISON_WINDOW; k <= COMPARISON_WINDOW; k++) {
+			const group = groups.get(key + k * step);
+			if (!group) continue;
+			window.my.push(...group.my);
+			window.pub.push(...group.pub);
+		}
+		bins.push({
+			key,
+			myAvg: average(window.my),
+			publicAvg: average(window.pub),
+		});
+	}
+	return bins;
+}
+
 export async function getStats(
 	year: number | null = null,
 	type: MediaType | null = null,
 ): Promise<StatsData> {
 	const range = reviewYearRange(year);
 	const mediaFilter = reviewedMediaFilter(year, type);
+	// The vs-public charts compare one type at a time; "All" shows movies.
+	const vsType = type ?? MediaType.MOVIE;
 	const reviewMediaFilter = mediaFilterWithType(type);
 
 	const [
@@ -81,6 +169,7 @@ export async function getStats(
 		genres,
 		reviewRatings,
 		allReviewDates,
+		rankPopulation,
 		mediaReleaseDates,
 		personCredits,
 	] = await Promise.all([
@@ -127,13 +216,41 @@ export async function getStats(
 				media: reviewMediaFilter,
 				...(range ? { createDate: range } : {}),
 			},
-			select: { rating: true, createDate: true },
+			select: {
+				rating: true,
+				createDate: true,
+				media: {
+					select: {
+						type: true,
+						publicRating: true,
+						releaseDate: true,
+						movie: { select: { runtime: true, popularity: true } },
+						tvShow: { select: { popularity: true } },
+					},
+				},
+			},
 		}),
 		// Always unscoped by year (drives the year selector + the "Reviews per
 		// year" chart, which stays full-history) but still respects the type filter.
 		db.review.findMany({
 			where: { media: reviewMediaFilter },
-			select: { createDate: true },
+			select: {
+				createDate: true,
+				rating: true,
+				media: { select: { type: true, publicRating: true } },
+			},
+		}),
+		// Every rated movie, unscoped by year, so a percentile doesn't move with the filters.
+		db.review.findMany({
+			where: {
+				rating: { not: null },
+				media: {
+					...MEDIA_FILTER,
+					type: vsType,
+					publicRating: { gt: 0 },
+				},
+			},
+			select: { rating: true, media: { select: { publicRating: true } } },
 		}),
 		db.media.findMany({
 			where: { ...mediaFilter, releaseDate: { not: null } },
@@ -270,14 +387,25 @@ export async function getStats(
 		avgRating: stat.ratingCount > 0 ? stat.ratingSum / stat.ratingCount : null,
 	}));
 
+	// Index i holds ratings nearest to i + 1 (1–10); 7.5 rounds up to 8 only.
+	const ratingTier = (r: number) =>
+		Math.min(Math.max(Math.round(r), 1), RATING_TIER_COUNT) - 1;
 	const ratingCounts = new Array<number>(RATING_TIER_COUNT).fill(0);
+	const publicCounts = new Array<number>(RATING_TIER_COUNT).fill(0);
 	let unrated = 0;
-	for (const { rating } of reviewRatings) {
+	// Same one-type rule as the vs-public charts.
+	for (const { rating, media } of reviewRatings) {
+		if (media.type !== vsType) continue;
+		const publicRating = media.publicRating;
+		if (isRealPublicRating(publicRating)) {
+			const tier = ratingTier(publicRating);
+			publicCounts[tier] = (publicCounts[tier] ?? 0) + 1;
+		}
 		if (rating == null) {
 			unrated++;
 			continue;
 		}
-		const tier = Math.min(Math.floor(rating), RATING_TIER_COUNT - 1);
+		const tier = ratingTier(rating);
 		ratingCounts[tier] = (ratingCounts[tier] ?? 0) + 1;
 	}
 
@@ -404,6 +532,97 @@ export async function getStats(
 		}),
 	) as Record<PersonRole, { byTitles: PersonStat[]; byRating: PersonStat[] }>;
 
+	// One type means one public source, so one scale to rank against.
+	const toPercentiles = percentileScales(
+		rankPopulation.flatMap(({ rating, media }) =>
+			rating != null && isRealPublicRating(media.publicRating)
+				? [{ my: rating, pub: media.publicRating }]
+				: [],
+		),
+	);
+	// my/pub are percentiles from here on; rawMy/rawPub keep the 0–10 values.
+	const paired = reviewRatings.flatMap(({ rating, media }) =>
+		media.type === vsType &&
+		rating != null &&
+		isRealPublicRating(media.publicRating)
+			? [
+					{
+						media,
+						rawMy: rating,
+						rawPub: media.publicRating,
+						...toPercentiles(rating, media.publicRating),
+					},
+				]
+			: [],
+	);
+
+	const byRuntimeEntries = paired.flatMap(({ media, my, pub }) => {
+		const runtime = media.movie?.runtime;
+		if (runtime == null || runtime <= 0) return [];
+		const clamped = Math.min(Math.max(runtime, RUNTIME_MIN), RUNTIME_MAX);
+		const key =
+			Math.floor(clamped / RUNTIME_BAND_MINUTES) * RUNTIME_BAND_MINUTES;
+		return [{ key, my, pub }];
+	});
+
+	// Fifths by rank, not by value: TMDB popularity is heavily long-tailed.
+	const byPopularitySorted = paired
+		.flatMap(({ media, my, pub }) => {
+			const popularity = media.movie?.popularity ?? media.tvShow?.popularity;
+			return popularity != null ? [{ popularity, my, pub }] : [];
+		})
+		.sort((a, b) => a.popularity - b.popularity);
+	const byPopularityEntries = byPopularitySorted.map((e, i) => ({
+		key: Math.floor((i * POPULARITY_BUCKETS) / byPopularitySorted.length),
+		my: e.my,
+		pub: e.pub,
+	}));
+
+	const vsPublic = {
+		type: vsType,
+		byDecade: compareBins(
+			paired.flatMap(({ media, my, pub }) =>
+				media.releaseDate
+					? [
+							{
+								key: Math.floor(media.releaseDate.getUTCFullYear() / 10) * 10,
+								my,
+								pub,
+							},
+						]
+					: [],
+			),
+			10,
+		),
+		byReviewYear: compareBins(
+			allReviewDates.flatMap(({ createDate, rating, media }) =>
+				media.type === vsType &&
+				rating != null &&
+				isRealPublicRating(media.publicRating)
+					? [
+							{
+								key: createDate.getUTCFullYear(),
+								...toPercentiles(rating, media.publicRating),
+							},
+						]
+					: [],
+			),
+			1,
+		),
+		byRuntime: compareBins(byRuntimeEntries, RUNTIME_BAND_MINUTES),
+		byPopularity:
+			byPopularitySorted.length >=
+			POPULARITY_BUCKETS * MIN_SAMPLE_FOR_COMPARISON
+				? compareBins(byPopularityEntries, 1)
+				: [],
+		points: paired.map(({ rawMy, rawPub, my, pub }) => ({
+			my: rawMy,
+			public: Math.round(rawPub * 10) / 10,
+			myPct: Math.round(my),
+			publicPct: Math.round(pub),
+		})),
+	};
+
 	return {
 		year,
 		years,
@@ -420,7 +639,8 @@ export async function getStats(
 		topCountries,
 		worldMap,
 		topPeople,
-		ratingHistogram: { counts: ratingCounts, unrated },
+		ratingHistogram: { counts: ratingCounts, publicCounts, unrated },
+		vsPublic,
 		reviewsByYear,
 		mediaByDecade,
 	};

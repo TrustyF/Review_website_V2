@@ -71,6 +71,27 @@ export const PERSON_ROLE_NAMES: Record<PersonRole, string[]> = {
 
 export type PersonRanking = { byTitles: PersonStat[]; byRating: PersonStat[] };
 
+export const RUNTIME_BAND_MINUTES = 15;
+// Runtimes outside this range fold into the first/last band.
+export const RUNTIME_MIN = 60;
+export const RUNTIME_MAX = 180;
+
+// One point on a me-vs-public line, averaging percentiles (0–100) over the bin
+// and its neighbours. Null when the bin itself is too thin, drawn as a gap.
+export type ComparisonBin = {
+	key: number;
+	myAvg: number | null;
+	publicAvg: number | null;
+};
+
+// Raw 0–10 ratings plus each one's percentile within its own scale.
+export type ScatterPoint = {
+	my: number;
+	public: number;
+	myPct: number;
+	publicPct: number;
+};
+
 export type StatsData = {
 	// The scope this data was computed for — null is "All" for either. `years`
 	// is always unscoped, so the selector never changes shape as the user switches.
@@ -89,7 +110,25 @@ export type StatsData = {
 	topCountries: CountryStat[];
 	worldMap: CountryStat[];
 	topPeople: Record<PersonRole, PersonRanking>;
-	ratingHistogram: { counts: number[]; unrated: number };
+	// Same one type as vsPublic; publicCounts buckets those titles by Media.publicRating.
+	ratingHistogram: {
+		counts: number[];
+		publicCounts: number[];
+		unrated: number;
+	};
+	// One type (the picked one, or movies for "All"), and only titles with both
+	// my rating and a public one.
+	vsPublic: {
+		type: MediaType;
+		byDecade: ComparisonBin[];
+		// Full history like reviewsByYear, ignores the year scope.
+		byReviewYear: ComparisonBin[];
+		// Movies only; key is the band's start in minutes.
+		byRuntime: ComparisonBin[];
+		// Movies + TV; key is the popularity fifth, 0 = least popular.
+		byPopularity: ComparisonBin[];
+		points: ScatterPoint[];
+	};
 	reviewsByYear: { year: number; count: number }[];
 	mediaByDecade: { decade: number; count: number }[];
 };

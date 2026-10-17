@@ -551,6 +551,76 @@ export const fr = {
 		},
 		ratingDistribution: {
 			title: "Répartition des notes",
+			subtitle: (items: string, unrated: number) =>
+				unrated > 0
+					? `Nombre de ${items} par note · ${unrated} sans note`
+					: `Nombre de ${items} par note`,
+			mySeries: "Mes notes",
+			publicSeries: "Notes du public",
+		},
+		vsPublic: {
+			mySeries: "Ma moyenne",
+			publicSeries: "Moyenne du public",
+			typePlurals: {
+				movie: "films",
+				short: "courts-métrages",
+				tvShow: "séries",
+				manga: "mangas",
+				comic: "comics",
+				game: "jeux",
+				book: "livres",
+			},
+			notEnoughData: (items: string) =>
+				`Pas encore assez de notes pour les ${items}.`,
+			byDecade: {
+				title: "Notes par décennie de sortie",
+				subtitle: (items: string) =>
+					`Comment j'ai noté les ${items} de chaque décennie, par rapport au public (50 = dans la moyenne)`,
+			},
+			byReviewYear: {
+				title: "Notes par année de critique",
+				subtitle: (items: string) =>
+					`Comment j'ai noté les ${items} selon l'année de ma critique, par rapport au public (50 = dans la moyenne)`,
+			},
+			byRuntime: {
+				title: "Notes par durée",
+				subtitle:
+					"Comment j'ai noté les films selon leur durée en minutes, par rapport au public (50 = dans la moyenne)",
+				tickUnder: (minutes: number) => `<${minutes}`,
+				tickOver: (minutes: number) => `${minutes}+`,
+			},
+			byPopularity: {
+				title: "Notes par popularité",
+				subtitle: (items: string) =>
+					`Comment j'ai noté les ${items}, du moins au plus populaire, par rapport au public (50 = dans la moyenne)`,
+				tick: (from: number, to: number) => `${from}–${to} %`,
+			},
+			scatter: {
+				title: "Ma note face à celle du public",
+				subtitleRelative: (items: string) =>
+					`Un point par titre : son rang parmi mes notes de ${items}, comparé à son rang parmi les notes du public pour les ${items}`,
+				subtitleRaw: (items: string) =>
+					`Un point par titre parmi les ${items}, notes telles quelles, sur 10`,
+				relative: "Relatif",
+				raw: "Brut",
+				xLabel: "Note du public",
+				yLabel: "Ma note",
+				xLabelRelative: "Note du public (centile)",
+				yLabelRelative: "Ma note (centile)",
+				trend: "Ma moyenne pour chaque note du public",
+				diagonal: "Même note",
+				diagonalRelative: "Même rang",
+				higherLegend: "J'ai mis une note plus haute",
+				lowerLegend: "J'ai mis une note plus basse",
+				higher: "Mieux noté que par le public",
+				same: "À peu près pareil (à 0,5 près)",
+				sameRelative: "À peu près pareil (à 10 points près)",
+				lower: "Moins bien noté que par le public",
+				avgDiff: "Écart moyen",
+				avgDiffRelative: "Écart moyen (en points de centile)",
+				agreement: "Accord des goûts (de −1 à 1)",
+				percent: (value: number) => `${value} %`,
+			},
 		},
 		reviewsByYear: {
 			title: "Critiques par année",
