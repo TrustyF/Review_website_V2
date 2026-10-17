@@ -1,3 +1,5 @@
+@use "@/app/styles/variables" as *
+
 .wrapper
   display: flex
   flex-flow: column
@@ -13,12 +15,12 @@
   grid-template-columns: 1.75rem 1fr
   grid-template-rows: auto auto
   gap: 0.3rem 0.35rem
-  min-width: calc(1.75rem + var(--weeks) * 12px)
+  min-width: calc(1.75rem + var(--squares) * 12px)
 
 .months
   grid-column: 2
   display: grid
-  grid-template-columns: repeat(var(--weeks), minmax(0, 1fr))
+  grid-template-columns: var(--columns)
   gap: 3px
 
 .month
@@ -43,13 +45,48 @@
   grid-column: 2
   grid-row: 2
   display: grid
-  grid-template-columns: repeat(var(--weeks), minmax(0, 1fr))
+  grid-template-columns: var(--columns)
   grid-template-rows: repeat(7, auto)
   gap: 3px
 
 .day
   aspect-ratio: 1
   border-radius: 2px
+
+  &[data-active="true"]
+    outline: 1px solid var(--foreground)
+    outline-offset: 1px
+
+// Portaled to document.body; fixed coords are the square's top center.
+.tooltip
+  position: fixed
+  z-index: 50
+  display: flex
+  flex-flow: column
+  gap: 0.15rem
+  max-width: 16rem
+  padding: 0.35rem 0.6rem
+  transform: translate(-50%, calc(-100% - 0.4rem))
+  background: var(--modal-bg)
+  border: 1px solid var(--surface-border)
+  border-radius: 0.35rem
+  pointer-events: none
+
+.tooltip_date
+  font-size: 0.8rem
+  color: var(--foreground)
+
+.tooltip_count
+  font-family: $font-mono
+  font-size: 0.7rem
+  color: var(--accent1)
+
+.tooltip_title
+  overflow: hidden
+  white-space: nowrap
+  text-overflow: ellipsis
+  font-size: 0.75rem
+  color: var(--body)
 
 .legend
   display: flex

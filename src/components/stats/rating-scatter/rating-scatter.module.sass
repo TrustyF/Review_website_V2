@@ -25,12 +25,6 @@
   height: 6px
   border-radius: 50%
 
-.swatch_trend
-  width: 12px
-  height: 3px
-  border-radius: 2px
-  background: var(--foreground)
-
 .swatch_diagonal
   width: 12px
   border-top: 1px dashed var(--accent2)
@@ -64,24 +58,14 @@
   stroke-width: 1
 
 .dot
-  position: absolute
   width: 7px
   height: 7px
-  border-radius: 50%
   opacity: 0.3
-  transform: translate(-50%, -50%)
 
 .diagonal
   stroke: var(--accent2)
   stroke-width: 1
   stroke-dasharray: 4 4
-
-.trend
-  fill: none
-  stroke: var(--foreground)
-  stroke-width: 2
-  stroke-linecap: round
-  stroke-linejoin: round
 
 .y_axis
   position: absolute
@@ -108,3 +92,14 @@
   transform: translateX(-50%)
   font-size: 0.65rem
   color: var(--accent1)
+
+.empty
+  position: absolute
+  inset: 0
+  display: flex
+  align-items: center
+  justify-content: center
+  margin: 0
+  text-align: center
+  font-size: 0.8rem
+  color: var(--accent2)

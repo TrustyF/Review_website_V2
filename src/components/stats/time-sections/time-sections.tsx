@@ -1,9 +1,12 @@
 "use client";
 import { CalendarHeatmap } from "@/components/stats/calendar-heatmap/calendar-heatmap";
-import { RatingLineChart } from "@/components/stats/rating-line-chart/rating-line-chart";
+import {
+	RatingLineChart,
+	ratingAxis,
+} from "@/components/stats/rating-line-chart/rating-line-chart";
 import { StackedAreaChart } from "@/components/stats/stacked-area-chart/stacked-area-chart";
 import { StatsSection } from "@/components/stats/stats-section/stats-section";
-import type { StatsData, TimeBin } from "@/components/stats/stats-types";
+import type { StatsData } from "@/components/stats/stats-types";
 import { TimeScatter } from "@/components/stats/time-scatter/time-scatter";
 import { useDictionary, useLocale } from "@/lib/i18n/i18n-context";
 
@@ -25,31 +28,26 @@ type Props = {
 
 type CalendarProps = {
 	calendar: StatsData["timeline"]["calendar"];
-	// The calendar's year, or null for the last 12 months.
-	year: number | null;
 };
 
 const intlLocaleOf = (locale: string) => (locale === "fr" ? "fr-FR" : "en-US");
 
 // Review calendar, rendered on its own near the top of the page.
-export function CalendarSection({ calendar, year }: CalendarProps) {
+export function CalendarSection({ calendar }: CalendarProps) {
 	const dict = useDictionary();
 	const locale = useLocale();
 	const t = dict.stats.timeline.calendar;
-	const titles = calendar.counts.reduce((a, b) => a + b, 0);
-	const days = calendar.counts.filter((c) => c > 0).length;
 
 	return (
-		<StatsSection
-			title={t.title}
-			subtitle={
-				year != null
-					? t.subtitleYear(titles, days, year)
-					: t.subtitleRecent(titles, days)
-			}>
+		<StatsSection title={t.title}>
 			<CalendarHeatmap
 				start={calendar.start}
 				counts={calendar.counts}
+				titles={calendar.titles.map((day) =>
+					day.map((d) => (locale === "fr" ? (d.titleFr ?? d.title) : d.title)),
+				)}
+				countLabel={dict.stats.titleCount}
+				moreTitlesLabel={t.moreTitles}
 				locale={intlLocaleOf(locale)}
 				fewerLabel={dict.stats.worldMap.fewer}
 				moreLabel={dict.stats.worldMap.more}
@@ -58,27 +56,14 @@ export function CalendarSection({ calendar, year }: CalendarProps) {
 	);
 }
 
-// Whole-number y range hugging the data, ticked every 1 (or 2 when wide).
-function ratingAxis(bins: TimeBin[]) {
-	const values = bins.flatMap((b) => (b.value != null ? [b.value] : []));
-	if (values.length === 0) return { domain: [0, 10] as [number, number] };
-	let lo = Math.max(0, Math.floor(Math.min(...values) - 0.25));
-	let hi = Math.min(10, Math.ceil(Math.max(...values) + 0.25));
-	const step = hi - lo > 4 ? 2 : 1;
-	// Stretch to a whole number of steps so the top edge gets a label too.
-	hi = lo + Math.ceil((hi - lo) / step) * step;
-	if (hi > 10) {
-		lo = Math.max(0, lo - (hi - 10));
-		hi = 10;
-	}
-	const yTicks: number[] = [];
-	for (let t = lo; t <= hi; t += step) yTicks.push(t);
-	return { domain: [lo, hi] as [number, number], yTicks };
-}
+// Labels only each year's first quarter.
+const quarterTicks = (keys: number[]) =>
+	keys.map((k) => (k % 4 === 0 ? String(k / 4) : ""));
 
 // The other "over time" charts on the stats page.
 export function TimeSections({ timeline }: Props) {
 	const dict = useDictionary();
+	const locale = useLocale();
 	const t = dict.stats.timeline;
 
 	const genreSeries = timeline.genreShift.series.map((s, i) => ({
@@ -87,12 +72,17 @@ export function TimeSections({ timeline }: Props) {
 		color: s.name == null ? OTHER_COLOR : GENRE_COLORS[i]!,
 		values: s.shares,
 	}));
+	// Thin quarters are skipped, so label each year's first kept quarter.
+	const genreKeys = timeline.genreShift.keys;
+	const genreTicks = genreKeys.map((k, i) =>
+		i === 0 || Math.floor(genreKeys[i - 1]! / 4) !== Math.floor(k / 4)
+			? String(Math.floor(k / 4))
+			: "",
+	);
 
 	return (
 		<>
-			<StatsSection
-				title={t.ratingOverTime.title}
-				subtitle={t.ratingOverTime.subtitle}>
+			<StatsSection title={t.ratingOverTime.title}>
 				<RatingLineChart
 					series={[
 						{
@@ -102,10 +92,12 @@ export function TimeSections({ timeline }: Props) {
 							values: timeline.ratingByQuarter.map((b) => b.value),
 						},
 					]}
-					ticks={timeline.ratingByQuarter.map((b) =>
-						b.key % 4 === 0 ? String(b.key / 4) : "",
+					ticks={quarterTicks(timeline.ratingByQuarter.map((b) => b.key))}
+					{...ratingAxis(
+						timeline.ratingByQuarter.flatMap((b) =>
+							b.value != null ? [b.value] : [],
+						),
 					)}
-					{...ratingAxis(timeline.ratingByQuarter)}
 					emptyText={t.notEnoughData}
 				/>
 			</StatsSection>
@@ -113,7 +105,7 @@ export function TimeSections({ timeline }: Props) {
 			<StatsSection title={t.genreShift.title} subtitle={t.genreShift.subtitle}>
 				<StackedAreaChart
 					series={genreSeries}
-					ticks={timeline.genreShift.years.map(String)}
+					ticks={genreTicks}
 					formatPercent={dict.stats.vsPublic.scatter.percent}
 					emptyText={t.notEnoughData}
 				/>
@@ -121,7 +113,16 @@ export function TimeSections({ timeline }: Props) {
 
 			<StatsSection title={t.age.title} subtitle={t.age.subtitle}>
 				<TimeScatter
-					points={timeline.age.map((a) => ({ x: a.watched, y: a.released }))}
+					points={timeline.age.map((a) => ({
+						x: a.watched,
+						y: a.released,
+						label: locale === "fr" ? (a.titleFr ?? a.title) : a.title,
+						detail: t.age.tooltip(
+							Math.floor(a.released),
+							Math.floor(a.watched),
+						),
+						href: `/media/${a.mediaId}`,
+					}))}
 					dotColor="var(--chart-1)"
 					dotLabel={t.age.dot}
 					xLabel={t.age.xLabel}

@@ -71,13 +71,16 @@ export const PERSON_ROLE_NAMES: Record<PersonRole, string[]> = {
 
 export type PersonRanking = { byTitles: PersonStat[]; byRating: PersonStat[] };
 
+// People per role and ranking on the stats page.
+export const TOP_PEOPLE_COUNT = 12;
+
 export const RUNTIME_BAND_MINUTES = 15;
 // Runtimes outside this range fold into the first/last band.
 export const RUNTIME_MIN = 60;
 export const RUNTIME_MAX = 180;
 
-// One point on a me-vs-public line, averaging percentiles (0–100) over the bin
-// and its neighbours. Null when the bin itself is too thin, drawn as a gap.
+// One point on a me-vs-public line, averaging ratings on my 0–10 scale over the
+// bin and its neighbours. Null when the bin itself is too thin, drawn as a gap.
 export type ComparisonBin = {
 	key: number;
 	myAvg: number | null;
@@ -87,6 +90,9 @@ export type ComparisonBin = {
 export type ScatterPoint = {
 	my: number;
 	public: number;
+	mediaId: number;
+	title: string;
+	titleFr: string | null;
 };
 
 // One step on a time line; null when that step is too thin, drawn as a gap.
@@ -132,14 +138,26 @@ export type StatsData = {
 	// Full history (type-scoped) except the calendar, which follows the year.
 	timeline: {
 		// start is a UTC YYYY-MM-DD; counts holds one entry per day from there.
-		calendar: { start: string; counts: number[] };
-		// name null is "Other"; shares per year sum to 1.
+		// titles holds each day's logged titles, parallel to counts.
+		calendar: {
+			start: string;
+			counts: number[];
+			titles: { title: string; titleFr: string | null }[][];
+		};
+		// Keys are year * 4 + quarter (thin quarters skipped); name null is
+		// "Other"; each key's shares sum to 1.
 		genreShift: {
-			years: number[];
+			keys: number[];
 			series: { name: string | null; shares: number[] }[];
 		};
 		// Fractional years.
-		age: { watched: number; released: number }[];
+		age: {
+			watched: number;
+			released: number;
+			mediaId: number;
+			title: string;
+			titleFr: string | null;
+		}[];
 		// Keys are year * 4 + quarter.
 		ratingByQuarter: TimeBin[];
 	};

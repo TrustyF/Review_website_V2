@@ -1,9 +1,13 @@
 import { noise } from "@/components/stats/rating-scatter/rating-scatter";
+import {
+	type ScatterDot,
+	ScatterDots,
+} from "@/components/stats/scatter-dots/scatter-dots";
 import styles from "./time-scatter.module.sass";
 
 type Props = {
 	// Fractional years on both axes.
-	points: { x: number; y: number }[];
+	points: (ScatterDot & { x: number; y: number })[];
 	dotColor: string;
 	dotLabel: string;
 	xLabel: string;
@@ -39,9 +43,9 @@ export function TimeScatter({
 	sameYearLabel,
 	emptyText,
 }: Props) {
-	if (points.length === 0) return <p className={styles.empty}>{emptyText}</p>;
-
-	const xs = points.map((p) => p.x);
+	// Empty still renders the full frame, so the section keeps its height.
+	const empty = points.length === 0;
+	const xs = empty ? [0] : points.map((p) => p.x);
 	const xMin = Math.floor(Math.min(...xs));
 	// At least one year (and one decade) wide, so positions never divide by 0.
 	const xMax = Math.max(Math.ceil(Math.max(...xs)), xMin + 1);
@@ -56,8 +60,8 @@ export function TimeScatter({
 	const px = (v: number) => ((v - xMin) / (xMax - xMin)) * 100;
 	const py = (v: number) =>
 		100 - ((Math.min(Math.max(v, yMin), yMax) - yMin) / (yMax - yMin)) * 100;
-	const xTicks = yearTicks(xMin, xMax, xMax - xMin > 8 ? 2 : 1);
-	const yTicks = yearTicks(yMin, yMax, yMax - yMin > 60 ? 20 : 10);
+	const xTicks = empty ? [] : yearTicks(xMin, xMax, xMax - xMin > 8 ? 2 : 1);
+	const yTicks = empty ? [] : yearTicks(yMin, yMax, yMax - yMin > 60 ? 20 : 10);
 
 	return (
 		<div className={styles.wrapper}>
@@ -104,7 +108,7 @@ export function TimeScatter({
 									vectorEffect="non-scaling-stroke"
 								/>
 							))}
-							{sameFrom < sameTo && (
+							{!empty && sameFrom < sameTo && (
 								<line
 									x1={px(sameFrom)}
 									y1={py(sameFrom)}
@@ -115,18 +119,16 @@ export function TimeScatter({
 								/>
 							)}
 						</svg>
-						{points.map((p, i) => (
-							<span
-								// biome-ignore lint/suspicious/noArrayIndexKey: points have no identity
-								key={i}
-								className={styles.dot}
-								style={{
-									left: `${px(p.x + noise(i, 0) * X_JITTER)}%`,
-									top: `${py(p.y + noise(i, 1) * Y_JITTER)}%`,
-									background: dotColor,
-								}}
-							/>
-						))}
+						<ScatterDots
+							points={points}
+							position={(i) => ({
+								left: `${px(points[i]!.x + noise(i, 0) * X_JITTER)}%`,
+								top: `${py(points[i]!.y + noise(i, 1) * Y_JITTER)}%`,
+							})}
+							color={() => dotColor}
+							dotClassName={styles.dot}
+						/>
+						{empty && <p className={styles.empty}>{emptyText}</p>}
 					</div>
 					<div className={styles.x_axis} aria-hidden>
 						{xTicks.map((t) => (

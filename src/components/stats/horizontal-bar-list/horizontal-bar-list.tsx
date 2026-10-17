@@ -20,6 +20,8 @@ type Props = {
 	// auto-fitting to this list's own min/max — omit for count-style lists.
 	scaleMin?: number;
 	scaleMax?: number;
+	// Pads shorter lists with invisible rows so the height stays put.
+	minRows?: number;
 };
 
 // Label-left, bar-right ranking — used for the media-type breakdown (colored
@@ -29,6 +31,7 @@ export function HorizontalBarList({
 	valueFormatter,
 	scaleMin,
 	scaleMax,
+	minRows = 0,
 }: Props) {
 	const min = scaleMin ?? 0;
 	const max = scaleMax ?? Math.max(...items.map((i) => i.value), 1);
@@ -70,6 +73,16 @@ export function HorizontalBarList({
 					</li>
 				);
 			})}
+			{Array.from({ length: Math.max(0, minRows - items.length) }, (_, i) => (
+				// biome-ignore lint/suspicious/noArrayIndexKey: interchangeable spacers
+				<li key={`pad-${i}`} className={styles.placeholder} aria-hidden>
+					<div className={styles.row}>
+						<span className={styles.label}>&nbsp;</span>
+						<span className={styles.track} />
+						<span className={styles.value}>&nbsp;</span>
+					</div>
+				</li>
+			))}
 		</ul>
 	);
 }

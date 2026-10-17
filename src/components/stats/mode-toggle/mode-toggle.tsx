@@ -10,27 +10,46 @@ type Props = {
 	onModeChange: (mode: StatsMode) => void;
 };
 
-// Titles/Avg rating pill pair — shared by the world map and top people
-// sections, rendered top-right of their StatsSection via its `actions` slot.
+type PillToggleProps<T extends string> = {
+	value: T;
+	options: { value: T; label: string }[];
+	onChange: (value: T) => void;
+};
+
+// Pill group for a StatsSection's `actions` slot (top-right of its heading).
+export function PillToggle<T extends string>({
+	value,
+	options,
+	onChange,
+}: PillToggleProps<T>) {
+	return (
+		<div className={styles.toggle}>
+			{options.map((option) => (
+				<Clickable
+					key={option.value}
+					className={styles.toggle_option}
+					aria-pressed={value === option.value}
+					data-active={value === option.value}
+					onClick={() => onChange(option.value)}>
+					{option.label}
+				</Clickable>
+			))}
+		</div>
+	);
+}
+
+// Titles/Avg rating pair — shared by the world map, top people and bar lists.
 export function ModeToggle({ mode, onModeChange }: Props) {
 	const dict = useDictionary();
 
 	return (
-		<div className={styles.toggle}>
-			<Clickable
-				className={styles.toggle_option}
-				aria-pressed={mode === "titles"}
-				data-active={mode === "titles"}
-				onClick={() => onModeChange("titles")}>
-				{dict.stats.modeToggle.titles}
-			</Clickable>
-			<Clickable
-				className={styles.toggle_option}
-				aria-pressed={mode === "rating"}
-				data-active={mode === "rating"}
-				onClick={() => onModeChange("rating")}>
-				{dict.stats.modeToggle.rating}
-			</Clickable>
-		</div>
+		<PillToggle
+			value={mode}
+			options={[
+				{ value: "titles", label: dict.stats.modeToggle.titles },
+				{ value: "rating", label: dict.stats.modeToggle.rating },
+			]}
+			onChange={onModeChange}
+		/>
 	);
 }

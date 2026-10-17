@@ -560,7 +560,7 @@ export const fr = {
 		},
 		vsPublic: {
 			mySeries: "Ma moyenne",
-			publicSeries: "Moyenne du public",
+			publicSeries: "Public",
 			typePlurals: {
 				movie: "films",
 				short: "courts-métrages",
@@ -574,72 +574,85 @@ export const fr = {
 				`Pas encore assez de notes pour les ${items}.`,
 			byDecade: {
 				title: "Notes par décennie de sortie",
-				subtitle: (items: string) =>
-					`Comment j'ai noté les ${items} de chaque décennie, par rapport au public (50 = dans la moyenne)`,
 			},
 			byReviewYear: {
 				title: "Notes par année de critique",
-				subtitle: (items: string) =>
-					`Comment j'ai noté les ${items} selon l'année de ma critique, par rapport au public (50 = dans la moyenne)`,
 			},
 			byRuntime: {
 				title: "Notes par durée",
-				subtitle:
-					"Comment j'ai noté les films selon leur durée en minutes, par rapport au public (50 = dans la moyenne)",
+				subtitle: "Durée en minutes",
 				tickUnder: (minutes: number) => `<${minutes}`,
 				tickOver: (minutes: number) => `${minutes}+`,
+				moviesOnly: "La durée n'est enregistrée que pour les films.",
 			},
 			byPopularity: {
 				title: "Notes par popularité",
-				subtitle: (items: string) =>
-					`Comment j'ai noté les ${items}, du moins au plus populaire, par rapport au public (50 = dans la moyenne)`,
+				subtitle: "Du moins au plus populaire",
 				tick: (from: number, to: number) => `${from}–${to} %`,
+				moviesAndTvOnly:
+					"La popularité n'est suivie que pour les films et les séries.",
 			},
 			scatter: {
 				title: "Ma note face à celle du public",
-				subtitle: (items: string) =>
-					`Un point par titre parmi les ${items}, notes sur 10`,
+				subtitle: "Un point par titre",
 				xLabel: "Note du public",
 				yLabel: "Ma note",
-				trend: "Ma moyenne pour chaque note du public",
 				diagonal: "Même note",
 				higherLegend: "J'ai mis une note plus haute",
 				lowerLegend: "J'ai mis une note plus basse",
-				higher: "Mieux noté que par le public",
-				same: "À peu près pareil (à 0,5 près)",
-				lower: "Moins bien noté que par le public",
+				higher: "J'ai mis une note plus haute",
+				same: "À peu près pareil",
+				lower: "J'ai mis une note plus basse",
+				scaleRaw: "Brut",
+				scaleFit: "Ajusté",
+				fitNote: (
+					publicAvg: string,
+					publicSpread: string,
+					myAvg: string,
+					mySpread: string,
+				) =>
+					`Moy. du public ${publicAvg} ±${publicSpread} → ma moy. ${myAvg} ±${mySpread}`,
 				avgDiff: "Écart moyen",
-				agreement: "Accord des goûts (de −1 à 1)",
+				avgDiffHigher: (points: string) =>
+					`Je note en moyenne ${points} points plus haut`,
+				avgDiffLower: (points: string) =>
+					`Je note en moyenne ${points} points plus bas`,
+				avgDiffSame: "Comme le public, en moyenne",
+				agreement: "Accord des goûts",
+				agreementLevels: {
+					veryHigh: "Nous classons les titres de façon très proche",
+					high: "Nous classons généralement les titres de la même façon",
+					some: "Nos classements se ressemblent un peu",
+					little: "Nos classements ont peu en commun",
+					opposite: "Nos classements ont tendance à s'opposer",
+				},
 				percent: (value: number) => `${value} %`,
+				tooltip: (my: number, pub: number) => `Moi ${my}/10 · Public ${pub}/10`,
 			},
 		},
 		timeline: {
 			notEnoughData: "Pas encore assez de titres enregistrés.",
 			calendar: {
 				title: "Calendrier des critiques",
-				subtitleYear: (titles: number, days: number, year: number) =>
-					`${titles} titre${titles === 1 ? "" : "s"} enregistré${titles === 1 ? "" : "s"} sur ${days} jour${days === 1 ? "" : "s"} en ${year}`,
-				subtitleRecent: (titles: number, days: number) =>
-					`${titles} titre${titles === 1 ? "" : "s"} enregistré${titles === 1 ? "" : "s"} sur ${days} jour${days === 1 ? "" : "s"} au cours des 12 derniers mois`,
+				moreTitles: (count: number) => `+${count} de plus`,
 			},
 			ratingOverTime: {
 				title: "Note moyenne au fil du temps",
-				subtitle:
-					"Ma note moyenne par trimestre, lissée avec les trimestres voisins",
 			},
 			genreShift: {
 				title: "Genres au fil du temps",
-				subtitle: "Part de ce que j'ai enregistré chaque année, par genre",
+				subtitle: "Part des titres enregistrés",
 				other: "Autres",
 			},
 			age: {
 				title: "L'âge de ce que je regarde",
-				subtitle:
-					"L'année de sortie de chaque titre par rapport au moment où je l'ai enregistré",
+				subtitle: "Année de sortie par rapport au moment où je l'ai enregistré",
 				dot: "Un titre",
 				xLabel: "Année d'enregistrement",
 				yLabel: "Année de sortie",
 				sameYear: "Sorti l'année où je l'ai enregistré",
+				tooltip: (released: number, logged: number) =>
+					`Sorti en ${released} · Enregistré en ${logged}`,
 			},
 		},
 		reviewsByYear: {

@@ -1,0 +1,38 @@
+@use "@/app/styles/variables" as *
+
+.dot
+  position: absolute
+  border-radius: 50%
+  transform: translate(-50%, -50%)
+
+  &[href]
+    cursor: pointer
+
+  &[data-active="true"]
+    opacity: 1
+    z-index: 2
+    transform: translate(-50%, -50%) scale(1.6)
+
+// One shared tooltip, placed above the hovered dot.
+.tooltip
+  position: absolute
+  z-index: 3
+  display: flex
+  flex-flow: column
+  gap: 0.1rem
+  padding: 0.35rem 0.6rem
+  transform: translate(-50%, calc(-100% - 0.6rem))
+  background: var(--modal-bg)
+  border: 1px solid var(--surface-border)
+  border-radius: 0.35rem
+  white-space: nowrap
+  pointer-events: none
+
+.tooltip_title
+  font-size: 0.8rem
+  color: var(--foreground)
+
+.tooltip_detail
+  font-family: $font-mono
+  font-size: 0.7rem
+  color: var(--accent1)

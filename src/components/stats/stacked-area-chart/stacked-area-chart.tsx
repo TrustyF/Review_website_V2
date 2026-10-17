@@ -1,3 +1,4 @@
+import { smoothPath } from "@/components/stats/rating-line-chart/rating-line-chart";
 import styles from "./stacked-area-chart.module.sass";
 
 type Series = {
@@ -25,22 +26,20 @@ export function StackedAreaChart({
 	emptyText,
 }: Props) {
 	const n = ticks.length;
-	if (n < 2) return <p className={styles.empty}>{emptyText}</p>;
-
+	// Empty still renders the full frame, so the section keeps its height.
+	const empty = n < 2;
 	const x = (i: number) => (i / (n - 1)) * 100;
 	const y = (share: number) => 100 - share * 100;
 	const cumulative = new Array<number>(n).fill(0);
-	const layers = series.map((s) => {
-		const lower = cumulative.slice();
+	const layers = (empty ? [] : series).map((s) => {
+		const lower = cumulative.map((v, i) => [x(i), y(v)] as [number, number]);
 		s.values.forEach((v, i) => {
 			cumulative[i]! += v;
 		});
-		const upper = cumulative.slice();
-		const points = [
-			...upper.map((v, i) => `${x(i)},${y(v)}`),
-			...lower.map((v, i) => `${x(i)},${y(v)}`).reverse(),
-		].join(" ");
-		return { ...s, points };
+		const upper = cumulative.map((v, i) => [x(i), y(v)] as [number, number]);
+		// Same monotone curve for a layer's top and the next layer's bottom, so they meet exactly.
+		const back = smoothPath(lower.reverse()).replace(/^M/, "L");
+		return { ...s, d: `${smoothPath(upper)} ${back} Z` };
 	});
 
 	return (
@@ -75,25 +74,29 @@ export function StackedAreaChart({
 							preserveAspectRatio="none"
 							aria-hidden>
 							{layers.map((l) => (
-								<polygon
+								<path
 									key={l.key}
-									points={l.points}
+									d={l.d}
 									fill={l.color}
 									className={styles.layer}
 									vectorEffect="non-scaling-stroke"
 								/>
 							))}
 						</svg>
+						{empty && <p className={styles.empty}>{emptyText}</p>}
 					</div>
 					<div className={styles.x_axis} aria-hidden>
-						{ticks.map((tick, i) => (
-							<span
-								key={tick}
-								className={styles.x_tick}
-								style={{ left: `${x(i)}%` }}>
-								{tick}
-							</span>
-						))}
+						{(empty ? [] : ticks).map((tick, i) =>
+							tick ? (
+								<span
+									// biome-ignore lint/suspicious/noArrayIndexKey: ticks are positional and may be blank
+									key={i}
+									className={styles.x_tick}
+									style={{ left: `${x(i)}%` }}>
+									{tick}
+								</span>
+							) : null,
+						)}
 					</div>
 				</div>
 			</div>

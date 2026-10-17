@@ -5,6 +5,8 @@
   flex-flow: row
   align-items: flex-end
   gap: 3px
+  // Bar track + gap + tick, so an empty chart keeps its height.
+  min-height: calc(110px + 0.35rem + 1rem)
 
 .column
   flex: 1
@@ -35,6 +37,7 @@
 
 .tick
   font-size: 0.65rem
+  line-height: 1rem
   color: var(--accent1)
   white-space: nowrap
   max-width: 100%

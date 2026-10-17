@@ -15,9 +15,26 @@ type Props = {
 	domain?: [number, number];
 	// Labelled gridlines; omitted renders no y-axis at all.
 	yTicks?: number[];
-	// Shown instead of the plot when no series has two points to connect.
+	// Shown over an empty plot when no series has two points to connect.
 	emptyText?: string;
 };
+
+// Whole-number 0–10 y range hugging the values, ticked every 1 (or 2 when wide).
+export function ratingAxis(values: number[]) {
+	if (values.length === 0) return { domain: [0, 10] as [number, number] };
+	let lo = Math.max(0, Math.floor(Math.min(...values) - 0.25));
+	let hi = Math.min(10, Math.ceil(Math.max(...values) + 0.25));
+	const step = hi - lo > 4 ? 2 : 1;
+	// Stretch to a whole number of steps so the top edge gets a label too.
+	hi = lo + Math.ceil((hi - lo) / step) * step;
+	if (hi > 10) {
+		lo = Math.max(0, lo - (hi - 10));
+		hi = 10;
+	}
+	const yTicks: number[] = [];
+	for (let t = lo; t <= hi; t += step) yTicks.push(t);
+	return { domain: [lo, hi] as [number, number], yTicks };
+}
 
 // Columns center each point on its tick, matching VerticalBarChart's layout.
 const xPercent = (i: number, n: number) => ((i + 0.5) / n) * 100;
@@ -74,25 +91,25 @@ export function RatingLineChart({
 	emptyText,
 }: Props) {
 	const n = ticks.length;
-	const plotted = series.filter((s) =>
+	const withData = series.filter((s) =>
 		s.values.some((v) => v != null && v > 0),
 	);
+	const drawable = withData.some(
+		(s) => s.values.filter((v) => v != null).length >= 2,
+	);
+	// Empty still renders the full frame, so the section keeps its height.
+	const plotted = drawable ? withData : [];
 	const values = plotted.flatMap((s) =>
 		s.values.filter((v): v is number => v != null),
 	);
 	const [min, max] = domain ?? [0, Math.max(...values, 1)];
 	const yPercent = (v: number) => 100 - ((v - min) / (max - min)) * 100;
-	const drawable = plotted.some(
-		(s) => s.values.filter((v) => v != null).length >= 2,
-	);
-
-	if (!drawable) return <p className={styles.empty}>{emptyText}</p>;
 
 	return (
 		<div className={styles.wrapper}>
-			{plotted.length > 1 && (
+			{series.length > 1 && (
 				<ul className={styles.legend}>
-					{plotted.map((s) => (
+					{series.map((s) => (
 						<li key={s.key} className={styles.legend_item}>
 							<span
 								className={styles.legend_swatch}
@@ -173,11 +190,16 @@ export function RatingLineChart({
 									),
 								),
 							)}
+						{!drawable && <p className={styles.empty}>{emptyText}</p>}
 					</div>
 					<div className={styles.ticks}>
 						{ticks.map((tick, i) => (
 							// biome-ignore lint/suspicious/noArrayIndexKey: ticks are positional and may repeat or be blank
-							<span key={i} className={styles.tick}>
+							<span
+								key={i}
+								className={styles.tick}
+								// A label between blank ticks may spill into them instead of clipping.
+								data-spill={!ticks[i - 1] && !ticks[i + 1]}>
 								{tick}
 							</span>
 						))}

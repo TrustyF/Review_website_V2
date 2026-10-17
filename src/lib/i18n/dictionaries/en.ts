@@ -550,7 +550,7 @@ export const en = {
 		},
 		vsPublic: {
 			mySeries: "My average",
-			publicSeries: "Public average",
+			publicSeries: "Public",
 			// Plural nouns filled into the copy below, keyed like nav.search.typeLabels.
 			typePlurals: {
 				movie: "movies",
@@ -564,71 +564,84 @@ export const en = {
 			notEnoughData: (items: string) => `Not enough rated ${items} yet.`,
 			byDecade: {
 				title: "Ratings by release decade",
-				subtitle: (items: string) =>
-					`How I rated ${items} from each decade, compared with the public (50 = typical)`,
 			},
 			byReviewYear: {
 				title: "Ratings by year reviewed",
-				subtitle: (items: string) =>
-					`How I rated the ${items} I reviewed each year, compared with the public (50 = typical)`,
 			},
 			byRuntime: {
 				title: "Ratings by runtime",
-				subtitle:
-					"How I rated movies of each length in minutes, compared with the public (50 = typical)",
+				subtitle: "Runtime in minutes",
 				tickUnder: (minutes: number) => `<${minutes}`,
 				tickOver: (minutes: number) => `${minutes}+`,
+				moviesOnly: "Runtime is only tracked for movies.",
 			},
 			byPopularity: {
 				title: "Ratings by popularity",
-				subtitle: (items: string) =>
-					`How I rated ${items} from least to most popular, compared with the public (50 = typical)`,
+				subtitle: "Least to most popular",
 				tick: (from: number, to: number) => `${from}–${to}%`,
+				moviesAndTvOnly: "Popularity is only tracked for movies and TV shows.",
 			},
 			scatter: {
 				title: "My rating vs. public rating",
-				subtitle: (items: string) =>
-					`One dot per title among ${items}, ratings out of 10`,
+				subtitle: "One dot per title",
 				xLabel: "Public rating",
 				yLabel: "My rating",
-				trend: "My average at each public score",
 				diagonal: "Same rating",
 				higherLegend: "I rated higher",
 				lowerLegend: "I rated lower",
-				higher: "Rated higher than the public",
-				same: "About the same (within 0.5)",
-				lower: "Rated lower than the public",
+				higher: "I rated higher",
+				same: "About the same",
+				lower: "I rated lower",
+				scaleRaw: "Raw",
+				scaleFit: "Fitted",
+				fitNote: (
+					publicAvg: string,
+					publicSpread: string,
+					myAvg: string,
+					mySpread: string,
+				) =>
+					`Public avg ${publicAvg} ±${publicSpread} → my avg ${myAvg} ±${mySpread}`,
 				avgDiff: "Average difference",
-				agreement: "Taste agreement (−1 to 1)",
+				avgDiffHigher: (points: string) =>
+					`I rate ${points} points higher on average`,
+				avgDiffLower: (points: string) =>
+					`I rate ${points} points lower on average`,
+				avgDiffSame: "Same as the public on average",
+				agreement: "Taste agreement",
+				agreementLevels: {
+					veryHigh: "We rank titles very similarly",
+					high: "We mostly rank titles the same way",
+					some: "We rank titles somewhat alike",
+					little: "Our rankings have little in common",
+					opposite: "We tend to rank titles oppositely",
+				},
 				percent: (value: number) => `${value}%`,
+				tooltip: (my: number, pub: number) => `Me ${my}/10 · Public ${pub}/10`,
 			},
 		},
 		timeline: {
 			notEnoughData: "Not enough logged titles yet.",
 			calendar: {
 				title: "Review calendar",
-				subtitleYear: (titles: number, days: number, year: number) =>
-					`${titles} title${titles === 1 ? "" : "s"} logged on ${days} day${days === 1 ? "" : "s"} in ${year}`,
-				subtitleRecent: (titles: number, days: number) =>
-					`${titles} title${titles === 1 ? "" : "s"} logged on ${days} day${days === 1 ? "" : "s"} in the last 12 months`,
+				moreTitles: (count: number) => `+${count} more`,
 			},
 			ratingOverTime: {
 				title: "Average rating over time",
-				subtitle:
-					"My average rating each quarter, smoothed with the quarters either side",
 			},
 			genreShift: {
 				title: "Genres over time",
-				subtitle: "Share of what I logged each year, by genre",
+				subtitle: "Share of titles logged",
 				other: "Other",
 			},
 			age: {
 				title: "How old the things I watch are",
-				subtitle: "Each title's release year against when I logged it",
+				subtitle: "Release year vs. when I logged it",
 				dot: "One title",
 				xLabel: "Year logged",
 				yLabel: "Release year",
 				sameYear: "Released the year I logged it",
+				tooltip: (released: number, logged: number) =>
+					`Released ${released} · Logged ${logged}`,
 			},
 		},
 		reviewsByYear: {

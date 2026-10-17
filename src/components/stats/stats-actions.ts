@@ -15,6 +15,7 @@ import {
 	RUNTIME_MAX,
 	RUNTIME_MIN,
 	type StatsData,
+	TOP_PEOPLE_COUNT,
 } from "@/components/stats/stats-types";
 
 // Same public-facing shape as dbPublic, applied by hand — dbPublic only
@@ -29,7 +30,6 @@ const RATING_TIER_COUNT = 10;
 // Same reasoning as the world map's own MIN_SAMPLE_FOR_RATING — a person with
 // one or two credits shouldn't be able to top the avg-rating leaderboard.
 const MIN_SAMPLE_FOR_PERSON_RATING = 3;
-const TOP_PEOPLE_COUNT = 12;
 // Min titles behind a me-vs-public average: a fixed floor, or a share of the
 // chart's titles when there are many. Matches the scatter's average line.
 const MIN_SAMPLE_FOR_COMPARISON = 8;
@@ -92,13 +92,21 @@ function percentileRank(sorted: number[], v: number): number {
 	return ((lo + (end - lo) / 2) / sorted.length) * 100;
 }
 
-// Ranks my rating among mine and the public one among the public's.
-function percentileScales(population: { my: number; pub: number }[]) {
+// Puts both ratings on my 0–10 scale: mine as is, the public one as the rating
+// I give at the same rank (its rank among the public's scores).
+function myScale(population: { my: number; pub: number }[]) {
 	const mine = population.map((p) => p.my).sort((a, b) => a - b);
 	const pubs = population.map((p) => p.pub).sort((a, b) => a - b);
+	const n = mine.length;
+	const atPercentile = (p: number) => {
+		const pos = Math.min(n - 1, Math.max(0, (p / 100) * n - 0.5));
+		const lo = mine[Math.floor(pos)]!;
+		const hi = mine[Math.ceil(pos)]!;
+		return lo + (hi - lo) * (pos - Math.floor(pos));
+	};
 	return (my: number, pub: number) => ({
-		my: percentileRank(mine, my),
-		pub: percentileRank(pubs, pub),
+		my,
+		pub: n > 0 ? atPercentile(percentileRank(pubs, pub)) : pub,
 	});
 }
 
@@ -222,7 +230,10 @@ export async function getStats(
 				createDate: true,
 				media: {
 					select: {
+						id: true,
 						type: true,
+						title: true,
+						titleFr: true,
 						publicRating: true,
 						releaseDate: true,
 						movie: { select: { runtime: true, popularity: true } },
@@ -240,6 +251,9 @@ export async function getStats(
 				rating: true,
 				media: {
 					select: {
+						id: true,
+						title: true,
+						titleFr: true,
 						type: true,
 						publicRating: true,
 						releaseDate: true,
@@ -248,7 +262,7 @@ export async function getStats(
 				},
 			},
 		}),
-		// Every rated movie, unscoped by year, so a percentile doesn't move with the filters.
+		// Every rated movie, unscoped by year, so the rank mapping doesn't move with the filters.
 		db.review.findMany({
 			where: {
 				rating: { not: null },
@@ -541,14 +555,14 @@ export async function getStats(
 	) as Record<PersonRole, { byTitles: PersonStat[]; byRating: PersonStat[] }>;
 
 	// One type means one public source, so one scale to rank against.
-	const toPercentiles = percentileScales(
+	const toMyScale = myScale(
 		rankPopulation.flatMap(({ rating, media }) =>
 			rating != null && isRealPublicRating(media.publicRating)
 				? [{ my: rating, pub: media.publicRating }]
 				: [],
 		),
 	);
-	// my/pub are percentiles from here on; rawMy/rawPub keep the 0–10 values.
+	// my/pub are on my scale from here on; rawMy/rawPub keep the raw values.
 	const paired = reviewRatings.flatMap(({ rating, media }) =>
 		media.type === vsType &&
 		rating != null &&
@@ -558,7 +572,7 @@ export async function getStats(
 						media,
 						rawMy: rating,
 						rawPub: media.publicRating,
-						...toPercentiles(rating, media.publicRating),
+						...toMyScale(rating, media.publicRating),
 					},
 				]
 			: [],
@@ -610,7 +624,7 @@ export async function getStats(
 					? [
 							{
 								key: createDate.getUTCFullYear(),
-								...toPercentiles(rating, media.publicRating),
+								...toMyScale(rating, media.publicRating),
 							},
 						]
 					: [],
@@ -623,9 +637,12 @@ export async function getStats(
 			POPULARITY_BUCKETS * MIN_SAMPLE_FOR_COMPARISON
 				? compareBins(byPopularityEntries, 1)
 				: [],
-		points: paired.map(({ rawMy, rawPub }) => ({
+		points: paired.map(({ media, rawMy, rawPub }) => ({
 			my: rawMy,
 			public: Math.round(rawPub * 10) / 10,
+			mediaId: media.id,
+			title: media.title,
+			titleFr: media.titleFr,
 		})),
 	};
 

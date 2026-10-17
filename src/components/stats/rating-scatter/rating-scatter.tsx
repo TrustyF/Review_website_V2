@@ -1,16 +1,14 @@
 import {
-	runs,
-	smoothPath,
-} from "@/components/stats/rating-line-chart/rating-line-chart";
+	type ScatterDot,
+	ScatterDots,
+} from "@/components/stats/scatter-dots/scatter-dots";
 import styles from "./rating-scatter.module.sass";
 
 type Props = {
-	points: { x: number; y: number }[];
+	points: (ScatterDot & { x: number; y: number })[];
 	// Shared x/y range; min defaults to just under the data.
 	max: number;
 	min?: number;
-	// Column width for the average line, in axis units.
-	bin: number;
 	tickStep?: number;
 	// Max display offset per axis, in axis units, to spread out stacked dots.
 	jitter?: number;
@@ -20,16 +18,10 @@ type Props = {
 	yLabel: string;
 	aboveLabel: string;
 	belowLabel: string;
-	trendLabel: string;
 	diagonalLabel: string;
+	// Shown over the empty plot when there are no points.
+	emptyText?: string;
 };
-
-// Min titles in a column before it gets a point on the average line: a fixed
-// floor, or a share of all dots when there are many.
-const MIN_TREND_SAMPLE = 8;
-const MIN_TREND_SHARE = 0.02;
-// Columns pooled on each side when averaging a point on the line.
-const TREND_WINDOW = 1;
 
 // Lower bound skips the sparse bottom 3% so outliers don't zoom the plot out.
 function lowerBound(values: number[], max: number) {
@@ -49,12 +41,11 @@ export function noise(i: number, axis: number) {
 }
 
 // Same-range x/y dot plot: dots above the dashed y = x line are colored one
-// way and below it the other; the solid line is the average y per column.
+// way and below it the other.
 export function RatingScatter({
 	points,
 	max,
 	min: fixedMin,
-	bin,
 	tickStep,
 	jitter = 0,
 	aboveColor,
@@ -63,8 +54,8 @@ export function RatingScatter({
 	yLabel,
 	aboveLabel,
 	belowLabel,
-	trendLabel,
 	diagonalLabel,
+	emptyText,
 }: Props) {
 	const min =
 		fixedMin ??
@@ -75,28 +66,16 @@ export function RatingScatter({
 	const clamp = (v: number) => Math.min(Math.max(v, min), max);
 	const percent = (v: number) => ((clamp(v) - min) / (max - min)) * 100;
 
-	const n = Math.round((max - min) / bin);
-	const columns: number[][] = Array.from({ length: n }, () => []);
-	for (const { x, y } of points) {
-		const i = Math.min(Math.max(Math.floor((x - min) / bin), 0), n - 1);
-		columns[i]!.push(y);
-	}
-	const minSample = Math.max(
-		MIN_TREND_SAMPLE,
-		Math.ceil(points.length * MIN_TREND_SHARE),
-	);
-	// Pooled mean over the column and its neighbours, shown only where the
-	// column itself is well sampled.
-	const trend = columns.map((ys, i) => {
-		if (ys.length < minSample) return null;
-		const window = columns
-			.slice(Math.max(i - TREND_WINDOW, 0), i + TREND_WINDOW + 1)
-			.flat();
-		return window.reduce((a, b) => a + b, 0) / window.length;
-	});
 	const step = tickStep ?? (max - min > 6 ? 2 : 1);
 	const ticks: number[] = [];
 	for (let t = min; t <= max; t += step) ticks.push(t);
+	const position = (i: number) => {
+		const p = points[i]!;
+		return {
+			left: `${percent(p.x + noise(i, 0) * jitter)}%`,
+			top: `${100 - percent(p.y + noise(i, 1) * jitter)}%`,
+		};
+	};
 
 	return (
 		<div className={styles.wrapper}>
@@ -114,10 +93,6 @@ export function RatingScatter({
 						style={{ background: belowColor }}
 					/>
 					{belowLabel}
-				</li>
-				<li className={styles.legend_item}>
-					<span className={styles.swatch_trend} />
-					{trendLabel}
 				</li>
 				<li className={styles.legend_item}>
 					<span className={styles.swatch_diagonal} />
@@ -152,38 +127,14 @@ export function RatingScatter({
 							vectorEffect="non-scaling-stroke"
 						/>
 					</svg>
-					{points.map((p, i) => (
-						<span
-							// biome-ignore lint/suspicious/noArrayIndexKey: points have no identity
-							key={i}
-							className={styles.dot}
-							style={{
-								left: `${percent(p.x + noise(i, 0) * jitter)}%`,
-								top: `${100 - percent(p.y + noise(i, 1) * jitter)}%`,
-								background: p.y > p.x ? aboveColor : belowColor,
-							}}
-						/>
-					))}
-					{/* Separate layer so the average line draws over the dots. */}
-					<svg
-						className={styles.svg}
-						viewBox="0 0 100 100"
-						preserveAspectRatio="none"
-						aria-hidden>
-						{runs(trend).map((run) => (
-							<path
-								key={run[0]![0]}
-								d={smoothPath(
-									run.map(([i, v]) => [
-										((i + 0.5) / n) * 100,
-										100 - percent(v),
-									]),
-								)}
-								className={styles.trend}
-								vectorEffect="non-scaling-stroke"
-							/>
-						))}
-					</svg>
+					<ScatterDots
+						points={points}
+						position={position}
+						color={(i) =>
+							points[i]!.y > points[i]!.x ? aboveColor : belowColor
+						}
+						dotClassName={styles.dot}
+					/>
 					<div className={styles.y_axis} aria-hidden>
 						{ticks.map((t) => (
 							<span
@@ -194,6 +145,7 @@ export function RatingScatter({
 							</span>
 						))}
 					</div>
+					{points.length === 0 && <p className={styles.empty}>{emptyText}</p>}
 				</div>
 				<div className={styles.x_axis} aria-hidden>
 					{ticks.map((t) => (

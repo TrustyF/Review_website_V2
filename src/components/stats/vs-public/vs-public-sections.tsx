@@ -1,5 +1,10 @@
 "use client";
-import { RatingLineChart } from "@/components/stats/rating-line-chart/rating-line-chart";
+import {
+	RatingLineChart,
+	ratingAxis,
+} from "@/components/stats/rating-line-chart/rating-line-chart";
+import { useState } from "react";
+import { PillToggle } from "@/components/stats/mode-toggle/mode-toggle";
 import { RatingScatter } from "@/components/stats/rating-scatter/rating-scatter";
 import { StatsSection } from "@/components/stats/stats-section/stats-section";
 import {
@@ -10,37 +15,18 @@ import {
 	RUNTIME_MIN,
 	type StatsData,
 } from "@/components/stats/stats-types";
-import { useDictionary } from "@/lib/i18n/i18n-context";
+import { useDictionary, useLocale } from "@/lib/i18n/i18n-context";
 import styles from "./vs-public-sections.module.sass";
 
 const MY_COLOR = "var(--chart-1)";
 const PUBLIC_COLOR = "var(--chart-red)";
+const SAME_COLOR = "color-mix(in srgb, var(--accent2) 45%, transparent)";
 // Gaps within this many points count as "about the same".
 const AGREEMENT_MARGIN = 0.5;
 
 type Props = {
 	vsPublic: StatsData["vsPublic"];
 };
-
-// Percentile y range hugging the data, in steps of 10 (or 20 when wide).
-function percentileAxis(bins: ComparisonBin[]) {
-	const values = bins.flatMap((b) =>
-		[b.myAvg, b.publicAvg].filter((v): v is number => v != null),
-	);
-	if (values.length === 0) return { domain: [0, 100] as [number, number] };
-	let lo = Math.max(0, Math.floor((Math.min(...values) - 3) / 10) * 10);
-	let hi = Math.min(100, Math.ceil((Math.max(...values) + 3) / 10) * 10);
-	const step = hi - lo > 50 ? 20 : 10;
-	// Stretch to a whole number of steps so the top edge gets a label too.
-	hi = lo + Math.ceil((hi - lo) / step) * step;
-	if (hi > 100) {
-		lo = Math.max(0, lo - (hi - 100));
-		hi = 100;
-	}
-	const yTicks: number[] = [];
-	for (let t = lo; t <= hi; t += step) yTicks.push(t);
-	return { domain: [lo, hi] as [number, number], yTicks };
-}
 
 // Ranks with ties sharing their average rank.
 function ranks(values: number[]): number[] {
@@ -77,12 +63,60 @@ function spearman(xs: number[], ys: number[]): number | null {
 	return vx > 0 && vy > 0 ? cov / Math.sqrt(vx * vy) : null;
 }
 
+type Point = {
+	x: number;
+	y: number;
+	label: string;
+	detail: string;
+	href: string;
+};
+
+const mean = (vs: number[]) => vs.reduce((a, b) => a + b, 0) / vs.length;
+const stdDev = (vs: number[]) => {
+	const m = mean(vs);
+	return Math.sqrt(mean(vs.map((v) => (v - m) ** 2)));
+};
+
+// Mean and spread of the public scores (x) and of mine (y); null when the
+// public side can't be rescaled.
+function fitOf(points: Point[]) {
+	if (points.length < 2) return null;
+	const xs = points.map((p) => p.x);
+	const ys = points.map((p) => p.y);
+	const xSd = stdDev(xs);
+	if (xSd === 0) return null;
+	return { xMean: mean(xs), xSd, yMean: mean(ys), ySd: stdDev(ys) };
+}
+
+// Linearly maps public scores onto my ratings' mean and spread.
+function rescalePublicToMine(
+	points: Point[],
+	fit: NonNullable<ReturnType<typeof fitOf>>,
+): Point[] {
+	const scale = fit.ySd / fit.xSd;
+	return points.map((p) => ({
+		...p,
+		x: fit.yMean + (p.x - fit.xMean) * scale,
+	}));
+}
+
+// Rough bands for a rank correlation.
+function agreementLevel(r: number) {
+	if (r >= 0.7) return "veryHigh";
+	if (r >= 0.4) return "high";
+	if (r >= 0.2) return "some";
+	if (r > -0.2) return "little";
+	return "opposite";
+}
+
 const formatSigned = (v: number) =>
 	`${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}`;
 
 // Every chart comparing my ratings with the public's.
 export function VsPublicSections({ vsPublic }: Props) {
 	const dict = useDictionary();
+	const locale = useLocale();
+	const [scale, setScale] = useState<"fit" | "raw">("fit");
 	const t = dict.stats.vsPublic;
 	const s = t.scatter;
 	const items = t.typePlurals[MEDIA_TYPE_LABEL_KEY[vsPublic.type]];
@@ -95,6 +129,7 @@ export function VsPublicSections({ vsPublic }: Props) {
 	const averageChart = (
 		bins: ComparisonBin[],
 		tick: (key: number) => string,
+		emptyText = notEnoughData,
 	) => (
 		<RatingLineChart
 			series={[
@@ -112,29 +147,74 @@ export function VsPublicSections({ vsPublic }: Props) {
 				},
 			]}
 			ticks={bins.map((b) => tick(b.key))}
-			{...percentileAxis(bins)}
-			emptyText={notEnoughData}
+			{...ratingAxis(
+				bins.flatMap((b) =>
+					[b.myAvg, b.publicAvg].filter((v): v is number => v != null),
+				),
+			)}
+			emptyText={emptyText}
 		/>
 	);
 
-	const points = vsPublic.points.map((p) => ({ x: p.public, y: p.my }));
+	const rawPoints = vsPublic.points.map((p) => ({
+		x: p.public,
+		y: p.my,
+		label: locale === "fr" ? (p.titleFr ?? p.title) : p.title,
+		detail: s.tooltip(p.my, p.public),
+		href: `/media/${p.mediaId}`,
+	}));
+	const fit = fitOf(rawPoints);
+	const points =
+		scale === "fit" && fit ? rescalePublicToMine(rawPoints, fit) : rawPoints;
 	const diffs = points.map((p) => p.y - p.x);
-	const share = (match: (d: number) => boolean) =>
-		s.percent(Math.round((diffs.filter(match).length / diffs.length) * 100));
-	const avgDiff = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+	const hasPoints = diffs.length > 0;
+	const shareOf = (match: (d: number) => boolean) =>
+		hasPoints ? diffs.filter(match).length / diffs.length : 0;
+	const avgDiff = mean(rawPoints.map((p) => p.y - p.x));
 	// One type means one public source, so raw values rank fine.
 	const agreement = spearman(
 		points.map((p) => p.x),
 		points.map((p) => p.y),
 	);
-	const summary = [
-		{ label: s.higher, value: share((d) => d > AGREEMENT_MARGIN) },
-		{ label: s.same, value: share((d) => Math.abs(d) <= AGREEMENT_MARGIN) },
-		{ label: s.lower, value: share((d) => d < -AGREEMENT_MARGIN) },
-		{ label: s.avgDiff, value: formatSigned(avgDiff) },
-		...(agreement != null
-			? [{ label: s.agreement, value: agreement.toFixed(2) }]
-			: []),
+	// Left to right in the bar, same colors as the dots.
+	const split = [
+		{
+			key: "higher",
+			label: s.higher,
+			share: shareOf((d) => d > AGREEMENT_MARGIN),
+			color: MY_COLOR,
+		},
+		{
+			key: "same",
+			label: s.same,
+			share: shareOf((d) => Math.abs(d) <= AGREEMENT_MARGIN),
+			color: SAME_COLOR,
+		},
+		{
+			key: "lower",
+			label: s.lower,
+			share: shareOf((d) => d < -AGREEMENT_MARGIN),
+			color: PUBLIC_COLOR,
+		},
+	];
+	const figures = [
+		{
+			label: s.avgDiff,
+			value: hasPoints ? formatSigned(avgDiff) : "—",
+			hint: !hasPoints
+				? null
+				: Math.abs(avgDiff) < 0.05
+					? s.avgDiffSame
+					: avgDiff > 0
+						? s.avgDiffHigher(avgDiff.toFixed(1))
+						: s.avgDiffLower(Math.abs(avgDiff).toFixed(1)),
+		},
+		{
+			label: s.agreement,
+			value: agreement != null ? agreement.toFixed(2) : "—",
+			hint:
+				agreement == null ? null : s.agreementLevels[agreementLevel(agreement)],
+		},
 	];
 
 	// The end bands also hold everything folded in from outside the range.
@@ -147,72 +227,120 @@ export function VsPublicSections({ vsPublic }: Props) {
 
 	return (
 		<>
-			<StatsSection title={s.title} subtitle={s.subtitle(items)}>
-				{diffs.length > 0 ? (
-					<div className={styles.scatter_layout}>
-						<RatingScatter
-							points={points}
-							max={10}
-							bin={0.5}
-							jitter={0.2}
-							aboveColor={MY_COLOR}
-							belowColor={PUBLIC_COLOR}
-							xLabel={s.xLabel}
-							yLabel={s.yLabel}
-							aboveLabel={s.higherLegend}
-							belowLabel={s.lowerLegend}
-							trendLabel={s.trend}
-							diagonalLabel={s.diagonal}
-						/>
-						<dl className={styles.summary}>
-							{summary.map((item) => (
-								<div key={item.label} className={styles.summary_item}>
-									<dt className={styles.summary_label}>{item.label}</dt>
-									<dd className={styles.summary_value}>{item.value}</dd>
+			<StatsSection
+				title={s.title}
+				subtitle={s.subtitle}
+				actions={
+					<PillToggle
+						value={scale}
+						options={[
+							{ value: "raw", label: s.scaleRaw },
+							{ value: "fit", label: s.scaleFit },
+						]}
+						onChange={setScale}
+					/>
+				}>
+				<div className={styles.scatter_layout}>
+					<RatingScatter
+						points={points}
+						max={10}
+						jitter={0.2}
+						aboveColor={MY_COLOR}
+						belowColor={PUBLIC_COLOR}
+						xLabel={s.xLabel}
+						yLabel={s.yLabel}
+						aboveLabel={s.higherLegend}
+						belowLabel={s.lowerLegend}
+						diagonalLabel={s.diagonal}
+						emptyText={notEnoughData}
+					/>
+					<div className={styles.summary}>
+						{scale === "fit" && fit && (
+							<p className={styles.fit_note}>
+								{s.fitNote(
+									fit.xMean.toFixed(1),
+									fit.xSd.toFixed(1),
+									fit.yMean.toFixed(1),
+									fit.ySd.toFixed(1),
+								)}
+							</p>
+						)}
+						<div className={styles.split}>
+							<div className={styles.split_bar} aria-hidden>
+								{split.map((part) => (
+									<span
+										key={part.key}
+										style={{
+											flexGrow: part.share,
+											background: part.color,
+										}}
+									/>
+								))}
+							</div>
+							<dl className={styles.split_rows}>
+								{split.map((part) => (
+									<div key={part.key} className={styles.split_row}>
+										<dt className={styles.split_label}>
+											<span
+												className={styles.swatch}
+												style={{ background: part.color }}
+											/>
+											{part.label}
+										</dt>
+										<dd className={styles.split_value}>
+											{hasPoints
+												? s.percent(Math.round(part.share * 100))
+												: "—"}
+										</dd>
+									</div>
+								))}
+							</dl>
+						</div>
+						<dl className={styles.figures}>
+							{figures.map((item) => (
+								<div key={item.label} className={styles.figure}>
+									<dt className={styles.figure_label}>{item.label}</dt>
+									<dd className={styles.figure_value}>{item.value}</dd>
+									{item.hint && (
+										<dd className={styles.figure_hint}>{item.hint}</dd>
+									)}
 								</div>
 							))}
 						</dl>
 					</div>
-				) : (
-					<p className={styles.empty}>{notEnoughData}</p>
-				)}
+				</div>
 			</StatsSection>
 
 			<div className={styles.row}>
-				<StatsSection
-					title={t.byDecade.title}
-					subtitle={t.byDecade.subtitle(items)}>
+				<StatsSection title={t.byDecade.title}>
 					{averageChart(vsPublic.byDecade, (k) =>
 						dict.stats.mediaByDecade.tick(k),
 					)}
 				</StatsSection>
-				<StatsSection
-					title={t.byReviewYear.title}
-					subtitle={t.byReviewYear.subtitle(items)}>
+				<StatsSection title={t.byReviewYear.title}>
 					{averageChart(vsPublic.byReviewYear, String)}
 				</StatsSection>
 			</div>
 
-			{(showRuntime || showPopularity) && (
-				<div className={styles.row}>
-					{showRuntime && (
-						<StatsSection
-							title={t.byRuntime.title}
-							subtitle={t.byRuntime.subtitle}>
-							{averageChart(vsPublic.byRuntime, runtimeTick)}
-						</StatsSection>
+			{/* Kept for every type (as an empty state) so the page doesn't jump. */}
+			<div className={styles.row}>
+				<StatsSection title={t.byRuntime.title} subtitle={t.byRuntime.subtitle}>
+					{averageChart(
+						showRuntime ? vsPublic.byRuntime : [],
+						runtimeTick,
+						showRuntime ? notEnoughData : t.byRuntime.moviesOnly,
 					)}
-					{showPopularity && (
-						<StatsSection
-							title={t.byPopularity.title}
-							subtitle={t.byPopularity.subtitle(items)}>
-							{averageChart(vsPublic.byPopularity, (k) =>
-								t.byPopularity.tick(k * 20, (k + 1) * 20),
-							)}
-						</StatsSection>
+				</StatsSection>
+				<StatsSection
+					title={t.byPopularity.title}
+					subtitle={t.byPopularity.subtitle}>
+					{averageChart(
+						showPopularity ? vsPublic.byPopularity : [],
+						(k) => t.byPopularity.tick(k * 20, (k + 1) * 20),
+						showPopularity ? notEnoughData : t.byPopularity.moviesAndTvOnly,
 					)}
-				</div>
-			)}
+				</StatsSection>
+			</div>
 		</>
 	);
 }

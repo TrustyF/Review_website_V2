@@ -44,6 +44,7 @@ const CHART_COLOR_VARS = [
 // one or two rated titles shouldn't be able to top the avg-rating ranking.
 const MIN_SAMPLE_FOR_GENRE_RATING = 3;
 const TOP_GENRES_COUNT = 7;
+const TOP_COUNTRIES_COUNT = 8;
 
 // Fixed bar-scale endpoints for every avg-rating list — edit directly.
 // Separate from the world map's own RATING_SCALE_MIN/MAX (colors a choropleth).
@@ -105,7 +106,7 @@ export function StatsPageContent({ stats }: Props) {
 						(c): c is typeof c & { weighted: number } => c.weighted != null,
 					)
 					.sort((a, b) => b.weighted - a.weighted)
-					.slice(0, 8)
+					.slice(0, TOP_COUNTRIES_COUNT)
 					.map((c) => ({
 						key: c.code,
 						label: c.name,
@@ -191,9 +192,10 @@ export function StatsPageContent({ stats }: Props) {
 							valueFormatter={(v) => `${v.toFixed(1)}/10`}
 							scaleMin={RATING_BAR_SCALE_MIN}
 							scaleMax={RATING_BAR_SCALE_MAX}
+							minRows={TOP_GENRES_COUNT}
 						/>
 					) : (
-						<HorizontalBarList items={genreItems} />
+						<HorizontalBarList items={genreItems} minRows={TOP_GENRES_COUNT} />
 					)}
 				</StatsSection>
 			</div>
@@ -221,15 +223,19 @@ export function StatsPageContent({ stats }: Props) {
 								valueFormatter={(v) => `${v.toFixed(1)}/10`}
 								scaleMin={RATING_BAR_SCALE_MIN}
 								scaleMax={RATING_BAR_SCALE_MAX}
+								minRows={TOP_COUNTRIES_COUNT}
 							/>
 						) : (
-							<HorizontalBarList items={countryItems} />
+							<HorizontalBarList
+								items={countryItems}
+								minRows={TOP_COUNTRIES_COUNT}
+							/>
 						)}
 					</div>
 				</div>
 			</StatsSection>
 
-			<CalendarSection calendar={stats.timeline.calendar} year={stats.year} />
+			<CalendarSection calendar={stats.timeline.calendar} />
 
 			<StatsSection
 				title={dict.stats.topPeople.title}

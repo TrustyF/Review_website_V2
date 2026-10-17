@@ -24,6 +24,9 @@
   color: var(--accent2)
   text-transform: uppercase
 
+.grid_frame
+  position: relative
+
 .grid
   display: grid
   grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr))
@@ -54,6 +57,9 @@
 
   @media (max-width: $mobile-breakpoint)
     padding-bottom: 0.85rem
+
+.placeholder
+  visibility: hidden
 
 .photo,
 .photo_placeholder
@@ -91,3 +97,7 @@
 
 .empty
   @include empty-text
+  position: absolute
+  top: 0
+  left: 0
+  margin: 0

@@ -5,10 +5,11 @@ import { Link } from "@/components/ui/link";
 import type { StatsMode } from "@/components/stats/mode-toggle/mode-toggle";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import type { Dictionary } from "@/lib/i18n/dictionaries/en";
-import type {
-	PersonRanking,
-	PersonRole,
-	PersonStat,
+import {
+	type PersonRanking,
+	type PersonRole,
+	type PersonStat,
+	TOP_PEOPLE_COUNT,
 } from "@/components/stats/stats-types";
 import styles from "./top-people.module.sass";
 
@@ -87,9 +88,8 @@ export function TopPeople({ topPeople, mode }: Props) {
 					return (
 						<div className={styles.group} key={role}>
 							<h3 className={styles.group_title}>{ROLE_LABEL[role](dict)}</h3>
-							{people.length === 0 ? (
-								<p className={styles.empty}>{dict.stats.topPeople.empty}</p>
-							) : (
+							{/* Always a full grid (padded with invisible cards) so the height stays put. */}
+							<div className={styles.grid_frame}>
 								<div className={styles.grid}>
 									{people.map((person) => (
 										<PersonCard
@@ -99,8 +99,22 @@ export function TopPeople({ topPeople, mode }: Props) {
 											dict={dict}
 										/>
 									))}
+									{Array.from(
+										{ length: Math.max(0, TOP_PEOPLE_COUNT - people.length) },
+										(_, i) => (
+											<span
+												// biome-ignore lint/suspicious/noArrayIndexKey: interchangeable spacers
+												key={`pad-${i}`}
+												className={`${styles.card} ${styles.placeholder}`}
+												aria-hidden
+											/>
+										),
+									)}
 								</div>
-							)}
+								{people.length === 0 && (
+									<p className={styles.empty}>{dict.stats.topPeople.empty}</p>
+								)}
+							</div>
 						</div>
 					);
 				})}

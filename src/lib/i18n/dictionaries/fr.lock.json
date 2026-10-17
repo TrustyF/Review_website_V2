@@ -1464,12 +1464,16 @@
 		"fr": "94ecc7916d2743a0"
 	},
 	"stats.timeline.age.subtitle": {
-		"en": "ee92b1442da100da",
-		"fr": "cbd078a560258fde"
+		"en": "25c0c9778a633920",
+		"fr": "f32e630683fe552f"
 	},
 	"stats.timeline.age.title": {
 		"en": "e708cc76f8d91164",
 		"fr": "e7664da818067f3d"
+	},
+	"stats.timeline.age.tooltip": {
+		"en": "3ab79b8b340346ca",
+		"fr": "b825ae7009260cbf"
 	},
 	"stats.timeline.age.xLabel": {
 		"en": "facf3c3cdb6df639",
@@ -1479,13 +1483,9 @@
 		"en": "3d879b11e75614ed",
 		"fr": "9beb4e9c1d569b99"
 	},
-	"stats.timeline.calendar.subtitleRecent": {
-		"en": "69e6de7d66ad7f27",
-		"fr": "40c9d766dc5e61d6"
-	},
-	"stats.timeline.calendar.subtitleYear": {
-		"en": "41927cb41ac16c8a",
-		"fr": "bd0f9ee6a7ee6eaa"
+	"stats.timeline.calendar.moreTitles": {
+		"en": "deb503ed3fee1efa",
+		"fr": "4181aa0046846fea"
 	},
 	"stats.timeline.calendar.title": {
 		"en": "c1c2c3107786b63e",
@@ -1496,8 +1496,8 @@
 		"fr": "10771c69aa256111"
 	},
 	"stats.timeline.genreShift.subtitle": {
-		"en": "d64c3981e341e0b5",
-		"fr": "d92234694b4ba9bb"
+		"en": "4002d0bf67a3f544",
+		"fr": "2827fb0a612367f5"
 	},
 	"stats.timeline.genreShift.title": {
 		"en": "07404d834bf6d1d3",
@@ -1506,10 +1506,6 @@
 	"stats.timeline.notEnoughData": {
 		"en": "2a0af3f6c4019796",
 		"fr": "64e3545d7f25fedf"
-	},
-	"stats.timeline.ratingOverTime.subtitle": {
-		"en": "c9872376e3f502e0",
-		"fr": "fc95acc0d5de63c3"
 	},
 	"stats.timeline.ratingOverTime.title": {
 		"en": "f9f8231845f8c2d6",
@@ -1543,17 +1539,17 @@
 		"en": "6c5466776a47094c",
 		"fr": "2a01d07f30b72110"
 	},
-	"stats.vsPublic.byDecade.subtitle": {
-		"en": "4793d1ea3b35480e",
-		"fr": "472679801356bcd3"
-	},
 	"stats.vsPublic.byDecade.title": {
 		"en": "7c738b07baa5a4a3",
 		"fr": "c491aeb14c3907c1"
 	},
+	"stats.vsPublic.byPopularity.moviesAndTvOnly": {
+		"en": "8cc09fc6c793789c",
+		"fr": "807e5dd6c9279504"
+	},
 	"stats.vsPublic.byPopularity.subtitle": {
-		"en": "457221d49ffe6367",
-		"fr": "fd7ef13e0f968d0d"
+		"en": "1277807dc984968f",
+		"fr": "6bafcf6c98c18351"
 	},
 	"stats.vsPublic.byPopularity.tick": {
 		"en": "81f77998114cc8bb",
@@ -1563,17 +1559,17 @@
 		"en": "4f7cdc7bc8e054bd",
 		"fr": "786683f0e3a54b53"
 	},
-	"stats.vsPublic.byReviewYear.subtitle": {
-		"en": "ec45a4b7d87335ad",
-		"fr": "9e937bd4b2e15e95"
-	},
 	"stats.vsPublic.byReviewYear.title": {
 		"en": "6ba86560a18004ef",
 		"fr": "ef23b678c5a02b45"
 	},
+	"stats.vsPublic.byRuntime.moviesOnly": {
+		"en": "3b960ed9f07cfe65",
+		"fr": "0932d12d7a905317"
+	},
 	"stats.vsPublic.byRuntime.subtitle": {
-		"en": "c31ad9e9a7dde548",
-		"fr": "0d71d7b9f5574ab4"
+		"en": "d8aa8461570a47b4",
+		"fr": "fde233b1b735fdea"
 	},
 	"stats.vsPublic.byRuntime.tickOver": {
 		"en": "4a1d5476deef308e",
@@ -1596,32 +1592,68 @@
 		"fr": "d16532e243aad81d"
 	},
 	"stats.vsPublic.publicSeries": {
-		"en": "870e9a500a8b4f3c",
-		"fr": "0622f7d10b213c23"
+		"en": "ff2e96a9a68593ed",
+		"fr": "ff2e96a9a68593ed"
 	},
 	"stats.vsPublic.scatter.agreement": {
-		"en": "255102c6bc5ffd55",
-		"fr": "3f30b55b0b6746df"
+		"en": "0d42afe3984b29e2",
+		"fr": "b86e50663f146237"
+	},
+	"stats.vsPublic.scatter.agreementLevels.high": {
+		"en": "15575adc21187b7a",
+		"fr": "1c9202e9dc710222"
+	},
+	"stats.vsPublic.scatter.agreementLevels.little": {
+		"en": "e10e13e71a4c0ca2",
+		"fr": "610ebc04196dfb13"
+	},
+	"stats.vsPublic.scatter.agreementLevels.opposite": {
+		"en": "7963246aff1c8883",
+		"fr": "3818ed4dfcb5fdcb"
+	},
+	"stats.vsPublic.scatter.agreementLevels.some": {
+		"en": "ab1b660005f248bd",
+		"fr": "46c3d930ea4ba7b4"
+	},
+	"stats.vsPublic.scatter.agreementLevels.veryHigh": {
+		"en": "ab1a2a25d61b6579",
+		"fr": "f8299601386d80b0"
 	},
 	"stats.vsPublic.scatter.avgDiff": {
 		"en": "c58a00fea7bdb101",
 		"fr": "4d0ed0bcc43cb48c"
 	},
+	"stats.vsPublic.scatter.avgDiffHigher": {
+		"en": "0bbd735e42cc6944",
+		"fr": "b8b46c4c96cc7bbd"
+	},
+	"stats.vsPublic.scatter.avgDiffLower": {
+		"en": "2b95998859dfaadd",
+		"fr": "ce6acc54a74bc094"
+	},
+	"stats.vsPublic.scatter.avgDiffSame": {
+		"en": "d11a760c36212737",
+		"fr": "73b2b478fe72061c"
+	},
 	"stats.vsPublic.scatter.diagonal": {
 		"en": "2d2e107a8faeab4a",
 		"fr": "a2a11881f47ddeec"
 	},
+	"stats.vsPublic.scatter.fitNote": {
+		"en": "0fd5faf4b623dd26",
+		"fr": "87bc9053debf2a3f"
+	},
 	"stats.vsPublic.scatter.higher": {
-		"en": "3229bda1baecb114",
-		"fr": "ca9f5e9df22314cc"
+		"en": "c1ab6e3a0c0ccf58",
+		"fr": "6a4079362b41610a"
 	},
 	"stats.vsPublic.scatter.higherLegend": {
 		"en": "c1ab6e3a0c0ccf58",
 		"fr": "6a4079362b41610a"
 	},
 	"stats.vsPublic.scatter.lower": {
-		"en": "3958570ab616d454",
-		"fr": "a99c6a26b16fc7ed"
+		"en": "cb32f14ab6e16141",
+		"fr": "fd343ba1202db5d3"
 	},
 	"stats.vsPublic.scatter.lowerLegend": {
 		"en": "cb32f14ab6e16141",
@@ -1632,20 +1664,28 @@
 		"fr": "f907c74cd0b360dd"
 	},
 	"stats.vsPublic.scatter.same": {
-		"en": "ca4a801943b6b05c",
-		"fr": "cdd310c43bbd512c"
+		"en": "e681d88892755a62",
+		"fr": "5901c4dd8347ab4a"
+	},
+	"stats.vsPublic.scatter.scaleFit": {
+		"en": "d8c6fcb189ed2825",
+		"fr": "35dd46a5942fa31a"
+	},
+	"stats.vsPublic.scatter.scaleRaw": {
+		"en": "df929d4214575e8b",
+		"fr": "622c8f6275b241fc"
 	},
 	"stats.vsPublic.scatter.subtitle": {
-		"en": "21073e76017911e2",
-		"fr": "395e6eb4e01f3854"
+		"en": "0ed9b2c5118bd8b8",
+		"fr": "4a8e91994748e545"
 	},
 	"stats.vsPublic.scatter.title": {
 		"en": "679af4ec70a67273",
 		"fr": "8a14f79f0407f559"
 	},
-	"stats.vsPublic.scatter.trend": {
-		"en": "ed734ca8037520b0",
-		"fr": "21c16a8b5e521190"
+	"stats.vsPublic.scatter.tooltip": {
+		"en": "7299bd29505a086f",
+		"fr": "3aaccb543160be02"
 	},
 	"stats.vsPublic.scatter.xLabel": {
 		"en": "ee92d05881037b4e",
