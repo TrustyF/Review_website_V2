@@ -162,7 +162,7 @@ export function RatingLineChart({
 								s.values.map((v, i) =>
 									v == null ? null : (
 										<span
-											key={`${s.key}-${ticks[i]}`}
+											key={`${s.key}-${i}`}
 											className={styles.dot}
 											style={{
 												left: `${xPercent(i, n)}%`,
@@ -175,8 +175,9 @@ export function RatingLineChart({
 							)}
 					</div>
 					<div className={styles.ticks}>
-						{ticks.map((tick) => (
-							<span key={tick} className={styles.tick}>
+						{ticks.map((tick, i) => (
+							// biome-ignore lint/suspicious/noArrayIndexKey: ticks are positional and may repeat or be blank
+							<span key={i} className={styles.tick}>
 								{tick}
 							</span>
 						))}

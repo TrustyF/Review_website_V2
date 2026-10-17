@@ -84,13 +84,13 @@ export type ComparisonBin = {
 	publicAvg: number | null;
 };
 
-// Raw 0–10 ratings plus each one's percentile within its own scale.
 export type ScatterPoint = {
 	my: number;
 	public: number;
-	myPct: number;
-	publicPct: number;
 };
+
+// One step on a time line; null when that step is too thin, drawn as a gap.
+export type TimeBin = { key: number; value: number | null };
 
 export type StatsData = {
 	// The scope this data was computed for — null is "All" for either. `years`
@@ -128,6 +128,20 @@ export type StatsData = {
 		// Movies + TV; key is the popularity fifth, 0 = least popular.
 		byPopularity: ComparisonBin[];
 		points: ScatterPoint[];
+	};
+	// Full history (type-scoped) except the calendar, which follows the year.
+	timeline: {
+		// start is a UTC YYYY-MM-DD; counts holds one entry per day from there.
+		calendar: { start: string; counts: number[] };
+		// name null is "Other"; shares per year sum to 1.
+		genreShift: {
+			years: number[];
+			series: { name: string | null; shares: number[] }[];
+		};
+		// Fractional years.
+		age: { watched: number; released: number }[];
+		// Keys are year * 4 + quarter.
+		ratingByQuarter: TimeBin[];
 	};
 	reviewsByYear: { year: number; count: number }[];
 	mediaByDecade: { decade: number; count: number }[];

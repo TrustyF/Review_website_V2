@@ -3,6 +3,7 @@ import { db } from "@/server/db/client";
 import { MediaStatus, MediaType, type Prisma } from "@prisma/client";
 import { WORLD_MAP_COUNTRIES } from "@/components/stats/world-map/world-map-paths.generated";
 import { toPersonPhotoSrc } from "@/server/resolvers/asset-paths";
+import { buildTimeline } from "@/components/stats/stats-timeline";
 import {
 	BROAD_GENRES,
 	type ComparisonBin,
@@ -237,7 +238,14 @@ export async function getStats(
 			select: {
 				createDate: true,
 				rating: true,
-				media: { select: { type: true, publicRating: true } },
+				media: {
+					select: {
+						type: true,
+						publicRating: true,
+						releaseDate: true,
+						mediaGenres: { select: { genreId: true } },
+					},
+				},
 			},
 		}),
 		// Every rated movie, unscoped by year, so a percentile doesn't move with the filters.
@@ -615,11 +623,9 @@ export async function getStats(
 			POPULARITY_BUCKETS * MIN_SAMPLE_FOR_COMPARISON
 				? compareBins(byPopularityEntries, 1)
 				: [],
-		points: paired.map(({ rawMy, rawPub, my, pub }) => ({
+		points: paired.map(({ rawMy, rawPub }) => ({
 			my: rawMy,
 			public: Math.round(rawPub * 10) / 10,
-			myPct: Math.round(my),
-			publicPct: Math.round(pub),
 		})),
 	};
 
@@ -641,6 +647,7 @@ export async function getStats(
 		topPeople,
 		ratingHistogram: { counts: ratingCounts, publicCounts, unrated },
 		vsPublic,
+		timeline: buildTimeline(allReviewDates, genreNameById, year),
 		reviewsByYear,
 		mediaByDecade,
 	};

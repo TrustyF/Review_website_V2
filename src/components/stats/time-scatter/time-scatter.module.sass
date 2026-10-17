@@ -1,0 +1,102 @@
+.wrapper
+  display: flex
+  flex-flow: column
+  gap: 0.35rem
+
+.legend
+  display: flex
+  flex-flow: row wrap
+  gap: 0.25rem 0.9rem
+  margin: 0 0 0.75rem
+  padding: 0
+  list-style: none
+
+.legend_item
+  display: flex
+  align-items: center
+  gap: 0.35rem
+  font-size: 0.7rem
+  color: var(--accent2)
+
+.swatch_dot
+  width: 6px
+  height: 6px
+  border-radius: 50%
+
+.swatch_diagonal
+  width: 12px
+  border-top: 1px dashed var(--accent2)
+
+.body
+  display: flex
+
+.main
+  flex: 1
+  min-width: 0
+
+// Same height as .plot so labels line up with the gridlines.
+.y_axis
+  position: relative
+  width: 2.25rem
+  height: 280px
+  flex-shrink: 0
+
+.y_tick
+  position: absolute
+  right: 0.35rem
+  transform: translateY(-50%)
+  font-size: 0.65rem
+  color: var(--accent1)
+  line-height: 1
+
+.plot
+  position: relative
+  height: 280px
+
+.svg
+  position: absolute
+  inset: 0
+  width: 100%
+  height: 100%
+  overflow: visible
+
+.gridline
+  stroke: var(--surface-border)
+  stroke-width: 1
+
+.diagonal
+  stroke: var(--accent2)
+  stroke-width: 1
+  stroke-dasharray: 4 4
+
+.dot
+  position: absolute
+  width: 6px
+  height: 6px
+  border-radius: 50%
+  opacity: 0.25
+  transform: translate(-50%, -50%)
+
+.x_axis
+  position: relative
+  height: 1rem
+  margin-top: 0.35rem
+
+.x_tick
+  position: absolute
+  transform: translateX(-50%)
+  font-size: 0.65rem
+  color: var(--accent1)
+
+.y_label,
+.x_label
+  font-size: 0.65rem
+  color: var(--accent2)
+
+.x_label
+  display: block
+  text-align: center
+
+.empty
+  font-size: 0.8rem
+  color: var(--accent2)

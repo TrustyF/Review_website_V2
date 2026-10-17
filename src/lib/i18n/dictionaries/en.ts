@@ -587,29 +587,48 @@ export const en = {
 			},
 			scatter: {
 				title: "My rating vs. public rating",
-				subtitleRelative: (items: string) =>
-					`One dot per title, ranked among my ratings of ${items} vs. among public scores for ${items}`,
-				subtitleRaw: (items: string) =>
-					`One dot per title among ${items}, ratings as given out of 10`,
-				relative: "Relative",
-				raw: "Raw",
+				subtitle: (items: string) =>
+					`One dot per title among ${items}, ratings out of 10`,
 				xLabel: "Public rating",
 				yLabel: "My rating",
-				xLabelRelative: "Public rating (percentile)",
-				yLabelRelative: "My rating (percentile)",
 				trend: "My average at each public score",
 				diagonal: "Same rating",
-				diagonalRelative: "Same standing",
 				higherLegend: "I rated higher",
 				lowerLegend: "I rated lower",
 				higher: "Rated higher than the public",
 				same: "About the same (within 0.5)",
-				sameRelative: "About the same (within 10 points)",
 				lower: "Rated lower than the public",
 				avgDiff: "Average difference",
-				avgDiffRelative: "Average difference (percentile points)",
 				agreement: "Taste agreement (−1 to 1)",
 				percent: (value: number) => `${value}%`,
+			},
+		},
+		timeline: {
+			notEnoughData: "Not enough logged titles yet.",
+			calendar: {
+				title: "Review calendar",
+				subtitleYear: (titles: number, days: number, year: number) =>
+					`${titles} title${titles === 1 ? "" : "s"} logged on ${days} day${days === 1 ? "" : "s"} in ${year}`,
+				subtitleRecent: (titles: number, days: number) =>
+					`${titles} title${titles === 1 ? "" : "s"} logged on ${days} day${days === 1 ? "" : "s"} in the last 12 months`,
+			},
+			ratingOverTime: {
+				title: "Average rating over time",
+				subtitle:
+					"My average rating each quarter, smoothed with the quarters either side",
+			},
+			genreShift: {
+				title: "Genres over time",
+				subtitle: "Share of what I logged each year, by genre",
+				other: "Other",
+			},
+			age: {
+				title: "How old the things I watch are",
+				subtitle: "Each title's release year against when I logged it",
+				dot: "One title",
+				xLabel: "Year logged",
+				yLabel: "Release year",
+				sameYear: "Released the year I logged it",
 			},
 		},
 		reviewsByYear: {

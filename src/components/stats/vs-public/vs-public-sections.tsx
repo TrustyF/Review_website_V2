@@ -1,6 +1,4 @@
 "use client";
-import { useState } from "react";
-import { OptionToggle } from "@/components/stats/mode-toggle/mode-toggle";
 import { RatingLineChart } from "@/components/stats/rating-line-chart/rating-line-chart";
 import { RatingScatter } from "@/components/stats/rating-scatter/rating-scatter";
 import { StatsSection } from "@/components/stats/stats-section/stats-section";
@@ -17,11 +15,8 @@ import styles from "./vs-public-sections.module.sass";
 
 const MY_COLOR = "var(--chart-1)";
 const PUBLIC_COLOR = "var(--chart-red)";
-// Gaps within this much count as "about the same", per scale.
-const RAW_AGREEMENT_MARGIN = 0.5;
-const RELATIVE_AGREEMENT_MARGIN = 10;
-
-type Scale = "relative" | "raw";
+// Gaps within this many points count as "about the same".
+const AGREEMENT_MARGIN = 0.5;
 
 type Props = {
 	vsPublic: StatsData["vsPublic"];
@@ -33,9 +28,15 @@ function percentileAxis(bins: ComparisonBin[]) {
 		[b.myAvg, b.publicAvg].filter((v): v is number => v != null),
 	);
 	if (values.length === 0) return { domain: [0, 100] as [number, number] };
-	const lo = Math.max(0, Math.floor((Math.min(...values) - 3) / 10) * 10);
-	const hi = Math.min(100, Math.ceil((Math.max(...values) + 3) / 10) * 10);
+	let lo = Math.max(0, Math.floor((Math.min(...values) - 3) / 10) * 10);
+	let hi = Math.min(100, Math.ceil((Math.max(...values) + 3) / 10) * 10);
 	const step = hi - lo > 50 ? 20 : 10;
+	// Stretch to a whole number of steps so the top edge gets a label too.
+	hi = lo + Math.ceil((hi - lo) / step) * step;
+	if (hi > 100) {
+		lo = Math.max(0, lo - (hi - 100));
+		hi = 100;
+	}
 	const yTicks: number[] = [];
 	for (let t = lo; t <= hi; t += step) yTicks.push(t);
 	return { domain: [lo, hi] as [number, number], yTicks };
@@ -76,16 +77,14 @@ function spearman(xs: number[], ys: number[]): number | null {
 	return vx > 0 && vy > 0 ? cov / Math.sqrt(vx * vy) : null;
 }
 
-const formatSigned = (v: number, digits: number) =>
-	`${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(digits)}`;
+const formatSigned = (v: number) =>
+	`${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}`;
 
 // Every chart comparing my ratings with the public's.
 export function VsPublicSections({ vsPublic }: Props) {
 	const dict = useDictionary();
 	const t = dict.stats.vsPublic;
 	const s = t.scatter;
-	const [scale, setScale] = useState<Scale>("relative");
-	const relative = scale === "relative";
 	const items = t.typePlurals[MEDIA_TYPE_LABEL_KEY[vsPublic.type]];
 	const notEnoughData = t.notEnoughData(items);
 	// Runtime is movie-only data; popularity exists for movies and TV.
@@ -118,30 +117,21 @@ export function VsPublicSections({ vsPublic }: Props) {
 		/>
 	);
 
-	const points = vsPublic.points.map((p) =>
-		relative ? { x: p.publicPct, y: p.myPct } : { x: p.public, y: p.my },
-	);
-	const margin = relative ? RELATIVE_AGREEMENT_MARGIN : RAW_AGREEMENT_MARGIN;
+	const points = vsPublic.points.map((p) => ({ x: p.public, y: p.my }));
 	const diffs = points.map((p) => p.y - p.x);
 	const share = (match: (d: number) => boolean) =>
 		s.percent(Math.round((diffs.filter(match).length / diffs.length) * 100));
 	const avgDiff = diffs.reduce((a, b) => a + b, 0) / diffs.length;
-	// Percentiles already put each source on one scale, so rank those.
+	// One type means one public source, so raw values rank fine.
 	const agreement = spearman(
-		vsPublic.points.map((p) => p.publicPct),
-		vsPublic.points.map((p) => p.myPct),
+		points.map((p) => p.x),
+		points.map((p) => p.y),
 	);
 	const summary = [
-		{ label: s.higher, value: share((d) => d > margin) },
-		{
-			label: relative ? s.sameRelative : s.same,
-			value: share((d) => Math.abs(d) <= margin),
-		},
-		{ label: s.lower, value: share((d) => d < -margin) },
-		{
-			label: relative ? s.avgDiffRelative : s.avgDiff,
-			value: formatSigned(avgDiff, relative ? 0 : 1),
-		},
+		{ label: s.higher, value: share((d) => d > AGREEMENT_MARGIN) },
+		{ label: s.same, value: share((d) => Math.abs(d) <= AGREEMENT_MARGIN) },
+		{ label: s.lower, value: share((d) => d < -AGREEMENT_MARGIN) },
+		{ label: s.avgDiff, value: formatSigned(avgDiff) },
 		...(agreement != null
 			? [{ label: s.agreement, value: agreement.toFixed(2) }]
 			: []),
@@ -157,34 +147,22 @@ export function VsPublicSections({ vsPublic }: Props) {
 
 	return (
 		<>
-			<StatsSection
-				title={s.title}
-				subtitle={relative ? s.subtitleRelative(items) : s.subtitleRaw(items)}
-				actions={
-					<OptionToggle
-						value={scale}
-						onChange={setScale}
-						options={[
-							{ value: "relative", label: s.relative },
-							{ value: "raw", label: s.raw },
-						]}
-					/>
-				}>
+			<StatsSection title={s.title} subtitle={s.subtitle(items)}>
 				{diffs.length > 0 ? (
 					<div className={styles.scatter_layout}>
 						<RatingScatter
 							points={points}
-							{...(relative
-								? { min: 0, max: 100, bin: 10, tickStep: 20, jitter: 2 }
-								: { max: 10, bin: 0.5, jitter: 0.2 })}
+							max={10}
+							bin={0.5}
+							jitter={0.2}
 							aboveColor={MY_COLOR}
 							belowColor={PUBLIC_COLOR}
-							xLabel={relative ? s.xLabelRelative : s.xLabel}
-							yLabel={relative ? s.yLabelRelative : s.yLabel}
+							xLabel={s.xLabel}
+							yLabel={s.yLabel}
 							aboveLabel={s.higherLegend}
 							belowLabel={s.lowerLegend}
 							trendLabel={s.trend}
-							diagonalLabel={relative ? s.diagonalRelative : s.diagonal}
+							diagonalLabel={s.diagonal}
 						/>
 						<dl className={styles.summary}>
 							{summary.map((item) => (

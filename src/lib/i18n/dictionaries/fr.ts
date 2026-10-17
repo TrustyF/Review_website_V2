@@ -597,29 +597,49 @@ export const fr = {
 			},
 			scatter: {
 				title: "Ma note face à celle du public",
-				subtitleRelative: (items: string) =>
-					`Un point par titre : son rang parmi mes notes de ${items}, comparé à son rang parmi les notes du public pour les ${items}`,
-				subtitleRaw: (items: string) =>
-					`Un point par titre parmi les ${items}, notes telles quelles, sur 10`,
-				relative: "Relatif",
-				raw: "Brut",
+				subtitle: (items: string) =>
+					`Un point par titre parmi les ${items}, notes sur 10`,
 				xLabel: "Note du public",
 				yLabel: "Ma note",
-				xLabelRelative: "Note du public (centile)",
-				yLabelRelative: "Ma note (centile)",
 				trend: "Ma moyenne pour chaque note du public",
 				diagonal: "Même note",
-				diagonalRelative: "Même rang",
 				higherLegend: "J'ai mis une note plus haute",
 				lowerLegend: "J'ai mis une note plus basse",
 				higher: "Mieux noté que par le public",
 				same: "À peu près pareil (à 0,5 près)",
-				sameRelative: "À peu près pareil (à 10 points près)",
 				lower: "Moins bien noté que par le public",
 				avgDiff: "Écart moyen",
-				avgDiffRelative: "Écart moyen (en points de centile)",
 				agreement: "Accord des goûts (de −1 à 1)",
 				percent: (value: number) => `${value} %`,
+			},
+		},
+		timeline: {
+			notEnoughData: "Pas encore assez de titres enregistrés.",
+			calendar: {
+				title: "Calendrier des critiques",
+				subtitleYear: (titles: number, days: number, year: number) =>
+					`${titles} titre${titles === 1 ? "" : "s"} enregistré${titles === 1 ? "" : "s"} sur ${days} jour${days === 1 ? "" : "s"} en ${year}`,
+				subtitleRecent: (titles: number, days: number) =>
+					`${titles} titre${titles === 1 ? "" : "s"} enregistré${titles === 1 ? "" : "s"} sur ${days} jour${days === 1 ? "" : "s"} au cours des 12 derniers mois`,
+			},
+			ratingOverTime: {
+				title: "Note moyenne au fil du temps",
+				subtitle:
+					"Ma note moyenne par trimestre, lissée avec les trimestres voisins",
+			},
+			genreShift: {
+				title: "Genres au fil du temps",
+				subtitle: "Part de ce que j'ai enregistré chaque année, par genre",
+				other: "Autres",
+			},
+			age: {
+				title: "L'âge de ce que je regarde",
+				subtitle:
+					"L'année de sortie de chaque titre par rapport au moment où je l'ai enregistré",
+				dot: "Un titre",
+				xLabel: "Année d'enregistrement",
+				yLabel: "Année de sortie",
+				sameYear: "Sorti l'année où je l'ai enregistré",
 			},
 		},
 		reviewsByYear: {

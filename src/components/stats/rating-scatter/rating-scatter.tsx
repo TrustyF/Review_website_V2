@@ -40,7 +40,7 @@ function lowerBound(values: number[], max: number) {
 
 // Stable pseudo-random offset in [-1, 1] per dot and axis, so dots don't move
 // between renders or between server and client.
-function noise(i: number, axis: number) {
+export function noise(i: number, axis: number) {
 	let h = Math.imul(i * 2 + axis + 1, 2654435761);
 	h ^= h >>> 15;
 	h = Math.imul(h, 2246822519);

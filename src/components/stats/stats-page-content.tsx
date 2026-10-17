@@ -17,6 +17,10 @@ import {
 	type StatsMode,
 } from "@/components/stats/mode-toggle/mode-toggle";
 import { TopPeople } from "@/components/stats/top-people/top-people";
+import {
+	CalendarSection,
+	TimeSections,
+} from "@/components/stats/time-sections/time-sections";
 import { VsPublicSections } from "@/components/stats/vs-public/vs-public-sections";
 import { countryFlagEmoji } from "@/lib/country-flag";
 import { useDictionary } from "@/lib/i18n/i18n-context";
@@ -225,6 +229,14 @@ export function StatsPageContent({ stats }: Props) {
 				</div>
 			</StatsSection>
 
+			<CalendarSection calendar={stats.timeline.calendar} year={stats.year} />
+
+			<StatsSection
+				title={dict.stats.topPeople.title}
+				actions={<ModeToggle mode={peopleMode} onModeChange={setPeopleMode} />}>
+				<TopPeople topPeople={stats.topPeople} mode={peopleMode} />
+			</StatsSection>
+
 			<StatsSection
 				title={dict.stats.ratingDistribution.title}
 				subtitle={dict.stats.ratingDistribution.subtitle(
@@ -238,11 +250,7 @@ export function StatsPageContent({ stats }: Props) {
 
 			<VsPublicSections vsPublic={stats.vsPublic} />
 
-			<StatsSection
-				title={dict.stats.topPeople.title}
-				actions={<ModeToggle mode={peopleMode} onModeChange={setPeopleMode} />}>
-				<TopPeople topPeople={stats.topPeople} mode={peopleMode} />
-			</StatsSection>
+			<TimeSections timeline={stats.timeline} />
 
 			<div className={styles.chart_row}>
 				<StatsSection title={dict.stats.reviewsByYear.title}>

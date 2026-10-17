@@ -34,31 +34,3 @@ export function ModeToggle({ mode, onModeChange }: Props) {
 		</div>
 	);
 }
-
-type OptionToggleProps<T extends string> = {
-	value: T;
-	options: { value: T; label: string }[];
-	onChange: (value: T) => void;
-};
-
-// Same pill look as ModeToggle, for an arbitrary set of options.
-export function OptionToggle<T extends string>({
-	value,
-	options,
-	onChange,
-}: OptionToggleProps<T>) {
-	return (
-		<div className={styles.toggle}>
-			{options.map((o) => (
-				<Clickable
-					key={o.value}
-					className={styles.toggle_option}
-					aria-pressed={value === o.value}
-					data-active={value === o.value}
-					onClick={() => onChange(o.value)}>
-					{o.label}
-				</Clickable>
-			))}
-		</div>
-	);
-}

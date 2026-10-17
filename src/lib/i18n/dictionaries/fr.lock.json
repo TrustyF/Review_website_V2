@@ -1455,6 +1455,66 @@
 		"en": "308cc33b3c9f8ae3",
 		"fr": "2a0bd2c035ade12a"
 	},
+	"stats.timeline.age.dot": {
+		"en": "416daa778cca06c9",
+		"fr": "00c294cb859de72f"
+	},
+	"stats.timeline.age.sameYear": {
+		"en": "92db312cb8b1b3b6",
+		"fr": "94ecc7916d2743a0"
+	},
+	"stats.timeline.age.subtitle": {
+		"en": "ee92b1442da100da",
+		"fr": "cbd078a560258fde"
+	},
+	"stats.timeline.age.title": {
+		"en": "e708cc76f8d91164",
+		"fr": "e7664da818067f3d"
+	},
+	"stats.timeline.age.xLabel": {
+		"en": "facf3c3cdb6df639",
+		"fr": "276d2c479414b9e3"
+	},
+	"stats.timeline.age.yLabel": {
+		"en": "3d879b11e75614ed",
+		"fr": "9beb4e9c1d569b99"
+	},
+	"stats.timeline.calendar.subtitleRecent": {
+		"en": "69e6de7d66ad7f27",
+		"fr": "40c9d766dc5e61d6"
+	},
+	"stats.timeline.calendar.subtitleYear": {
+		"en": "41927cb41ac16c8a",
+		"fr": "bd0f9ee6a7ee6eaa"
+	},
+	"stats.timeline.calendar.title": {
+		"en": "c1c2c3107786b63e",
+		"fr": "38335861fb8f5dee"
+	},
+	"stats.timeline.genreShift.other": {
+		"en": "1f1260ddd48575a9",
+		"fr": "10771c69aa256111"
+	},
+	"stats.timeline.genreShift.subtitle": {
+		"en": "d64c3981e341e0b5",
+		"fr": "d92234694b4ba9bb"
+	},
+	"stats.timeline.genreShift.title": {
+		"en": "07404d834bf6d1d3",
+		"fr": "22f89fb9ab51d00d"
+	},
+	"stats.timeline.notEnoughData": {
+		"en": "2a0af3f6c4019796",
+		"fr": "64e3545d7f25fedf"
+	},
+	"stats.timeline.ratingOverTime.subtitle": {
+		"en": "c9872376e3f502e0",
+		"fr": "fc95acc0d5de63c3"
+	},
+	"stats.timeline.ratingOverTime.title": {
+		"en": "f9f8231845f8c2d6",
+		"fr": "b1ecfbd4feda946d"
+	},
 	"stats.title": {
 		"en": "b307a08c2efd1f05",
 		"fr": "b307a08c2efd1f05"
@@ -1547,17 +1607,9 @@
 		"en": "c58a00fea7bdb101",
 		"fr": "4d0ed0bcc43cb48c"
 	},
-	"stats.vsPublic.scatter.avgDiffRelative": {
-		"en": "e4f28ecf7092a14c",
-		"fr": "0240afad2ea8d0d1"
-	},
 	"stats.vsPublic.scatter.diagonal": {
 		"en": "2d2e107a8faeab4a",
 		"fr": "a2a11881f47ddeec"
-	},
-	"stats.vsPublic.scatter.diagonalRelative": {
-		"en": "5773c84beb1dd93e",
-		"fr": "691074eb3811b5b1"
 	},
 	"stats.vsPublic.scatter.higher": {
 		"en": "3229bda1baecb114",
@@ -1579,29 +1631,13 @@
 		"en": "5a61bcec9eaa7555",
 		"fr": "f907c74cd0b360dd"
 	},
-	"stats.vsPublic.scatter.raw": {
-		"en": "df929d4214575e8b",
-		"fr": "622c8f6275b241fc"
-	},
-	"stats.vsPublic.scatter.relative": {
-		"en": "64702fc0fe5dc221",
-		"fr": "c57acec230eff146"
-	},
 	"stats.vsPublic.scatter.same": {
 		"en": "ca4a801943b6b05c",
 		"fr": "cdd310c43bbd512c"
 	},
-	"stats.vsPublic.scatter.sameRelative": {
-		"en": "d0410343ab2f2b50",
-		"fr": "2df99e221da1025f"
-	},
-	"stats.vsPublic.scatter.subtitleRaw": {
-		"en": "60cf068e6d97ce9c",
-		"fr": "81c48fd8dfe3a9fb"
-	},
-	"stats.vsPublic.scatter.subtitleRelative": {
-		"en": "53cd2aaecdb76130",
-		"fr": "52631240a2ab2041"
+	"stats.vsPublic.scatter.subtitle": {
+		"en": "21073e76017911e2",
+		"fr": "395e6eb4e01f3854"
 	},
 	"stats.vsPublic.scatter.title": {
 		"en": "679af4ec70a67273",
@@ -1615,17 +1651,9 @@
 		"en": "ee92d05881037b4e",
 		"fr": "946b7fa26038b6a6"
 	},
-	"stats.vsPublic.scatter.xLabelRelative": {
-		"en": "c948f73bd4722a03",
-		"fr": "6bb3294dc6bdd7f5"
-	},
 	"stats.vsPublic.scatter.yLabel": {
 		"en": "a030c7738ab8ab2b",
 		"fr": "fb6a1d49ca1dc1e4"
-	},
-	"stats.vsPublic.scatter.yLabelRelative": {
-		"en": "97005723e18471b4",
-		"fr": "9279feb0d5970a9e"
 	},
 	"stats.vsPublic.typePlurals.book": {
 		"en": "35599b6b49a8c9df",
