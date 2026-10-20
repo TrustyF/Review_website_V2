@@ -27,17 +27,34 @@ function batchPayload(batch: eventWithTime[]) {
 	};
 }
 
+// Browsers cap keepalive bodies at 64KB (shared across in-flight requests);
+// anything bigger has to go as a plain fetch.
+const KEEPALIVE_MAX_BYTES = 60000;
+
+// Sent as text/plain, a CORS-safelisted type, so these cross-origin posts need
+// no preflight — a beacon can never pass one (it always sends credentials,
+// which the server doesn't allow). The server's req.json() ignores the type.
 async function sendBatch(batch: eventWithTime[]) {
+	const body = JSON.stringify(batchPayload(batch));
 	const ok = await fetch(url, {
 		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(batchPayload(batch)),
+		headers: { "Content-Type": "text/plain" },
+		body,
+		// lets a flush started as the tab hides survive the page closing
+		keepalive: body.length < KEEPALIVE_MAX_BYTES,
 	})
 		.then((res) => res.ok)
 		.catch(() => false);
 
 	// failed to send, requeue the batch for the next flush
 	if (!ok) events = batch.concat(events);
+}
+
+function flush() {
+	if (events.length === 0) return;
+	const batch = events;
+	events = [];
+	sendBatch(batch).then();
 }
 
 // Not statically imported — rrweb is a sizable library, and this way it only
@@ -70,25 +87,22 @@ export async function start() {
 		maskInputOptions: { password: true, email: true },
 	});
 
-	sendInterval = setInterval(() => {
-		if (events.length === 0) return;
-		const batch = events;
-		events = [];
-		sendBatch(batch).then();
-	}, SEND_INTERVAL_MS);
+	sendInterval = setInterval(flush, SEND_INTERVAL_MS);
 
+	// Last chance as the page unloads, when a fetch could be cancelled
 	flushOnHide = () => {
 		if (events.length === 0) return;
-		navigator.sendBeacon(
+		const queued = navigator.sendBeacon(
 			url,
-			new Blob([JSON.stringify(batchPayload(events))], {
-				type: "application/json",
-			}),
+			new Blob([JSON.stringify(batchPayload(events))], { type: "text/plain" }),
 		);
-		events = [];
+		// false = over the beacon size quota; keep the events in case the page survives
+		if (queued) events = [];
 	};
+	// The page is still alive when merely hidden (tab/app switch, screen lock),
+	// so a normal send that requeues on failure beats a fire-and-forget beacon
 	visibilityHandler = () => {
-		if (document.visibilityState === "hidden") flushOnHide?.();
+		if (document.visibilityState === "hidden") flush();
 	};
 	document.addEventListener("visibilitychange", visibilityHandler);
 	window.addEventListener("pagehide", flushOnHide);
@@ -112,5 +126,7 @@ export function stop() {
 		window.removeEventListener("pagehide", flushOnHide);
 		flushOnHide = null;
 	}
-	events = [];
+	// send what's buffered rather than dropping it — stop() also runs when the
+	// auth status changes (e.g. on login), mid-session
+	flush();
 }
