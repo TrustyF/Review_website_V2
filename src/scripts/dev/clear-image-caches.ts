@@ -10,6 +10,7 @@ import {
 	CHANGELOG_BANNER_THUMB_DIR,
 	PERSON_PHOTO_DIR,
 	LINK_EMBED_DIR,
+	mediaAssetFilename,
 } from "@/server/resolvers/poster-resolver";
 import { getImageStorage } from "@/server/storage/image-storage";
 
@@ -40,6 +41,38 @@ function parseTypes(argv: string[]): MediaType[] | null {
 	});
 }
 
+// A saved crop's only durable copy is its poster/banner cache file (CROPPED_DIR is swept
+// after 24h), so those files and anything derived from them must never be deleted.
+async function findCropDerivedKeys(): Promise<Set<string>> {
+	const isCrop = { contains: "/cropped/" };
+	const [media, changes] = await Promise.all([
+		db.media.findMany({
+			where: { OR: [{ posterPath: isCrop }, { bannerPath: isCrop }] },
+			select: { id: true, posterPath: true, bannerPath: true },
+		}),
+		db.mediaChangeLog.findMany({
+			where: { OR: [{ oldValue: isCrop }, { newValue: isCrop }] },
+			select: { mediaId: true, oldValue: true, newValue: true },
+		}),
+	]);
+	const pairs = [
+		...media.flatMap((m) => [
+			[m.id, m.posterPath],
+			[m.id, m.bannerPath],
+		]),
+		...changes.flatMap((c) => [
+			[c.mediaId, c.oldValue],
+			[c.mediaId, c.newValue],
+		]),
+	] as [number, string | null][];
+	// Extension stripped: the same crop is cached as webp/avif/jpeg across dirs.
+	return new Set(
+		pairs
+			.filter(([, p]) => p?.includes("/cropped/"))
+			.map(([id, p]) => mediaAssetFilename(id, p!).replace(/\.[^.]+$/, "")),
+	);
+}
+
 // Dev-only: lets a resize/quality/format change in poster-resolver.ts take effect —
 // cache files are keyed by source URL, not encode settings, so a stale file lingers otherwise.
 async function main() {
@@ -60,6 +93,11 @@ async function main() {
 	if (types)
 		console.log(`Only ${types.join(", ")} (${mediaIds!.size} media)\n`);
 
+	const protectedKeys = await findCropDerivedKeys();
+	console.log(
+		`Keeping files derived from ${protectedKeys.size} saved crop(s)\n`,
+	);
+
 	// Person photos aren't tied to a media type.
 	const dirs = types
 		? MEDIA_CACHE_DIRS
@@ -68,7 +106,9 @@ async function main() {
 	let removed = 0;
 	for (const dir of dirs) {
 		const files = (await storage.list(dir)).filter(
-			(file) => !mediaIds || mediaIds.has(file.split("-")[0] ?? ""),
+			(file) =>
+				(!mediaIds || mediaIds.has(file.split("-")[0] ?? "")) &&
+				!protectedKeys.has(file.replace(/\.[^.]+$/, "")),
 		);
 		let dirRemoved = 0;
 		for (const file of files) {
