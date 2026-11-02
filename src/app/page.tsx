@@ -18,7 +18,6 @@ import { FeaturedListsSection } from "@/components/home/featured-lists-section/f
 import { RecommendationCta } from "@/components/home/recommendation-cta/recommendation-cta";
 import { RandomPickSection } from "@/components/home/random-pick/random-pick-section";
 import { MovieSpotlightSection } from "@/components/home/movie-spotlight-section/movie-spotlight-section";
-import { HomeReveal } from "@/components/home/reveal/home-reveal";
 import { PersonSpotlightSection } from "@/components/home/person-spotlight-section/person-spotlight-section";
 import {
 	EnrichmentStatus,
@@ -302,55 +301,53 @@ export default async function HomePage() {
 	return (
 		<div className={styles.wrapper}>
 			<FeaturedReview items={reviewedList} />
-			<HomeReveal>
-				<RecentMoviesSection items={recentMovies} />
-				{/* The admin's own watchlist already shows as MyWatchlistSection. */}
-				{userId && !isAdmin && (
-					<Suspense>
-						<YourWatchlistSection userId={userId} />
-					</Suspense>
-				)}
+			<RecentMoviesSection items={recentMovies} />
+			{/* The admin's own watchlist already shows as MyWatchlistSection. */}
+			{userId && !isAdmin && (
 				<Suspense>
-					<RecentlyWatchedRow recentlyWatched={recentlyWatchedPromise} />
+					<YourWatchlistSection userId={userId} />
 				</Suspense>
+			)}
+			<Suspense>
+				<RecentlyWatchedRow recentlyWatched={recentlyWatchedPromise} />
+			</Suspense>
+			<Suspense>
+				<AnticipatedRow anticipated={anticipatedPromise} />
+			</Suspense>
+			<Suspense>
+				<RandomPickSection excludeIds={archiveExcludeIds} />
+			</Suspense>
+			<Suspense>
+				<FeaturedListsSection />
+			</Suspense>
+			<Suspense>
+				<MovieSpotlightSection />
+			</Suspense>
+			<Suspense>
+				<PersonSpotlightSection />
+			</Suspense>
+			{/* Lazily fetched client-side on scroll. */}
+			{RECENT_MEDIA_GROUP_KEYS.map((group) => (
+				<LazyRecentMediaSection key={group} group={group} />
+			))}
+			<Suspense>
+				<MyWatchlistRow anticipated={anticipatedPromise} />
+			</Suspense>
+			{/* Admins get no CTA, so the activity preview takes the full width. */}
+			{isAdmin ? (
 				<Suspense>
-					<AnticipatedRow anticipated={anticipatedPromise} />
+					<ActivitySection />
 				</Suspense>
-				<Suspense>
-					<RandomPickSection excludeIds={archiveExcludeIds} />
-				</Suspense>
-				<Suspense>
-					<FeaturedListsSection />
-				</Suspense>
-				<Suspense>
-					<MovieSpotlightSection />
-				</Suspense>
-				<Suspense>
-					<PersonSpotlightSection />
-				</Suspense>
-				{/* Lazily fetched client-side on scroll. */}
-				{RECENT_MEDIA_GROUP_KEYS.map((group) => (
-					<LazyRecentMediaSection key={group} group={group} />
-				))}
-				<Suspense>
-					<MyWatchlistRow anticipated={anticipatedPromise} />
-				</Suspense>
-				{/* Admins get no CTA, so the activity preview takes the full width. */}
-				{isAdmin ? (
+			) : (
+				<div className={styles.split}>
 					<Suspense>
 						<ActivitySection />
 					</Suspense>
-				) : (
-					<div className={styles.split}>
-						<Suspense>
-							<ActivitySection />
-						</Suspense>
-						<aside className={styles.side}>
-							<RecommendationCta signedIn={Boolean(userId)} />
-						</aside>
-					</div>
-				)}
-			</HomeReveal>
+					<aside className={styles.side}>
+						<RecommendationCta signedIn={Boolean(userId)} />
+					</aside>
+				</div>
+			)}
 		</div>
 	);
 }

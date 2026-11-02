@@ -189,7 +189,9 @@ export function TierList({ listId, media, tiers, seenMediaIds }: Props) {
 		persist(sorted, rows);
 	}
 
-	const showPool = isAdmin || rows.POOL.some((id) => visibleIds.has(id));
+	// Hidden when empty, but kept during a drag so it stays a drop target (and doesn't vanish when its last item leaves).
+	const showPool =
+		dragStartRows !== null || rows.POOL.some((id) => visibleIds.has(id));
 
 	return (
 		<div className={styles.wrapper}>

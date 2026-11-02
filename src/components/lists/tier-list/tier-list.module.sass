@@ -44,13 +44,13 @@
 .tier
   display: flex
   flex-flow: row
-  // Exactly one 2/3 poster tall (90px × 1.5; 66px on mobile), so cards sit flush top and bottom.
-  min-height: 135px
+  // Exactly one 2/3 poster tall (102px × 1.5; 72px on mobile), so cards sit flush top and bottom.
+  min-height: 153px
   // Same spacing as between tiers; the label and item area are separate blocks so the gap shows the page background.
   gap: 0.125rem
 
   @media (max-width: $mobile-breakpoint)
-    min-height: 99px
+    min-height: 108px
 
 .tier_label
   display: flex
@@ -95,11 +95,11 @@
 // Fixed small width — tier tiles are thumbnail-scale so a row fits many. Multiples of 6 keep 2/3 and 3/4 poster heights whole pixels.
 .item
   position: relative
-  width: 90px
+  width: 102px
   flex-shrink: 0
 
   @media (max-width: $mobile-breakpoint)
-    width: 66px
+    width: 72px
 
   &:hover
     .remove_button
