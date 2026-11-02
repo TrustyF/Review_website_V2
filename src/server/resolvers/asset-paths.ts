@@ -106,7 +106,8 @@ export function posterUrlFor(
 		return `https://uploads.mangadex.org/covers/${externalId}/${posterPath}.${size === "full" ? "512" : "256"}.jpg`;
 	}
 	if (type === MediaType.GAME) {
-		return `https://images.igdb.com/igdb/image/upload/t_cover_${size === "full" ? "big" : "small"}/${posterPath}.jpg`;
+		// _2x (528px / 180px wide) puts games on par with TMDB's w500.
+		return `https://images.igdb.com/igdb/image/upload/t_cover_${size === "full" ? "big" : "small"}_2x/${posterPath}.jpg`;
 	}
 	return `https://image.tmdb.org/t/p/${size === "full" ? "w500" : "w154"}${posterPath}`;
 }
