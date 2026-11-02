@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { db } from "@/server/db/client";
-import { ListSortMode } from "@prisma/client";
+import { ListSortMode, ListTier } from "@prisma/client";
 import {
 	isListThumbnailUrl,
 	saveListThumbnail,
@@ -211,7 +211,7 @@ export async function addMediaToList(
 	mediaId: number,
 ): Promise<void> {
 	await requireAdmin();
-	// New items always append to the bottom of the ranking.
+	// New items append to the bottom, in the unplaced pool (tier defaults to null).
 	const { _max } = await db.listItem.aggregate({
 		where: { listId },
 		_max: { rank: true },
@@ -257,17 +257,26 @@ export async function removeMediaFromList(
 	revalidatePath("/activity");
 }
 
-// Persists a drag-and-drop reorder: rewrites every item's rank to its index in the new order. Simple 0..n-1 renumbering rather than fractional positions — cheap at this app's scale. Rows missing from orderedMediaIds keep their prior rank untouched.
-export async function reorderListItems(
+export type ListTierGroup = { tier: ListTier | null; mediaIds: number[] };
+
+// Persists a tier-list drag: rewrites each item's tier, and its rank to its index across all groups in order. Simple 0..n-1 renumbering rather than fractional positions — cheap at this app's scale. Rows missing from groups keep their prior tier/rank.
+export async function setListTiers(
 	listId: number,
-	orderedMediaIds: number[],
+	groups: ListTierGroup[],
 ): Promise<void> {
 	await requireAdmin();
+	const validTiers = new Set<string>(Object.values(ListTier));
+	if (groups.some((g) => g.tier !== null && !validTiers.has(g.tier))) {
+		throw new Error("Invalid tier");
+	}
+	const rows = groups.flatMap((g) =>
+		g.mediaIds.map((mediaId) => ({ mediaId, tier: g.tier })),
+	);
 	await db.$transaction(
-		orderedMediaIds.map((mediaId, index) =>
+		rows.map(({ mediaId, tier }, index) =>
 			db.listItem.update({
 				where: { listId_mediaId: { listId, mediaId } },
-				data: { rank: index },
+				data: { tier, rank: index },
 			}),
 		),
 	);

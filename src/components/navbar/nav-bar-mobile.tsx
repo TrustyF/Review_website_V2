@@ -5,7 +5,7 @@ import {
 	CirclePlus,
 	GamepadDirectional,
 	LayoutList,
-	List,
+	LayoutGrid,
 	Menu,
 	X,
 } from "lucide-react";
@@ -179,7 +179,7 @@ export function NavBarMobile({
 					</NavLink>
 					<NavLink
 						href="/lists"
-						icon={List}
+						icon={LayoutGrid}
 						className={barStyle.link}
 						pathname={pathname}
 						iconOnly

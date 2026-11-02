@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Link } from "@/components/ui/link";
-import { List, MailPlus, Settings } from "lucide-react";
+import { LayoutGrid, MailPlus, Settings } from "lucide-react";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
@@ -126,7 +126,7 @@ export default async function AccountPage() {
 					side="top">
 					<Link href="/account/lists" className={styles.lists}>
 						<h2 className={styles.section_title}>
-							<List size={18} className={styles.section_icon} />
+							<LayoutGrid size={18} className={styles.section_icon} />
 							{dict.account.recommendations}
 						</h2>
 						{recommendationLists.length === 0 ? (

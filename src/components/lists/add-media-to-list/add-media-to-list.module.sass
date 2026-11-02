@@ -1,13 +1,16 @@
+// Absolute against list-detail-page's header (top-right); no z-index so MediaBrowser's fixed modal isn't trapped.
 .wrapper
+  position: absolute
+  top: 0
+  right: 0
   display: flex
   flex-flow: column
+  align-items: flex-end
   gap: 0.5rem
-  margin-bottom: 1rem
 
 .browse_button
   display: inline-flex
   align-items: center
-  align-self: flex-start
   padding: 0.4rem 0.9rem
   border: 1px solid var(--accent1)
   border-radius: 0.4rem

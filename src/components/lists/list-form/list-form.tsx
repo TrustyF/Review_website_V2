@@ -23,7 +23,7 @@ export type ListFormValues = {
 };
 
 const SORT_MODE_OPTIONS: { value: ListSortMode; label: string }[] = [
-	{ value: "RANKED", label: "Ranked (drag to reorder)" },
+	{ value: "RANKED", label: "Tier list (drag into S–D)" },
 	{ value: "RATED", label: "Grouped by rating" },
 	{ value: "UNSORTED", label: "Unsorted" },
 ];

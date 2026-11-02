@@ -93,11 +93,11 @@
   cursor: pointer
 
 // The notice drawn over one bar line (placed inline by SpoilerText); hidden until measured to fit.
-// left (set inline) is the spoiler block's horizontal center, which the transform centers the box on; top is just below the block's top.
+// left/top (set inline) are the spoiler block's center of mass, which the transform centers the box on.
 .spoiler_overlay
   position: absolute
   z-index: 1
-  transform: translateX(-50%)
+  transform: translate(-50%, -50%)
   display: inline-flex
   align-items: center
   gap: 0.3rem

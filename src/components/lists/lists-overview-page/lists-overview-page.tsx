@@ -1,5 +1,5 @@
 import { CSSProperties } from "react";
-import { List } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
 import { db } from "@/server/db/client";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
 import { NewListLink } from "@/components/lists/new-list-link/new-list-link";
@@ -24,7 +24,7 @@ export async function ListsOverviewPage() {
 		<div className={styles.wrapper}>
 			<div className={styles.header}>
 				<h1 className={styles.title}>
-					<List size={20} className={styles.title_icon} />
+					<LayoutGrid size={20} className={styles.title_icon} />
 					{dict.nav.lists}
 				</h1>
 				<NewListLink />

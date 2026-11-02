@@ -18,7 +18,7 @@ type Props = {
 	seenMediaIds?: Set<number> | undefined;
 };
 
-// Handles the two non-RANKED sort modes (RankedList covers RANKED); RATED reuses RatedTierGrid, UNSORTED reuses LazyMediaGrid directly. Neither grid has a built-in "remove from list", so it's supplied via renderOverlay — the seen badge rides along in the same slot.
+// Handles the two non-RANKED sort modes (TierList covers RANKED); RATED reuses RatedTierGrid, UNSORTED reuses LazyMediaGrid directly. Neither grid has a built-in "remove from list", so it's supplied via renderOverlay — the seen badge rides along in the same slot.
 export function ListMediaView({
 	listId,
 	media,

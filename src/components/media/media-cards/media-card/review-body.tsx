@@ -67,9 +67,6 @@ function SpoilerNotice() {
 	);
 }
 
-// How far below the spoiler's top edge the notice box sits.
-const OVERLAY_TOP_OFFSET_PX = 8;
-
 // Click/Enter/Space reveals every spoiler in the review. interactive=false (inside a navigating <Link>, e.g. featured-review.tsx) drops handlers so clicks reach the link.
 // onNoticeFit (first spoiler only): notice box centered over the bar, no shift on reveal; false = bar too narrow, ReviewBody falls back.
 function SpoilerText({
@@ -97,8 +94,8 @@ function SpoilerText({
 		const text = textRef.current;
 		const overlay = overlayRef.current;
 		if (!showOverlay || !text || !overlay) return;
-		// Centers the box horizontally on the spoiler's bounding block (all its line rects), just below its
-		// top, against offsetParent (the paragraph). Too narrow a block (a short one-liner) falls back instead.
+		// Centers the box on the area-weighted centroid of the spoiler's line rects, clamped inside their bounding
+		// block, against offsetParent (the paragraph). Too narrow a block (a short one-liner) falls back instead.
 		const measure = () => {
 			const parent = overlay.offsetParent;
 			if (!parent) return;
@@ -107,15 +104,40 @@ function SpoilerText({
 			);
 			const left = Math.min(...lines.map((rect) => rect.left));
 			const right = Math.max(...lines.map((rect) => rect.right));
-			if (!lines.length || right - left < overlay.offsetWidth) {
+			const halfWidth = overlay.offsetWidth / 2;
+			if (!lines.length || right - left < halfWidth * 2) {
 				setPlacement(null);
 				onNoticeFit(false);
 				return;
 			}
+			let area = 0;
+			let sumX = 0;
+			let sumY = 0;
+			for (const rect of lines) {
+				const a = rect.width * rect.height;
+				area += a;
+				sumX += a * (rect.left + rect.width / 2);
+				sumY += a * (rect.top + rect.height / 2);
+			}
+			const top = lines[0]!.top;
+			const bottom = Math.max(...lines.map((rect) => rect.bottom));
+			const halfHeight = overlay.offsetHeight / 2;
+			const centerX = Math.min(
+				Math.max(sumX / area, left + halfWidth),
+				right - halfWidth,
+			);
+			// A single line is shorter than the box, so only clamp vertically when the block has room.
+			const centerY =
+				bottom - top >= halfHeight * 2
+					? Math.min(
+							Math.max(sumY / area, top + halfHeight),
+							bottom - halfHeight,
+						)
+					: sumY / area;
 			const box = parent.getBoundingClientRect();
 			setPlacement({
-				left: (left + right) / 2 - box.left - parent.clientLeft,
-				top: lines[0]!.top - box.top - parent.clientTop + OVERLAY_TOP_OFFSET_PX,
+				left: centerX - box.left - parent.clientLeft,
+				top: centerY - box.top - parent.clientTop,
 			});
 			onNoticeFit(true);
 		};

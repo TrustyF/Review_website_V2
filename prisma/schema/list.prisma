@@ -1,5 +1,5 @@
-// RANKED: explicit top-to-bottom order (ListItem.rank), drag-to-reorder —
-// see RankedList. RATED: grouped into rating tiers, same view /movies etc.
+// RANKED: lettered tier list (ListItem.tier, ordered within a tier by
+// ListItem.rank), drag between tiers — see TierList. RATED: grouped into rating tiers, same view /movies etc.
 // already use — see RatedTierGrid. UNSORTED: plain grid, no ordering UI —
 // see LazyMediaGrid. ListItem.rank still gets set on every add regardless
 // of mode (see addMediaToList) — harmless when unused, and it means
@@ -8,6 +8,15 @@ enum ListSortMode {
   RANKED
   RATED
   UNSORTED
+}
+
+// Tier letters for RANKED lists; a null ListItem.tier is the unplaced pool.
+enum ListTier {
+  S
+  A
+  B
+  C
+  D
 }
 
 model List {
@@ -48,13 +57,15 @@ model List {
 model ListItem {
   listId  Int
   mediaId Int
-  // Explicit top-to-bottom position within the list (0-based) — the
-  // sort key ranked-list.tsx's drag-and-drop reordering writes to.
+  // Explicit position within the list (0-based), counted across tiers in
+  // S..D-then-pool order — the sort key tier-list.tsx's drag-and-drop writes to.
   // @default(0) exists only so the migration adding this column doesn't
   // need existing rows backfilled interactively; every real insert
   // (addMediaToList) always sets an explicit value, and a one-off script
   // backfills existing rows right after the migration runs.
   rank    Int @default(0)
+  // Null = not yet placed in a tier (new items land here).
+  tier    ListTier?
 
   list  List  @relation(fields: [listId], references: [id], onDelete: Cascade)
   media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)

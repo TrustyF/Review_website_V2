@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/server/db/client";
 import { toMediaRecord } from "@/components/media/types";
 import { AddMediaToList } from "@/components/lists/add-media-to-list/add-media-to-list";
-import { RankedList } from "@/components/lists/ranked-list/ranked-list";
+import { TierList } from "@/components/lists/tier-list/tier-list";
 import { ListMediaView } from "@/components/lists/list-media-view/list-media-view";
 import { EditListLink } from "@/components/lists/edit-list-link/edit-list-link";
 import { ListIdBadge } from "@/components/lists/list-id-badge/list-id-badge";
@@ -40,7 +40,7 @@ export async function ListDetailPage({ id }: Props) {
 							game: true,
 							book: true,
 							review: true,
-							// For MediaFilterPopover's genre filter (see ranked-list.tsx).
+							// For MediaFilterPopover's genre filter (see tier-list.tsx).
 							mediaGenres: { include: { genre: true } },
 						},
 					},
@@ -69,9 +69,9 @@ export async function ListDetailPage({ id }: Props) {
 		if (!isRecipient && !isAdmin) notFound();
 	}
 
-	const media = list.items
-		.filter((item) => !item.media.isDeleted)
-		.map((item) => toMediaRecord(item.media));
+	const liveItems = list.items.filter((item) => !item.media.isDeleted);
+	const media = liveItems.map((item) => toMediaRecord(item.media));
+	const tiers = new Map(liveItems.map((item) => [item.mediaId, item.tier]));
 
 	// Read-only "already seen" badges: only meaningful to an admin browsing someone else's
 	// recommendation list — the recipient already knows their own watched state.
@@ -115,13 +115,13 @@ export async function ListDetailPage({ id }: Props) {
 					mediaIds={media.map((item) => item.id)}
 					className={styles.watched_progress}
 				/>
+				{/* Floats in the header's top-right corner (admin-only), so it adds no layout. */}
+				<AddMediaToList
+					listId={list.id}
+					excludeMediaIds={media.map((item) => item.id)}
+					seenMediaIds={seenMediaIds}
+				/>
 			</div>
-
-			<AddMediaToList
-				listId={list.id}
-				excludeMediaIds={media.map((item) => item.id)}
-				seenMediaIds={seenMediaIds}
-			/>
 
 			{media.length === 0 ? (
 				<p className={styles.empty}>{dict.lists.emptyMedia}</p>
@@ -131,9 +131,10 @@ export async function ListDetailPage({ id }: Props) {
 						<MediaSelectToggle />
 					</MediaGridControls>
 					{list.sortMode === "RANKED" ? (
-						<RankedList
+						<TierList
 							listId={list.id}
 							media={media}
+							tiers={tiers}
 							seenMediaIds={seenMediaIds}
 						/>
 					) : (

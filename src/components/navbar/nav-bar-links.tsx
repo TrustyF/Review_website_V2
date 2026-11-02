@@ -4,7 +4,7 @@ import {
 	ChartLine,
 	GamepadDirectional,
 	LayoutList,
-	List,
+	LayoutGrid,
 } from "lucide-react";
 import { ActivityIcon } from "@/components/icons/activity-icon";
 import { MovieIcon } from "@/components/icons/movie-icon";
@@ -94,7 +94,7 @@ export function NavBarLinks({
 						</NavLink>
 						<NavLink
 							href="/lists"
-							icon={List}
+							icon={LayoutGrid}
 							className={barStyle.link}
 							pathname={pathname}
 							iconOnly

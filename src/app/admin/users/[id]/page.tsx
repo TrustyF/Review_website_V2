@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { Link } from "@/components/ui/link";
-import { List } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
 import { db } from "@/server/db/client";
 import { getRecommendationTarget } from "@/components/lists/list-actions";
 import { ListPreviewCard } from "@/components/lists/list-preview-card/list-preview-card";
@@ -67,7 +67,7 @@ export default async function AdminUserOverviewPage({
 
 			<Link href={`/admin/users/${id}/lists`} className={styles.lists}>
 				<h2 className={styles.section_title}>
-					<List size={18} className={styles.section_icon} />
+					<LayoutGrid size={18} className={styles.section_icon} />
 					Recommendations
 				</h2>
 				{lists.length === 0 ? (
