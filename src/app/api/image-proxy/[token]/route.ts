@@ -39,10 +39,20 @@ export async function GET(
 			{ status: 502 },
 		);
 	}
+	// Never serve non-image upstream content (e.g. HTML) from our origin.
+	const contentType = upstream.headers.get("content-type") ?? "image/jpeg";
+	if (!contentType.startsWith("image/")) {
+		await upstream.body.cancel();
+		return NextResponse.json(
+			{ error: "Upstream returned a non-image" },
+			{ status: 502 },
+		);
+	}
 
 	return new NextResponse(upstream.body, {
 		headers: {
-			"Content-Type": upstream.headers.get("content-type") ?? "image/jpeg",
+			"Content-Type": contentType,
+			"X-Content-Type-Options": "nosniff",
 			// s-maxage lets the edge CDN serve repeat requests without re-invoking this function; safe since tokens are content-addressed.
 			"Cache-Control":
 				"public, max-age=86400, s-maxage=2592000, stale-while-revalidate=86400",

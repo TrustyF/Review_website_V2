@@ -69,6 +69,12 @@ export const en = {
 		createAccountButton: "Create account",
 		creatingAccount: "Creating account…",
 		signupFailed: "Failed to sign up. Try again.",
+		signupErrors: {
+			emailInvalid: "Enter a valid email address",
+			passwordTooShort: "Password must be at least 8 characters",
+			passwordTooLong: "Password must be at most 72 characters",
+			emailTaken: "An account with this email already exists",
+		},
 		haveAccount: "Already have an account? Sign in",
 	},
 	account: {

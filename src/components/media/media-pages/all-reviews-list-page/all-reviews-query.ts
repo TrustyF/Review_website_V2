@@ -34,7 +34,7 @@ export async function loadReviewsPage(
 		where: REVIEWED_WHERE,
 		include: { ...EVERY_TYPE_RELATION, review: true },
 		orderBy: REVIEWED_ORDER_BY,
-		skip: offset,
+		skip: Number.isInteger(offset) && offset > 0 ? offset : 0,
 		// One extra row fetched then trimmed below — cheaper than a separate count query.
 		take: PAGE_SIZE + 1,
 	});

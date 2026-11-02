@@ -70,6 +70,12 @@ export const fr = {
 		createAccountButton: "Créer le compte",
 		creatingAccount: "Création du compte…",
 		signupFailed: "L'inscription a échoué. Réessayez.",
+		signupErrors: {
+			emailInvalid: "Saisissez une adresse e-mail valide",
+			passwordTooShort: "Le mot de passe doit contenir au moins 8 caractères",
+			passwordTooLong: "Le mot de passe doit contenir au maximum 72 caractères",
+			emailTaken: "Un compte existe déjà avec cet e-mail",
+		},
 		haveAccount: "Déjà un compte ? Connectez-vous",
 	},
 	account: {

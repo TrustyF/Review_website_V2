@@ -211,6 +211,22 @@
 		"en": "c134a3defaf087bc",
 		"fr": "a241d478e994bdb0"
 	},
+	"auth.signupErrors.emailInvalid": {
+		"en": "45a6d38b8d8cf436",
+		"fr": "52c5de4893703630"
+	},
+	"auth.signupErrors.emailTaken": {
+		"en": "60b079bcc421ed25",
+		"fr": "c716e0db2cb0d1c6"
+	},
+	"auth.signupErrors.passwordTooLong": {
+		"en": "447b9e08def9826a",
+		"fr": "6fc96f8e636d9d0e"
+	},
+	"auth.signupErrors.passwordTooShort": {
+		"en": "7f1d9f3e5d0eff8d",
+		"fr": "96b5c2c96092b5a0"
+	},
 	"auth.signupFailed": {
 		"en": "4f3f0cca7fbbf12b",
 		"fr": "da478ae972bcd537"

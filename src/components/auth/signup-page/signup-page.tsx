@@ -19,13 +19,19 @@ export function SignupPage() {
 		setIsSubmitting(true);
 		setError(null);
 		try {
-			await signUp({ name, email, password });
+			const result = await signUp({ name, email, password });
+			if (result) {
+				setError(dict.auth.signupErrors[result.error]);
+				setIsSubmitting(false);
+				return;
+			}
 			// Signs in immediately (see auth-actions.ts's note) so they don't bounce to /login.
 			await signIn("credentials", { email, password, redirect: false });
 			// Hard navigation, not router.push/refresh — see login-page.tsx's comment.
 			window.location.href = "/onboarding";
 		} catch (err) {
-			setError(err instanceof Error ? err.message : dict.auth.signupFailed);
+			console.error(err);
+			setError(dict.auth.signupFailed);
 			setIsSubmitting(false);
 		}
 	}
@@ -70,7 +76,9 @@ export function SignupPage() {
 					type="submit"
 					className={styles.submit_button}
 					disabled={isSubmitting}>
-					{isSubmitting ? dict.auth.creatingAccount : dict.auth.createAccountButton}
+					{isSubmitting
+						? dict.auth.creatingAccount
+						: dict.auth.createAccountButton}
 				</button>
 			</form>
 			<Link href="/login" className={styles.switch_link}>
