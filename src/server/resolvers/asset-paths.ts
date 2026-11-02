@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 import { MediaType } from "@prisma/client";
 
-// Pure URL/filename helpers split out of poster-resolver.ts so callers that only need a URL (search-actions.ts, list-actions.ts, ...) skip loading sharp's native binary.
+// Pure URL/filename helpers split out of poster-resolver.ts so callers that only need a URL (search-query.ts, list-actions.ts, ...) skip loading sharp's native binary.
 
 // Logical keys handed to ImageStorage, not real filesystem paths — local storage joins onto public/, a remote backend uses it as a key prefix.
 export const POSTER_DIR = "posters/cache";

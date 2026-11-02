@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./search-page-input.module.sass";
 
-// Same delay as the navbar's own search (nav-search.tsx), so results refresh
-// shortly after typing stops instead of re-querying on every keystroke.
+// Longer than the navbar's (nav-search.tsx): each refresh here re-renders the whole page on the server,
+// so results refresh after typing stops instead of on every keystroke.
 const DEBOUNCE_MS = 1000;
 
 // Refine query from results page; router.replace avoids history buildup.

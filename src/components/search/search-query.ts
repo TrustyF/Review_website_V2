@@ -1,4 +1,5 @@
-"use server";
+// Plain server module, not "use server": the navbar reaches it via GET /api/search, since
+// server actions dispatch one at a time and would queue up behind each other while typing.
 import Fuse from "fuse.js";
 import { db, dbPublic } from "@/server/db/client";
 import { EnrichmentStatus, MediaType } from "@prisma/client";
@@ -93,7 +94,14 @@ type SearchableCompany = {
 	creditCount: number;
 };
 
-type SearchableEntry = SearchableMedia | SearchablePerson | SearchableCompany;
+// Normalized title forms, computed once at index build instead of on every search.
+type TierText = { normalized: string; compact: string };
+
+type SearchableEntry = (
+	| SearchableMedia
+	| SearchablePerson
+	| SearchableCompany
+) & { tierTexts: TierText[] };
 
 // Director > Actor; covers all sources (MangaDex/ComicVine/IGDB).
 const ROLE_LABEL_PRIORITY = [
@@ -121,14 +129,12 @@ function mainRoleFor(roleNames: string[]): string {
 
 // In-memory only: rebuilding from the DB is cheap in a long-lived container. Admin edits call invalidateSearchIndex();
 // standalone scripts (enrich-db cron etc.) run in another process, so they rely on the TTL.
-let cachedIndex: {
-	fuse: Fuse<SearchableEntry>;
-	expiresAt: number;
-	version: number;
-} | null = null;
-// Shared by concurrent searches that hit an expired cache, so only one rebuild runs.
+type SearchIndex = { entries: SearchableEntry[]; fuse: Fuse<SearchableEntry> };
+let cachedIndex: (SearchIndex & { expiresAt: number; version: number }) | null =
+	null;
+// Shared by concurrent searches that need a rebuild, so only one runs.
 let pendingIndex: {
-	promise: Promise<Fuse<SearchableEntry>>;
+	promise: Promise<SearchIndex>;
 	version: number;
 } | null = null;
 const CACHE_TTL_MS = 60 * 60_000;
@@ -217,21 +223,25 @@ async function fetchSearchEntriesFromDb(): Promise<SearchableEntry[]> {
 			kind: "media",
 			...m,
 			popularity: movie?.popularity ?? tvShow?.popularity ?? null,
+			tierTexts: toTierTexts([m.title, m.titleFr, m.alternateTitle]),
 		}),
 	);
 
-	const unsortedPersonEntries: SearchablePerson[] = personRows.map((p) => {
-		const roleNames = p.credits.map((c) => c.role.name);
-		return {
-			kind: "person",
-			id: p.id,
-			title: p.name,
-			// null (not real photoPath) for person without photo-eligible roles. See person-photo-eligibility.ts for why check lives here, not ingest.
-			photoPath: hasPhotoEligibleRole(roleNames) ? p.photoPath : null,
-			mainRole: mainRoleFor(roleNames),
-			creditCount: p.credits.length,
-		};
-	});
+	const unsortedPersonEntries = personRows.map(
+		(p): SearchableEntry & SearchablePerson => {
+			const roleNames = p.credits.map((c) => c.role.name);
+			return {
+				kind: "person",
+				id: p.id,
+				title: p.name,
+				// null (not real photoPath) for person without photo-eligible roles. See person-photo-eligibility.ts for why check lives here, not ingest.
+				photoPath: hasPhotoEligibleRole(roleNames) ? p.photoPath : null,
+				mainRole: mainRoleFor(roleNames),
+				creditCount: p.credits.length,
+				tierTexts: toTierTexts([p.name]),
+			};
+		},
+	);
 
 	// Photo first, most-credited second; photo > credit count.
 	const personEntries: SearchableEntry[] = unsortedPersonEntries
@@ -256,6 +266,7 @@ async function fetchSearchEntriesFromDb(): Promise<SearchableEntry[]> {
 				title: c.name,
 				mainRole: mainRoleFor(roleNames),
 				creditCount: c.credits.length,
+				tierTexts: toTierTexts([c.name]),
 			};
 		})
 		.sort((a, b) => b.creditCount - a.creditCount);
@@ -272,6 +283,14 @@ function compactForTier(text: string): string {
 	return text.replace(/[^\p{L}\p{N}]+/gu, "");
 }
 
+function toTierTexts(titles: (string | null)[]): TierText[] {
+	return titles.flatMap((title) => {
+		if (!title) return [];
+		const normalized = normalizeForTier(title);
+		return [{ normalized, compact: compactForTier(normalized) }];
+	});
+}
+
 // Returns a tier fn: 0 exact, 1 query starts at a word boundary, 2 anything else Fuse matched (mid-word, typo).
 function buildTierFn(query: string): (entry: SearchableEntry) => number {
 	const normalized = normalizeForTier(query);
@@ -280,24 +299,32 @@ function buildTierFn(query: string): (entry: SearchableEntry) => number {
 	const atWordStart = new RegExp(`(?:^|[^\\p{L}\\p{N}])${escaped}`, "u");
 
 	return (entry) => {
-		const candidates =
-			entry.kind === "media"
-				? [entry.title, entry.titleFr, entry.alternateTitle]
-				: [entry.title];
 		let best = 2;
-		for (const candidate of candidates) {
-			if (!candidate) continue;
-			const text = normalizeForTier(candidate);
-			const textCompact = compactForTier(text);
-			if (text === normalized || (compact && textCompact === compact)) return 0;
+		for (const text of entry.tierTexts) {
 			if (
-				atWordStart.test(text) ||
-				(compact && textCompact.startsWith(compact))
+				text.normalized === normalized ||
+				(compact && text.compact === compact)
+			)
+				return 0;
+			if (
+				atWordStart.test(text.normalized) ||
+				(compact && text.compact.startsWith(compact))
 			)
 				best = 1;
 		}
 		return best;
 	};
+}
+
+// Below this, fuzzy matching hits nearly every entry ("a" matched ~25k), so only exact/word-start matches count.
+const MIN_FUZZY_QUERY_LENGTH = 3;
+
+function searchWordStarts(
+	entries: SearchableEntry[],
+	query: string,
+): ScoredEntry[] {
+	const tierOf = buildTierFn(query);
+	return entries.filter((item) => tierOf(item) < 2).map((item) => ({ item }));
 }
 
 // Fuse scores 0 (perfect) to 1 (worst); scores in the same bucket count as a tie.
@@ -347,38 +374,44 @@ function rankMatches<T extends ScoredEntry>(matches: T[], query: string): T[] {
 	});
 }
 
-async function getSearchIndex(): Promise<Fuse<SearchableEntry>> {
-	const version = getSearchIndexVersion();
-	if (
-		cachedIndex &&
-		cachedIndex.version === version &&
-		cachedIndex.expiresAt > Date.now()
-	)
-		return cachedIndex.fuse;
+function rebuildSearchIndex(version: number): Promise<SearchIndex> {
+	if (pendingIndex?.version === version) return pendingIndex.promise;
+	const pending = {
+		version,
+		promise: fetchSearchEntriesFromDb()
+			.then((entries) => {
+				const index = { entries, fuse: new Fuse(entries, FUSE_OPTIONS) };
+				// Invalidated mid-rebuild means these rows may predate the edit, so don't cache them.
+				if (getSearchIndexVersion() === version) {
+					cachedIndex = {
+						...index,
+						version,
+						expiresAt: Date.now() + CACHE_TTL_MS,
+					};
+				}
+				return index;
+			})
+			.finally(() => {
+				if (pendingIndex === pending) pendingIndex = null;
+			}),
+	};
+	pendingIndex = pending;
+	return pending.promise;
+}
 
-	if (pendingIndex?.version !== version) {
-		const pending = {
-			version,
-			promise: fetchSearchEntriesFromDb()
-				.then((entries) => {
-					const fuse = new Fuse(entries, FUSE_OPTIONS);
-					// Invalidated mid-rebuild means these rows may predate the edit, so don't cache them.
-					if (getSearchIndexVersion() === version) {
-						cachedIndex = {
-							fuse,
-							version,
-							expiresAt: Date.now() + CACHE_TTL_MS,
-						};
-					}
-					return fuse;
-				})
-				.finally(() => {
-					if (pendingIndex === pending) pendingIndex = null;
-				}),
-		};
-		pendingIndex = pending;
+async function getSearchIndex(): Promise<SearchIndex> {
+	const version = getSearchIndexVersion();
+	if (cachedIndex?.version === version) {
+		// TTL expiry only means another process (cron) may have changed rows: serve stale, refresh in background.
+		if (cachedIndex.expiresAt <= Date.now()) {
+			rebuildSearchIndex(version).catch((err) =>
+				console.error("Background search index rebuild failed", err),
+			);
+		}
+		return cachedIndex;
 	}
-	return pendingIndex.promise;
+	// An admin edit bumped the version, so wait for fresh rows.
+	return rebuildSearchIndex(version);
 }
 
 // Media/people/company fuzzy search (no overview-text for lighter payload).
@@ -394,8 +427,11 @@ export async function searchAllMedia(
 	// Falls back to English when untranslated, like Review.bodyFr/MediaTitle.
 	const locale = await getLocale();
 
-	const fuse = await getSearchIndex();
-	const matches = fuse.search(trimmed);
+	const { entries, fuse } = await getSearchIndex();
+	const matches =
+		compactForTier(normalizeForTier(trimmed)).length < MIN_FUZZY_QUERY_LENGTH
+			? searchWordStarts(entries, trimmed)
+			: fuse.search(trimmed);
 
 	const ranked = rankMatches(matches, trimmed);
 

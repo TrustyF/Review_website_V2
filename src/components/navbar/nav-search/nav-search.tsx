@@ -7,17 +7,14 @@ import { Clickable } from "@/components/ui/clickable";
 import Image from "next/image";
 import { Building2, Search, UserRound } from "lucide-react";
 import { MediaType } from "@prisma/client";
-import {
-	GlobalSearchResult,
-	searchAllMedia,
-} from "@/components/search/search-actions";
+import type { GlobalSearchResult } from "@/components/search/search-query";
 import { useOutsideClick } from "@/lib/use-outside-click";
 import { useIsMobileViewport } from "@/lib/use-is-mobile-viewport";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./nav-search.module.sass";
 
-// Wait after the last keystroke before querying, so the input stays responsive.
-const DEBOUNCE_MS = 500;
+// Wait after the last keystroke before querying; short since stale requests get aborted.
+const DEBOUNCE_MS = 250;
 
 // Avoids React's "useLayoutEffect does nothing on the server" warning.
 const useIsomorphicLayoutEffect =
@@ -88,15 +85,33 @@ export function NavSearch({ iconSize = 18 }: { iconSize?: number }) {
 	useEffect(() => {
 		if (!input.trim()) return;
 
+		// Aborted on the next keystroke, so a slow earlier response can't overwrite newer results.
+		const controller = new AbortController();
 		const timeout = setTimeout(() => {
 			setIsSearching(true);
 			setError(null);
-			searchAllMedia(input)
-				.then(setResults)
-				.catch(() => setError(dict.nav.search.searchFailed))
-				.finally(() => setIsSearching(false));
+			fetch(`/api/search?q=${encodeURIComponent(input)}`, {
+				signal: controller.signal,
+			})
+				.then((res) => {
+					if (!res.ok) throw new Error(`Search failed: ${res.status}`);
+					return res.json() as Promise<GlobalSearchResult[]>;
+				})
+				.then((results) => {
+					setResults(results);
+					setIsSearching(false);
+				})
+				.catch(() => {
+					if (!controller.signal.aborted) {
+						setError(dict.nav.search.searchFailed);
+					}
+					setIsSearching(false);
+				});
 		}, DEBOUNCE_MS);
-		return () => clearTimeout(timeout);
+		return () => {
+			clearTimeout(timeout);
+			controller.abort();
+		};
 	}, [input, dict.nav.search.searchFailed]);
 
 	function handleQueryChange(value: string) {

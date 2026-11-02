@@ -14,7 +14,7 @@ export type MediaBrowserSearchResult = {
 
 const SEARCH_LIMIT = 20;
 
-// Same typo tolerance as search-actions.ts's FUSE_OPTIONS.
+// Same typo tolerance as search-query.ts's FUSE_OPTIONS.
 const FUSE_OPTIONS = {
 	keys: ["title"],
 	threshold: 0.35,

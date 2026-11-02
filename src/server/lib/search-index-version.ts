@@ -1,4 +1,4 @@
-// Not in search-actions.ts: every export of a "use server" file is a public endpoint.
+// Separate from search-query.ts so admin actions can invalidate without loading Fuse.
 let version = 0;
 
 export function invalidateSearchIndex() {

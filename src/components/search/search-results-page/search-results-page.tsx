@@ -1,4 +1,4 @@
-import { searchAllMedia } from "@/components/search/search-actions";
+import { searchAllMedia } from "@/components/search/search-query";
 import { SearchResultCard } from "@/components/search/search-result-card";
 import { SearchPageInput } from "@/components/search/search-page-input";
 import { getDictionary } from "@/lib/i18n/get-dictionary";

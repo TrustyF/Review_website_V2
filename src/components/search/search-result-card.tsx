@@ -2,7 +2,7 @@
 import Image from "next/image";
 import { Building2, UserRound } from "lucide-react";
 import { Link } from "@/components/ui/link";
-import { GlobalSearchResult } from "@/components/search/search-actions";
+import type { GlobalSearchResult } from "@/components/search/search-query";
 import { useDictionary } from "@/lib/i18n/i18n-context";
 import styles from "./search-result-card.module.sass";
 
@@ -53,7 +53,9 @@ export function SearchResultCard({ result }: { result: GlobalSearchResult }) {
 				<div className={styles.entity_name}>{result.name}</div>
 				<div className={styles.entity_meta}>
 					{result.mainRole} · {result.creditCount}{" "}
-					{result.creditCount === 1 ? dict.nav.search.credit : dict.nav.search.credits}
+					{result.creditCount === 1
+						? dict.nav.search.credit
+						: dict.nav.search.credits}
 				</div>
 			</div>
 		</Link>
