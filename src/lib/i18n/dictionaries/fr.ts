@@ -392,6 +392,15 @@ export const fr = {
 			"Ce lien de désinscription n'a pas pu être vérifié. Vous pouvez gérer vos préférences d'e-mail dans les paramètres du compte.",
 		accountSettings: "Paramètres du compte",
 	},
+	errorPage: {
+		notFoundTitle: "Page introuvable",
+		notFoundBody: "Cette page n'existe pas ou a peut-être été déplacée.",
+		errorTitle: "Un problème est survenu",
+		errorBody:
+			"Cette page a rencontré une erreur inattendue. Réessayez dans un instant.",
+		retry: "Réessayer",
+		home: "Retour à l'accueil",
+	},
 	lists: {
 		empty: "Aucune liste pour l'instant.",
 		emptyMedia: "Aucun titre dans cette liste pour l'instant.",

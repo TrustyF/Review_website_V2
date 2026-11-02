@@ -28,6 +28,7 @@ export function SignupPage() {
 			// Signs in immediately (see auth-actions.ts's note) so they don't bounce to /login.
 			await signIn("credentials", { email, password, redirect: false });
 			// Hard navigation, not router.push/refresh — see login-page.tsx's comment.
+			// eslint-disable-next-line @next/next/no-location-assign-relative-destination
 			window.location.href = "/onboarding";
 		} catch (err) {
 			console.error(err);

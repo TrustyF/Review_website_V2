@@ -3,7 +3,7 @@
 	"name": "Arthur Sirjacobs",
 	"url": "https://arthursirjacobs.com/",
 	"image": "https://arthursirjacobs.com/avatar3.webp",
-	"jobTitle": "Houdini FX Artist",
+	"jobTitle": "Senior FX Artist",
 	"address": {
 		"@type": "PostalAddress",
 		"addressLocality": "Vancouver",
@@ -22,10 +22,26 @@
 	},
 	"knowsAbout": [
 		"Houdini",
+		"Python",
+		"After Effects",
+		"Photoshop",
 		"Visual effects",
 		"FX simulation",
 		"Procedural generation",
-		"Python"
+		"Blender",
+		"Maya",
+		"3ds Max",
+		"Creative Cloud",
+		"SynthEyes",
+		"Nuke",
+		"Marvelous Designer",
+		"ZBrush",
+		"Gaffer",
+		"Cinema 4D",
+		"Git",
+		"Vue.js",
+		"JavaScript",
+		"MySQL"
 	],
 	"knowsLanguage": [
 		"fr",

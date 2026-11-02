@@ -382,6 +382,14 @@ export const en = {
 			"This unsubscribe link couldn't be verified. You can manage your email preferences from account settings.",
 		accountSettings: "Account settings",
 	},
+	errorPage: {
+		notFoundTitle: "Page not found",
+		notFoundBody: "This page doesn't exist or may have been moved.",
+		errorTitle: "Something went wrong",
+		errorBody: "This page hit an unexpected error. Try again in a moment.",
+		retry: "Try again",
+		home: "Back to home",
+	},
 	lists: {
 		empty: "No lists yet.",
 		emptyMedia: "No media in this list yet.",

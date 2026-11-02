@@ -379,6 +379,30 @@
 		"en": "0d49ffc4c81c8eb3",
 		"fr": "c51b06a3ae46a691"
 	},
+	"errorPage.errorBody": {
+		"en": "ac6d44d5c85f4888",
+		"fr": "24428bca8447fc6d"
+	},
+	"errorPage.errorTitle": {
+		"en": "db54f96370b20856",
+		"fr": "2b7d48d3b1aa460b"
+	},
+	"errorPage.home": {
+		"en": "6aee0962fc18c0f1",
+		"fr": "09c0fa43d991aca7"
+	},
+	"errorPage.notFoundBody": {
+		"en": "e3c5a2d50b3c3d6d",
+		"fr": "ccce08db3d323915"
+	},
+	"errorPage.notFoundTitle": {
+		"en": "ee42bfb381db06de",
+		"fr": "30d1db21914303ce"
+	},
+	"errorPage.retry": {
+		"en": "514c63428de25cfb",
+		"fr": "e17b2b111ef4442d"
+	},
 	"home.actorSpotlight": {
 		"en": "8889dd6f10d0e926",
 		"fr": "670a60fa264cd47f"

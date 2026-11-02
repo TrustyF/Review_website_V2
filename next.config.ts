@@ -48,6 +48,26 @@ export default function config(phase: string): NextConfig {
 			// images/CSS - needed for the rrweb replay on analytics.arthursirjacobs.com.
 			return [
 				{
+					// Baseline hardening; no full CSP yet (rrweb/analytics scripts would need allowlisting).
+					source: "/:path*",
+					headers: [
+						// 'self' keeps the admin digest preview and dev responsive-preview iframes working.
+						{ key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+						{ key: "X-Frame-Options", value: "SAMEORIGIN" },
+						{ key: "X-Content-Type-Options", value: "nosniff" },
+						{
+							key: "Referrer-Policy",
+							value: "strict-origin-when-cross-origin",
+						},
+						{
+							key: "Permissions-Policy",
+							value: "camera=(), microphone=(), geolocation=(), payment=()",
+						},
+						// Browsers ignore this over plain http (LAN/dev), so it only takes effect via Cloudflare.
+						{ key: "Strict-Transport-Security", value: "max-age=31536000" },
+					],
+				},
+				{
 					source: "/_next/static/:path*",
 					headers: [
 						{
