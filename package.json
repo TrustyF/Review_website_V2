@@ -22,6 +22,7 @@
 		"i18n:fr": "tsx src/scripts/i18n/translate-fr.ts",
 		"i18n:check": "tsx src/scripts/i18n/translate-fr.ts check",
 		"fetch_identity": "tsx src/server/maintenance/fetch-identity.ts",
+		"migrate_saved_crops": "tsx src/server/maintenance/migrate-saved-crops.ts",
 		"cleanup_posters": "tsx src/server/maintenance/cron/cleanup-posters.ts",
 		"cleanup_cropped_images": "tsx src/server/maintenance/cron/cleanup-cropped-images.ts",
 		"cleanup_review_images": "tsx src/server/maintenance/cron/cleanup-review-images.ts",

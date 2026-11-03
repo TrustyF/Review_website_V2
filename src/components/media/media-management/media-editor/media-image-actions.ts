@@ -17,6 +17,8 @@ import {
 	BANNER_FORMAT,
 	bannerUrlFor,
 	mediaAssetFilename,
+	POSTER_CROP_DIR,
+	BANNER_CROP_DIR,
 	persistCroppedBanner,
 	persistCroppedPoster,
 	posterUrlFor,
@@ -24,6 +26,7 @@ import {
 	resolvePoster,
 } from "@/server/resolvers/poster-resolver";
 import { readCroppedFile } from "@/server/resolvers/image-crop-resolver";
+import { cropExtension, saveCrop } from "@/server/resolvers/saved-crop";
 import { buildProxiedImageUrl } from "@/server/resolvers/image-proxy";
 import type { PickableImage } from "@/components/media/media-management/media-editor/components/image-picker";
 import { recordInvocation } from "@/server/dev/invocation-tracker";
@@ -129,11 +132,17 @@ export async function getAlternativePosters(
 // The detail page's standalone PosterEditTrigger passes false, relying on MediaPublishButton's publishMediaEdits instead.
 export async function updateMediaPoster(
 	mediaId: number,
-	posterPath: string,
+	inputPath: string,
 	{ revalidate = true }: { revalidate?: boolean } = {},
 ) {
 	await requireAdmin();
 	recordInvocation("action:updateMediaPoster");
+
+	// A crop's cropped/ URL expires (24h sweep), so store its durable POSTER_CROP_DIR copy instead.
+	const croppedBytes = await readCroppedFile(inputPath);
+	const posterPath = croppedBytes
+		? await saveCrop(POSTER_CROP_DIR, croppedBytes, cropExtension(inputPath))
+		: inputPath;
 
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
@@ -153,9 +162,7 @@ export async function updateMediaPoster(
 		});
 	}
 
-	// A custom crop's bytes live in the transient cropped/ store (swept after 24h) — persist them
-	// directly rather than relying on resolvePoster's lazy fetch of a URL that later expires.
-	const croppedBytes = await readCroppedFile(posterPath);
+	// Crop bytes are already in hand, so pre-warm the cache instead of a resolvePoster round trip.
 	if (croppedBytes) {
 		await persistCroppedPoster(mediaId, posterPath, croppedBytes);
 	} else {
@@ -231,11 +238,17 @@ export async function getAlternativeBanners(
 // See updateMediaPoster's own comment on the revalidate param.
 export async function updateMediaBanner(
 	mediaId: number,
-	bannerPath: string,
+	inputPath: string,
 	{ revalidate = true }: { revalidate?: boolean } = {},
 ) {
 	await requireAdmin();
 	recordInvocation("action:updateMediaBanner");
+
+	// Same durable-copy move as updateMediaPoster.
+	const croppedBytes = await readCroppedFile(inputPath);
+	const bannerPath = croppedBytes
+		? await saveCrop(BANNER_CROP_DIR, croppedBytes, cropExtension(inputPath))
+		: inputPath;
 
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
@@ -255,9 +268,6 @@ export async function updateMediaBanner(
 		});
 	}
 
-	// A custom crop's bytes live in the transient cropped/ store (swept after 24h) — persist them
-	// directly rather than relying on resolveBanner's lazy fetch of a URL that later expires.
-	const croppedBytes = await readCroppedFile(bannerPath);
 	if (croppedBytes) {
 		await persistCroppedBanner(mediaId, bannerPath, croppedBytes);
 	} else {

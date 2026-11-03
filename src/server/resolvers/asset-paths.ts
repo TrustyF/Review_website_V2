@@ -21,6 +21,31 @@ export const BANNER_MOBILE_QUALITY = 45;
 // Own directory, same reasoning as CHANGELOG_THUMB_DIR vs POSTER_DIR.
 export const CHANGELOG_BANNER_THUMB_DIR = "banners/changelog-cache";
 
+// Durable homes for saved poster/banner crops: the only copy of user content, never swept.
+// Media.posterPath/bannerPath point here; the *_DIR caches above stay fully re-derivable.
+export const POSTER_CROP_DIR = "posters/crops";
+export const BANNER_CROP_DIR = "banners/crops";
+
+// Matches storage.urlFor(*_CROP_DIR, …): an R2 public URL, or root-relative on local disk.
+const SAVED_CROP_URL =
+	/\/((?:posters|banners)\/crops)\/([a-f0-9]{16}\.(?:webp|avif|jpeg))$/;
+
+export function parseSavedCropPath(
+	path: string,
+): { dir: string; filename: string } | null {
+	const match = SAVED_CROP_URL.exec(path);
+	return match?.[1] && match[2] ? { dir: match[1], filename: match[2] } : null;
+}
+
+// Paths used as-is by the *UrlFor builders below, instead of being composed onto a source's CDN.
+function isDirectSource(path: string): boolean {
+	return (
+		path.startsWith("http://") ||
+		path.startsWith("https://") ||
+		parseSavedCropPath(path) != null
+	);
+}
+
 // Images embedded in a review body, one subdirectory per media: reviews/images/<mediaId>/<hash>.<ext>.
 export const REVIEW_IMAGE_DIR = "reviews/images";
 
@@ -98,7 +123,7 @@ export function posterUrlFor(
 	posterPath: string,
 	size: PosterSize,
 ) {
-	if (posterPath.startsWith("http://") || posterPath.startsWith("https://")) {
+	if (isDirectSource(posterPath)) {
 		return posterPath;
 	}
 	if (type === MediaType.MANGA) {
@@ -124,7 +149,7 @@ export function toLinkEmbedImageSrc(
 
 // Only TMDB/IGDB populate Media.bannerPath, so no other sources to handle. No externalId param needed, unlike posterUrlFor — neither source's path needs scoping context.
 export function bannerUrlFor(type: MediaType, bannerPath: string) {
-	if (bannerPath.startsWith("http://") || bannerPath.startsWith("https://")) {
+	if (isDirectSource(bannerPath)) {
 		return bannerPath;
 	}
 	if (type === MediaType.GAME) {
@@ -136,7 +161,7 @@ export function bannerUrlFor(type: MediaType, bannerPath: string) {
 // Largest size each source offers — for the email banner, which needs 1200px and is cached
 // once, unlike the site's capped sizes above. External http(s) paths are used as-is.
 export function fullResBannerUrlFor(type: MediaType, bannerPath: string) {
-	if (bannerPath.startsWith("http://") || bannerPath.startsWith("https://")) {
+	if (isDirectSource(bannerPath)) {
 		return bannerPath;
 	}
 	if (type === MediaType.GAME) {
@@ -150,7 +175,7 @@ export function fullResPosterUrlFor(
 	externalId: string | null,
 	posterPath: string,
 ) {
-	if (posterPath.startsWith("http://") || posterPath.startsWith("https://")) {
+	if (isDirectSource(posterPath)) {
 		return posterPath;
 	}
 	if (type === MediaType.MANGA) {
