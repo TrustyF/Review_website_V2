@@ -226,40 +226,6 @@ services:
       # same secret `app` uses for NextAuth, just needed here too now.
       AUTH_SECRET: ${AUTH_SECRET}
 
-  # Uptime monitoring: pings `app` (and can be pointed at review.arthursirjacobs.com
-  # itself) and alerts if it goes down. Bound to all interfaces (not just
-  # loopback like `app`/`db`) so it's reachable from other devices on the
-  # home LAN without an SSH tunnel — still not internet-reachable, since
-  # nothing forwards these ports from the router, and it has its own login
-  # (forced on first run). Widens the trust boundary from "only this host"
-  # to "anything on the LAN" — accepted deliberately since this is just a
-  # monitoring dashboard, not `db`/`app`.
-  uptime-kuma:
-    image: louislam/uptime-kuma:1
-    restart: unless-stopped
-    depends_on:
-      firewall-init:
-        condition: service_completed_successfully
-    ports:
-      - "3001:3001"
-    volumes:
-      - uptime-kuma-data:/app/data
-
-  # System/container resource monitoring (CPU, RAM, disk, network, per-container
-  # stats) — hub is the dashboard + data store, agent is what actually reads
-  # the host's stats and reports them in. Same LAN-reachable rationale as
-  # uptime-kuma above.
-  beszel-hub:
-    image: henrygd/beszel:latest
-    restart: unless-stopped
-    depends_on:
-      firewall-init:
-        condition: service_completed_successfully
-    ports:
-      - "8090:8090"
-    volumes:
-      - beszel-hub-data:/beszel_data
-
   # Applies the DOCKER-USER iptables rules (see scripts/docker-user-lan-
   # isolation.sh) that stop this project's Docker network from reaching the
   # LAN/other private ranges. Runs as part of the compose stack itself
@@ -291,36 +257,8 @@ services:
       ]
     restart: "no"
 
-  # `network_mode: host` (rather than the compose network everything else
-  # uses) is what Beszel's own docs call for here — it's how the agent gets
-  # accurate host-level network/disk stats instead of just the container's
-  # own. Docker socket is mounted read-only so it can also report per-container
-  # stats (for `app`, `db`, etc.) alongside host-level ones.
-  #
-  # KEY has no default and can't be filled in ahead of time: it's a public key
-  # beszel-hub generates when you add a new "system" from its web UI (port
-  # 8090 above) — create the system there first, copy the key it shows you
-  # into .env.beszel, then start this service.
-  #
-  # Split into its own env_file (not this file's usual ${VAR} interpolation
-  # from .env) so this monitoring key can be copied/rotated independently of
-  # the app's own secrets — e.g. syncing .env to another host no longer also
-  # touches this.
-  beszel-agent:
-    image: henrygd/beszel-agent:latest
-    restart: unless-stopped
-    network_mode: host
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    env_file:
-      - .env.beszel
-    environment:
-      HUB_URL: http://127.0.0.1:8090
-
 volumes:
   pgdata:
-  uptime-kuma-data:
-  beszel-hub-data:
 
 # Pinned rather than left to Docker's IPAM allocator so
 # scripts/docker-user-lan-isolation.sh's hardcoded SUBNET can never silently
