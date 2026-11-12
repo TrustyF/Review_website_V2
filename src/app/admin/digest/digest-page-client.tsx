@@ -12,8 +12,10 @@ type Props = {
 };
 
 const PREVIEW_SRC = "/api/admin/digest-preview";
-// Email layout width plus the iframe border; the preview renders at this size, then scales.
-const PREVIEW_WIDTH = 602;
+// The email's own max width; the frame starts here and grows if the content overflows it.
+const EMAIL_WIDTH = 600;
+// 1px each side; the frame is border-box, so its size must include this or the email gets clipped.
+const FRAME_BORDER = 2;
 
 // previewKey busts the iframe's cache after a save — src alone wouldn't
 // reload since the URL never changes.
@@ -21,24 +23,32 @@ export function DigestPageClient({ initial }: Props) {
 	const [previewKey, setPreviewKey] = useState(0);
 	const [reviewsKey, setReviewsKey] = useState(0);
 	const frameBoxRef = useRef<HTMLDivElement>(null);
-	const [scale, setScale] = useState(1);
-	const [contentHeight, setContentHeight] = useState(900);
+	const [boxWidth, setBoxWidth] = useState<number | null>(null);
+	const [frameSize, setFrameSize] = useState({
+		width: EMAIL_WIDTH + FRAME_BORDER,
+		height: 900,
+	});
+	// Shrinks the native-size preview to fit the page, never enlarging it.
+	const scale = boxWidth ? Math.min(1, boxWidth / frameSize.width) : 1;
 
-	// Shrinks the native-width preview to fit the column, never enlarging it.
 	useEffect(() => {
 		const box = frameBoxRef.current;
 		if (!box) return;
 		const observer = new ResizeObserver(([entry]) => {
-			if (entry) setScale(Math.min(1, entry.contentRect.width / PREVIEW_WIDTH));
+			if (entry) setBoxWidth(entry.contentRect.width);
 		});
 		observer.observe(box);
 		return () => observer.disconnect();
 	}, []);
 
-	// Same-origin, so the email's full height is readable; the frame grows to show all of it.
+	// Same-origin, so the email's full size is readable; the frame grows to show all of it.
 	function handleFrameLoad(e: SyntheticEvent<HTMLIFrameElement>) {
-		const doc = e.currentTarget.contentDocument;
-		if (doc) setContentHeight(doc.documentElement.scrollHeight);
+		const root = e.currentTarget.contentDocument?.documentElement;
+		if (!root) return;
+		setFrameSize({
+			width: Math.max(EMAIL_WIDTH, root.scrollWidth) + FRAME_BORDER,
+			height: root.scrollHeight + FRAME_BORDER,
+		});
 	}
 
 	return (
@@ -57,7 +67,9 @@ export function DigestPageClient({ initial }: Props) {
 				/>
 				<DigestSendPanel />
 			</div>
-			<div className={styles.column}>
+			<div
+				className={styles.preview_column}
+				style={{ flexBasis: frameSize.width }}>
 				<div className={styles.header_row}>
 					<h2 className={styles.preview_heading}>Preview</h2>
 					<Clickable
@@ -69,14 +81,14 @@ export function DigestPageClient({ initial }: Props) {
 				<div
 					ref={frameBoxRef}
 					className={styles.preview_box}
-					style={{ height: contentHeight * scale }}>
+					style={{ height: frameSize.height * scale }}>
 					<iframe
 						key={previewKey}
 						src={`${PREVIEW_SRC}?v=${previewKey}`}
 						className={styles.preview_frame}
 						style={{
-							width: PREVIEW_WIDTH,
-							height: contentHeight,
+							width: frameSize.width,
+							height: frameSize.height,
 							transform: `scale(${scale})`,
 						}}
 						onLoad={handleFrameLoad}

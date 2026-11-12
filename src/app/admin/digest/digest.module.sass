@@ -10,8 +10,18 @@
   align-items: flex-start
   gap: 2rem
 
+// Takes what the preview leaves and squishes; the columns only stack once it'd go below 16rem.
 .column
-  flex: 1 1 26rem
+  flex: 1 1 16rem
+  min-width: 0
+  display: flex
+  flex-flow: column
+  gap: 1.5rem
+
+// Basis set inline to the email's full width; shrinks (and scales the email) only on narrow screens.
+.preview_column
+  flex: 0 1 auto
+  min-width: 0
   display: flex
   flex-flow: column
   gap: 1.5rem
