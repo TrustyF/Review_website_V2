@@ -146,21 +146,11 @@ export async function updateMediaPoster(
 
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
-		select: { posterPath: true, type: true, externalId: true },
+		select: { type: true, externalId: true },
 	});
 
+	// Not logged to the changelog, same as banners.
 	await db.media.update({ where: { id: mediaId }, data: { posterPath } });
-
-	if (existing?.posterPath !== posterPath) {
-		await db.mediaChangeLog.create({
-			data: {
-				mediaId,
-				field: "posterPath",
-				oldValue: existing?.posterPath ?? null,
-				newValue: posterPath,
-			},
-		});
-	}
 
 	// Crop bytes are already in hand, so pre-warm the cache instead of a resolvePoster round trip.
 	if (croppedBytes) {
@@ -252,21 +242,11 @@ export async function updateMediaBanner(
 
 	const existing = await db.media.findUnique({
 		where: { id: mediaId },
-		select: { bannerPath: true, type: true },
+		select: { type: true },
 	});
 
+	// Not logged to the changelog, same as posters.
 	await db.media.update({ where: { id: mediaId }, data: { bannerPath } });
-
-	if (existing?.bannerPath !== bannerPath) {
-		await db.mediaChangeLog.create({
-			data: {
-				mediaId,
-				field: "bannerPath",
-				oldValue: existing?.bannerPath ?? null,
-				newValue: bannerPath,
-			},
-		});
-	}
 
 	if (croppedBytes) {
 		await persistCroppedBanner(mediaId, bannerPath, croppedBytes);

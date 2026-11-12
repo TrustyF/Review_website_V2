@@ -14,8 +14,7 @@ import {
 	BANNER_MOBILE_MAX_WIDTH,
 	BANNER_MOBILE_QUALITY,
 	BANNER_QUALITY,
-	CHANGELOG_BANNER_THUMB_DIR,
-	CHANGELOG_THUMB_DIR,
+	POSTER_THUMB_DIR,
 	EMAIL_BANNER_DIR,
 	EMAIL_BANNER_MAX_WIDTH,
 	EMAIL_BANNER_QUALITY,
@@ -41,9 +40,6 @@ export * from "@/server/resolvers/asset-paths";
 
 // Thumbnails display at 46x69; re-encode to height for small cache even without variants.
 const THUMB_MAX_HEIGHT = 140;
-// Same idea as THUMB_MAX_HEIGHT, sized down from BANNER_MAX_WIDTH instead —
-// see resolveChangelogBannerThumb.
-const BANNER_THUMB_MAX_WIDTH = 120;
 
 // Standard og:image shape (1200x630); composite for Discord/WhatsApp, not resize
 const LINK_EMBED_WIDTH = 1200;
@@ -279,9 +275,9 @@ export async function resolveLinkEmbedImage(
 	return { bytes, contentType: "image/jpeg" };
 }
 
-// Content-addressable caching like resolvePoster; resolvable after poster replaced/deleted.
-// Null when the historical source is no longer reachable — callers fall back to a placeholder.
-export async function resolveChangelogPosterThumb(
+// Small poster for the activity feed and notifications; content-addressed like resolvePoster.
+// Null when the source is no longer reachable — callers fall back to a placeholder.
+export async function resolvePosterThumb(
 	mediaId: number,
 	type: MediaType,
 	externalId: string | null,
@@ -289,7 +285,7 @@ export async function resolveChangelogPosterThumb(
 ): Promise<string | null> {
 	const filename = mediaAssetFilename(mediaId, posterPath);
 	const result = await cacheOrDownload(
-		CHANGELOG_THUMB_DIR,
+		POSTER_THUMB_DIR,
 		filename,
 		posterUrlFor(type, externalId, posterPath, "thumb"),
 		{ resize: { height: THUMB_MAX_HEIGHT } },
@@ -297,7 +293,7 @@ export async function resolveChangelogPosterThumb(
 	);
 	if (!result) return null;
 
-	return getImageStorage().urlFor(CHANGELOG_THUMB_DIR, filename);
+	return getImageStorage().urlFor(POSTER_THUMB_DIR, filename);
 }
 
 // Doesn't share cacheOrDownload's shape — banner resize+AVIF encode is slow part, not download. Miss returns raw source immediately, resizes/encodes/writes in after() off critical path.
@@ -461,24 +457,4 @@ export async function resolveEmailPoster(
 	if (!result) return null;
 
 	return getImageStorage().urlFor(EMAIL_POSTER_DIR, filename);
-}
-
-// Same content-addressable caching as resolveChangelogPosterThumb, but for a
-// change log entry's old/new bannerPath.
-export async function resolveChangelogBannerThumb(
-	mediaId: number,
-	type: MediaType,
-	bannerPath: string,
-): Promise<string | null> {
-	const filename = mediaAssetFilename(mediaId, bannerPath);
-	const result = await cacheOrDownload(
-		CHANGELOG_BANNER_THUMB_DIR,
-		filename,
-		bannerUrlFor(type, bannerPath),
-		{ resize: { width: BANNER_THUMB_MAX_WIDTH } },
-		50,
-	);
-	if (!result) return null;
-
-	return getImageStorage().urlFor(CHANGELOG_BANNER_THUMB_DIR, filename);
 }

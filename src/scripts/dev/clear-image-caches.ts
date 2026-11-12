@@ -4,10 +4,9 @@ import { MediaType } from "@prisma/client";
 import { db } from "@/server/db/client";
 import {
 	POSTER_DIR,
-	CHANGELOG_THUMB_DIR,
+	POSTER_THUMB_DIR,
 	BANNER_DIR,
 	BANNER_MOBILE_DIR,
-	CHANGELOG_BANNER_THUMB_DIR,
 	PERSON_PHOTO_DIR,
 	LINK_EMBED_DIR,
 } from "@/server/resolvers/poster-resolver";
@@ -17,10 +16,9 @@ import { getImageStorage } from "@/server/storage/image-storage";
 // Files are named `${mediaId}-${hash}.ext` (mediaAssetFilename), so --type filters by id prefix.
 const MEDIA_CACHE_DIRS = [
 	POSTER_DIR,
-	CHANGELOG_THUMB_DIR,
+	POSTER_THUMB_DIR,
 	BANNER_DIR,
 	BANNER_MOBILE_DIR,
-	CHANGELOG_BANNER_THUMB_DIR,
 	LINK_EMBED_DIR,
 ];
 

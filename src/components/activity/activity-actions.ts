@@ -1,6 +1,6 @@
 "use server";
 import { db } from "@/server/db/client";
-import { resolveChangelogPosterThumb } from "@/server/resolvers/poster-resolver";
+import { resolvePosterThumb } from "@/server/resolvers/poster-resolver";
 import type { MediaType } from "@prisma/client";
 import { groupListAdditions, mergeSameDay } from "@/lib/same-day-grouping";
 
@@ -89,7 +89,7 @@ async function toMediaEntry(
 	if (media.posterPath) {
 		posterSrc = posterSrcCache.get(media.id);
 		if (!posterSrc) {
-			posterSrc = resolveChangelogPosterThumb(
+			posterSrc = resolvePosterThumb(
 				media.id,
 				media.type,
 				media.externalId,

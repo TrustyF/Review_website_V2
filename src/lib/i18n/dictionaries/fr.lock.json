@@ -239,10 +239,6 @@
 		"en": "44fa5184d5c53ccc",
 		"fr": "54ac7b286c14950f"
 	},
-	"changeLog.bannerAlt": {
-		"en": "413fba6a10dc4a2e",
-		"fr": "365b2eab85b851cf"
-	},
 	"changeLog.deleted": {
 		"en": "a9a33bf98ae22859",
 		"fr": "ee744c5aa7a15cc9"
@@ -255,10 +251,6 @@
 		"en": "06488d3329681741",
 		"fr": "79d93f03e2fe7eb3"
 	},
-	"changeLog.fields.bannerPath": {
-		"en": "413fba6a10dc4a2e",
-		"fr": "365b2eab85b851cf"
-	},
 	"changeLog.fields.body": {
 		"en": "552e425de43e12fc",
 		"fr": "bcb494aac19af937"
@@ -270,10 +262,6 @@
 	"changeLog.fields.liked": {
 		"en": "2a70248592c0968a",
 		"fr": "ad081a514e05659f"
-	},
-	"changeLog.fields.posterPath": {
-		"en": "633a0bc0c148d558",
-		"fr": "9b8c915f614c20f1"
 	},
 	"changeLog.fields.rating": {
 		"en": "dc8880b9272dc093",
@@ -298,10 +286,6 @@
 	"changeLog.no": {
 		"en": "b2cbc4e2e5545a6c",
 		"fr": "2b7d9457a558bb1f"
-	},
-	"changeLog.posterAlt": {
-		"en": "633a0bc0c148d558",
-		"fr": "9b8c915f614c20f1"
 	},
 	"changeLog.yes": {
 		"en": "184fda5c980b9d9c",

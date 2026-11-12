@@ -1,6 +1,5 @@
 import { Fragment } from "react";
 import type { PublicReview } from "@/components/media/types";
-import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { MediaChangeLog, MediaType } from "@prisma/client";
 import { StarIcon } from "@/components/media/icons/star-icon";
@@ -8,10 +7,6 @@ import {
 	rewatchedOnLabel,
 	watchedOnLabel,
 } from "@/components/media/media-verb-labels";
-import {
-	resolveChangelogBannerThumb,
-	resolveChangelogPosterThumb,
-} from "@/server/resolvers/poster-resolver";
 import { ChangeLogEntryRow } from "./change-log-entry-row";
 import { ChangeLogEmptyGate } from "./change-log-empty-gate";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
@@ -58,54 +53,12 @@ function formatGap(days: number, dict: Dictionary): string {
 async function ChangeValue({
 	field,
 	value,
-	mediaId,
-	type,
-	externalId,
 }: {
 	field: string;
 	value: string | null;
-	mediaId: number;
-	type: MediaType;
-	externalId: string | null;
 }) {
 	if (value === null) return null;
 	const dict = await getDictionary();
-
-	if (field === "posterPath") {
-		// Content-addressed by mediaId + historical posterPath, so it keeps working after the current poster changes.
-		// Null when that historical source is no longer reachable (e.g. an expired crop upload).
-		const thumbSrc = await resolveChangelogPosterThumb(
-			mediaId,
-			type,
-			externalId,
-			value,
-		);
-		if (!thumbSrc) return null;
-		return (
-			<Image
-				className={styles.poster_value}
-				src={thumbSrc}
-				alt={dict.changeLog.posterAlt}
-				width={46}
-				height={69}
-			/>
-		);
-	}
-
-	if (field === "bannerPath") {
-		// Same idea as posterPath above, but landscape; bannerUrlFor doesn't need externalId.
-		const thumbSrc = await resolveChangelogBannerThumb(mediaId, type, value);
-		if (!thumbSrc) return null;
-		return (
-			<Image
-				className={styles.banner_value}
-				src={thumbSrc}
-				alt={dict.changeLog.bannerAlt}
-				width={80}
-				height={34}
-			/>
-		);
-	}
 
 	if (field === "rating") {
 		return (
@@ -130,12 +83,10 @@ async function ChangeValue({
 export async function ChangeLogList({
 	entries,
 	type,
-	externalId,
 	review,
 }: {
 	entries: MediaChangeLog[];
 	type: MediaType;
-	externalId: string | null;
 	// "Watched on"/"Reviewed on" are never written to MediaChangeLog — synthesized from
 	// Review.createDate/reviewDate and merged in at display time instead.
 	review: PublicReview | null | undefined;
@@ -147,8 +98,6 @@ export async function ChangeLogList({
 		liked: dict.changeLog.fields.liked,
 		difficulty: dict.changeLog.fields.difficulty,
 		body: dict.changeLog.fields.body,
-		posterPath: dict.changeLog.fields.posterPath,
-		bannerPath: dict.changeLog.fields.bannerPath,
 		// Milestones (see MILESTONE_FIELDS) skip old/new/arrow; "watched"/"rewatched" are omitted
 		// here since their wording depends on media type (see media-verb-labels.ts).
 		reviewed: dict.changeLog.fields.reviewedOn,
@@ -227,23 +176,11 @@ export async function ChangeLogList({
 								{!MILESTONE_FIELDS.has(entry.field) && (
 									<>
 										<span className={styles.old_value}>
-											<ChangeValue
-												field={entry.field}
-												value={entry.oldValue}
-												mediaId={entry.mediaId}
-												type={type}
-												externalId={externalId}
-											/>
+											<ChangeValue field={entry.field} value={entry.oldValue} />
 										</span>
 										<ArrowRight size={14} className={styles.arrow_icon} />
 										<span className={styles.new_value}>
-											<ChangeValue
-												field={entry.field}
-												value={entry.newValue}
-												mediaId={entry.mediaId}
-												type={type}
-												externalId={externalId}
-											/>
+											<ChangeValue field={entry.field} value={entry.newValue} />
 										</span>
 									</>
 								)}

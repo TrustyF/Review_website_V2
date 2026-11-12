@@ -495,7 +495,6 @@ export default async function MediaDetailPage({
 							<MediaChangeLogSection
 								mediaId={media.id}
 								type={raw.type}
-								externalId={raw.externalId}
 								review={raw.review}
 							/>
 						</Suspense>

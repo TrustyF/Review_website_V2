@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { db } from "@/server/db/client";
-import { resolveChangelogPosterThumb } from "@/server/resolvers/poster-resolver";
+import { resolvePosterThumb } from "@/server/resolvers/poster-resolver";
 import type { MediaType, NotificationType } from "@prisma/client";
 import { groupListAdditions } from "@/lib/same-day-grouping";
 
@@ -70,7 +70,7 @@ async function toMediaEntry(
 ): Promise<NotificationEntry["media"]> {
 	if (!media) return null;
 	const posterSrc = media.posterPath
-		? ((await resolveChangelogPosterThumb(
+		? ((await resolvePosterThumb(
 				media.id,
 				media.type,
 				media.externalId,

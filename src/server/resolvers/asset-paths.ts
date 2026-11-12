@@ -6,20 +6,17 @@ import { MediaType } from "@prisma/client";
 // Logical keys handed to ImageStorage, not real filesystem paths — local storage joins onto public/, a remote backend uses it as a key prefix.
 export const POSTER_DIR = "posters/cache";
 
-// Own directory since changelog thumbnails are a smaller size than the main poster, avoiding a same-hash-different-size collision.
-export const CHANGELOG_THUMB_DIR = "posters/changelog-cache";
+// Own directory since thumbnails are a smaller size than the main poster, avoiding a same-hash-different-size collision.
+export const POSTER_THUMB_DIR = "posters/thumb-cache";
 
 export const BANNER_DIR = "banners/cache";
 
-// Own directory, same reasoning as CHANGELOG_THUMB_DIR vs POSTER_DIR — the mobile featured-review card only ever displays the banner at ~380px CSS width (~720px at 2x DPI), well under BANNER_MAX_WIDTH.
+// Own directory, same reasoning as POSTER_THUMB_DIR vs POSTER_DIR — the mobile featured-review card only ever displays the banner at ~380px CSS width (~720px at 2x DPI), well under BANNER_MAX_WIDTH.
 export const BANNER_MOBILE_DIR = "banners/mobile-cache";
 export const BANNER_MOBILE_MAX_WIDTH = 800;
 // Lower than BANNER_QUALITY — smaller on-screen size hides compression artifacts better, and this
 // is the mobile LCP image, so trimming bytes matters more here than it does for the desktop hero.
 export const BANNER_MOBILE_QUALITY = 45;
-
-// Own directory, same reasoning as CHANGELOG_THUMB_DIR vs POSTER_DIR.
-export const CHANGELOG_BANNER_THUMB_DIR = "banners/changelog-cache";
 
 // Durable homes for saved poster/banner crops: the only copy of user content, never swept.
 // Media.posterPath/bannerPath point here; the *_DIR caches above stay fully re-derivable.

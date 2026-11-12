@@ -6,25 +6,12 @@ import { getMediaChangeLog } from "./get-media";
 type Props = {
 	mediaId: number;
 	type: MediaType;
-	externalId: string | null;
 	review: PublicReview | null | undefined;
 };
 
-// Split into own <Suspense> boundary so change-log query doesn't gate rest of page. Type/externalId/review already resolved; only entries fetched here.
-export async function MediaChangeLogSection({
-	mediaId,
-	type,
-	externalId,
-	review,
-}: Props) {
+// Split into own <Suspense> boundary so change-log query doesn't gate rest of page. Type/review already resolved; only entries fetched here.
+export async function MediaChangeLogSection({ mediaId, type, review }: Props) {
 	const entries = await getMediaChangeLog(mediaId);
 
-	return (
-		<ChangeLogList
-			entries={entries}
-			type={type}
-			externalId={externalId}
-			review={review}
-		/>
-	);
+	return <ChangeLogList entries={entries} type={type} review={review} />;
 }

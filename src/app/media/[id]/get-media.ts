@@ -33,7 +33,9 @@ function reviveMediaCoreDates(media: MediaCore): MediaCore {
 		releaseDate: media.releaseDate ? new Date(media.releaseDate) : null,
 		createDate: media.createDate ? new Date(media.createDate) : null,
 		updateDate: media.updateDate ? new Date(media.updateDate) : null,
-		lastEnrichedAt: media.lastEnrichedAt ? new Date(media.lastEnrichedAt) : null,
+		lastEnrichedAt: media.lastEnrichedAt
+			? new Date(media.lastEnrichedAt)
+			: null,
 		review: media.review && {
 			...media.review,
 			reviewDate: media.review.reviewDate
@@ -75,7 +77,9 @@ function queryMediaChangeLog(mediaId: number) {
 	});
 }
 
-type MediaChangeLogRow = Awaited<ReturnType<typeof queryMediaChangeLog>>[number];
+type MediaChangeLogRow = Awaited<
+	ReturnType<typeof queryMediaChangeLog>
+>[number];
 
 // Same JSON-round-trip problem as reviveMediaCoreDates above — see its own
 // comment.
