@@ -59,8 +59,28 @@
   gap: 0.5rem
   max-width: 100%
 
-  img
+  img, .figure
     min-width: 0
+
+// Captioned image; shrink-wraps the image, and the caption wraps instead of widening it.
+.figure
+  display: flex
+  flex-flow: column
+  gap: 0.25rem
+  align-self: flex-start
+  max-width: 100%
+  margin: 0
+
+  img
+    max-width: 100%
+
+.caption
+  contain: inline-size
+  color: var(--accent1)
+  font-size: 0.85rem
+  font-style: italic
+  text-align: center
+  white-space: normal
 
 // [spacer]: one line's height by default; [spacer =N] overrides it inline.
 .spacer

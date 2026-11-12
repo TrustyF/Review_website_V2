@@ -190,6 +190,7 @@ type ReviewImage = {
 	url: string;
 	alt: string;
 	size: ReturnType<typeof parseImageSize>;
+	caption: string | undefined;
 };
 type ReviewBodyBlock =
 	| { kind: "paragraph"; key: number; nodes: ReactNode[]; hasSpoiler: boolean }
@@ -260,24 +261,29 @@ function splitReviewBody(
 				currentNodes.push(match[0]);
 			} else if (showImages) {
 				flushParagraph();
-				const image = { url, alt: match[2]!, size: parseImageSize(match[4]) };
+				const image = {
+					url,
+					alt: match[2]!,
+					size: parseImageSize(match[4]),
+					caption: match[5]?.trim() || undefined,
+				};
 				const last = blocks.at(-1);
 				if (last?.kind === "images") last.images.push(image);
 				else blocks.push({ kind: "images", key: blockKey++, images: [image] });
 			}
-		} else if (match[7] !== undefined) {
+		} else if (match[8] !== undefined) {
 			// Layout only, so dropped along with images where those are hidden.
 			if (showImages) {
 				flushParagraph();
 				blocks.push({
 					kind: "spacer",
 					key: blockKey++,
-					height: match[8] && `${match[8]}px`,
+					height: match[9] && `${match[9]}px`,
 				});
 			}
 		} else {
-			const linkText = match[5]!;
-			const url = match[6]!;
+			const linkText = match[6]!;
+			const url = match[7]!;
 			if (isSafeUrl(url)) {
 				const external = !url.startsWith("/");
 				currentNodes.push(
@@ -340,18 +346,37 @@ export function ReviewBody({
 			? blocks.find((block) => block.kind === "paragraph" && block.hasSpoiler)
 					?.key
 			: undefined;
-	const renderImage = ({ url, alt, size }: ReviewImage, key: number) => (
-		// Plain <img>, not next/image: the host is an arbitrary pasted URL with unknown dimensions.
-		// eslint-disable-next-line @next/next/no-img-element
-		<img
-			key={key}
-			src={url}
-			alt={alt}
-			className={imageClassName ?? styles.image}
-			style={size}
-			loading="lazy"
-		/>
-	);
+	const renderImage = (
+		{ url, alt, size, caption }: ReviewImage,
+		key: number,
+	) => {
+		// Captioned: the figure takes the width so a % still resolves against the body, the img fills it.
+		const imgStyle = caption
+			? { height: size.height, ...(size.width ? { width: "100%" } : {}) }
+			: size;
+		const img = (
+			// Plain <img>, not next/image: the host is an arbitrary pasted URL with unknown dimensions.
+			// eslint-disable-next-line @next/next/no-img-element
+			<img
+				key={key}
+				src={url}
+				alt={alt}
+				className={imageClassName ?? styles.image}
+				style={imgStyle}
+				loading="lazy"
+			/>
+		);
+		if (!caption) return img;
+		return (
+			<figure
+				key={key}
+				className={styles.figure}
+				style={size.width ? { width: size.width } : undefined}>
+				{img}
+				<figcaption className={styles.caption}>{caption}</figcaption>
+			</figure>
+		);
+	};
 	return (
 		<>
 			{blocks.map((block) =>

@@ -31,6 +31,7 @@ import {
 	ReviewSpoilerProvider,
 } from "@/components/media/media-cards/media-card/review-body";
 import reviewStyles from "@/components/media/media-cards/media-card/review.module.sass";
+import { REVIEW_MARKUP_REGEX } from "@/components/media/media-cards/media-card/review-body-syntax";
 import styles from "./review-body-modal.module.sass";
 
 const AUTOSAVE_DELAY_MS = 2000;
@@ -61,7 +62,7 @@ export function ReviewBodyModal({
 	draftMediaId,
 	mediaId,
 }: Props) {
-	const [activeLang, setActiveLang] = useState<"en" | "fr">("en");
+	const [activeLang, setActiveLang] = useState<"en" | "fr" | "syntax">("en");
 
 	const [body, onChange] = useState(initialBody);
 	const [bodyFr, onChangeFr] = useState(initialBodyFr);
@@ -343,6 +344,47 @@ export function ReviewBodyModal({
 		);
 	}
 
+	const [captionError, setCaptionError] = useState<string | null>(null);
+
+	// Adds a caption to the image under the cursor (else the nearest one before it), or selects its existing caption.
+	function handleCaption(
+		text: string,
+		onChangeText: (value: string) => void,
+		textarea: HTMLTextAreaElement | null,
+	) {
+		if (!textarea) return;
+		const cursor = textarea.selectionStart;
+		let target: RegExpExecArray | undefined;
+		for (const match of text.matchAll(REVIEW_MARKUP_REGEX)) {
+			if (match[3] === undefined || match.index > cursor) continue;
+			target = match;
+		}
+		if (!target) {
+			setCaptionError("Put the cursor in or after an image first.");
+			return;
+		}
+		setCaptionError(null);
+		const end = target.index + target[0].length;
+		let start: number;
+		let length: number;
+		if (target[5] !== undefined) {
+			// Existing caption sits just before the closing `")`.
+			start = end - 2 - target[5].length;
+			length = target[5].length;
+		} else {
+			const placeholder = "caption";
+			onChangeText(
+				`${text.slice(0, end - 1)} "${placeholder}"${text.slice(end - 1)}`,
+			);
+			start = end + 1;
+			length = placeholder.length;
+		}
+		requestAnimationFrame(() => {
+			textarea.focus();
+			textarea.setSelectionRange(start, start + length);
+		});
+	}
+
 	function handleLink(
 		text: string,
 		onChangeText: (value: string) => void,
@@ -369,6 +411,12 @@ export function ReviewBodyModal({
 						className={activeLang === "fr" ? styles.tab_active : ""}
 						onClick={() => setActiveLang("fr")}>
 						Français
+					</button>
+					<button
+						type="button"
+						className={activeLang === "syntax" ? styles.tab_active : ""}
+						onClick={() => setActiveLang("syntax")}>
+						Formatting
 					</button>
 				</div>
 
@@ -397,12 +445,20 @@ export function ReviewBodyModal({
 									</button>
 									<button
 										type="button"
-										title="Insert the image URL on the clipboard, e.g. a path the crop tool just copied (selected text becomes its description)"
+										title="Insert the image URL on the clipboard, e.g. a path the crop tool just copied (selected text becomes its description). Add a size and/or caption after the URL: ![alt](url =300x200 &quot;caption&quot;)"
 										disabled={imageInsert.pending}
 										onClick={() =>
 											handleImage(onChange, enTextareaRef.current)
 										}>
 										{imageInsert.pending ? "Saving…" : "Image"}
+									</button>
+									<button
+										type="button"
+										title="Add a caption to the image the cursor is in (or the nearest one before it), or select its existing caption"
+										onClick={() =>
+											handleCaption(body, onChange, enTextareaRef.current)
+										}>
+										Caption
 									</button>
 									<button
 										type="button"
@@ -416,6 +472,9 @@ export function ReviewBodyModal({
 							</div>
 							{imageInsert.error && (
 								<div className={styles.suggest_error}>{imageInsert.error}</div>
+							)}
+							{captionError && (
+								<div className={styles.suggest_error}>{captionError}</div>
 							)}
 							<textarea
 								ref={enTextareaRef}
@@ -458,7 +517,7 @@ export function ReviewBodyModal({
 							)}
 						</div>
 					</div>
-				) : (
+				) : activeLang === "fr" ? (
 					<div className={styles.columns}>
 						<ReviewPreview text={bodyFr} />
 						<label className={styles.column}>
@@ -483,12 +542,20 @@ export function ReviewBodyModal({
 									</button>
 									<button
 										type="button"
-										title="Insert the image URL on the clipboard, e.g. a path the crop tool just copied (selected text becomes its description)"
+										title="Insert the image URL on the clipboard, e.g. a path the crop tool just copied (selected text becomes its description). Add a size and/or caption after the URL: ![alt](url =300x200 &quot;caption&quot;)"
 										disabled={imageInsert.pending}
 										onClick={() =>
 											handleImage(onChangeFr, frTextareaRef.current)
 										}>
 										{imageInsert.pending ? "Saving…" : "Image"}
+									</button>
+									<button
+										type="button"
+										title="Add a caption to the image the cursor is in (or the nearest one before it), or select its existing caption"
+										onClick={() =>
+											handleCaption(bodyFr, onChangeFr, frTextareaRef.current)
+										}>
+										Caption
 									</button>
 									<button
 										type="button"
@@ -502,6 +569,9 @@ export function ReviewBodyModal({
 							</div>
 							{imageInsert.error && (
 								<div className={styles.suggest_error}>{imageInsert.error}</div>
+							)}
+							{captionError && (
+								<div className={styles.suggest_error}>{captionError}</div>
 							)}
 							<textarea
 								ref={frTextareaRef}
@@ -559,6 +629,8 @@ export function ReviewBodyModal({
 							</div>
 						</div>
 					</div>
+				) : (
+					<SyntaxHelp />
 				)}
 
 				<div className={styles.actions}>
@@ -621,6 +693,48 @@ function ReviewPreview({ text }: { text: string }) {
 					<span className={styles.preview_empty}>Nothing to preview yet.</span>
 				)}
 			</div>
+		</div>
+	);
+}
+
+// Formatting tab: cheat sheet for the markup REVIEW_MARKUP_REGEX understands.
+function SyntaxHelp() {
+	return (
+		<div className={styles.syntax_help}>
+			<dl>
+				<dt>
+					<code>||text||</code>
+				</dt>
+				<dd>Spoiler, hidden until clicked.</dd>
+				<dt>
+					<code>[text](url)</code>
+				</dt>
+				<dd>Link.</dd>
+				<dt>
+					<code>![alt](url)</code>
+				</dt>
+				<dd>Image; alt is its description.</dd>
+				<dt>
+					<code>![alt](url =SIZE)</code>
+				</dt>
+				<dd>
+					Sized image. SIZE is <code>300</code> (width), <code>x200</code>{" "}
+					(height), <code>300x200</code>, or <code>50%</code>. Pixels unless it
+					ends in %. One space before the =, none inside SIZE.
+				</dd>
+				<dt>
+					<code>{'![alt](url "caption")'}</code>
+				</dt>
+				<dd>
+					Image with a caption shown under it. Combines with a size:{" "}
+					<code>{'![alt](url =300 "caption")'}</code>. The caption can&apos;t
+					contain a double quote.
+				</dd>
+				<dt>
+					<code>[spacer]</code> / <code>[spacer =40]</code>
+				</dt>
+				<dd>Blank vertical space, optionally N px tall.</dd>
+			</dl>
 		</div>
 	);
 }

@@ -161,3 +161,20 @@
 .translate_cost
   color: var(--accent1)
   font-size: 0.85rem
+
+// Fills the tab's column area so switching tabs doesn't shrink the panel.
+.syntax_help
+  flex: 1
+  color: var(--accent1)
+  font-size: 0.95rem
+
+  dl
+    display: grid
+    grid-template-columns: auto 1fr
+    gap: 0.75rem 1.5rem
+
+  dd
+    margin: 0
+
+  code
+    color: var(--body)

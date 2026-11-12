@@ -70,7 +70,7 @@ function RandomPickItem({ media }: { media: MediaRecord }) {
 								text={body}
 								paragraphClassName={styles.excerpt_line}
 								spoilersInteractive={false}
-								showImages={false}
+								imageClassName={styles.excerpt_image}
 							/>
 						</ReviewSpoilerProvider>
 					</div>

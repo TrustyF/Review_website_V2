@@ -13,8 +13,9 @@ const LINK_CLOSE_REGEX = new RegExp(
 	`${LINK_OPEN}([\\s\\S]*?)${LINK_CLOSE_PREFIX}(\\d+)⟧`,
 	"g",
 );
-// Same shape as links; the pair wraps the alt text, which may be empty.
+// Same shape as links; the pair wraps the alt text (may be empty), then the caption after IMAGE_CAPTION if any.
 const IMAGE_OPEN = "⟦IMAGE_OPEN⟧";
+const IMAGE_CAPTION = "⟦IMAGE_CAPTION⟧";
 const IMAGE_CLOSE_PREFIX = "⟦IMAGE_CLOSE";
 const IMAGE_CLOSE_REGEX = new RegExp(
 	`${IMAGE_OPEN}([\\s\\S]*?)${IMAGE_CLOSE_PREFIX}(\\d+)⟧`,
@@ -38,6 +39,7 @@ export function markMarkupForTranslation(body: string): {
 			imageAlt,
 			imageUrl,
 			imageSize,
+			imageCaption,
 			linkText,
 			linkUrl,
 			spacer,
@@ -49,7 +51,8 @@ export function markMarkupForTranslation(body: string): {
 				// The size rides along with the URL, so it's restored untouched.
 				const target = imageSize ? `${imageUrl} =${imageSize}` : imageUrl;
 				const index = urls.push(target) - 1;
-				return `${IMAGE_OPEN}${imageAlt}${IMAGE_CLOSE_PREFIX}${index}⟧`;
+				const caption = imageCaption ? `${IMAGE_CAPTION}${imageCaption}` : "";
+				return `${IMAGE_OPEN}${imageAlt}${caption}${IMAGE_CLOSE_PREFIX}${index}⟧`;
 			}
 			if (spacer !== undefined) {
 				// Nothing to translate; an opaque token keeps "spacer" from becoming French.
@@ -73,9 +76,14 @@ export function unmarkTranslatedMarkup(text: string, urls: string[]): string {
 		);
 	const withImages = withSpoilers.replace(
 		IMAGE_CLOSE_REGEX,
-		(full, alt: string, indexStr: string) => {
+		(full, inner: string, indexStr: string) => {
 			const url = urls[Number(indexStr)];
-			return url ? `![${alt}](${url})` : full;
+			if (!url) return full;
+			const [alt, caption] = inner.split(IMAGE_CAPTION);
+			// A straight quote would end the caption early.
+			return caption?.trim()
+				? `![${alt}](${url} "${caption.trim().replaceAll('"', "”")}")`
+				: `![${alt}](${url})`;
 		},
 	);
 	return withImages.replace(
@@ -91,4 +99,4 @@ export const REVIEW_TRANSLATION_SYSTEM = `You translate review text for a person
 
 ${FRENCH_STYLE_RULES}
 
-The text contains marker tokens in pairs, e.g. ${SPOILER_OPEN}some phrase${SPOILER_CLOSE} or ${LINK_OPEN}some phrase${LINK_CLOSE_PREFIX}0⟧ or ${IMAGE_OPEN}some phrase${IMAGE_CLOSE_PREFIX}1⟧ (the phrase may be empty) — translate the phrase inside a pair normally, as part of the surrounding sentence, but leave the marker tokens themselves exactly as they are, immediately before/after the translated phrase: don't add, remove, rename, reorder, or explain them. Standalone tokens like ${KEEP_PREFIX}2⟧ stand for layout and must stay exactly where they are. Reply with only the translated text: no preamble, no explanation, no surrounding quotes.`;
+The text contains marker tokens in pairs, e.g. ${SPOILER_OPEN}some phrase${SPOILER_CLOSE} or ${LINK_OPEN}some phrase${LINK_CLOSE_PREFIX}0⟧ or ${IMAGE_OPEN}some phrase${IMAGE_CLOSE_PREFIX}1⟧ (the phrase may be empty; an image's phrase may also contain ${IMAGE_CAPTION} followed by its caption, keep that token between the two translated parts) — translate the phrase inside a pair normally, as part of the surrounding sentence, but leave the marker tokens themselves exactly as they are, immediately before/after the translated phrase: don't add, remove, rename, reorder, or explain them. Standalone tokens like ${KEEP_PREFIX}2⟧ stand for layout and must stay exactly where they are. Reply with only the translated text: no preamble, no explanation, no surrounding quotes.`;

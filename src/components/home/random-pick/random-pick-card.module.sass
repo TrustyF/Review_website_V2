@@ -63,14 +63,20 @@
   // Global line-height: 1 leaves no gap, so wrapped spoiler bars overlap; same value as the mobile featured excerpt.
   line-height: 1.35rem
 
+  // Paragraphs, images and spacers alike.
+  > * + *
+    margin-top: 0.6rem
+
 .excerpt_clipped
   mask-image: linear-gradient(to bottom, var(--foreground) 75%, transparent)
 
 .excerpt_line
   white-space: pre-wrap
 
-  & + &
-    margin-top: 0.6rem
+.excerpt_image
+  display: block
+  max-width: 100%
+  border-radius: 0.25rem
 
 // Pinned under the excerpt, which absorbs the leftover height.
 .read_more
